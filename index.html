@@ -592,6 +592,117 @@ td .fname .ic{color:var(--ink-3);margin-top:1px}
 .widget,.shell,.login{position:relative}
 td.mono{white-space:nowrap}
 @media (max-width:760px){.greet{flex:1 1 auto;min-width:0}.filters .seg{flex-wrap:nowrap;overflow-x:auto;max-width:100%;scrollbar-width:none}.filters .seg::-webkit-scrollbar{display:none}.filters .seg button{flex:none}}
+
+/* chats: list on the left, conversation on the right; one at a time on phones */
+.stage.chats-mode{display:block}
+.chats{display:grid;grid-template-columns:350px minmax(0,1fr);height:100%;min-height:0;padding-bottom:80px}
+.chatlist{display:flex;flex-direction:column;min-height:0;border-right:1px solid var(--glass-line);padding:18px 12px 0}
+.cl-head{display:flex;align-items:center;justify-content:space-between;padding:0 6px 10px}
+.cl-head h2{font-size:26px;font-stretch:115%}
+.cl-search{width:auto;margin:0 4px 10px}
+.cl-filter{margin:0 4px 8px;align-self:flex-start;flex-wrap:nowrap}
+.cl-items{flex:1;overflow-y:auto;display:grid;align-content:start;gap:2px;padding-bottom:12px}
+.ci{display:flex;gap:12px;align-items:center;width:100%;border:0;background:none;text-align:left;padding:9px 10px;border-radius:16px;color:var(--ink)}
+.ci:hover{background:var(--glass-2)}
+.ci.on{background:var(--glass-3)}
+.ci-main{flex:1;min-width:0;display:grid;gap:3px}
+.ci-top,.ci-bot{display:flex;align-items:center;gap:8px;min-width:0}
+.ci-top b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:15px}
+.ci-time{font-size:12px;color:var(--ink-3);flex:none}
+.ci-time.new{color:var(--green);font-weight:700}
+.ci-prev{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13.5px;color:var(--ink-2)}
+.ci-n{min-width:21px;height:21px;border-radius:99px;background:var(--green-dot);color:#0b2a17;font-size:12px;font-weight:700;display:grid;place-items:center;padding:0 6px;font-family:var(--f-mono);flex:none}
+.ci-at{width:21px;height:21px;border-radius:50%;background:var(--green-dot);color:#0b2a17;font-weight:800;font-size:12.5px;display:grid;place-items:center;flex:none}
+.chat-av{display:inline-grid;place-items:center;border-radius:32%;background:color-mix(in srgb,var(--c) 78%,transparent);flex:none;line-height:1;box-shadow:inset 0 1px 0 rgba(255,255,255,.35),0 0 0 1px rgba(255,255,255,.18)}
+.convo{min-width:0;min-height:0;display:flex;flex-direction:column}
+.convo-empty{margin:auto;text-align:center;display:grid;gap:10px;justify-items:center;color:var(--ink-2);padding:24px;max-width:44ch}
+.convo-empty h2{color:var(--ink)}
+.cv{display:flex;flex-direction:column;height:100%;min-height:0}
+.cv-head{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--glass-line);background:rgba(255,255,255,.05)}
+.cv-back{display:none}
+.cv-title{flex:1;min-width:0;display:flex;align-items:center;gap:12px;border:0;background:none;text-align:left;color:var(--ink);padding:2px}
+.cv-title > span{min-width:0}
+.cv-title b{display:block;font-size:16px;line-height:1.2}
+.cv-title small{display:block;font-size:12.5px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cv-msgs{flex:1;overflow-y:auto;padding:14px 22px 14px;display:flex;flex-direction:column;gap:3px}
+.cv-day{display:flex;justify-content:center;margin:14px 0 8px}
+.cv-day span{font-size:12px;font-weight:700;background:var(--glass-2);border:1px solid var(--glass-line);padding:3px 12px;border-radius:99px;color:var(--ink-2)}
+.cv-sys{display:flex;justify-content:center;margin:8px 0;text-align:center}
+.cv-sys span{font-size:12.5px;color:var(--ink-2);background:rgba(0,0,0,.2);padding:4px 12px;border-radius:99px}
+.bw{display:flex;align-items:flex-end;gap:8px;margin-top:9px;max-width:100%}
+.bw.grouped{margin-top:2px}
+.bw.mine{flex-direction:row-reverse}
+.bw-av{width:28px;flex:none}
+.bubble{max-width:min(560px,78%);background:var(--glass-2);border:1px solid var(--glass-line);border-radius:18px 18px 18px 6px;padding:7px 12px 5px;box-shadow:var(--hi);min-width:0}
+.bw.mine .bubble{background:rgba(255,255,255,.9);color:var(--accent-ink);border-color:transparent;border-radius:18px 18px 6px 18px}
+.bubble.has-card{padding:6px;width:min(430px,82%)}
+.b-name{font-size:13px;font-weight:700;margin-bottom:2px}
+.b-text{white-space:pre-wrap;overflow-wrap:anywhere;font-size:15px;line-height:1.4}
+.mention{color:var(--sky)}
+.bw.mine .mention{color:#1d4fc4}
+.b-meta{display:flex;justify-content:flex-end;align-items:center;gap:5px;font-size:11px;color:var(--ink-3);margin-top:2px}
+.bw.mine .b-meta{color:rgba(34,24,15,.55)}
+.ticks{letter-spacing:-4px;font-weight:700;padding-right:4px}
+.ticks.read{color:#2a7dff}
+.b-quote{border-left:3px solid var(--sky);background:rgba(0,0,0,.14);border-radius:8px;padding:4px 8px;margin-bottom:4px;font-size:13px;display:grid}
+.bw.mine .b-quote{background:rgba(0,0,0,.06)}
+.b-quote span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:.85}
+.b-reply{opacity:0;align-self:center;color:var(--ink-3)}
+.bw:hover .b-reply,.b-reply:focus-visible{opacity:1}
+.bubble .atts{margin:2px 0 4px}
+.bubble .att-grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.b-card{background:rgba(26,19,14,.55);border:1px solid var(--glass-line);border-radius:14px;padding:10px 12px;display:grid;gap:7px;cursor:pointer;color:var(--ink);text-align:left}
+.bw.mine .b-card{background:rgba(42,31,23,.92)}
+.b-card:hover{border-color:var(--glass-line-2)}
+.b-card-t{font-weight:700;font-size:15px;line-height:1.3}
+.b-card-b{font-size:13.5px;color:var(--ink-2);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.b-card-m{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;font-size:12.5px;color:var(--ink-2)}
+.b-card-open{font-size:12.5px;font-weight:700;color:var(--sky)}
+.cc{position:relative;border-top:1px solid var(--glass-line);padding:9px 14px 12px;display:grid;gap:8px;background:rgba(255,255,255,.04)}
+.cc-row{display:flex;align-items:flex-end;gap:4px}
+.cc-row textarea{flex:1;min-height:44px;max-height:140px;resize:none;border-radius:22px;padding:11px 16px;background:rgba(255,255,255,.1);line-height:1.35;font-size:16px}
+.cc-send{width:44px;height:44px;border-radius:50%;background:#fff;color:var(--accent-ink);border:0;display:grid;place-items:center;flex:none;margin-left:4px;box-shadow:0 6px 18px rgba(0,0,0,.25)}
+.cc-send:disabled{opacity:.45;cursor:not-allowed}
+.cc-tool{color:var(--ink-2);width:40px;height:44px}
+.cc-tool.on{background:#fff;color:var(--accent-ink)}
+.cc-bar{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;font-size:13px}
+.cc-bar-l{color:var(--ink);font-weight:700;margin-right:auto}
+.seg.sm button{padding:4px 10px;font-size:12.5px}
+.cc-due{width:auto;padding:5px 10px;font-size:13px;border-radius:99px}
+.cc-reply{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.18);border-left:3px solid var(--sky);border-radius:10px;padding:6px 8px 6px 10px;font-size:13px}
+.cc-reply span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cc-sugs{top:auto;bottom:calc(100% + 4px);left:14px;right:14px;max-width:420px}
+.gi-head{display:flex;gap:14px;align-items:center}
+.person.pick{border:1px solid var(--glass-line);text-align:left;color:var(--ink);cursor:pointer;width:100%}
+.person.pick:hover{background:var(--glass-2)}
+.person.pick.on{border-color:#fff;background:var(--glass-2)}
+.tick-box{width:22px;height:22px;border-radius:50%;border:2px solid var(--glass-line-2);display:grid;place-items:center;flex:none}
+.tick-box.on{background:var(--green-dot);border-color:var(--green-dot);color:#0b2a17}
+.msg-hit{display:flex;gap:12px;align-items:center;width:100%;text-align:left;border:1px solid var(--glass-line);background:var(--glass);border-radius:var(--r);padding:10px 12px;color:var(--ink)}
+.msg-hit:hover{background:var(--glass-2)}
+.msg-hit .pm{flex:1;min-width:0;display:grid;gap:2px}
+.mh-top{display:flex;justify-content:space-between;gap:10px}
+.feat-note{color:var(--ink-2);font-size:14px;max-width:70ch}
+.dock-i b.g{background:var(--green-dot);color:#0b2a17}
+.dcard .toggles{margin-top:2px}
+@media (max-width:760px){
+  .chats{grid-template-columns:minmax(0,1fr);padding-bottom:76px}
+  .chats.has-chat .chatlist{display:none}
+  .chats:not(.has-chat) .convo{display:none}
+  .chatlist{border-right:0;padding:14px 8px 0}
+  .cv-back{display:inline-grid}
+  .shell.chat-open{row-gap:0}
+  .shell.chat-open .topbar,.shell.chat-open .dock{display:none}
+  .shell.chat-open .stage{border-radius:20px 20px 0 0}
+  .shell.chat-open .chats{padding-bottom:0}
+  .cv-head{padding:8px 8px}
+  .cv-msgs{padding:10px 10px}
+  .bubble{max-width:84%}
+  .bubble.has-card{width:90%}
+  .bw-av{width:24px}
+  .cc{padding:8px 8px calc(10px + env(safe-area-inset-bottom,0px))}
+  .b-reply{display:none}
+}
 </style>
 
 <div id="root"></div>
@@ -606,7 +717,7 @@ const html = htm.bind(React.createElement);
 
 /* ---------------- constants ---------------- */
 const MIN = 6e4, HOUR = 36e5, DAY = 864e5;
-const LS_KEY = 'floorboard.demo.v1', SESSION_KEY = 'floorboard.session.v1';
+const LS_KEY = 'floorboard.demo.v2', SESSION_KEY = 'floorboard.session.v1';
 const TYPES = {
   task: { label: 'Task', plural: 'Tasks', icon: 'task', hint: 'Something that needs doing' },
   feedback: { label: 'Feedback', plural: 'Feedback', icon: 'feedback', hint: 'Ask for an answer or opinion' },
@@ -668,6 +779,10 @@ const ICONS = {
   sidebar: '<rect x="3" y="4" width="18" height="16" rx="3"/><path d="M15 4v16"/>',
   refresh: '<path d="M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7"/>',
   expand: '<path d="M14 4h6v6M10 20H4v-6M20 4l-7 7M4 20l7-7"/>',
+  back: '<path d="m15 6-6 6 6 6"/>',
+  info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
+  reply: '<path d="M10 8 5 12l5 4"/><path d="M5 12h9a5 5 0 0 1 5 5v1"/>',
+  chat: '<path d="M4.5 19.5 5.6 16A7.8 7.8 0 1 1 8.9 18.6z"/>',
 };
 
 /* ---------------- small utils ---------------- */
@@ -849,6 +964,12 @@ function applyFilters(list, f) {
   return list.filter((p) => (f.type === 'any' || p.type === f.type) && (f.level === 'any' || p.level === f.level) && (f.dept === 'any' || p.about === f.dept || p.toDepts.includes(f.dept)));
 }
 function canDrive(u, d) { return u.role === 'admin' || d.access.includes('all') || d.access.some((x) => u.depts.includes(x) || u.manages.includes(x)); }
+const featureOn = (dept, key) => !!(dept && dept.features && dept.features[key]);
+// A department's drive appears once Drive is switched on for it; the shared drive appears with the first one.
+function driveOn(db, d) {
+  if (d.id === 'd-shared') return db.depts.some((x) => featureOn(x, 'drive'));
+  return featureOn(db.depts.find((x) => 'd-' + x.id === d.id), 'drive');
+}
 function folderPath(db, fid) { const parts = []; let f = db.folders.find((x) => x.id === fid); while (f) { parts.unshift(f.name); f = db.folders.find((x) => x.id === f.parent); } return parts.join(' › '); }
 function fileMatches(db, f, q) {
   const words = q.toLowerCase().split(/\s+/).filter(Boolean); if (!words.length) return true;
@@ -860,7 +981,7 @@ function fileMatches(db, f, q) {
 /* ---------------- demo store seed ---------------- */
 function seed() {
   const T = Date.now();
-  const db = { v: 1, store: 'Riverside Fresh Market', counter: 1040, posts: [], files: [], folders: [], tiles: [], pins: {} };
+  const db = { v: 2, store: 'Riverside Fresh Market', counter: 1040, posts: [], files: [], folders: [], tiles: [], pins: {}, chats: [], messages: [] };
   db.depts = [
     { id: 'mgmt', name: 'Management', color: '#3D4A5C' },
     { id: 'admin', name: 'Admin', color: '#0F8A8A' },
@@ -871,6 +992,8 @@ function seed() {
     { id: 'tills', name: 'Tills & Front End', color: '#8A4FB8' },
     { id: 'receiving', name: 'Receiving', color: '#6F7D1F' },
   ];
+  // Extra tools are switched on department by department as each one comes on board.
+  db.depts.forEach((d) => { d.features = { tools: false, drive: false }; });
   const U = (id, name, title, role, depts, manages) => ({ id, name, title, role, depts, manages: manages || [], pin: '1234', active: true });
   db.users = [
     U('u1', 'Thandi Mokoena', 'Store Manager', 'admin', ['mgmt'], ['mgmt']),
@@ -1050,11 +1173,60 @@ function seed() {
     ] },
     u6: { posts: [], notes: [{ id: uid('n'), icon: '🔥', title: 'Oven 3', body: 'Door needs a firm push to seal. Tell Johan if the light stays orange.', sensitive: false, at: T - 12 * DAY }] },
   };
+  // chats: one group per department (members follow the department), a custom group and two direct messages
+  const CHAT_ICONS = { mgmt: '📋', admin: '📝', finance: '💰', bakery: '🍞', deli: '🔥', fv: '🍌', tills: '🛒', receiving: '🚚' };
+  const G = (id, name, icon, color, dept, members, createdBy, ago) => ({ id, kind: 'group', name, icon, color, dept, members: members || [], createdBy: createdBy || 'u1', createdAt: T - (ago || 90 * DAY), read: {} });
+  db.chats = [G('c-all', 'Whole store', '🏪', '#5E6B65', 'all')]
+    .concat(db.depts.map((d) => G('c-' + d.id, d.id === 'bakery' ? 'Bakery team' : d.name, CHAT_ICONS[d.id] || '💬', d.color, d.id)))
+    .concat([G('c-ls', 'Load-shedding plan', '🔦', '#B8860B', null, ['u2', 'u1', 'u8', 'u14', 'u10'], 'u2', 10 * DAY),
+      { id: 'c-dm1', kind: 'dm', name: '', icon: '', color: '', dept: null, members: ['u1', 'u2'], createdBy: 'u1', createdAt: T - 20 * DAY, read: {} },
+      { id: 'c-dm2', kind: 'dm', name: '', icon: '', color: '', dept: null, members: ['u5', 'u6'], createdBy: 'u5', createdAt: T - 20 * DAY, read: {} }]);
+  const M = (chat, u, ago, text, extra) => db.messages.push({ id: uid('m'), chat, user: u, at: T - ago, text, attachments: [], mentions: [], replyTo: null, postId: null, kind: 'msg', ...extra });
+  M('c-ls', 'u2', 10 * DAY, 'Pieter created the group “Load-shedding plan”', { kind: 'system' });
+  M('c-all', 'u2', 3 * DAY, 'Welcome to Floorboard, everyone 👋 This replaces our WhatsApp groups. Tag people with @ so nothing gets lost.');
+  M('c-all', 'u14', 4 * HOUR, 'Tills 4 and 5 are low on R5 coins. Can someone bring a bag from the safe?');
+  M('c-fv', 'u10', 26 * HOUR, 'Morning team. Bananas came in very green, they go straight into the ripening room at 16 °C.');
+  M('c-fv', 'u11', 25.8 * HOUR, 'Done 👍 Also 3 boxes of mangoes are bruised. I put them aside for you to check.');
+  M('c-fv', 'u10', 25.5 * HOUR, 'Mark them down 30% and put them on the special table.');
+  M('c-fv', 'u11', 7 * HOUR, 'We only have one box of 2 kg potato bags left.');
+  M('c-fv', 'u10', 50 * MIN, '@Zanele please check the strawberry punnets before lunch. A customer complained about mould.', { mentions: [{ k: 'u', id: 'u11', label: 'Zanele' }] });
+  M('c-bakery', 'u5', 27 * HOUR, 'Oven 3 is running hot again. Keep an eye on the second bake.');
+  M('c-bakery', 'u6', 26.9 * HOUR, 'Noted, chef.');
+  M('c-bakery', 'u7', 3 * HOUR, 'Flour delivery came early. It’s in the store room.');
+  M('c-bakery', 'u6', 19 * MIN, '2 trays of white out in 40 minutes, brown next.');
+  M('c-deli', 'u8', 30 * HOUR, 'Reminder: probe every tray at 10:00 and write it on the sheet.');
+  M('c-deli', 'u9', 29.8 * HOUR, 'Yes ma’am.');
+  M('c-deli', 'u9', 2.5 * HOUR, 'Chicken order is 2 boxes short today.');
+  M('c-mgmt', 'u2', 28 * HOUR, 'Who’s closing tonight?');
+  M('c-mgmt', 'u1', 27.9 * HOUR, 'Fatima and me.');
+  M('c-mgmt', 'u3', 3 * HOUR, 'Month-end is Wednesday. Please get your waste sheets in.');
+  M('c-finance', 'u4', 22 * HOUR, 'SunPack statement still isn’t in.');
+  M('c-finance', 'u3', 21 * HOUR, 'I’ll phone them first thing tomorrow.');
+  M('c-tills', 'u13', 2 * DAY - 3 * HOUR, 'Float sheets are in all six drawers.');
+  M('c-admin', 'u13', 9 * HOUR, 'Contact list: bakery, deli and tills done. Waiting on F&V numbers.');
+  M('c-receiving', 'u12', 20 * HOUR, 'Credit note CN-2291 received for R1 860. Filed with Finance.');
+  M('c-ls', 'u2', 40 * MIN, 'Generator check done. Diesel at 70%.');
+  M('c-ls', 'u1', 36 * MIN, 'Thanks. Deli: no new batches 45 minutes before it starts.');
+  M('c-dm1', 'u1', 2 * HOUR, 'Can you send me the generator service quote?');
+  M('c-dm1', 'u2', 1.9 * HOUR, 'Sending it now.');
+  M('c-dm2', 'u5', 5 * HOUR, 'Can you do Saturday’s early shift?');
+  M('c-dm2', 'u6', 4.8 * HOUR, 'Yes, no problem.');
+  // every post also shows as a card in the group it belongs to
+  db.posts.forEach((p) => {
+    const ids = [p.author, ...Object.keys(p.recips)];
+    let ch = p.toDepts.length ? db.chats.find((c) => c.dept === p.toDepts[0]) : null;
+    if (!ch) ch = db.chats.filter((c) => c.kind === 'group' && ids.every((id) => chatMembers(db, c).includes(id))).sort((a, b) => chatMembers(db, a).length - chatMembers(db, b).length)[0];
+    if (ch) { p.chat = ch.id; M(ch.id, p.author, T - p.createdAt, '', { postId: p.id }); }
+  });
+  db.messages.sort((a, b) => a.at - b.at);
+  // everyone has read up to 45 minutes ago; Zanele hasn't opened her group since this morning
+  db.chats.forEach((c) => chatMembers(db, c).forEach((id) => { c.read[id] = T - 45 * MIN; }));
+  db.chats.find((c) => c.id === 'c-fv').read.u11 = T - 2 * HOUR;
   return db;
 }
 function loadDb() {
   const raw = lsGet(LS_KEY);
-  if (raw) { try { const d = JSON.parse(raw); if (d && d.v === 1 && Array.isArray(d.posts)) return d; } catch (e) { } }
+  if (raw) { try { const d = JSON.parse(raw); if (d && d.v === 2 && Array.isArray(d.posts) && Array.isArray(d.chats)) return d; } catch (e) { } }
   return seed();
 }
 function saveDb(db) { try { localStorage.setItem(LS_KEY, JSON.stringify(db)); return true; } catch (e) { return false; } }
@@ -1240,11 +1412,13 @@ function Rail() {
   </nav>`;
 }
 function Dock() {
-  const { user, view, go, compose, setFilters } = useApp();
+  const { db, user, view, go, compose, setFilters } = useApp();
   const c = useCounts();
-  const items = [['needs', 'inbox', 'Needs you', c.mine.length], ['all', 'list', 'Everything'], ['sent', 'send', 'Sent'], user.role !== 'staff' && ['team', 'team', 'Team'], ['drive', 'folder', 'Drive'], ['pins', 'pin', 'Pins']].filter(Boolean);
+  const unreadChats = myChats(db, user.id).filter((ch) => unreadIn(db, ch, user.id) > 0).length;
+  const items = [['chats', 'chat', 'Chats', unreadChats], ['needs', 'inbox', 'Needs you', c.mine.length], ['all', 'list', 'Everything'], ['sent', 'send', 'Sent'],
+    user.role !== 'staff' && ['team', 'team', 'Team'], db.drives.some((d) => driveOn(db, d)) && ['drive', 'folder', 'Drive'], ['pins', 'pin', 'Pins']].filter(Boolean);
   return html`<nav className="dock glass" aria-label="Views">
-    ${items.map(([id, icon, label, n]) => html`<button key=${id} className=${'dock-i' + (view === id ? ' on' : '')} onClick=${() => { if (id === 'needs') setFilters(NO_FILTERS); go(id); }} aria-label=${label} aria-current=${view === id ? 'page' : null}><${Icon} n=${icon} s=${18}/><span>${label}</span>${n > 0 && html`<b>${n}</b>`}</button>`)}
+    ${items.map(([id, icon, label, n]) => html`<button key=${id} className=${'dock-i' + (view === id ? ' on' : '')} onClick=${() => { if (id === 'needs') setFilters(NO_FILTERS); go(id); }} aria-label=${label} aria-current=${view === id ? 'page' : null}><${Icon} n=${icon} s=${18}/><span>${label}</span>${n > 0 && html`<b className=${id === 'chats' ? 'g' : ''}>${n}</b>`}</button>`)}
     <button className="plus" onClick=${() => compose()} aria-label="New post" title="New post"><${Icon} n="plus" s=${22}/></button>
   </nav>`;
 }
@@ -1511,7 +1685,7 @@ function Thread({ p }) {
   </section>`;
 }
 function PostDetail({ id }) {
-  const { db, user, update, closePost, toast, ask } = useApp();
+  const { db, user, update, closePost, toast, ask, openChat } = useApp();
   const p = db.posts.find((x) => x.id === id);
   useEffect(() => {
     if (p && p.recips[user.id] && !p.recips[user.id].seen) update((d) => { const q = d.posts.find((x) => x.id === id); if (q && q.recips[user.id]) q.recips[user.id].seen = Date.now(); });
@@ -1536,7 +1710,8 @@ function PostDetail({ id }) {
     <div className="detail-body">
       <div className="card-top"><${LevelTag} l=${p.level}/><${TypeChip} t=${p.type}/><${DeptTag} id=${p.about}/>${p.due && html`<${DueTag} p=${p} uid=${p.recips[user.id] ? user.id : null}/>`}</div>
       <h2 className="d-title">${p.title}</h2>
-      <div className="d-from"><${Avatar} u=${a} s=${36}/><div><div><b>${a ? a.name : 'Someone'}</b> <span className="muted">· ${a ? a.title : ''}</span></div><div className="muted sm">${ago(p.createdAt)} · to ${toLabel(db, p)} · reaches ${n} ${n === 1 ? 'person' : 'people'}</div></div></div>
+      <div className="d-from"><${Avatar} u=${a} s=${36}/><div><div><b>${a ? a.name : 'Someone'}</b> <span className="muted">· ${a ? a.title : ''}</span></div><div className="muted sm">${ago(p.createdAt)} · to ${toLabel(db, p)} · reaches ${n} ${n === 1 ? 'person' : 'people'}</div>
+        ${(() => { const ch = p.chat && db.chats.find((x) => x.id === p.chat); return ch && chatMembers(db, ch).includes(user.id) && html`<button className="linkish sm" onClick=${() => openChat(ch.id)}>Open in chat: ${chatName(db, ch, user.id)}</button>`; })()}</div></div>
       ${p.closed && html`<div className="notice"><${Icon} n="archive" s=${16}/>Closed. No more updates are needed.</div>`}
       ${p.body && html`<div className="d-text">${p.body}</div>`}
       ${p.attachments.length > 0 && html`<${Attachments} items=${p.attachments}/>`}
@@ -1591,7 +1766,10 @@ function Composer({ preset, onClose }) {
     update((d) => {
       d.counter = Math.max(d.counter + 1, no);
       const recips = {}; expand(d, toUsers, toDepts, user.id).forEach((id) => { recips[id] = { status: 'todo', pct: 0, seen: null, updatedAt: null }; });
-      d.posts.unshift({ id: uid('p'), no: d.counter, type, title: title.trim(), body: body.trim(), author: user.id, createdAt: Date.now(), toUsers, toDepts,
+      const pid = uid('p'), now = Date.now();
+      const chats = toDepts.map((td) => d.chats.find((c) => c.dept === td)).filter(Boolean);
+      chats.forEach((c) => d.messages.push({ id: uid('m'), chat: c.id, user: user.id, at: now, text: '', attachments: [], mentions: [], replyTo: null, postId: pid, kind: 'msg' }));
+      d.posts.unshift({ id: pid, chat: chats[0] ? chats[0].id : null, no: d.counter, type, title: title.trim(), body: body.trim(), author: user.id, createdAt: now, toUsers, toDepts,
         about: about || user.depts[0], level, due: type === 'task' && due ? due : null, attachments: atts, recips, activity: [],
         poll: type === 'vote' ? { multi, closes, options: options.map((t, i) => ({ id: 'o' + (i + 1), text: t })), votes: {} } : null, closed: false });
     });
@@ -1698,24 +1876,26 @@ function TeamsView() {
   <//>`;
 }
 function DeptView({ id }) {
-  const { db, user, compose, update, toast } = useApp();
+  const { db, user, compose, openChat } = useApp();
   const d = db.depts.find((x) => x.id === id);
-  const [tab, setTab] = useState('tools');
+  const [tab, setTab] = useState(featureOn(d, 'tools') ? 'tools' : 'posts');
   const [tileOpen, setTileOpen] = useState(null);
   if (!d) return html`<${Page} title="Department not found"><div className="empty"><p>This department was removed.</p></div><//>`;
   const member = user.depts.includes(id) || user.manages.includes(id) || user.role === 'admin';
   const canEdit = isManagerOf(user, id);
+  const toolsOn = featureOn(d, 'tools');
+  const teamChat = db.chats.find((c) => c.dept === id);
   const tiles = db.tiles.filter((t) => t.dept === id);
   const posts = db.posts.filter((p) => canSee(db, p, user) && (p.about === id || p.toDepts.includes(id))).sort((a, b) => b.createdAt - a.createdAt);
   const ids = deptMembers(db, id);
   const tileKind = (t) => { if (t.kind === 'checklist') { const c = Object.keys((t.checks || {})[dkey()] || {}).length; return 'Checklist · ' + c + '/' + t.items.length + ' today'; } return t.kind === 'link' ? 'Link' : 'Manual'; };
-  return html`<${Page} title=${d.name} sub=${ids.length + ' people · ' + (db.users.filter((u) => u.manages.includes(id)).map((u) => u.name).join(', ') || 'no manager set')} actions=${html`<button className="btn primary" onClick=${() => compose({ to: [{ k: 'd', id }], about: id })}><${Icon} n="at" s=${16}/>Post to @${d.name}</button>`}>
+  return html`<${Page} title=${d.name} sub=${ids.length + ' people · ' + (db.users.filter((u) => u.manages.includes(id)).map((u) => u.name).join(', ') || 'no manager set')} actions=${html`${teamChat && chatMembers(db, teamChat).includes(user.id) && html`<button className="btn" onClick=${() => openChat(teamChat.id)}><${Icon} n="chat" s=${16}/>Open team chat</button>`}<button className="btn primary" onClick=${() => compose({ to: [{ k: 'd', id }], about: id })}><${Icon} n="at" s=${16}/>Post to @${d.name}</button>`}>
     <div className="tabs" role="tablist">
-      <button className=${tab === 'tools' ? 'on' : ''} onClick=${() => setTab('tools')}>Tools & manuals <b>${tiles.length}</b></button>
+      ${toolsOn && html`<button className=${tab === 'tools' ? 'on' : ''} onClick=${() => setTab('tools')}>Tools & manuals <b>${tiles.length}</b></button>`}
       <button className=${tab === 'posts' ? 'on' : ''} onClick=${() => setTab('posts')}>Posts <b>${posts.length}</b></button>
       <button className=${tab === 'people' ? 'on' : ''} onClick=${() => setTab('people')}>People <b>${ids.length}</b></button>
     </div>
-    ${tab === 'tools' && (member ? html`<div className="tiles">
+    ${tab === 'tools' && toolsOn && (member ? html`<div className="tiles">
         ${tiles.map((t) => html`<button key=${t.id} className="tile" style=${{ '--c': t.color }} onClick=${() => setTileOpen(t.id)}><span className="tile-ic">${t.icon}</span><span className="tile-t">${t.title}</span><span className="tile-k">${tileKind(t)}</span></button>`)}
         ${canEdit && html`<button className="tile add" onClick=${() => setTileOpen('new')}><${Icon} n="plus" s=${22}/><span className="tile-t">Add a tool</span><span className="tile-k">Checklist, manual or link, with your own icon</span></button>`}
         ${!tiles.length && !canEdit && html`<div className="empty"><p>No tools yet. Your manager can add checklists, manuals and links here.</p></div>`}
@@ -1841,7 +2021,7 @@ function DocModal({ fileId, driveId, folderId, onClose }) {
 function useAttUrlMaybe(a) { const fake = { id: '', demo: 'none' }; const url = useAttUrl(a || fake); return a ? url : null; }
 function DriveView() {
   const { db, user, update, toast } = useApp();
-  const drives = db.drives.map((d) => ({ ...d, ok: canDrive(user, d) }));
+  const drives = db.drives.filter((d) => driveOn(db, d)).map((d) => ({ ...d, ok: canDrive(user, d) }));
   const first = drives.find((d) => d.ok && d.id !== 'd-shared' && (user.depts.includes(d.id.slice(2)) || user.manages.includes(d.id.slice(2)))) || drives.find((d) => d.ok);
   const [driveId, setDriveId] = useState(first ? first.id : null);
   const [folderId, setFolderId] = useState(null);
@@ -1855,6 +2035,7 @@ function DriveView() {
   const countIn = (fid) => { const kids = db.folders.filter((x) => x.parent === fid).map((x) => x.id); return db.files.filter((f) => f.folder === fid).length + kids.reduce((a, k) => a + countIn(k), 0); };
   const crumbs = []; let c = db.folders.find((x) => x.id === folderId); while (c) { crumbs.unshift(c); c = db.folders.find((x) => x.id === c.parent); }
   const addFolder = (e) => { e.preventDefault(); const name = (nf || '').trim(); if (!name) return setNf(null); update((d) => { d.folders.push({ id: uid('f'), drive: driveId, name, parent: folderId }); }); setNf(null); toast('Folder “' + name + '” created'); };
+  if (!drives.length) return html`<${Page} title="Drive"><div className="empty"><${Icon} n="folder" s=${24}/><h3>Drive isn’t switched on yet</h3><p>Drive gets switched on department by department. An admin can turn it on in People & access → Departments.</p></div><//>`;
   return html`<${Page} title="Drive" sub="Every document in one place. Search by name, reference, supplier, date or where the paper copy is filed. Your login decides which drives you can open.">
     <div className="drive">
       <nav className="drives" aria-label="Drives">${drives.map((d) => { const dep = deptById(db, d.id.slice(2)); return html`<button key=${d.id} className=${'drv' + (d.id === driveId && !searching ? ' on' : '') + (d.ok ? '' : ' locked')} style=${{ '--c': d.id === 'd-shared' ? '#5E6B65' : dep.color }} onClick=${() => { setDriveId(d.id); setFolderId(null); setQ(''); setTypeF('any'); }}>${d.ok ? html`<i></i>` : html`<${Icon} n="lock" s=${14}/>`}<span>${d.name}</span></button>`; })}</nav>
@@ -1922,7 +2103,7 @@ function PinsView() {
 
 /* ---------------- search ---------------- */
 function SearchView() {
-  const { db, user, searchQ, setSearchQ, compose } = useApp();
+  const { db, user, searchQ, setSearchQ, compose, openChat } = useApp();
   const [scope, setScope] = useState('posts'); const [status, setStatus] = useState('all');
   const [fileOpen, setFileOpen] = useState(null);
   const raw = searchQ.trim().toLowerCase();
@@ -1935,7 +2116,12 @@ function SearchView() {
   const text = (p) => [p.title, p.body, ...p.activity.map((a) => a.text || ''), ...p.attachments.map((a) => a.name), (userById(db, p.author) || {}).name, deptById(db, p.about).name, TYPES[p.type].label, LEVELS[p.level].label].join(' ').toLowerCase();
   const posts = !raw ? [] : db.posts.filter((p) => canSee(db, p, user) && (!nums.length || nums.includes(p.no)) && mentions.every((m) => involves(p, m)) && words.every((w) => text(p).includes(w)))
     .filter((p) => status === 'all' || (status === 'open') === !(p.closed || Object.values(p.recips).every((r) => r.status === 'done'))).sort((a, b) => b.createdAt - a.createdAt);
-  const okDrives = db.drives.filter((d) => canDrive(user, d)).map((d) => d.id);
+  const okDrives = db.drives.filter((d) => driveOn(db, d) && canDrive(user, d)).map((d) => d.id);
+  const chatIds = new Set(myChats(db, user.id).map((c) => c.id));
+  const msgs = !raw || nums.length ? [] : db.messages.filter((m) => m.kind === 'msg' && m.text && chatIds.has(m.chat)
+    && words.every((w) => m.text.toLowerCase().includes(w))
+    && mentions.every((mm) => norm((userById(db, m.user) || { name: '' }).name).includes(norm(mm)) || (m.mentions || []).some((x) => norm(x.label).includes(norm(mm)))))
+    .sort((a, b) => b.at - a.at).slice(0, 60);
   const files = !raw || nums.length ? [] : db.files.filter((f) => okDrives.includes(f.drive) && fileMatches(db, f, [...words, ...mentions].join(' ')));
   const people = !raw || nums.length ? [] : db.users.filter((u) => u.active !== false && [...words, ...mentions].every((w) => (u.name + ' ' + u.title + ' ' + u.depts.map((d) => deptById(db, d).name).join(' ')).toLowerCase().includes(w)));
   const examples = ['@bakery', '#1047', 'invoice highveld', '@fatima', 'cabinet 2', 'load-shedding'];
@@ -1944,11 +2130,13 @@ function SearchView() {
     ${!raw ? html`<div className="tips">Examples: ${examples.map((x) => html`<button key=${x} onClick=${() => setSearchQ(x)}>${x}</button>`)}</div>` : html`
       <div className="tabs" role="tablist">
         <button className=${scope === 'posts' ? 'on' : ''} onClick=${() => setScope('posts')}>Posts <b>${posts.length}</b></button>
+        <button className=${scope === 'messages' ? 'on' : ''} onClick=${() => setScope('messages')}>Messages <b>${msgs.length}</b></button>
         <button className=${scope === 'files' ? 'on' : ''} onClick=${() => setScope('files')}>Documents <b>${files.length}</b></button>
         <button className=${scope === 'people' ? 'on' : ''} onClick=${() => setScope('people')}>People <b>${people.length}</b></button>
       </div>
       ${scope === 'posts' && html`<div className="filters"><div className="seg" role="group" aria-label="Status">${[['all', 'All'], ['open', 'Still open'], ['done', 'Finished']].map(([k, l]) => html`<button key=${k} className=${status === k ? 'on' : ''} onClick=${() => setStatus(k)}>${l}</button>`)}</div></div>
         ${posts.length ? html`<div className="cards">${posts.map((p) => html`<${PostCard} key=${p.id} p=${p}/>`)}</div>` : html`<div className="empty"><p>No posts match “${searchQ}”.</p></div>`}`}
+      ${scope === 'messages' && (msgs.length ? html`<div className="cards">${msgs.map((m) => { const c = db.chats.find((x) => x.id === m.chat); return html`<button key=${m.id} className="msg-hit" onClick=${() => openChat(c.id)}><${ChatAvatar} c=${c} s=${40}/><span className="pm"><span className="mh-top"><b>${chatName(db, c, user.id)}</b><span className="muted sm">${ago(m.at)}</span></span><span className="sm"><b>${m.user === user.id ? 'You' : firstName(userById(db, m.user))}:</b> <${MsgText} text=${m.text} mentions=${m.mentions}/></span></span></button>`; })}</div>` : html`<div className="empty"><p>No chat messages match “${searchQ}”.</p></div>`)}
       ${scope === 'files' && (files.length ? html`<${FileTable} files=${files} onOpen=${setFileOpen} showPath/>` : html`<div className="empty"><p>No documents you can open match “${searchQ}”.</p></div>`)}
       ${scope === 'people' && (people.length ? html`<div className="people">${people.map((u) => html`<div className="person" key=${u.id}><${Avatar} u=${u} s=${36}/><div className="pm"><b>${u.name}</b><span className="muted sm">${u.title} · ${u.depts.map((d) => deptById(db, d).name).join(', ')}</span></div>${u.id !== user.id && html`<button className="btn sm" onClick=${() => compose({ to: [{ k: 'u', id: u.id }], about: u.depts[0] })}><${Icon} n="at" s=${14}/>Tag</button>`}</div>`)}</div>` : html`<div className="empty"><p>No one matches “${searchQ}”.</p></div>`)}
     `}
@@ -1987,7 +2175,8 @@ function PersonModal({ personId, onClose }) {
   <//>`;
 }
 function AdminView() {
-  const { db, update, toast } = useApp();
+  const { db, user, update, toast } = useApp();
+  const flipFeature = (deptId, key) => update((d) => { const x = d.depts.find((y) => y.id === deptId); x.features = { ...(x.features || {}), [key]: !featureOn(x, key) }; });
   const [tab, setTab] = useState('people');
   const [edit, setEdit] = useState(null);
   const [nd, setNd] = useState({ name: '', color: TILE_COLORS[0] });
@@ -1995,12 +2184,16 @@ function AdminView() {
   const addDept = (e) => {
     e.preventDefault(); const name = nd.name.trim(); if (!name) return;
     const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 12) + Math.random().toString(36).slice(2, 5);
-    update((d) => { d.depts.push({ id, name, color: nd.color }); d.drives.push({ id: 'd-' + id, name, access: [id, 'mgmt'], desc: name + ' documents.' }); });
-    setNd({ name: '', color: TILE_COLORS[0] }); toast(name + ' added, with its own drive');
+    update((d) => {
+      d.depts.push({ id, name, color: nd.color, features: { tools: false, drive: false } });
+      d.drives.push({ id: 'd-' + id, name, access: [id, 'mgmt'], desc: name + ' documents.' });
+      d.chats.push({ id: 'c-' + id, kind: 'group', name, icon: '💬', color: nd.color, dept: id, members: [], createdBy: user.id, createdAt: Date.now(), read: {} });
+    });
+    setNd({ name: '', color: TILE_COLORS[0] }); toast(name + ' added, with its own group chat');
   };
   const flipAccess = (driveId, deptId) => update((d) => { const dr = d.drives.find((x) => x.id === driveId); dr.access = dr.access.includes(deptId) ? dr.access.filter((x) => x !== deptId) : [...dr.access, deptId]; });
   return html`<${Page} title="People & access" sub="Who can log in, which departments they’re in, and which drives each department can open." actions=${tab === 'people' && html`<button className="btn primary" onClick=${() => setEdit('new')}><${Icon} n="plus" s=${16}/>Add person</button>`}>
-    <div className="tabs" role="tablist">${[['people', 'People', db.users.length], ['depts', 'Departments', db.depts.length], ['drives', 'Drive access', db.drives.length]].map(([k, l, n]) => html`<button key=${k} className=${tab === k ? 'on' : ''} onClick=${() => setTab(k)}>${l} <b>${n}</b></button>`)}</div>
+    <div className="tabs" role="tablist">${[['people', 'People', db.users.length], ['depts', 'Departments', db.depts.length], ['drives', 'Drive access', db.drives.filter((dr) => driveOn(db, dr)).length]].map(([k, l, n]) => html`<button key=${k} className=${tab === k ? 'on' : ''} onClick=${() => setTab(k)}>${l} <b>${n}</b></button>`)}</div>
     ${tab === 'people' && html`<div className="table-wrap"><table>
       <thead><tr><th>Name</th><th>Access</th><th>Departments</th><th>Manages</th><th>PIN</th></tr></thead>
       <tbody>${db.users.map((u) => html`<tr key=${u.id} onClick=${() => setEdit(u.id)} tabIndex="0" onKeyDown=${(e) => { if (e.key === 'Enter') setEdit(u.id); }} style=${u.active === false ? { opacity: 0.5 } : null}>
@@ -2012,11 +2205,14 @@ function AdminView() {
       </tr>`)}</tbody></table></div>`}
     ${tab === 'depts' && html`<div style=${{ display: 'grid', gap: 14 }}>
       <form className="dtool" onSubmit=${addDept}><input id="nd-name" className="input" style=${{ maxWidth: 280 }} value=${nd.name} onChange=${(e) => setNd({ ...nd, name: e.target.value })} placeholder="New department, e.g. Butchery"/><div className="swatches">${TILE_COLORS.map((c) => html`<button type="button" key=${c} className=${nd.color === c ? 'on' : ''} style=${{ '--c': c }} onClick=${() => setNd({ ...nd, color: c })} aria-label=${'Colour ' + c}></button>`)}</div><button className="btn primary">Add department</button></form>
-      <div className="dgrid">${db.depts.map((d) => html`<div key=${d.id} className="dcard"><div className="dcard-h"><span className="dsw" style=${{ '--c': d.color }}></span><div><h3>${d.name}</h3><span className="muted sm">${deptMembers(db, d.id).length} people · ${db.users.filter((u) => u.manages.includes(d.id)).map((u) => firstName(u)).join(', ') || 'no manager'}</span></div></div></div>`)}</div>
+      <p className="feat-note">Every department starts with its group chat, tagging and the “Needs you” board. Switch on the extra tools as each department comes on board.</p>
+      <div className="dgrid">${db.depts.map((d) => html`<div key=${d.id} className="dcard"><div className="dcard-h"><span className="dsw" style=${{ '--c': d.color }}></span><div><h3>${d.name}</h3><span className="muted sm">${deptMembers(db, d.id).length} people · ${db.users.filter((u) => u.manages.includes(d.id)).map((u) => firstName(u)).join(', ') || 'no manager'}</span></div></div>
+        <div className="toggles">${[['tools', 'Tools & manuals'], ['drive', 'Drive']].map(([k, l]) => html`<button key=${k} className=${'toggle' + (featureOn(d, k) ? ' on' : '')} style=${{ '--c': d.color }} onClick=${() => flipFeature(d.id, k)} aria-pressed=${featureOn(d, k)}><i></i>${l}${featureOn(d, k) ? ' · on' : ' · off'}</button>`)}</div></div>`)}</div>
     </div>`}
     ${tab === 'drives' && html`<div className="table-wrap"><table>
       <thead><tr><th>Drive</th><th>Who can open it (tap to change)</th></tr></thead>
-      <tbody>${db.drives.map((dr) => html`<tr key=${dr.id} style=${{ cursor: 'default' }}><td><b>${dr.name}</b><span className="muted sm" style=${{ display: 'block' }}>${db.files.filter((f) => f.drive === dr.id).length} documents</span></td>
+      <tbody>${db.drives.filter((dr) => driveOn(db, dr)).length === 0 && html`<tr style=${{ cursor: 'default' }}><td colSpan="2" className="muted">No drives are switched on yet. Turn Drive on for a department under Departments.</td></tr>`}
+      ${db.drives.filter((dr) => driveOn(db, dr)).map((dr) => html`<tr key=${dr.id} style=${{ cursor: 'default' }}><td><b>${dr.name}</b><span className="muted sm" style=${{ display: 'block' }}>${db.files.filter((f) => f.drive === dr.id).length} documents</span></td>
         <td><div className="toggles">${[PSEUDO.all, ...db.depts].map((d) => html`<button key=${d.id} className=${'toggle' + (dr.access.includes(d.id) ? ' on' : '')} style=${{ '--c': d.color }} onClick=${() => flipAccess(dr.id, d.id)} aria-pressed=${dr.access.includes(d.id)}><i></i>${d.name}</button>`)}</div></td></tr>`)}</tbody>
     </table></div><p className="muted sm">Admins can open every drive. Managers can edit and delete records in drives their department can open.</p>`}
     ${edit && html`<${PersonModal} personId=${edit === 'new' ? null : edit} onClose=${() => setEdit(null)}/>`}
@@ -2058,12 +2254,336 @@ function Login() {
   </div>`;
 }
 
+/* ---------------- chats: WhatsApp-style groups and direct messages ---------------- */
+// Department groups follow the department (join Bakery, you're in the Bakery group); the store admin is in every group.
+function chatMembers(db, c) {
+  if (c.dept) {
+    const s = new Set(deptMembers(db, c.dept));
+    db.users.forEach((u) => { if (u.role === 'admin' && u.active !== false) s.add(u.id); });
+    return [...s];
+  }
+  return c.members.filter((id) => { const u = userById(db, id); return u && u.active !== false; });
+}
+const myChats = (db, me) => db.chats.filter((c) => chatMembers(db, c).includes(me));
+function chatName(db, c, me) {
+  if (c.kind !== 'dm') return c.name;
+  const other = userById(db, c.members.find((id) => id !== me));
+  return other ? other.name : 'Former staff';
+}
+function lastMsg(db, c) { let last = null; for (const m of db.messages) if (m.chat === c.id && (!last || m.at > last.at)) last = m; return last; }
+function unreadIn(db, c, me) { const t = (c.read || {})[me] || 0; return db.messages.filter((m) => m.chat === c.id && m.at > t && m.user !== me && m.kind !== 'system').length; }
+const mentioned = (db, m, me) => (m.mentions || []).some((x) => (x.k === 'u' ? x.id === me : deptMembers(db, x.id).includes(me)));
+function mentionsIn(db, c, me) { const t = (c.read || {})[me] || 0; return db.messages.some((m) => m.chat === c.id && m.at > t && m.user !== me && mentioned(db, m, me)); }
+function labelFor(db, u) { const first = u.name.split(' ')[0]; return db.users.filter((x) => x.active !== false && x.name.split(' ')[0] === first).length > 1 ? u.name : first; }
+function shortTime(t) { const k = dkey(t); if (k === dkey()) return hm(t); if (k === keyPlus(-1)) return 'Yesterday'; if (Date.now() - t < 6 * DAY) return fmtDay(t, { weekday: 'short' }); return fmtDay(t, { day: 'numeric', month: 'short' }); }
+function dayLabel(t) { const k = dkey(t); if (k === dkey()) return 'Today'; if (k === keyPlus(-1)) return 'Yesterday'; return fmtDay(t, { weekday: 'long', day: 'numeric', month: 'long' }); }
+const NAME_COLORS = ['#FFB38A', '#9CC3FF', '#A6E3B0', '#F5A3C7', '#FFD27A', '#C3A6FF', '#7FE0D6', '#FF9C9C'];
+const nameColor = (id) => NAME_COLORS[[...String(id)].reduce((a, ch) => a + ch.charCodeAt(0), 0) % NAME_COLORS.length];
+const isTouch = () => { try { return matchMedia('(pointer: coarse)').matches; } catch (e) { return false; } };
+
+function ChatAvatar({ c, s = 44 }) {
+  const { db, user } = useApp();
+  if (c.kind === 'dm') return html`<${Avatar} u=${userById(db, c.members.find((id) => id !== user.id))} s=${s}/>`;
+  return html`<span className="chat-av" style=${{ width: s, height: s, fontSize: Math.round(s * 0.48), '--c': c.color || '#5E6B65' }}>${c.icon || '💬'}</span>`;
+}
+function MsgText({ text, mentions }) {
+  if (!mentions || !mentions.length) return text;
+  const labels = mentions.map((m) => '@' + m.label).sort((a, b) => b.length - a.length);
+  const re = new RegExp('(' + labels.map((l) => l.replace(/[.*+?^${}()|[\]\\]/g, '\\/* ---------------- shell + app ---------------- */')).join('|') + ')', 'g');
+  return text.split(re).map((part, i) => (labels.includes(part) ? html`<b key=${i} className="mention">${part}</b>` : part));
+}
+function ChatItem({ r, on, onOpen }) {
+  const { db, user } = useApp();
+  const { c, last, unread, ment } = r;
+  let preview = 'No messages yet', who = '';
+  if (last) {
+    if (last.kind === 'system') preview = last.text;
+    else {
+      who = last.user === user.id ? 'You' : firstName(userById(db, last.user));
+      const p = last.postId && db.posts.find((x) => x.id === last.postId);
+      const a = last.attachments && last.attachments[0];
+      preview = last.postId ? (p ? TYPES[p.type].label + ': ' + p.title : 'Post removed') : last.text || (a ? (a.kind === 'image' ? 'Photo' : a.kind === 'video' ? 'Video' : 'Document') : '');
+    }
+  }
+  const showWho = who && (c.kind !== 'dm' || who === 'You');
+  return html`<button className=${'ci' + (on ? ' on' : '')} onClick=${onOpen}>
+    <${ChatAvatar} c=${c} s=${48}/>
+    <span className="ci-main">
+      <span className="ci-top"><b>${chatName(db, c, user.id)}</b><span className=${'ci-time' + (unread ? ' new' : '')}>${last ? shortTime(last.at) : ''}</span></span>
+      <span className="ci-bot"><span className="ci-prev">${showWho ? who + ': ' : ''}${preview}</span>${ment && html`<span className="ci-at" title="You were tagged">@</span>`}${unread > 0 && html`<span className="ci-n">${unread}</span>`}</span>
+    </span>
+  </button>`;
+}
+function CardInChat({ p }) {
+  const { db, user, openPost } = useApp();
+  const r = p.recips[user.id];
+  return html`<div className="b-card" role="button" tabIndex="0" onClick=${() => openPost(p.id)} onKeyDown=${(e) => { if (e.key === 'Enter') openPost(p.id); }}>
+    <div className="card-top"><${LevelTag} l=${p.level}/><${TypeChip} t=${p.type}/><span className="mono sm muted">#${p.no}</span></div>
+    <div className="b-card-t">${p.title}</div>
+    ${p.body && html`<div className="b-card-b">${p.body}</div>`}
+    ${p.attachments.length > 0 && html`<div onClick=${(e) => e.stopPropagation()}><${Attachments} items=${p.attachments}/></div>`}
+    <div className="b-card-m"><span>To ${toLabel(db, p)}</span>${p.due && html`<${DueTag} p=${p} uid=${r ? user.id : null}/>`}<span style=${{ marginLeft: 'auto' }}>${r ? html`<${MyState} p=${p} who=${user.id}/>` : html`<${Overall} p=${p}/>`}</span></div>
+    <div className="b-card-open">${r && needsMe(p, user.id) ? 'Open to respond ›' : 'Open ›'}</div>
+  </div>`;
+}
+function Bubble({ m, c, grouped, members, onReply }) {
+  const { db, user } = useApp();
+  if (m.kind === 'system') return html`<div className="cv-sys"><span>${m.text}</span></div>`;
+  const mine = m.user === user.id, u = userById(db, m.user), group = c.kind !== 'dm';
+  const quoted = m.replyTo && db.messages.find((x) => x.id === m.replyTo);
+  const p = m.postId && db.posts.find((x) => x.id === m.postId);
+  const others = members.filter((id) => id !== m.user);
+  const readAll = others.length > 0 && others.every((id) => ((c.read || {})[id] || 0) >= m.at);
+  return html`<div className=${'bw' + (mine ? ' mine' : '') + (grouped ? ' grouped' : '')}>
+    ${!mine && group && html`<span className="bw-av">${!grouped && html`<${Avatar} u=${u} s=${28}/>`}</span>`}
+    <div className=${'bubble' + (m.postId ? ' has-card' : '')}>
+      ${!mine && group && !grouped && html`<div className="b-name" style=${{ color: nameColor(m.user) }}>${u ? u.name : 'Former staff'}</div>`}
+      ${quoted && html`<div className="b-quote"><b style=${{ color: nameColor(quoted.user) }}>${quoted.user === user.id ? 'You' : firstName(userById(db, quoted.user))}</b><span>${quoted.text || (quoted.postId ? 'Tagged post' : 'Attachment')}</span></div>`}
+      ${m.postId && (p ? html`<${CardInChat} p=${p}/>` : html`<div className="muted sm">This post was deleted.</div>`)}
+      ${!m.postId && m.attachments && m.attachments.length > 0 && html`<${Attachments} items=${m.attachments}/>`}
+      ${!m.postId && m.text && html`<div className="b-text"><${MsgText} text=${m.text} mentions=${m.mentions}/></div>`}
+      <div className="b-meta"><span>${hm(m.at)}</span>${mine && html`<span className=${'ticks' + (readAll ? ' read' : '')} title=${readAll ? 'Read by everyone' : 'Delivered'}>✓✓</span>`}</div>
+    </div>
+    <button className="b-reply icon-btn sm" onClick=${onReply} aria-label="Reply" title="Reply"><${Icon} n="reply" s=${15}/></button>
+  </div>`;
+}
+function ChatComposer({ c, members, reply, clearReply }) {
+  const { db, user, update, toast } = useApp();
+  const [text, setText] = useState('');
+  const [files, setFiles] = useState([]);
+  const [ments, setMents] = useState([]);
+  const [kind, setKind] = useState('none');
+  const [touched, setTouched] = useState(false);
+  const [level, setLevel] = useState('green');
+  const [due, setDue] = useState('');
+  const [sug, setSug] = useState(null);
+  const [hi, setHi] = useState(0);
+  const [busy, setBusy] = useState(false);
+  const ta = useRef(null), fileRef = useRef(null);
+  const live = ments.filter((m) => text.includes('@' + m.label));
+  // Tagging someone makes the message a tracked "Look at this" by default; the sender can change it or keep it as plain chat.
+  useEffect(() => { if (!touched) setKind(live.length ? 'look' : 'none'); }, [live.length]);
+  useEffect(() => { if (reply && ta.current) ta.current.focus(); }, [reply]);
+  const options = useMemo(() => {
+    if (!sug) return [];
+    const q = sug.q.toLowerCase();
+    const people = members.filter((id) => id !== user.id).map((id) => userById(db, id)).filter((u) => u && (!q || u.name.toLowerCase().includes(q)))
+      .map((u) => ({ k: 'u', id: u.id, label: labelFor(db, u), sub: u.title, u }));
+    const own = c.dept && !PSEUDO[c.dept] ? [deptById(db, c.dept)] : [];
+    const teams = [...own, ...db.depts.filter((d) => d.id !== c.dept)].filter((d) => !q || d.name.toLowerCase().includes(q))
+      .map((d) => ({ k: 'd', id: d.id, label: d.name, sub: 'Team · ' + deptMembers(db, d.id).length + ' people', color: d.color }));
+    return [...people, ...teams].slice(0, 8);
+  }, [sug, members, db]);
+  const grow = (el) => { if (!el) return; el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 140) + 'px'; };
+  const onChange = (e) => {
+    const v = e.target.value, caret = e.target.selectionStart;
+    setText(v); grow(e.target);
+    const m = v.slice(0, caret).match(/(^|\s)@([^\s@]*)$/);
+    setSug(m ? { q: m[2], start: caret - m[2].length - 1 } : null); setHi(0);
+  };
+  const pick = (o) => {
+    const el = ta.current, caret = el.selectionStart;
+    const before = text.slice(0, sug.start) + '@' + o.label + ' ';
+    setText(before + text.slice(caret)); setSug(null);
+    setMents((ms) => (ms.some((x) => x.k === o.k && x.id === o.id) ? ms : [...ms, { k: o.k, id: o.id, label: o.label }]));
+    requestAnimationFrame(() => { el.focus(); el.setSelectionRange(before.length, before.length); grow(el); });
+  };
+  const onKey = (e) => {
+    if (sug && options.length) {
+      if (e.key === 'ArrowDown') { e.preventDefault(); setHi((h) => Math.min(h + 1, options.length - 1)); return; }
+      if (e.key === 'ArrowUp') { e.preventDefault(); setHi((h) => Math.max(h - 1, 0)); return; }
+      if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); pick(options[hi]); return; }
+      if (e.key === 'Escape') { e.stopPropagation(); setSug(null); return; }
+    }
+    if (e.key === 'Enter' && !e.shiftKey && !isTouch()) { e.preventDefault(); send(); }
+  };
+  const onPick = (e) => {
+    const ok = [];
+    for (const f of [...e.target.files]) {
+      if (f.size > 100 * 1048576) { toast(f.name + ' is over 100 MB', 'warn'); continue; }
+      const mime = f.type || 'application/octet-stream', k = kindOf(mime);
+      ok.push({ tmp: uid('t'), file: f, name: f.name, mime, size: f.size, kind: k, url: k !== 'doc' ? URL.createObjectURL(f) : null });
+    }
+    setFiles((p) => [...p, ...ok]); e.target.value = '';
+  };
+  async function send() {
+    const body = text.trim();
+    if ((!body && !files.length) || busy) return;
+    setBusy(true);
+    const atts = await storeFiles(files);
+    const type = kind, now = Date.now();
+    const toUsers = live.filter((x) => x.k === 'u').map((x) => x.id), toDepts = live.filter((x) => x.k === 'd').map((x) => x.id);
+    update((d) => {
+      const msg = { id: uid('m'), chat: c.id, user: user.id, at: now, text: body, attachments: atts, mentions: live, replyTo: reply ? reply.id : null, postId: null, kind: 'msg' };
+      if (type !== 'none') {
+        let tu = toUsers, td = toDepts, ids = expand(d, toUsers, toDepts, user.id);
+        if (!ids.length) { ids = chatMembers(d, c).filter((id) => id !== user.id); if (c.dept) td = [c.dept]; else tu = ids; }
+        const lines = body.split('\n'), recips = {};
+        ids.forEach((id) => { recips[id] = { status: 'todo', pct: 0, seen: null, updatedAt: null }; });
+        d.counter += 1;
+        const pid = uid('p');
+        d.posts.unshift({ id: pid, chat: c.id, no: d.counter, type, title: (lines[0] || (atts.length ? 'Photo' : TYPES[type].label)).slice(0, 140), body: lines.slice(1).join('\n').trim(),
+          author: user.id, createdAt: now, toUsers: tu, toDepts: td, about: c.dept && !PSEUDO[c.dept] ? c.dept : user.depts[0], level,
+          due: type === 'task' && due ? due : null, attachments: atts, recips, activity: [], poll: null, closed: false });
+        msg.postId = pid;
+      }
+      d.messages.push(msg);
+      const x = d.chats.find((y) => y.id === c.id); x.read = x.read || {}; x.read[user.id] = now;
+    });
+    setText(''); setFiles([]); setMents([]); setKind('none'); setTouched(false); setLevel('green'); setDue(''); setSug(null); clearReply(); setBusy(false);
+    if (type !== 'none') toast(TYPES[type].label + ' sent. It’s on their “Needs you” board now.');
+    if (ta.current) { ta.current.style.height = ''; ta.current.focus(); }
+  }
+  const showBar = kind !== 'none' || live.length > 0;
+  return html`<div className="cc">
+    ${sug && options.length > 0 && html`<div className="sugs cc-sugs" role="listbox">${options.map((o, i) => html`<button type="button" key=${o.k + o.id} className=${'sug' + (i === hi ? ' hi' : '')} onMouseDown=${(e) => { e.preventDefault(); pick(o); }} onMouseEnter=${() => setHi(i)}>
+      ${o.k === 'd' ? html`<span className="sq" style=${{ '--c': o.color }}>@</span>` : html`<${Avatar} u=${o.u} s=${28}/>`}<span><b>${o.label}</b><div className="sug-sub">${o.sub}</div></span></button>`)}</div>`}
+    ${reply && html`<div className="cc-reply"><${Icon} n="reply" s=${15}/><span><b>${reply.user === user.id ? 'You' : firstName(userById(db, reply.user))}</b>: ${reply.text || 'Attachment'}</span><button className="icon-btn sm" onClick=${clearReply} aria-label="Cancel reply"><${Icon} n="close" s=${14}/></button></div>`}
+    ${showBar && html`<div className="cc-bar">
+      <span className="cc-bar-l">${live.length ? 'Tagged ' + live.map((x) => '@' + x.label).join(', ') : 'Goes to everyone in this chat'}</span>
+      <div className="seg sm" role="group" aria-label="What is it">${[['none', 'Just chat'], ['task', 'Task'], ['feedback', 'Feedback'], ['look', 'Look at this']].map(([k, l]) => html`<button type="button" key=${k} className=${kind === k ? 'on' : ''} onClick=${() => { setKind(k); setTouched(true); }}>${l}</button>`)}</div>
+      ${kind !== 'none' && html`<div className="seg sm" role="group" aria-label="Attention level">${LEVEL_KEYS.map((l) => html`<button type="button" key=${l} className=${level === l ? 'on' : ''} onClick=${() => setLevel(l)}><span className=${'ldot ' + l}></span>${LEVELS[l].label}</button>`)}</div>`}
+      ${kind === 'task' && html`<input id=${'cc-due-' + c.id} type="date" className="input cc-due" value=${due} min=${dkey()} onChange=${(e) => setDue(e.target.value)} aria-label="Due date"/>`}
+    </div>`}
+    ${files.length > 0 && html`<div className="attach-list">${files.map((f) => html`<div className="attach-item" key=${f.tmp}>
+      ${f.kind === 'image' ? html`<img src=${f.url} alt=""/>` : f.kind === 'video' ? html`<video src=${f.url} muted></video>` : html`<span className="attach-doc"><${Icon} n="doc"/></span>`}
+      <span className="attach-name">${f.name} <span className="muted">· ${fmtSize(f.size)}</span></span>
+      <button type="button" className="icon-btn sm" aria-label=${'Remove ' + f.name} onClick=${() => setFiles((p) => p.filter((x) => x.tmp !== f.tmp))}><${Icon} n="close" s=${14}/></button></div>`)}</div>`}
+    <div className="cc-row">
+      <input type="file" ref=${fileRef} multiple hidden onChange=${onPick} accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.ppt,.pptx"/>
+      <button type="button" className="icon-btn cc-tool" onClick=${() => fileRef.current && fileRef.current.click()} aria-label="Attach photo, video or document" title="Attach"><${Icon} n="clip"/></button>
+      <button type="button" className=${'icon-btn cc-tool' + (kind !== 'none' ? ' on' : '')} onClick=${() => { setKind(kind === 'none' ? 'task' : 'none'); setTouched(true); }} aria-pressed=${kind !== 'none'} aria-label="Make it a task" title="Make it a task, feedback or look-at"><${Icon} n="task"/></button>
+      <textarea id=${'cc-' + c.id} ref=${ta} rows="1" value=${text} onChange=${onChange} onKeyDown=${onKey} onBlur=${() => setTimeout(() => setSug(null), 150)} placeholder="Message · @ to tag" aria-label="Message"></textarea>
+      <button type="button" className="cc-send" onClick=${send} disabled=${busy || (!text.trim() && !files.length)} aria-label="Send"><${Icon} n="send" s=${19}/></button>
+    </div>
+  </div>`;
+}
+function Conversation({ c }) {
+  const { db, user, update, closeChat } = useApp();
+  const [info, setInfo] = useState(false);
+  const [reply, setReply] = useState(null);
+  const scroller = useRef(null);
+  const msgs = db.messages.filter((m) => m.chat === c.id).sort((a, b) => a.at - b.at);
+  const members = chatMembers(db, c);
+  const lastAt = msgs.length ? msgs[msgs.length - 1].at : 0;
+  useEffect(() => {
+    if (((c.read || {})[user.id] || 0) < lastAt) update((d) => { const x = d.chats.find((y) => y.id === c.id); x.read = x.read || {}; x.read[user.id] = Date.now(); });
+  }, [c.id, lastAt]);
+  useEffect(() => { const el = scroller.current; if (el) el.scrollTop = el.scrollHeight; }, [c.id, msgs.length]);
+  const other = c.kind === 'dm' ? userById(db, c.members.find((id) => id !== user.id)) : null;
+  const sub = other ? other.title : members.map((id) => (id === user.id ? 'You' : firstName(userById(db, id)))).slice(0, 7).join(', ') + (members.length > 7 ? ' +' + (members.length - 7) : '');
+  let lastDay = '';
+  return html`<div className="cv">
+    <header className="cv-head">
+      <button className="icon-btn cv-back" onClick=${closeChat} aria-label="Back to chats"><${Icon} n="back"/></button>
+      <button className="cv-title" onClick=${() => setInfo(true)}><${ChatAvatar} c=${c} s=${42}/><span><b>${chatName(db, c, user.id)}</b><small>${sub}</small></span></button>
+      <button className="icon-btn" onClick=${() => setInfo(true)} aria-label=${c.kind === 'dm' ? 'Contact info' : 'Group info'} title="Info"><${Icon} n="info"/></button>
+    </header>
+    <div className="cv-msgs" ref=${scroller}>
+      ${msgs.length === 0 && html`<div className="cv-sys"><span>No messages yet. Say hello, or type @ to tag someone.</span></div>`}
+      ${msgs.map((m, i) => {
+        const day = dkey(m.at), sep = day !== lastDay; lastDay = day;
+        const prev = msgs[i - 1];
+        const grouped = !!prev && !sep && prev.user === m.user && prev.kind !== 'system' && m.kind !== 'system' && m.at - prev.at < 5 * MIN;
+        return html`<${React.Fragment} key=${m.id}>${sep && html`<div className="cv-day"><span>${dayLabel(m.at)}</span></div>`}<${Bubble} m=${m} c=${c} grouped=${grouped} members=${members} onReply=${() => setReply(m)}/><//>`;
+      })}
+    </div>
+    <${ChatComposer} key=${'cc' + c.id} c=${c} members=${members} reply=${reply} clearReply=${() => setReply(null)}/>
+    ${info && html`<${ChatInfo} c=${c} onClose=${() => setInfo(false)}/>`}
+  </div>`;
+}
+function ChatInfo({ c, onClose }) {
+  const { db, user, update, toast, closeChat } = useApp();
+  const members = chatMembers(db, c);
+  const custom = c.kind === 'group' && !c.dept;
+  const canEdit = custom && (c.createdBy === user.id || user.role === 'admin');
+  const [adding, setAdding] = useState('');
+  const media = db.messages.filter((m) => m.chat === c.id).flatMap((m) => [...(m.attachments || []), ...(m.postId ? ((db.posts.find((p) => p.id === m.postId) || {}).attachments || []) : [])]);
+  const sys = (d, text) => d.messages.push({ id: uid('m'), chat: c.id, user: user.id, at: Date.now(), kind: 'system', text, attachments: [], mentions: [] });
+  const remove = (id) => update((d) => { const x = d.chats.find((y) => y.id === c.id); x.members = x.members.filter((m) => m !== id); sys(d, firstName(user) + ' removed ' + userById(d, id).name); });
+  const add = (id) => { if (!id) return; update((d) => { const x = d.chats.find((y) => y.id === c.id); if (!x.members.includes(id)) x.members.push(id); sys(d, firstName(user) + ' added ' + userById(d, id).name); }); setAdding(''); };
+  const leave = () => { update((d) => { const x = d.chats.find((y) => y.id === c.id); x.members = x.members.filter((m) => m !== user.id); sys(d, user.name + ' left'); }); onClose(); closeChat(); toast('You left the group'); };
+  const other = c.kind === 'dm' ? userById(db, c.members.find((id) => id !== user.id)) : null;
+  const isAdmin = (u) => (c.dept ? u.role === 'admin' || u.manages.includes(c.dept) : c.createdBy === u.id);
+  return html`<${Modal} title=${c.kind === 'dm' ? 'Contact info' : 'Group info'} onClose=${onClose}>
+    <div className="gi-head"><${ChatAvatar} c=${c} s=${64}/><div><h2>${chatName(db, c, user.id)}</h2><span className="muted sm">${other ? other.title + ' · ' + other.depts.map((d) => deptById(db, d).name).join(', ') : members.length + ' members'}</span></div></div>
+    ${c.dept && html`<p className="notice"><${Icon} n="team" s=${16}/>Everyone in ${deptById(db, c.dept).name} is in this group automatically. People join or leave it when they change department.</p>`}
+    ${media.length > 0 && html`<div className="field"><span>Photos, videos and documents</span><${Attachments} items=${media.slice(-9)}/></div>`}
+    ${!other && html`<div className="field"><span>Members</span><ul className="plist">${members.map((id) => { const u = userById(db, id); return html`<li key=${id}><${Avatar} u=${u} s=${32}/><div className="pl-main"><div className="pl-name">${u.name}${id === user.id && html`<span className="you">you</span>`}</div><div className="muted sm">${u.title}</div></div>${isAdmin(u) && html`<span className="rolebadge manager">Group admin</span>`}${canEdit && id !== user.id && html`<button className="btn sm ghost" onClick=${() => remove(id)}>Remove</button>`}</li>`; })}</ul></div>`}
+    ${canEdit && html`<label className="field"><span>Add someone</span><select id="gi-add" className="select" value=${adding} onChange=${(e) => add(e.target.value)}><option value="">Choose a person</option>${db.users.filter((u) => u.active !== false && !members.includes(u.id)).map((u) => html`<option key=${u.id} value=${u.id}>${u.name} · ${u.title}</option>`)}</select></label>`}
+    ${custom && members.includes(user.id) && html`<div><button className="btn danger" onClick=${leave}>Leave group</button></div>`}
+  <//>`;
+}
+function NewChatModal({ onClose }) {
+  const { db, user, update, openChat } = useApp();
+  const [tab, setTab] = useState('person');
+  const [q, setQ] = useState('');
+  const [name, setName] = useState(''); const [icon, setIcon] = useState('💬'); const [color, setColor] = useState(TILE_COLORS[3]);
+  const [sel, setSel] = useState([]); const [err, setErr] = useState('');
+  const people = db.users.filter((u) => u.active !== false && u.id !== user.id && (!q || (u.name + ' ' + u.title).toLowerCase().includes(q.toLowerCase())));
+  const flip = (id) => setSel((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
+  const addTeam = (deptId) => setSel((s) => [...new Set([...s, ...deptMembers(db, deptId).filter((id) => id !== user.id)])]);
+  const startDm = (id) => {
+    const found = db.chats.find((c) => c.kind === 'dm' && c.members.includes(id) && c.members.includes(user.id));
+    if (found) { openChat(found.id); onClose(); return; }
+    const nid = uid('c');
+    update((d) => { d.chats.push({ id: nid, kind: 'dm', name: '', icon: '', color: '', dept: null, members: [user.id, id], createdBy: user.id, createdAt: Date.now(), read: {} }); });
+    openChat(nid); onClose();
+  };
+  const create = () => {
+    if (!name.trim()) return setErr('Give the group a name.');
+    if (!sel.length) return setErr('Add at least one person.');
+    const nid = uid('c'), now = Date.now();
+    update((d) => {
+      d.chats.push({ id: nid, kind: 'group', name: name.trim(), icon, color, dept: null, members: [user.id, ...sel], createdBy: user.id, createdAt: now, read: { [user.id]: now } });
+      d.messages.push({ id: uid('m'), chat: nid, user: user.id, at: now, kind: 'system', text: firstName(user) + ' created the group “' + name.trim() + '”', attachments: [], mentions: [] });
+    });
+    openChat(nid); onClose();
+  };
+  return html`<${Modal} title="New chat" onClose=${onClose} wide footer=${tab === 'group' ? html`<span className="reach">${sel.length} ${sel.length === 1 ? 'person' : 'people'} added</span><button className="btn" onClick=${onClose}>Cancel</button><button className="btn primary" onClick=${create}>Create group</button>` : null}>
+    <div className="tabs" role="tablist"><button className=${tab === 'person' ? 'on' : ''} onClick=${() => setTab('person')}>Message a person</button><button className=${tab === 'group' ? 'on' : ''} onClick=${() => setTab('group')}>New group</button></div>
+    ${tab === 'group' && html`<div className="row2"><label className="field"><span>Group name</span><input id="g-name" className="input" value=${name} onChange=${(e) => { setName(e.target.value); setErr(''); }} placeholder="e.g. December promo team"/></label>
+      <div className="field"><span>Colour</span><div className="swatches">${TILE_COLORS.map((col) => html`<button type="button" key=${col} className=${color === col ? 'on' : ''} style=${{ '--c': col }} onClick=${() => setColor(col)} aria-label=${'Colour ' + col}></button>`)}</div></div></div>
+      <div className="field"><span>Icon</span><div className="iconpick">${['💬', ...TILE_ICONS.slice(0, 27)].map((ic) => html`<button type="button" key=${ic} className=${icon === ic ? 'on' : ''} onClick=${() => setIcon(ic)} aria-label=${'Icon ' + ic}>${ic}</button>`)}</div></div>
+      <div className="field"><span>Add a whole team</span><div className="toggles">${db.depts.map((d) => html`<button type="button" key=${d.id} className="toggle" style=${{ '--c': d.color }} onClick=${() => addTeam(d.id)}><i></i>+ ${d.name}</button>`)}</div></div>`}
+    <label className="bigsearch" style=${{ height: 44, fontSize: 15 }}><${Icon} n="search" s=${17}/><input id="nc-q" value=${q} onChange=${(e) => setQ(e.target.value)} placeholder="Search people" aria-label="Search people"/></label>
+    <div className="people">${people.map((u) => { const on = sel.includes(u.id); return html`<button key=${u.id} className=${'person pick' + (tab === 'group' && on ? ' on' : '')} onClick=${() => (tab === 'person' ? startDm(u.id) : flip(u.id))} aria-pressed=${tab === 'group' ? on : null}><${Avatar} u=${u} s=${36}/><span className="pm"><b>${u.name}</b><span className="muted sm">${u.title}</span></span>${tab === 'group' && html`<span className=${'tick-box' + (on ? ' on' : '')}>${on && html`<${Icon} n="check" s=${14}/>`}</span>`}</button>`; })}</div>
+    ${err && html`<p className="err">${err}</p>`}
+  <//>`;
+}
+function ChatsView() {
+  const { db, user, openChatId, openChat } = useApp();
+  const [filter, setFilter] = useState('all');
+  const [q, setQ] = useState('');
+  const [newChat, setNewChat] = useState(false);
+  const rows = myChats(db, user.id).map((c) => ({ c, last: lastMsg(db, c), unread: unreadIn(db, c, user.id), ment: mentionsIn(db, c, user.id) }))
+    .sort((a, b) => ((b.last && b.last.at) || b.c.createdAt) - ((a.last && a.last.at) || a.c.createdAt));
+  const unreadChats = rows.filter((r) => r.unread > 0).length;
+  const shown = rows.filter((r) => (filter === 'all' || (filter === 'unread' && r.unread > 0) || (filter === 'groups' && r.c.kind === 'group') || (filter === 'direct' && r.c.kind === 'dm'))
+    && (!q || chatName(db, r.c, user.id).toLowerCase().includes(q.toLowerCase())));
+  const open = rows.find((r) => r.c.id === openChatId);
+  return html`<div className=${'chats' + (open ? ' has-chat' : '')}>
+    <aside className="chatlist" aria-label="Chats">
+      <div className="cl-head"><h2>Chats</h2><button className="icon-btn solid" onClick=${() => setNewChat(true)} title="New chat or group" aria-label="New chat or group"><${Icon} n="plus"/></button></div>
+      <label className="tsearch cl-search"><${Icon} n="search" s=${15}/><input id="chat-q" value=${q} onChange=${(e) => setQ(e.target.value)} placeholder="Search chats" aria-label="Search chats"/></label>
+      <div className="seg cl-filter" role="group" aria-label="Show">${[['all', 'All'], ['unread', 'Unread' + (unreadChats ? ' ' + unreadChats : '')], ['groups', 'Groups'], ['direct', 'Direct']].map(([k, l]) => html`<button key=${k} className=${filter === k ? 'on' : ''} onClick=${() => setFilter(k)}>${l}</button>`)}</div>
+      <div className="cl-items">
+        ${shown.length === 0 && html`<p className="muted sm" style=${{ padding: '12px 10px' }}>${filter === 'unread' ? 'No unread chats.' : 'No chats match.'}</p>`}
+        ${shown.map((r) => html`<${ChatItem} key=${r.c.id} r=${r} on=${openChatId === r.c.id} onOpen=${() => openChat(r.c.id)}/>`)}
+      </div>
+    </aside>
+    <section className="convo">${open ? html`<${Conversation} key=${open.c.id} c=${open.c}/>` : html`<div className="convo-empty"><span className="chat-av" style=${{ width: 68, height: 68, fontSize: 32, '--c': '#5E6B65' }}>💬</span><h2>Pick a chat</h2><p>Your department groups work like WhatsApp. Type @ in a message to tag someone, and it stays on their “Needs you” board until they deal with it.</p></div>`}</section>
+    ${newChat && html`<${NewChatModal} onClose=${() => setNewChat(false)}/>`}
+  </div>`;
+}
+
 /* ---------------- shell + app ---------------- */
 const SCENES = ['warm', 'night', 'fresh'];
 const SCENE_KEY = 'floorboard.scene.v1';
 const DESKTOP_SHELL = /[?&]shell=desktop\b/.test(location.search);
 function Shell() {
-  const { view, openId, closePost, drawer, setDrawer, composer, closeComposer, ask, resetDemo } = useApp();
+  const { view, openId, closePost, drawer, setDrawer, composer, closeComposer, ask, resetDemo, openChatId } = useApp();
+  const chatsMode = view === 'chats';
   let content;
   if (view === 'needs' || view === 'all' || view === 'sent') content = html`<${FeedView} kind=${view}/>`;
   else if (view === 'team') content = html`<${TeamView}/>`;
@@ -2074,14 +2594,14 @@ function Shell() {
   else if (view === 'search') content = html`<${SearchView}/>`;
   else if (view === 'admin') content = html`<${AdminView}/>`;
   const note = html`<p className="board-note">Demo store with example staff. Changes stay on this device. <button onClick=${() => ask({ title: 'Reset the demo store?', body: 'All posts, files, pins and people go back to the example data. Anything you added is removed.', confirm: 'Reset demo', danger: true, onConfirm: resetDemo })}>Reset demo</button></p>`;
-  return html`<div className=${'shell' + (openId ? ' has-detail' : '')}>
+  return html`<div className=${'shell' + (openId ? ' has-detail' : '') + (chatsMode && openChatId ? ' chat-open' : '')}>
     <${Topbar}/>
     <${Rail}/>
     ${drawer && html`<div className="side-scrim" onClick=${() => setDrawer(false)}></div>`}
-    <main className="stage glass">
+    ${chatsMode ? html`<main className="stage glass chats-mode"><${ChatsView}/></main>` : html`<main className="stage glass">
       <aside className="board-col"><${Board} note=${note}/></aside>
       <section className="content" key=${view}>${content}</section>
-    </main>
+    </main>`}
     <${Dock}/>
     ${openId && html`<div className="detail-scrim" onClick=${closePost}></div>`}
     ${openId && html`<aside className="detail" aria-label="Post details"><${PostDetail} key=${openId} id=${openId}/></aside>`}
@@ -2095,7 +2615,8 @@ function App() {
   const [me, setMe] = useState(() => lsGet(SESSION_KEY));
   const [mode, setMode] = useState(() => (location.hash === '#widget' ? 'widget' : 'full'));
   const [scene, setSceneState] = useState(() => { const s = lsGet(SCENE_KEY); return SCENES.includes(s) ? s : 'warm'; });
-  const [view, setView] = useState('needs');
+  const [view, setView] = useState('chats');
+  const [openChatId, setOpenChatId] = useState(null);
   const [openId, setOpenId] = useState(null);
   const [composer, setComposer] = useState(null);
   const [toasts, setToasts] = useState([]);
@@ -2130,13 +2651,15 @@ function App() {
   }, [openId, drawer]);
   const ctx = {
     db, update, user, view, go, openId, toast, toasts, filters, setFilters, searchQ, setSearchQ, saved, drawer, setDrawer, lightbox, setLightbox, composer,
-    confirmState, ask: setConfirmState, mode, scene,
+    confirmState, ask: setConfirmState, mode, scene, openChatId,
+    openChat: (id) => { setOpenChatId(id); setView('chats'); setOpenId(null); setDrawer(false); },
+    closeChat: () => setOpenChatId(null),
     setScene: (s) => { setSceneState(s); lsSet(SCENE_KEY, s); },
     openPost: (id) => { setOpenId(id); setDrawer(false); }, closePost: () => setOpenId(null),
     compose: (preset) => setComposer(preset || {}), closeComposer: () => setComposer(null),
-    login: (id) => { lsSet(SESSION_KEY, id); setMe(id); setView('needs'); setOpenId(null); setFilters(NO_FILTERS); },
+    login: (id) => { lsSet(SESSION_KEY, id); setMe(id); setView('chats'); setOpenChatId(null); setOpenId(null); setFilters(NO_FILTERS); },
     logout: () => { lsSet(SESSION_KEY, ''); setMe(null); setOpenId(null); setDrawer(false); setComposer(null); },
-    resetDemo: async () => { await Blobs.clear(); setDb(seed()); setOpenId(null); setView('needs'); setFilters(NO_FILTERS); toast('Demo store reset'); },
+    resetDemo: async () => { await Blobs.clear(); setDb(seed()); setOpenId(null); setOpenChatId(null); setView('chats'); setFilters(NO_FILTERS); toast('Demo store reset'); },
   };
   return html`<${Ctx.Provider} value=${ctx}>
     <div className="scene" data-scene=${scene} aria-hidden="true"></div>
