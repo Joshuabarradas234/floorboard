@@ -52,10 +52,15 @@ function createSidebar() {
   }
 }
 
-function openFull() {
-  if (full && !full.isDestroyed()) { full.show(); full.focus(); return; }
+// target (from a sidebar shortcut) names what to open, e.g. chat:c-bakery or view:drive
+function openFull(_e, target) {
+  const hash = typeof target === 'string' && /^(chat|view):[\w:.-]+$/.test(target) ? 'go-' + target : undefined;
+  if (full && !full.isDestroyed()) {
+    if (hash) full.loadFile(PAGE, { query: { shell: 'desktop' }, hash });
+    full.show(); full.focus(); return;
+  }
   full = new BrowserWindow({ width: 1320, height: 860, minWidth: 380, minHeight: 560, title: 'Floorboard', icon: ICON, backgroundColor: '#2b2018', autoHideMenuBar: true, webPreferences });
-  full.loadFile(PAGE, { query: { shell: 'desktop' } });
+  full.loadFile(PAGE, { query: { shell: 'desktop' }, hash });
   openLinksOutside(full);
 }
 

@@ -2,7 +2,7 @@
 // and tell Windows how many things need you (red items wake the sidebar).
 const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('floorboardDesktop', {
-  openFull: () => ipcRenderer.send('open-full'),
+  openFull: (target) => ipcRenderer.send('open-full', typeof target === 'string' ? target : undefined),
   hide: () => ipcRenderer.send('hide-sidebar'),
   showSidebar: () => ipcRenderer.send('show-sidebar'),
   focus: () => ipcRenderer.send('show-sidebar'),
