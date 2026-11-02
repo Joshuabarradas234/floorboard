@@ -703,6 +703,48 @@ td.mono{white-space:nowrap}
   .cc{padding:8px 8px calc(10px + env(safe-area-inset-bottom,0px))}
   .b-reply{display:none}
 }
+
+/* one-tap answers */
+.qa{display:flex;gap:6px;flex-wrap:wrap}
+.qa-b{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--glass-line-2);background:var(--glass-2);border-radius:99px;padding:5px 12px;font-size:12.5px;font-weight:700;color:var(--ink)}
+.qa-b:hover{background:var(--glass-3)}
+.qa-b.go{background:#fff;color:var(--accent-ink);border-color:#fff}
+.card .qa,.witem .qa{margin-top:10px}
+/* pop-up alerts */
+.alerts{position:fixed;top:calc(12px + env(safe-area-inset-top,0px));right:max(16px,env(safe-area-inset-right,0px));z-index:95;display:grid;gap:8px;width:min(370px,calc(100% - 32px))}
+.alert{display:flex;gap:11px;align-items:flex-start;padding:12px 12px 10px;border-radius:20px;background:rgba(40,29,22,.82);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:1px solid var(--glass-line-2);box-shadow:var(--shadow);animation:slidein .28s ease-out}
+.alert.red{border-color:var(--red-dot);box-shadow:0 0 0 1px var(--red-dot),0 0 30px rgba(255,107,87,.35),var(--shadow)}
+.alert.amber{border-color:rgba(255,181,71,.6)}
+.alert-main{flex:1;min-width:0}
+.alert-t{font-weight:700;font-size:13px;color:var(--ink-2)}
+.alert.red .alert-t{color:var(--red)}
+.alert-b{font-size:15px;font-weight:700;line-height:1.3;margin-top:2px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.alert-a{display:flex;gap:6px;margin-top:8px}
+.alert-ctl{display:flex;flex-wrap:wrap;gap:6px;padding:8px;border-top:1px solid var(--glass-line);margin-top:6px}
+.w-demo{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;padding:4px 0 8px}
+@keyframes slidein{from{transform:translateX(24px);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.alert{animation:none}}
+/* reactions, pins, voice notes */
+.b-acts{display:flex;gap:1px;align-self:center;opacity:0;transition:opacity .12s;color:var(--ink-3)}
+.bw:hover .b-acts,.bw.active .b-acts,.b-acts:focus-within{opacity:1}
+.b-reacts{display:flex;gap:4px;flex-wrap:wrap;margin-top:5px}
+.b-reacts button{border:0;font-size:13px;background:rgba(0,0,0,.2);border-radius:99px;padding:1px 8px;color:inherit;line-height:1.5}
+.bw.mine .b-reacts button{background:rgba(0,0,0,.07)}
+.b-reacts button.mine{box-shadow:inset 0 0 0 1.5px var(--sky)}
+.bw.mine .b-reacts button.mine{box-shadow:inset 0 0 0 1.5px #1d4fc4}
+.react-pick{display:flex;gap:2px;padding:4px;border-radius:99px;background:rgba(40,29,22,.9);-webkit-backdrop-filter:var(--blur);backdrop-filter:var(--blur);border:1px solid var(--glass-line-2);box-shadow:var(--shadow);align-self:center;flex:none}
+.react-pick button{border:0;background:none;font-size:20px;width:36px;height:36px;border-radius:50%;line-height:1}
+.react-pick button:hover,.react-pick button.on{background:var(--glass-3)}
+.bubble.pinned{box-shadow:var(--hi),0 0 0 1.5px var(--amber-dot)}
+.cv-pin{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--glass-line);background:rgba(255,181,71,.12);font-size:13.5px;cursor:pointer;color:var(--ink)}
+.cv-pin .ic{color:var(--amber)}
+.cv-pin span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.audio-row{display:flex;align-items:center;gap:8px;min-width:0}
+.audio-row audio{height:38px;width:240px;max-width:100%}
+.rec-bar{flex:1;display:flex;align-items:center;gap:10px;font-weight:700;padding:0 16px;height:44px;border-radius:22px;background:rgba(255,94,72,.2);font-family:var(--f-mono)}
+.rec-dot{width:10px;height:10px;border-radius:50%;background:var(--red-dot);animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.25}}
+@media (max-width:760px){.b-acts{opacity:0;pointer-events:none}.bw.active .b-acts{opacity:1;pointer-events:auto}.alerts{left:10px;right:10px;width:auto}}
 </style>
 
 <div id="root"></div>
@@ -717,7 +759,7 @@ const html = htm.bind(React.createElement);
 
 /* ---------------- constants ---------------- */
 const MIN = 6e4, HOUR = 36e5, DAY = 864e5;
-const LS_KEY = 'floorboard.demo.v2', SESSION_KEY = 'floorboard.session.v1';
+const LS_KEY = 'floorboard.demo.v3', SESSION_KEY = 'floorboard.session.v1';
 const TYPES = {
   task: { label: 'Task', plural: 'Tasks', icon: 'task', hint: 'Something that needs doing' },
   feedback: { label: 'Feedback', plural: 'Feedback', icon: 'feedback', hint: 'Ask for an answer or opinion' },
@@ -783,6 +825,8 @@ const ICONS = {
   info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
   reply: '<path d="M10 8 5 12l5 4"/><path d="M5 12h9a5 5 0 0 1 5 5v1"/>',
   chat: '<path d="M4.5 19.5 5.6 16A7.8 7.8 0 1 1 8.9 18.6z"/>',
+  mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/>',
+  smile: '<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4.5 4.5 0 0 0 7 0M9 9.5h.01M15 9.5h.01"/>',
 };
 
 /* ---------------- small utils ---------------- */
@@ -815,7 +859,7 @@ function dueText(k) {
 const rand = (n) => (n == null || n === '' || isNaN(n)) ? '' : 'R ' + Number(n).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 function fmtSize(b) { if (!b) return ''; if (b < 1024) return b + ' B'; if (b < 1048576) return Math.round(b / 1024) + ' KB'; return (b / 1048576).toFixed(1) + ' MB'; }
 const extOf = (n) => (n.match(/\.([a-z0-9]+)$/i) || [, 'file'])[1];
-const kindOf = (mime) => mime.startsWith('image/') ? 'image' : mime.startsWith('video/') ? 'video' : 'doc';
+const kindOf = (mime) => mime.startsWith('image/') ? 'image' : mime.startsWith('video/') ? 'video' : mime.startsWith('audio/') ? 'audio' : 'doc';
 function lsGet(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
 function lsSet(k, v) { try { if (v) localStorage.setItem(k, v); else localStorage.removeItem(k); return true; } catch (e) { return false; } }
 
@@ -1219,6 +1263,11 @@ function seed() {
     if (ch) { p.chat = ch.id; M(ch.id, p.author, T - p.createdAt, '', { postId: p.id }); }
   });
   db.messages.sort((a, b) => a.at - b.at);
+  const find = (chat, start) => db.messages.find((m) => m.chat === chat && m.text.startsWith(start));
+  db.chats.find((c) => c.id === 'c-all').pinned = find('c-all', 'Welcome').id;
+  find('c-bakery', 'Oven 3').reactions = { u6: '👍', u7: '👍' };
+  find('c-fv', 'Mark them down').reactions = { u11: '✅' };
+  find('c-ls', 'Generator check').reactions = { u1: '🙏', u8: '👍' };
   // everyone has read up to 45 minutes ago; Zanele hasn't opened her group since this morning
   db.chats.forEach((c) => chatMembers(db, c).forEach((id) => { c.read[id] = T - 45 * MIN; }));
   db.chats.find((c) => c.id === 'c-fv').read.u11 = T - 2 * HOUR;
@@ -1301,9 +1350,14 @@ function DocRow({ a }) {
     ${dl && !a.demo && html`<button className="btn sm" onClick=${() => saveAttachment(a, toast)}><${Icon} n="download" s=${15}/>Save</button>`}
   </div>`;
 }
+function AudioRow({ a }) {
+  const url = useAttUrl(a);
+  return html`<div className="audio-row"><${Icon} n="mic" s=${16}/>${url ? html`<audio src=${url} controls preload="metadata" aria-label=${a.name}></audio>` : html`<span className="muted sm">Voice note isn’t stored on this device</span>`}</div>`;
+}
 function Attachments({ items }) {
-  const media = items.filter((a) => a.kind !== 'doc'); const docs = items.filter((a) => a.kind === 'doc');
+  const media = items.filter((a) => a.kind === 'image' || a.kind === 'video'), voice = items.filter((a) => a.kind === 'audio'), docs = items.filter((a) => a.kind === 'doc');
   return html`<div className="atts">
+    ${voice.map((a) => html`<${AudioRow} key=${a.id} a=${a}/>`)}
     ${media.length > 0 && html`<div className="att-grid">${media.map((a) => html`<${MediaThumb} key=${a.id} a=${a}/>`)}</div>`}
     ${docs.map((a) => html`<${DocRow} key=${a.id} a=${a}/>`)}
   </div>`;
@@ -1389,6 +1443,7 @@ function Topbar() {
         <div className="pop-h"><b>New for you</b><span className="muted sm">${unseen.length} unopened</span></div>
         ${unseen.length === 0 && html`<p className="muted sm" style=${{ padding: '4px 8px 10px' }}>Nothing new. You’ve opened everything sent to you.</p>`}
         ${unseen.slice(0, 8).map((p) => html`<button key=${p.id} className="pop-i" onClick=${() => { setBell(false); openPost(p.id); }}><${LevelTag} l=${p.level}/><div><div className="pop-t">${p.title}</div><div className="muted sm">${firstName(userById(db, p.author))} · ${TYPES[p.type].label} · ${ago(p.createdAt)}</div></div></button>`)}
+        <${AlertControls} onDone=${() => setBell(false)}/>
       </div>`}
     </div>
   </header>`;
@@ -1439,6 +1494,7 @@ function WidgetItem({ p, tab }) {
     <div className="witem-top"><${LevelTag} l=${p.level}/><span>${TYPES[p.type].label}</span><span className="mono">#${p.no}</span></div>
     <div className="witem-t">${r && !r.seen && html`<span className="dot-new" title="New"></span>`}<span>${p.title}</span></div>
     <div className="witem-m"><span>${tab === 'sent' ? 'To ' + toLabel(db, p) : 'From ' + firstName(a)}</span>${p.due && html`<${DueTag} p=${p} uid=${r ? user.id : null}/>`}<span style=${{ marginLeft: 'auto' }}>${tab === 'sent' || !r ? html`<${Overall} p=${p}/>` : html`<${MyState} p=${p} who=${user.id}/>`}</span></div>
+    ${tab !== 'sent' && html`<${QuickActions} p=${p}/>`}
   </article>`;
 }
 function Widget() {
@@ -1469,6 +1525,7 @@ function Widget() {
     <div className="w-list">
       ${list.length === 0 && html`<div className="empty"><p>${tab === 'needs' ? (filtered ? 'Nothing of this kind is waiting on you.' : 'You’re all caught up.') : 'Nothing you sent is still open.'}</p></div>`}
       ${list.map((p) => html`<${WidgetItem} key=${p.id} p=${p} tab=${tab}/>`)}
+      <div className="w-demo"><${AlertControls}/></div>
     </div>
     <button className="w-fab" onClick=${() => compose()} aria-label="New post" title="New post"><${Icon} n="plus" s=${24}/></button>
     ${openId && html`<aside className="detail" aria-label="Post details"><${PostDetail} key=${openId} id=${openId}/></aside>`}
@@ -1511,6 +1568,7 @@ function PostCard({ p, mode }) {
       ${p.due && html`<${DueTag} p=${p} uid=${showMine ? user.id : null}/>`}
       <span className="meta-end">${showMine ? html`<${MyState} p=${p} who=${user.id}/>` : html`<${Overall} p=${p}/>`}</span>
     </div>
+    ${showMine && html`<${QuickActions} p=${p}/>`}
   </article>`;
 }
 function FilterBar({ base, status, setStatus }) {
@@ -2323,10 +2381,98 @@ function CardInChat({ p }) {
     ${p.body && html`<div className="b-card-b">${p.body}</div>`}
     ${p.attachments.length > 0 && html`<div onClick=${(e) => e.stopPropagation()}><${Attachments} items=${p.attachments}/></div>`}
     <div className="b-card-m"><span>To ${toLabel(db, p)}</span>${p.due && html`<${DueTag} p=${p} uid=${r ? user.id : null}/>`}<span style=${{ marginLeft: 'auto' }}>${r ? html`<${MyState} p=${p} who=${user.id}/>` : html`<${Overall} p=${p}/>`}</span></div>
-    <div className="b-card-open">${r && needsMe(p, user.id) ? 'Open to respond ›' : 'Open ›'}</div>
+    <${QuickActions} p=${p}/>
+    <div className="b-card-open">${r && needsMe(p, user.id) ? 'Open for more ›' : 'Open ›'}</div>
   </div>`;
 }
-function Bubble({ m, c, grouped, members, onReply }) {
+/* ---------------- one-tap answers, alerts and the demo task ---------------- */
+function quickAct(update, p, who, action) {
+  update((d) => {
+    const q = d.posts.find((x) => x.id === p.id); const r = q && q.recips[who];
+    if (!r) return;
+    const now = Date.now();
+    r.seen = r.seen || now; r.updatedAt = now; r.nudgedAt = null;
+    if (action === 'seen') r.status = 'done';
+    if (action === 'start') { r.status = 'doing'; r.pct = Math.max(r.pct || 0, 10); q.activity.push({ id: uid('e'), kind: 'update', user: who, at: now, pct: r.pct, text: 'On it.', attachments: [] }); }
+    if (action === 'done') { r.status = 'done'; r.pct = 100; q.activity.push({ id: uid('e'), kind: 'update', user: who, at: now, pct: 100, text: 'Done.', attachments: [] }); }
+  });
+}
+function QuickActions({ p }) {
+  const { user, update, toast, openPost } = useApp();
+  const r = p.recips[user.id];
+  if (!r || !needsMe(p, user.id)) return null;
+  const act = (a, msg) => { quickAct(update, p, user.id, a); toast(msg); };
+  const btns = p.type === 'look' ? [['Got it', 'check', true, () => act('seen', 'Marked as seen')]]
+    : p.type === 'task' ? [r.status === 'todo' && ['On it', 'clock', false, () => act('start', 'Marked as started')], ['Done', 'check', true, () => act('done', 'Marked done')]].filter(Boolean)
+    : [[p.type === 'vote' ? 'Vote' : 'Reply', p.type === 'vote' ? 'vote' : 'reply', false, () => openPost(p.id)]];
+  return html`<div className="qa" onClick=${(e) => e.stopPropagation()} onKeyDown=${(e) => e.stopPropagation()}>${btns.map(([l, ic, go, fn]) => html`<button key=${l} className=${'qa-b' + (go ? ' go' : '')} onClick=${fn}><${Icon} n=${ic} s=${14}/>${l}</button>`)}</div>`;
+}
+// Everything that should pop up for this person: new tags on their board, reminders, @mentions and direct messages.
+function alertItems(db, me) {
+  const out = [];
+  db.posts.forEach((p) => {
+    if (p.author === me || !needsMe(p, me)) return;
+    const r = p.recips[me];
+    out.push({ key: 'p:' + p.id + ':' + (r.nudgedAt || 0), level: p.level, from: p.author, postId: p.id, chatId: p.chat || null,
+      title: (r.nudgedAt ? 'Reminder · ' : '') + TYPES[p.type].label + ' from ' + firstName(userById(db, p.author)) + ' · ' + LEVELS[p.level].label, body: p.title });
+  });
+  myChats(db, me).forEach((c) => {
+    const read = (c.read || {})[me] || 0;
+    db.messages.forEach((m) => {
+      if (m.chat !== c.id || m.user === me || m.kind !== 'msg' || m.postId || m.at <= read) return;
+      if (c.kind !== 'dm' && !mentioned(db, m, me)) return;
+      const u = userById(db, m.user), a0 = m.attachments && m.attachments[0];
+      out.push({ key: 'm:' + m.id, level: 'green', from: m.user, chatId: c.id, title: c.kind === 'dm' ? (u ? u.name : 'New message') : firstName(u) + ' tagged you in ' + c.name,
+        body: m.text || (a0 ? (a0.kind === 'audio' ? 'Voice note' : a0.kind === 'image' ? 'Photo' : 'Attachment') : '') });
+    });
+  });
+  return out;
+}
+let audioCtx = null;
+function chime(urgent) {
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const t = audioCtx.currentTime;
+    (urgent ? [880, 660, 880] : [660, 880]).forEach((f, i) => {
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain(), s = t + i * 0.16;
+      o.type = 'sine'; o.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, s); g.gain.exponentialRampToValueAtTime(0.12, s + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, s + 0.15);
+      o.connect(g).connect(audioCtx.destination); o.start(s); o.stop(s + 0.16);
+    });
+  } catch (e) { /* sound is optional */ }
+}
+const popupsSupported = () => { try { return 'Notification' in window; } catch (e) { return false; } };
+const popupPermission = () => (popupsSupported() ? Notification.permission : 'unsupported');
+function AlertStack() {
+  const { db, alerts, dismissAlert, openAlert } = useApp();
+  if (!alerts.length) return null;
+  return html`<div className="alerts" role="status" aria-live="polite">${alerts.map((a) => html`<div key=${a.id} className=${'alert ' + a.level}>
+    <${Avatar} u=${userById(db, a.from)} s=${38}/>
+    <div className="alert-main"><div className="alert-t">${a.title}</div><div className="alert-b">${a.body}</div>
+      <div className="alert-a"><button className="btn sm primary" onClick=${() => openAlert(a)}>Open</button><button className="btn sm ghost" onClick=${() => dismissAlert(a.id)}>Dismiss</button></div></div>
+  </div>`)}</div>`;
+}
+const TEST_TASKS = [
+  { type: 'task', level: 'red', title: 'Customer spill in aisle 4. Put out the wet-floor sign and clean it up' },
+  { type: 'look', level: 'amber', title: 'Thursday promo tickets are in the admin office. Collect yours before 3pm' },
+  { type: 'feedback', level: 'green', title: 'Can you work Sunday morning instead of Saturday this week?' },
+  { type: 'task', level: 'amber', title: 'Count the crates on the receiving dock before 15:00' },
+];
+let testIdx = 0;
+function AlertControls({ onDone }) {
+  const { soundOn, setSoundOn, sendTestTask, enablePopups } = useApp();
+  const perm = popupPermission();
+  return html`<div className="alert-ctl">
+    ${perm === 'default' && html`<button className="btn sm" onClick=${() => { enablePopups(); onDone && onDone(); }}><${Icon} n="bell" s=${14}/>Turn on pop-ups</button>`}
+    <button className="btn sm ghost" onClick=${() => setSoundOn(!soundOn)} aria-pressed=${soundOn}>${soundOn ? 'Sound on' : 'Sound off'}</button>
+    <button className="btn sm ghost" onClick=${() => { sendTestTask(); onDone && onDone(); }}>Send me a test task</button>
+  </div>`;
+}
+
+/* ---------------- chat bubbles, conversation and composer ---------------- */
+const REACTIONS = ['👍', '✅', '❤️', '😂', '🙏', '👀'];
+function canPinIn(c, u) { if (c.kind === 'dm') return true; if (c.dept) return u.role === 'admin' || u.manages.includes(c.dept); return c.createdBy === u.id || u.role === 'admin'; }
+function Bubble({ m, c, grouped, members, active, picking, canPin, onSelect, onReply, onReact, onPick, onPin }) {
   const { db, user } = useApp();
   if (m.kind === 'system') return html`<div className="cv-sys"><span>${m.text}</span></div>`;
   const mine = m.user === user.id, u = userById(db, m.user), group = c.kind !== 'dm';
@@ -2334,17 +2480,25 @@ function Bubble({ m, c, grouped, members, onReply }) {
   const p = m.postId && db.posts.find((x) => x.id === m.postId);
   const others = members.filter((id) => id !== m.user);
   const readAll = others.length > 0 && others.every((id) => ((c.read || {})[id] || 0) >= m.at);
-  return html`<div className=${'bw' + (mine ? ' mine' : '') + (grouped ? ' grouped' : '')}>
+  const counts = {}; Object.values(m.reactions || {}).forEach((e) => { counts[e] = (counts[e] || 0) + 1; });
+  const myReact = (m.reactions || {})[user.id];
+  return html`<div id=${'msg-' + m.id} className=${'bw' + (mine ? ' mine' : '') + (grouped ? ' grouped' : '') + (active ? ' active' : '')} onClick=${onSelect}>
     ${!mine && group && html`<span className="bw-av">${!grouped && html`<${Avatar} u=${u} s=${28}/>`}</span>`}
-    <div className=${'bubble' + (m.postId ? ' has-card' : '')}>
+    <div className=${'bubble' + (m.postId ? ' has-card' : '') + (c.pinned === m.id ? ' pinned' : '')}>
       ${!mine && group && !grouped && html`<div className="b-name" style=${{ color: nameColor(m.user) }}>${u ? u.name : 'Former staff'}</div>`}
       ${quoted && html`<div className="b-quote"><b style=${{ color: nameColor(quoted.user) }}>${quoted.user === user.id ? 'You' : firstName(userById(db, quoted.user))}</b><span>${quoted.text || (quoted.postId ? 'Tagged post' : 'Attachment')}</span></div>`}
       ${m.postId && (p ? html`<${CardInChat} p=${p}/>` : html`<div className="muted sm">This post was deleted.</div>`)}
       ${!m.postId && m.attachments && m.attachments.length > 0 && html`<${Attachments} items=${m.attachments}/>`}
       ${!m.postId && m.text && html`<div className="b-text"><${MsgText} text=${m.text} mentions=${m.mentions}/></div>`}
-      <div className="b-meta"><span>${hm(m.at)}</span>${mine && html`<span className=${'ticks' + (readAll ? ' read' : '')} title=${readAll ? 'Read by everyone' : 'Delivered'}>✓✓</span>`}</div>
+      ${Object.keys(counts).length > 0 && html`<div className="b-reacts">${Object.entries(counts).map(([e, n]) => html`<button key=${e} className=${myReact === e ? 'mine' : ''} onClick=${(ev) => { ev.stopPropagation(); onReact(e); }} title=${myReact === e ? 'Remove your reaction' : 'React ' + e}>${e}${n > 1 ? ' ' + n : ''}</button>`)}</div>`}
+      <div className="b-meta">${c.pinned === m.id && html`<${Icon} n="pin" s=${11}/>`}<span>${hm(m.at)}</span>${mine && html`<span className=${'ticks' + (readAll ? ' read' : '')} title=${readAll ? 'Read by everyone' : 'Delivered'}>✓✓</span>`}</div>
     </div>
-    <button className="b-reply icon-btn sm" onClick=${onReply} aria-label="Reply" title="Reply"><${Icon} n="reply" s=${15}/></button>
+    ${picking ? html`<div className="react-pick" onClick=${(e) => e.stopPropagation()}>${REACTIONS.map((e) => html`<button key=${e} className=${myReact === e ? 'on' : ''} onClick=${() => onReact(e)} aria-label=${'React ' + e}>${e}</button>`)}</div>`
+      : html`<div className="b-acts" onClick=${(e) => e.stopPropagation()}>
+        <button className="icon-btn sm" onClick=${onPick} aria-label="React" title="React"><${Icon} n="smile" s=${15}/></button>
+        <button className="icon-btn sm" onClick=${onReply} aria-label="Reply" title="Reply"><${Icon} n="reply" s=${15}/></button>
+        ${canPin && html`<button className="icon-btn sm" onClick=${onPin} aria-label=${c.pinned === m.id ? 'Unpin' : 'Pin to the top'} title=${c.pinned === m.id ? 'Unpin' : 'Pin to the top'}><${Icon} n="pin" s=${15}/></button>`}
+      </div>`}
   </div>`;
 }
 function ChatComposer({ c, members, reply, clearReply }) {
@@ -2359,11 +2513,15 @@ function ChatComposer({ c, members, reply, clearReply }) {
   const [sug, setSug] = useState(null);
   const [hi, setHi] = useState(0);
   const [busy, setBusy] = useState(false);
+  const [rec, setRec] = useState(null);
+  const [recSecs, setRecSecs] = useState(0);
   const ta = useRef(null), fileRef = useRef(null);
   const live = ments.filter((m) => text.includes('@' + m.label));
   // Tagging someone makes the message a tracked "Look at this" by default; the sender can change it or keep it as plain chat.
   useEffect(() => { if (!touched) setKind(live.length ? 'look' : 'none'); }, [live.length]);
   useEffect(() => { if (reply && ta.current) ta.current.focus(); }, [reply]);
+  useEffect(() => { if (!rec) return; const t = setInterval(() => setRecSecs(Math.round((Date.now() - rec.started) / 1000)), 250); return () => clearInterval(t); }, [rec]);
+  useEffect(() => () => { if (rec) rec.stream.getTracks().forEach((t) => t.stop()); }, [rec]);
   const options = useMemo(() => {
     if (!sug) return [];
     const q = sug.q.toLowerCase();
@@ -2402,19 +2560,43 @@ function ChatComposer({ c, members, reply, clearReply }) {
     for (const f of [...e.target.files]) {
       if (f.size > 100 * 1048576) { toast(f.name + ' is over 100 MB', 'warn'); continue; }
       const mime = f.type || 'application/octet-stream', k = kindOf(mime);
-      ok.push({ tmp: uid('t'), file: f, name: f.name, mime, size: f.size, kind: k, url: k !== 'doc' ? URL.createObjectURL(f) : null });
+      ok.push({ tmp: uid('t'), file: f, name: f.name, mime, size: f.size, kind: k, url: k === 'image' || k === 'video' ? URL.createObjectURL(f) : null });
     }
     setFiles((p) => [...p, ...ok]); e.target.value = '';
   };
-  async function send() {
-    const body = text.trim();
-    if ((!body && !files.length) || busy) return;
+  async function startRec() {
+    if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder)) { toast('Voice notes aren’t available here. They work in the installed app.', 'warn'); return; }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream), chunks = [];
+      mr.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+      mr.start();
+      setRecSecs(0); setRec({ started: Date.now(), mr, chunks, stream });
+    } catch (e) { toast('The microphone is blocked here, so voice notes can’t record.', 'warn'); }
+  }
+  function stopRec(keep) {
+    const r = rec; if (!r) return;
+    setRec(null);
+    r.mr.onstop = () => {
+      r.stream.getTracks().forEach((t) => t.stop());
+      if (!keep || !r.chunks.length) return;
+      const type = r.mr.mimeType || 'audio/webm', blob = new Blob(r.chunks, { type });
+      const secs = Math.max(1, Math.round((Date.now() - r.started) / 1000));
+      const name = 'Voice note ' + Math.floor(secs / 60) + ':' + pad(secs % 60) + (type.includes('mp4') ? '.m4a' : '.webm');
+      send({ tmp: uid('t'), file: blob, name, mime: type, size: blob.size, kind: 'audio' });
+    };
+    r.mr.stop();
+  }
+  async function send(voice) {
+    const body = voice ? '' : text.trim(), all = voice ? [voice] : files;
+    if ((!body && !all.length) || busy) return;
     setBusy(true);
-    const atts = await storeFiles(files);
-    const type = kind, now = Date.now();
-    const toUsers = live.filter((x) => x.k === 'u').map((x) => x.id), toDepts = live.filter((x) => x.k === 'd').map((x) => x.id);
+    const atts = await storeFiles(all);
+    const type = voice ? 'none' : kind, now = Date.now();
+    const tags = voice ? [] : live;
+    const toUsers = tags.filter((x) => x.k === 'u').map((x) => x.id), toDepts = tags.filter((x) => x.k === 'd').map((x) => x.id);
     update((d) => {
-      const msg = { id: uid('m'), chat: c.id, user: user.id, at: now, text: body, attachments: atts, mentions: live, replyTo: reply ? reply.id : null, postId: null, kind: 'msg' };
+      const msg = { id: uid('m'), chat: c.id, user: user.id, at: now, text: body, attachments: atts, mentions: tags, replyTo: reply ? reply.id : null, postId: null, kind: 'msg' };
       if (type !== 'none') {
         let tu = toUsers, td = toDepts, ids = expand(d, toUsers, toDepts, user.id);
         if (!ids.length) { ids = chatMembers(d, c).filter((id) => id !== user.id); if (c.dept) td = [c.dept]; else tu = ids; }
@@ -2430,11 +2612,13 @@ function ChatComposer({ c, members, reply, clearReply }) {
       d.messages.push(msg);
       const x = d.chats.find((y) => y.id === c.id); x.read = x.read || {}; x.read[user.id] = now;
     });
-    setText(''); setFiles([]); setMents([]); setKind('none'); setTouched(false); setLevel('green'); setDue(''); setSug(null); clearReply(); setBusy(false);
+    if (!voice) { setText(''); setFiles([]); setMents([]); setKind('none'); setTouched(false); setLevel('green'); setDue(''); setSug(null); }
+    clearReply(); setBusy(false);
     if (type !== 'none') toast(TYPES[type].label + ' sent. It’s on their “Needs you” board now.');
-    if (ta.current) { ta.current.style.height = ''; ta.current.focus(); }
+    if (ta.current && !voice) { ta.current.style.height = ''; ta.current.focus(); }
   }
   const showBar = kind !== 'none' || live.length > 0;
+  const empty = !text.trim() && !files.length;
   return html`<div className="cc">
     ${sug && options.length > 0 && html`<div className="sugs cc-sugs" role="listbox">${options.map((o, i) => html`<button type="button" key=${o.k + o.id} className=${'sug' + (i === hi ? ' hi' : '')} onMouseDown=${(e) => { e.preventDefault(); pick(o); }} onMouseEnter=${() => setHi(i)}>
       ${o.k === 'd' ? html`<span className="sq" style=${{ '--c': o.color }}>@</span>` : html`<${Avatar} u=${o.u} s=${28}/>`}<span><b>${o.label}</b><div className="sug-sub">${o.sub}</div></span></button>`)}</div>`}
@@ -2446,30 +2630,52 @@ function ChatComposer({ c, members, reply, clearReply }) {
       ${kind === 'task' && html`<input id=${'cc-due-' + c.id} type="date" className="input cc-due" value=${due} min=${dkey()} onChange=${(e) => setDue(e.target.value)} aria-label="Due date"/>`}
     </div>`}
     ${files.length > 0 && html`<div className="attach-list">${files.map((f) => html`<div className="attach-item" key=${f.tmp}>
-      ${f.kind === 'image' ? html`<img src=${f.url} alt=""/>` : f.kind === 'video' ? html`<video src=${f.url} muted></video>` : html`<span className="attach-doc"><${Icon} n="doc"/></span>`}
+      ${f.kind === 'image' ? html`<img src=${f.url} alt=""/>` : f.kind === 'video' ? html`<video src=${f.url} muted></video>` : html`<span className="attach-doc"><${Icon} n=${f.kind === 'audio' ? 'mic' : 'doc'}/></span>`}
       <span className="attach-name">${f.name} <span className="muted">· ${fmtSize(f.size)}</span></span>
       <button type="button" className="icon-btn sm" aria-label=${'Remove ' + f.name} onClick=${() => setFiles((p) => p.filter((x) => x.tmp !== f.tmp))}><${Icon} n="close" s=${14}/></button></div>`)}</div>`}
-    <div className="cc-row">
-      <input type="file" ref=${fileRef} multiple hidden onChange=${onPick} accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.ppt,.pptx"/>
+    ${rec ? html`<div className="cc-row">
+        <button type="button" className="icon-btn cc-tool" onClick=${() => stopRec(false)} aria-label="Cancel voice note" title="Cancel"><${Icon} n="trash"/></button>
+        <div className="rec-bar"><span className="rec-dot"></span>Recording ${Math.floor(recSecs / 60)}:${pad(recSecs % 60)}</div>
+        <button type="button" className="cc-send" onClick=${() => stopRec(true)} aria-label="Send voice note"><${Icon} n="send" s=${19}/></button>
+      </div>`
+    : html`<div className="cc-row">
+      <input type="file" ref=${fileRef} multiple hidden onChange=${onPick} accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.ppt,.pptx"/>
       <button type="button" className="icon-btn cc-tool" onClick=${() => fileRef.current && fileRef.current.click()} aria-label="Attach photo, video or document" title="Attach"><${Icon} n="clip"/></button>
       <button type="button" className=${'icon-btn cc-tool' + (kind !== 'none' ? ' on' : '')} onClick=${() => { setKind(kind === 'none' ? 'task' : 'none'); setTouched(true); }} aria-pressed=${kind !== 'none'} aria-label="Make it a task" title="Make it a task, feedback or look-at"><${Icon} n="task"/></button>
       <textarea id=${'cc-' + c.id} ref=${ta} rows="1" value=${text} onChange=${onChange} onKeyDown=${onKey} onBlur=${() => setTimeout(() => setSug(null), 150)} placeholder="Message · @ to tag" aria-label="Message"></textarea>
-      <button type="button" className="cc-send" onClick=${send} disabled=${busy || (!text.trim() && !files.length)} aria-label="Send"><${Icon} n="send" s=${19}/></button>
-    </div>
+      ${empty ? html`<button type="button" className="cc-send" onClick=${startRec} aria-label="Record a voice note" title="Record a voice note"><${Icon} n="mic" s=${19}/></button>`
+        : html`<button type="button" className="cc-send" onClick=${() => send()} disabled=${busy} aria-label="Send"><${Icon} n="send" s=${19}/></button>`}
+    </div>`}
   </div>`;
 }
 function Conversation({ c }) {
   const { db, user, update, closeChat } = useApp();
   const [info, setInfo] = useState(false);
   const [reply, setReply] = useState(null);
+  const [active, setActive] = useState(null);
+  const [picking, setPicking] = useState(null);
   const scroller = useRef(null);
   const msgs = db.messages.filter((m) => m.chat === c.id).sort((a, b) => a.at - b.at);
   const members = chatMembers(db, c);
   const lastAt = msgs.length ? msgs[msgs.length - 1].at : 0;
+  const canPin = canPinIn(c, user);
   useEffect(() => {
     if (((c.read || {})[user.id] || 0) < lastAt) update((d) => { const x = d.chats.find((y) => y.id === c.id); x.read = x.read || {}; x.read[user.id] = Date.now(); });
   }, [c.id, lastAt]);
   useEffect(() => { const el = scroller.current; if (el) el.scrollTop = el.scrollHeight; }, [c.id, msgs.length]);
+  const react = (m, e) => {
+    update((d) => { const x = d.messages.find((y) => y.id === m.id); x.reactions = x.reactions || {}; if (x.reactions[user.id] === e) delete x.reactions[user.id]; else x.reactions[user.id] = e; });
+    // a thumbs-up or tick on a "Look at this" that's waiting on you counts as seeing it
+    const p = m.postId && db.posts.find((x) => x.id === m.postId);
+    if (p && p.type === 'look' && (e === '👍' || e === '✅') && needsMe(p, user.id)) quickAct(update, p, user.id, 'seen');
+    setPicking(null); setActive(null);
+  };
+  const pin = (m) => update((d) => {
+    const x = d.chats.find((y) => y.id === c.id); x.pinned = x.pinned === m.id ? null : m.id;
+    d.messages.push({ id: uid('m'), chat: c.id, user: user.id, at: Date.now(), kind: 'system', text: firstName(user) + (x.pinned ? ' pinned a message' : ' unpinned a message'), attachments: [], mentions: [] });
+  });
+  const pinned = c.pinned && msgs.find((m) => m.id === c.pinned);
+  const pinText = pinned && (pinned.text || (pinned.postId ? ((db.posts.find((p) => p.id === pinned.postId) || {}).title || 'Post') : 'Attachment'));
   const other = c.kind === 'dm' ? userById(db, c.members.find((id) => id !== user.id)) : null;
   const sub = other ? other.title : members.map((id) => (id === user.id ? 'You' : firstName(userById(db, id)))).slice(0, 7).join(', ') + (members.length > 7 ? ' +' + (members.length - 7) : '');
   let lastDay = '';
@@ -2479,13 +2685,18 @@ function Conversation({ c }) {
       <button className="cv-title" onClick=${() => setInfo(true)}><${ChatAvatar} c=${c} s=${42}/><span><b>${chatName(db, c, user.id)}</b><small>${sub}</small></span></button>
       <button className="icon-btn" onClick=${() => setInfo(true)} aria-label=${c.kind === 'dm' ? 'Contact info' : 'Group info'} title="Info"><${Icon} n="info"/></button>
     </header>
-    <div className="cv-msgs" ref=${scroller}>
+    ${pinned && html`<div className="cv-pin" role="button" tabIndex="0" onClick=${() => { const el = document.getElementById('msg-' + pinned.id); if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' }); }}>
+      <${Icon} n="pin" s=${15}/><span><b>Pinned · </b>${pinText}</span>${canPin && html`<button className="icon-btn sm" onClick=${(e) => { e.stopPropagation(); pin(pinned); }} aria-label="Unpin"><${Icon} n="close" s=${13}/></button>`}</div>`}
+    <div className="cv-msgs" ref=${scroller} onClick=${() => { setPicking(null); }}>
       ${msgs.length === 0 && html`<div className="cv-sys"><span>No messages yet. Say hello, or type @ to tag someone.</span></div>`}
       ${msgs.map((m, i) => {
         const day = dkey(m.at), sep = day !== lastDay; lastDay = day;
         const prev = msgs[i - 1];
         const grouped = !!prev && !sep && prev.user === m.user && prev.kind !== 'system' && m.kind !== 'system' && m.at - prev.at < 5 * MIN;
-        return html`<${React.Fragment} key=${m.id}>${sep && html`<div className="cv-day"><span>${dayLabel(m.at)}</span></div>`}<${Bubble} m=${m} c=${c} grouped=${grouped} members=${members} onReply=${() => setReply(m)}/><//>`;
+        return html`<${React.Fragment} key=${m.id}>${sep && html`<div className="cv-day"><span>${dayLabel(m.at)}</span></div>`}<${Bubble} m=${m} c=${c} grouped=${grouped} members=${members}
+          active=${active === m.id} picking=${picking === m.id} canPin=${canPin}
+          onSelect=${() => setActive((a) => (a === m.id ? null : m.id))} onReply=${() => { setReply(m); setActive(null); }}
+          onReact=${(e) => react(m, e)} onPick=${() => setPicking(m.id)} onPin=${() => { pin(m); setActive(null); }}/><//>`;
       })}
     </div>
     <${ChatComposer} key=${'cc' + c.id} c=${c} members=${members} reply=${reply} clearReply=${() => setReply(null)}/>
@@ -2645,6 +2856,44 @@ function App() {
   const user = me ? db.users.find((u) => u.id === me && u.active !== false) : null;
   const toast = useCallback((msg, kind) => { const id = uid('t'); setToasts((t) => [...t, { id, msg, kind }]); setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3800); }, []);
   const go = useCallback((v) => { setView(v); setOpenId(null); setDrawer(false); }, []);
+  // Pop-up alerts for anything new that needs this person; also keeps the desktop sidebar's count up to date
+  // and wakes it for red items.
+  const [alerts, setAlerts] = useState([]);
+  const [soundOn, setSoundOnState] = useState(() => lsGet('floorboard.sound.v1') !== 'off');
+  const known = useRef(null);
+  const dismissAlert = useCallback((id) => setAlerts((l) => l.filter((x) => x.id !== id)), []);
+  const openAlert = (a) => {
+    dismissAlert(a.id);
+    const desk = window.floorboardDesktop;
+    if (a.postId) { setOpenId(a.postId); return; }
+    if (mode === 'widget') { if (desk && desk.openFull) desk.openFull(); else location.hash = ''; }
+    setOpenChatId(a.chatId); setView('chats'); setOpenId(null);
+  };
+  const openAlertRef = useRef(openAlert); openAlertRef.current = openAlert;
+  useEffect(() => { known.current = null; setAlerts([]); }, [me]);
+  useEffect(() => {
+    if (!user) return;
+    const desk = window.floorboardDesktop;
+    const items = alertItems(db, user.id);
+    const count = db.posts.filter((p) => needsMe(p, user.id)).length;
+    if (!known.current) { known.current = new Set(items.map((i) => i.key)); if (desk && desk.attention) desk.attention({ count, urgent: false }); return; }
+    const fresh = items.filter((i) => !known.current.has(i.key));
+    fresh.forEach((i) => known.current.add(i.key));
+    if (desk && desk.attention) desk.attention({ count, urgent: fresh.some((i) => i.level === 'red') });
+    if (!fresh.length) return;
+    fresh.slice(-3).forEach((i) => {
+      const a = { ...i, id: uid('al') };
+      setAlerts((l) => [...l.slice(-3), a]);
+      if (i.level !== 'red') setTimeout(() => dismissAlert(a.id), 9000);
+      try {
+        if (popupPermission() === 'granted' && (document.hidden || !document.hasFocus())) {
+          const n = new Notification(i.title, { body: i.body, icon: 'icon-192.png', tag: i.key, requireInteraction: i.level === 'red' });
+          n.onclick = () => { window.focus(); if (desk && desk.focus) desk.focus(); openAlertRef.current(a); n.close(); };
+        }
+      } catch (e) { /* pop-ups are optional; the in-app alert still shows */ }
+    });
+    if (soundOn) chime(fresh.some((i) => i.level === 'red'));
+  }, [db, user && user.id]);
   useEffect(() => {
     const h = (e) => { if (e.key !== 'Escape' || document.querySelector('.modal-wrap,.lightbox')) return; if (openId) setOpenId(null); else if (drawer) setDrawer(false); };
     window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h);
@@ -2654,6 +2903,30 @@ function App() {
     confirmState, ask: setConfirmState, mode, scene, openChatId,
     openChat: (id) => { setOpenChatId(id); setView('chats'); setOpenId(null); setDrawer(false); },
     closeChat: () => setOpenChatId(null),
+    alerts, dismissAlert, openAlert, soundOn,
+    setSoundOn: (v) => { setSoundOnState(v); lsSet('floorboard.sound.v1', v ? 'on' : 'off'); if (v) chime(false); },
+    enablePopups: () => {
+      try { Notification.requestPermission().then((p) => toast(p === 'granted' ? 'Pop-up alerts are on for this device' : 'Pop-ups were blocked. Alerts still show inside the app.', p === 'granted' ? undefined : 'warn')); }
+      catch (e) { toast('Pop-ups aren’t available here. Alerts still show inside the app.', 'warn'); }
+    },
+    // Demo only: a colleague sends you something a few seconds from now, so you can see how it arrives.
+    sendTestTask: () => {
+      if (!user) return;
+      const others = db.users.filter((u) => u.id !== user.id && u.active !== false);
+      const from = others.find((u) => u.role !== 'staff' && u.depts.some((d) => user.depts.includes(d))) || others.find((u) => u.role === 'admin') || others[0];
+      const t = TEST_TASKS[testIdx++ % TEST_TASKS.length];
+      toast('Demo: ' + firstName(from) + ' sends you a ' + TYPES[t.type].label.toLowerCase() + ' in 3 seconds');
+      setTimeout(() => update((d) => {
+        const now = Date.now();
+        let ch = d.chats.find((c) => c.kind === 'dm' && c.members.includes(from.id) && c.members.includes(user.id));
+        if (!ch) { ch = { id: uid('c'), kind: 'dm', name: '', icon: '', color: '', dept: null, members: [from.id, user.id], createdBy: from.id, createdAt: now, read: {} }; d.chats.push(ch); }
+        d.counter += 1;
+        const pid = uid('p');
+        d.posts.unshift({ id: pid, chat: ch.id, no: d.counter, type: t.type, title: t.title, body: '', author: from.id, createdAt: now, toUsers: [user.id], toDepts: [], about: user.depts[0],
+          level: t.level, due: t.type === 'task' ? dkey() : null, attachments: [], recips: { [user.id]: { status: 'todo', pct: 0, seen: null, updatedAt: null } }, activity: [], poll: null, closed: false });
+        d.messages.push({ id: uid('m'), chat: ch.id, user: from.id, at: now, text: '', attachments: [], mentions: [], replyTo: null, postId: pid, kind: 'msg' });
+      }), 3000);
+    },
     setScene: (s) => { setSceneState(s); lsSet(SCENE_KEY, s); },
     openPost: (id) => { setOpenId(id); setDrawer(false); }, closePost: () => setOpenId(null),
     compose: (preset) => setComposer(preset || {}), closeComposer: () => setComposer(null),
@@ -2664,6 +2937,7 @@ function App() {
   return html`<${Ctx.Provider} value=${ctx}>
     <div className="scene" data-scene=${scene} aria-hidden="true"></div>
     ${!user ? html`<${Login}/>` : mode === 'widget' ? html`<${Widget}/>` : html`<${Shell}/>`}
+    <${AlertStack}/>
     <${Toasts}/>
   <//>`;
 }

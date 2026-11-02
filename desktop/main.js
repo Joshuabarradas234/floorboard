@@ -1,6 +1,6 @@
 // Floorboard on Windows: a frosted-glass sidebar docked to the edge of the screen,
 // a tray icon to show or hide it, and the full app in its own window.
-const { app, BrowserWindow, Tray, Menu, nativeImage, screen, globalShortcut, ipcMain, shell } = require('electron');
+const { app, BrowserWindow, Tray, Menu, nativeImage, screen, globalShortcut, ipcMain, shell, session } = require('electron');
 const path = require('path'), fs = require('fs');
 
 const PAGE = path.join(__dirname, '..', 'index.html');
@@ -40,6 +40,7 @@ function createSidebar() {
   sidebar.loadFile(PAGE, { hash: 'widget', query: { shell: 'desktop' } });
   openLinksOutside(sidebar);
   sidebar.on('close', (e) => { if (!app.isQuitting) { e.preventDefault(); sidebar.hide(); } });
+  sidebar.on('focus', () => sidebar.flashFrame(false));
   if (SMOKE) {
     sidebar.webContents.on('console-message', (_e, level, message) => { if (level >= 2) console.log('console:', message); });
     sidebar.webContents.on('did-finish-load', () => setTimeout(async () => {
@@ -74,11 +75,20 @@ function buildTray() {
   ]));
 }
 
+// Red items slide the sidebar into view without stealing focus and flash it on the taskbar;
+// the tray tooltip always shows how many things need you.
+function attention(_e, { count, urgent }) {
+  if (tray) tray.setToolTip(count ? 'Floorboard · ' + count + (count === 1 ? ' thing needs you' : ' things need you') : 'Floorboard · all caught up');
+  if (urgent && sidebar) { if (!sidebar.isVisible()) { dock(); sidebar.showInactive(); } sidebar.flashFrame(true); }
+}
+
+app.setAppUserModelId('Floorboard'); // lets Windows show pop-up notifications for the app
 if (!app.requestSingleInstanceLock()) app.quit();
 else {
   app.on('second-instance', showSidebar);
   app.whenReady().then(() => {
     loadPrefs();
+    session.defaultSession.setPermissionRequestHandler((_wc, permission, done) => done(permission === 'media' || permission === 'notifications'));
     createSidebar();
     if (SMOKE) return;
     buildTray();
@@ -87,6 +97,7 @@ else {
     ipcMain.on('open-full', openFull);
     ipcMain.on('hide-sidebar', () => sidebar && sidebar.hide());
     ipcMain.on('show-sidebar', showSidebar);
+    ipcMain.on('attention', attention);
   });
   app.on('window-all-closed', () => { /* keep running in the tray */ });
   app.on('will-quit', () => globalShortcut.unregisterAll());
