@@ -71,9 +71,12 @@ Deno.serve(async (req) => {
     };
 
     const now = Date.now();
-    const sends: { to: string; title: string; body: string; tag: string; url: string; urgent: boolean }[] = [];
+    const sends: { to: string; title: string; body: string; tag: string; url: string; urgent: boolean; force?: boolean }[] = [];
     for (const it of (Array.isArray(items) ? items : []).slice(0, 50)) {
-      if (it.post && (it.to || it.nudge)) {
+      if (it.test) {
+        // "Send me a test alert": only ever to the person asking, shown even if Floorboard is open
+        sends.push({ to: me, tag: 'test', url: '', urgent: false, force: true, title: 'Floorboard test alert', body: 'Alerts work on this device. You’ll get them even when Floorboard is closed.' });
+      } else if (it.post && (it.to || it.nudge)) {
         const p = await one('posts', String(it.post));
         const who = String(it.to || it.nudge);
         const r = await one('rcp', p ? p.id + '|' + who : '');
@@ -100,7 +103,7 @@ Deno.serve(async (req) => {
         }
       }
     }
-    const reachable = sends.filter((s) => onShift(status[s.to], now));
+    const reachable = sends.filter((s) => s.force || onShift(status[s.to], now));
     if (!reachable.length) return json({ sent: 0, skipped: sends.length });
 
     const { data: subs } = await db.from('push_subs').select('*').in('staff_id', [...new Set(reachable.map((s) => s.to))]);
@@ -109,7 +112,7 @@ Deno.serve(async (req) => {
     await Promise.all(reachable.flatMap((s) => (subs || []).filter((x) => x.staff_id === s.to).map(async (sub) => {
       try {
         await webpush.sendNotification({ endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-          JSON.stringify({ title: s.title, body: s.body, tag: s.tag, url: s.url, urgent: s.urgent }),
+          JSON.stringify({ title: s.title, body: s.body, tag: s.tag, url: s.url, urgent: s.urgent, force: !!s.force }),
           { TTL: 12 * 3600, urgency: s.urgent ? 'high' : 'normal' });
         sent++;
       } catch (e: any) {

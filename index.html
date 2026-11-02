@@ -2749,11 +2749,11 @@ const TEST_TASKS = [
 ];
 let testIdx = 0;
 function AlertControls({ onDone }) {
-  const { soundOn, setSoundOn, sendTestTask, enablePopups, pushState, enablePush, disablePush } = useApp();
+  const { soundOn, setSoundOn, sendTestTask, enablePopups, pushState, enablePush, disablePush, testPush } = useApp();
   const perm = popupPermission(), push = pushAvailability();
   return html`<div className="alert-ctl">
     ${push === 'ready' && pushState !== 'on' && html`<button className="btn sm primary" onClick=${() => { enablePush(); onDone && onDone(); }}><${Icon} n="bell" s=${14}/>Get alerts when Floorboard is closed</button>`}
-    ${push === 'ready' && pushState === 'on' && html`<span className="push-ok">✓ Alerts reach this device when Floorboard is closed</span><button className="btn sm ghost" onClick=${disablePush}>Turn off</button>`}
+    ${push === 'ready' && pushState === 'on' && html`<span className="push-ok">✓ Alerts reach this device when Floorboard is closed</span><button className="btn sm" onClick=${() => { testPush(); onDone && onDone(); }}>Send me a test alert</button><button className="btn sm ghost" onClick=${disablePush}>Turn off</button>`}
     ${push === 'ios-install' && html`<span className="push-note">To get alerts on iPhone when Floorboard is closed: open it in Safari, tap Share, then “Add to Home Screen”, and open it from there.</span>`}
     ${push === 'blocked' && html`<span className="push-note">Alerts are blocked for Floorboard in this browser’s settings. Allow notifications for this site to get them.</span>`}
     ${push !== 'ready' && push !== 'blocked' && perm === 'default' && html`<button className="btn sm" onClick=${() => { enablePopups(); onDone && onDone(); }}><${Icon} n="bell" s=${14}/>Turn on pop-ups</button>`}
@@ -4082,9 +4082,20 @@ function App() {
     enablePush: async () => {
       const r = await pushOn(true);
       setPushState(r === 'on' ? 'on' : r === 'setup' ? 'setup' : 'off');
-      toast({ on: 'Alerts are on. This device gets them even when Floorboard is closed.', blocked: 'Alerts are blocked for Floorboard in this browser’s settings.', setup: 'Alerts aren’t switched on for the store yet. Ask your admin to finish the alerts setup.' }[r] || 'Couldn’t turn alerts on here. Try again in a moment.', r === 'on' ? undefined : 'warn');
+      toast({ on: 'Alerts are on. This device gets them even when Floorboard is closed.', blocked: 'Alerts are blocked for Floorboard in this browser’s settings.', setup: 'Alerts aren’t switched on for the store yet. Ask your admin to finish the alerts setup (step 1).' }[r] || 'Couldn’t turn alerts on here. Try again in a moment.', r === 'on' ? undefined : 'warn');
     },
     disablePush: async () => { await pushOff(false); setPushState('off'); toast('This device won’t get alerts while Floorboard is closed'); },
+    // checks the whole chain: this device's sign-up, the server function, its key, and the phone showing it
+    testPush: async () => {
+      const { data, error } = await CLOUD.functions.invoke('notify', { body: { items: [{ test: true }] } });
+      let why = '';
+      if (error && error.context && error.context.json) { try { why = ((await error.context.json()) || {}).error || ''; } catch (e) { /* no details */ } }
+      if (error) toast(/VAPID/.test(why) ? 'The alerts key isn’t saved on the server yet (step 3 of the alerts setup).'
+        : error.name === 'FunctionsHttpError' ? 'The server refused the test (' + (why || error.context.status) + '). Check step 2 of the alerts setup.'
+        : 'Can’t reach the alerts function. Check it’s deployed and named notify (step 2 of the alerts setup).', 'warn');
+      else if (!data || !data.sent) toast('No device has alerts on for you yet. Tap “Get alerts when Floorboard is closed” first.', 'warn');
+      else toast('Test alert sent to ' + data.sent + (data.sent === 1 ? ' device' : ' devices') + '. It should pop up in a few seconds.');
+    },
     openShift: () => { setShiftOpen(true); setDrawer(false); },
     openSummary: () => { setSummary(true); setDrawer(false); },
     setSoundOn: (v) => { setSoundOnState(v); lsSet('floorboard.sound.v1', v ? 'on' : 'off'); if (v) chime(false); },

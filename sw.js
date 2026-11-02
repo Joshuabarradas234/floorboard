@@ -18,8 +18,8 @@ self.addEventListener('push', (e) => {
   let d = {};
   try { d = e.data ? e.data.json() : {}; } catch (x) { d = { body: e.data ? e.data.text() : '' }; }
   e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((wins) => {
-    // the app on screen shows its own alert (Apple devices must always get one)
-    if (!/iPhone|iPad|Macintosh/.test(navigator.userAgent) && wins.some((w) => w.visibilityState === 'visible' && w.focused)) return;
+    // the app on screen shows its own alert (Apple devices must always get one, and a test always shows)
+    if (!d.force && !/iPhone|iPad|Macintosh/.test(navigator.userAgent) && wins.some((w) => w.visibilityState === 'visible' && w.focused)) return;
     return self.registration.showNotification(d.title || 'Floorboard', {
       body: d.body || '', tag: d.tag || undefined, renotify: !!d.tag, data: { url: d.url || '' },
       icon: 'icon-192.png', badge: 'icon-192.png', requireInteraction: !!d.urgent, vibrate: d.urgent ? [220, 120, 220, 120, 220] : [140],
