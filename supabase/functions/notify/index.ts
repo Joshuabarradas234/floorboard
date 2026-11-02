@@ -2,10 +2,9 @@
 // The app calls it after saving something that needs someone: a new tag, a nudge, an @mention or a direct message.
 // It works out the text and the people itself from the saved data, so nobody can send made-up alerts,
 // and it skips anyone who is off shift.
+// It only uses what the Supabase runtime has built in (fetch and Web Crypto), so there are no packages to load.
 // Deploy: Supabase -> Edge Functions -> Deploy a new function -> Via editor -> name it "notify" -> paste -> Deploy.
 // Secret needed: VAPID_PRIVATE_KEY (Edge Functions -> Secrets).
-import { createClient } from 'npm:@supabase/supabase-js@2.117.3';
-import webpush from 'npm:web-push@3.6.7';
 
 const VAPID_PUBLIC_KEY = 'BObiDNxNhrWIwRFL9i6_Ulr5_Mk3wGqsdI8N_wgpSIGR7YitjJmXenVLpklE24tKxb8ePkcg2-QJja_ry4j6-fY';
 const APP_LINK = 'https://joshuabarradas234.github.io/floorboard/';
@@ -16,11 +15,72 @@ const cors = {
 };
 const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
 
+// --- web push: the message is encrypted for that one browser (RFC 8291) and signed with the store's key (RFC 8292) ---
+const utf8 = new TextEncoder();
+type Bytes = ReturnType<typeof Uint8Array.from>; // plain bytes, as Web Crypto wants them
+function b64uDecode(s: string): Bytes {
+  const bin = atob(s.replace(/-/g, '+').replace(/_/g, '/') + '==='.slice((s.length + 3) % 4));
+  return Uint8Array.from(bin, (c) => c.charCodeAt(0));
+}
+function b64uEncode(a: Bytes): string {
+  let bin = '';
+  for (const b of a) bin += String.fromCharCode(b);
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function concat(...parts: Bytes[]): Bytes {
+  const out = new Uint8Array(parts.reduce((n, p) => n + p.length, 0));
+  let at = 0;
+  for (const p of parts) { out.set(p, at); at += p.length; }
+  return out;
+}
+async function hkdf(salt: Bytes, ikm: Bytes, info: Bytes, bytes: number): Promise<Bytes> {
+  const key = await crypto.subtle.importKey('raw', ikm, 'HKDF', false, ['deriveBits']);
+  return new Uint8Array(await crypto.subtle.deriveBits({ name: 'HKDF', hash: 'SHA-256', salt, info }, key, bytes * 8));
+}
+async function encryptPayload(p256dh: string, authSecret: string, text: string): Promise<Bytes> {
+  const ua = b64uDecode(p256dh), secret = b64uDecode(authSecret);
+  const mine = await crypto.subtle.generateKey({ name: 'ECDH', namedCurve: 'P-256' }, true, ['deriveBits']) as CryptoKeyPair;
+  const minePub = new Uint8Array(await crypto.subtle.exportKey('raw', mine.publicKey));
+  const theirs = await crypto.subtle.importKey('raw', ua, { name: 'ECDH', namedCurve: 'P-256' }, false, []);
+  const shared = new Uint8Array(await crypto.subtle.deriveBits({ name: 'ECDH', public: theirs }, mine.privateKey, 256));
+  const ikm = await hkdf(secret, shared, concat(utf8.encode('WebPush: info\0'), ua, minePub), 32);
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const cek = await hkdf(salt, ikm, utf8.encode('Content-Encoding: aes128gcm\0'), 16);
+  const nonce = await hkdf(salt, ikm, utf8.encode('Content-Encoding: nonce\0'), 12);
+  const key = await crypto.subtle.importKey('raw', cek, 'AES-GCM', false, ['encrypt']);
+  const sealed = new Uint8Array(await crypto.subtle.encrypt({ name: 'AES-GCM', iv: nonce }, key, concat(utf8.encode(text), new Uint8Array([2]))));
+  const head = new Uint8Array(21);
+  head.set(salt); new DataView(head.buffer).setUint32(16, 4096); head[20] = minePub.length;
+  return concat(head, minePub, sealed);
+}
+async function importVapidKey(privateKey: string, publicKey: string): Promise<CryptoKey> {
+  const pub = b64uDecode(publicKey);
+  return crypto.subtle.importKey('jwk', { kty: 'EC', crv: 'P-256', d: privateKey, x: b64uEncode(pub.slice(1, 33)), y: b64uEncode(pub.slice(33, 65)) },
+    { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']);
+}
+async function vapidAuth(endpoint: string, key: CryptoKey, publicKey: string, subject: string): Promise<string> {
+  const part = (o: unknown) => b64uEncode(utf8.encode(JSON.stringify(o)));
+  const unsigned = part({ typ: 'JWT', alg: 'ES256' }) + '.' + part({ aud: new URL(endpoint).origin, exp: Math.floor(Date.now() / 1000) + 12 * 3600, sub: subject });
+  const sig = new Uint8Array(await crypto.subtle.sign({ name: 'ECDSA', hash: 'SHA-256' }, key, utf8.encode(unsigned)));
+  return 'vapid t=' + unsigned + '.' + b64uEncode(sig) + ', k=' + publicKey;
+}
+// --- end web push ---
+
+// The store's database, reached as the server (so it can read everyone's alert sign-ups).
 function serviceKey(): string {
   const legacy = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   if (legacy) return legacy;
   try { const keys = JSON.parse(Deno.env.get('SUPABASE_SECRET_KEYS') || '{}'); return keys.default || Object.values(keys)[0] as string; } catch { return ''; }
 }
+async function rest(path: string, init: RequestInit = {}): Promise<any> {
+  const key = serviceKey();
+  const auth: Record<string, string> = key.startsWith('sb_') ? { apikey: key } : { apikey: key, Authorization: 'Bearer ' + key };
+  const res = await fetch(Deno.env.get('SUPABASE_URL') + '/rest/v1/' + path, { ...init, headers: { ...auth, 'Content-Type': 'application/json', ...(init.headers || {}) } });
+  if (!res.ok) throw new Error('database ' + res.status + ' ' + (await res.text()).slice(0, 200));
+  return res.status === 204 ? null : res.json();
+}
+const q = encodeURIComponent;
+const inList = (xs: string[]) => q('(' + xs.map((x) => '"' + x.replace(/"/g, '') + '"').join(',') + ')');
 
 type Rec = Record<string, any>;
 const TYPES: Rec = { task: 'Task', feedback: 'Feedback', look: 'Look at this', vote: 'Vote' };
@@ -41,23 +101,27 @@ function onShift(st: Rec | undefined, now: number): boolean {
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
+  let stage = 'reading the alert key';
   try {
-    const priv = Deno.env.get('VAPID_PRIVATE_KEY');
+    const priv = (Deno.env.get('VAPID_PRIVATE_KEY') || '').trim().replace(/^["']|["']$/g, '');
     if (!priv) return json({ error: 'VAPID_PRIVATE_KEY secret is missing' }, 500);
-    webpush.setVapidDetails(APP_LINK, VAPID_PUBLIC_KEY, priv);
-    const db = createClient(Deno.env.get('SUPABASE_URL')!, serviceKey(), { auth: { persistSession: false, autoRefreshToken: false } });
+    const vapidKey = await importVapidKey(priv, VAPID_PUBLIC_KEY);
 
     // who is asking: must be a signed-in member of the store
+    stage = 'checking who is asking';
     const token = (req.headers.get('Authorization') || '').replace(/^Bearer\s+/i, '');
-    const { data: auth } = await db.auth.getUser(token);
-    if (!auth?.user) return json({ error: 'not signed in' }, 401);
-    const { data: mem } = await db.from('members').select('staff_id').eq('auth_uid', auth.user.id).maybeSingle();
+    if (!token || token.startsWith('sb_')) return json({ error: 'not signed in' }, 401);
+    const who = await fetch(Deno.env.get('SUPABASE_URL') + '/auth/v1/user', { headers: { apikey: Deno.env.get('SUPABASE_ANON_KEY') || serviceKey(), Authorization: 'Bearer ' + token } });
+    if (!who.ok) return json({ error: 'not signed in' }, 401);
+    const user = await who.json();
+    const mem = (await rest('members?select=staff_id&auth_uid=eq.' + q(user.id)))[0];
     if (!mem) return json({ error: 'not a member of this store' }, 403);
     const me: string = mem.staff_id;
 
+    stage = 'reading what to send';
     const { items = [] } = await req.json().catch(() => ({ items: [] }));
-    const rows = async (coll: string) => ((await db.from('records').select('id,data').eq('coll', coll)).data || []) as { id: string; data: Rec }[];
-    const one = async (coll: string, id: string) => ((await db.from('records').select('data').eq('coll', coll).eq('id', id).maybeSingle()).data?.data) as Rec | undefined;
+    const rows = async (coll: string) => (await rest('records?select=id,data&coll=eq.' + q(coll))) as { id: string; data: Rec }[];
+    const one = async (coll: string, id: string) => ((await rest('records?select=data&coll=eq.' + q(coll) + '&id=eq.' + q(id)))[0] || {}).data as Rec | undefined;
     const users: Rec = Object.fromEntries((await rows('users')).map((r) => [r.id, r.data]));
     const status: Rec = Object.fromEntries((await rows('status')).map((r) => [r.id, r.data]));
     const first = (id: string) => String(users[id]?.name || 'Someone').split(' ')[0];
@@ -79,7 +143,7 @@ Deno.serve(async (req) => {
       } else if (it.post && (it.to || it.nudge)) {
         const p = await one('posts', String(it.post));
         const who = String(it.to || it.nudge);
-        const r = await one('rcp', p ? p.id + '|' + who : '');
+        const r = p ? await one('rcp', p.id + '|' + who) : undefined;
         if (!p || !r || r.status === 'done' || p.closed) continue;
         sends.push({
           to: who, tag: 'p:' + p.id + (it.nudge ? ':n' : ''), url: '#go-post:' + p.id, urgent: p.level === 'red',
@@ -106,22 +170,26 @@ Deno.serve(async (req) => {
     const reachable = sends.filter((s) => s.force || onShift(status[s.to], now));
     if (!reachable.length) return json({ sent: 0, skipped: sends.length });
 
-    const { data: subs } = await db.from('push_subs').select('*').in('staff_id', [...new Set(reachable.map((s) => s.to))]);
+    stage = 'sending';
+    const subs: Rec[] = await rest('push_subs?select=*&staff_id=in.' + inList([...new Set(reachable.map((s) => s.to))]));
     let sent = 0;
-    const gone: string[] = [];
-    await Promise.all(reachable.flatMap((s) => (subs || []).filter((x) => x.staff_id === s.to).map(async (sub) => {
+    const gone: string[] = [], failed: string[] = [];
+    await Promise.all(reachable.flatMap((s) => subs.filter((x) => x.staff_id === s.to).map(async (sub) => {
       try {
-        await webpush.sendNotification({ endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
-          JSON.stringify({ title: s.title, body: s.body, tag: s.tag, url: s.url, urgent: s.urgent, force: !!s.force }),
-          { TTL: 12 * 3600, urgency: s.urgent ? 'high' : 'normal' });
-        sent++;
-      } catch (e: any) {
-        if (e && (e.statusCode === 404 || e.statusCode === 410)) gone.push(sub.endpoint); // the app was removed from that device
-      }
+        const res = await fetch(sub.endpoint, {
+          method: 'POST',
+          headers: { TTL: String(12 * 3600), Urgency: s.urgent ? 'high' : 'normal', 'Content-Encoding': 'aes128gcm', 'Content-Type': 'application/octet-stream',
+            Authorization: await vapidAuth(sub.endpoint, vapidKey, VAPID_PUBLIC_KEY, APP_LINK) },
+          body: await encryptPayload(sub.p256dh, sub.auth, JSON.stringify({ title: s.title, body: s.body, tag: s.tag, url: s.url, urgent: s.urgent, force: !!s.force })),
+        });
+        if (res.ok) sent++;
+        else if (res.status === 404 || res.status === 410) gone.push(sub.endpoint); // the app was removed from that device
+        else failed.push(res.status + ' ' + (await res.text()).slice(0, 120));
+      } catch (e: any) { failed.push(String(e?.message || e)); }
     })));
-    if (gone.length) await db.from('push_subs').delete().in('endpoint', gone);
-    return json({ sent, skipped: sends.length - reachable.length, removed: gone.length });
+    for (const e of gone) await rest('push_subs?endpoint=eq.' + q(e), { method: 'DELETE' });
+    return json({ sent, skipped: sends.length - reachable.length, removed: gone.length, failed });
   } catch (e: any) {
-    return json({ error: String(e?.message || e) }, 500);
+    return json({ error: String(e?.message || e), stage }, 500);
   }
 });

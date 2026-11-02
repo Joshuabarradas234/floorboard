@@ -31,8 +31,8 @@ language sql security definer set search_path = public as $$
   delete from push_subs where endpoint = p_endpoint and staff_id = public.my_staff_id()
 $$;
 
-revoke all on function public.save_push_sub(text, text, text, text) from public;
-revoke all on function public.remove_push_sub(text) from public;
+revoke all on function public.save_push_sub(text, text, text, text) from public, anon;
+revoke all on function public.remove_push_sub(text) from public, anon;
 grant execute on function public.save_push_sub(text, text, text, text) to authenticated;
 grant execute on function public.remove_push_sub(text) to authenticated;
 
