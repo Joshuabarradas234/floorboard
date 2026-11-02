@@ -1,0 +1,14 @@
+{
+  "name": "floorboard-desktop",
+  "productName": "Floorboard",
+  "version": "0.1.0",
+  "description": "Floorboard as a glass sidebar on the edge of your Windows desktop",
+  "main": "main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "33.2.1"
+  }
+}
