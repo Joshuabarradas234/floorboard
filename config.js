@@ -2,6 +2,6 @@
 // From Supabase: Project Settings -> API: the Project URL, and the publishable (or "anon public") key.
 // The publishable key is meant to be public; the access rules in supabase/setup.sql protect the data.
 window.FLOORBOARD_CONFIG = {
-  supabaseUrl: '',
-  supabaseKey: '',
+  supabaseUrl: 'https://dtddkocntgxlktwzcvyt.supabase.co',
+  supabaseKey: 'sb_publishable_njrV4tkcsyurg8YjTcuvtA_-4B4znfX',
 };
