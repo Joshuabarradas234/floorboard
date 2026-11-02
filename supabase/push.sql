@@ -49,4 +49,7 @@ drop policy if exists "own shift remove" on public.records;
 create policy "own shift remove" on public.records as restrictive for delete to authenticated
   using (coll <> 'status' or id = public.my_staff_id() or public.is_admin());
 
+-- Tell the API to pick up the new functions straight away.
+notify pgrst, 'reload schema';
+
 select 'Phone alerts are ready in the database' as done;
