@@ -39,7 +39,16 @@ Without a server, the app runs the demo store and keeps everything on one device
 
 Add `?demo` to the link to open the demo store instead.
 
+## Alerts when the app is closed, and on shift / off shift
+
+Once, after the steps above:
+
+1. **SQL Editor → New query**: paste all of `supabase/push.sql` and click **Run**.
+2. **Edge Functions → Deploy a new function → Via editor**: name it `notify`, paste all of `supabase/functions/notify/index.ts`, and deploy. In the function's settings, switch **Verify JWT** off (the function checks who is calling itself).
+3. **Edge Functions → Secrets**: add `VAPID_PRIVATE_KEY` with the private key that matches `vapidPublicKey` in `config.js`. Keep the private key out of this repository.
+
+Then each person taps the bell → **Get alerts when Floorboard is closed** on their phone. On an iPhone, Floorboard has to be added to the home screen from Safari first. The Windows sidebar alerts from the tray instead. Nobody gets phone alerts while they're off shift.
+
 ## Still to come
 
-- Push notifications when the app is closed on a phone (alerts work while it's open, and on the always-running desktop sidebar).
 - Real home-screen widgets (the live tiles on an iPhone or Android home screen) need a native app built on top of the server.

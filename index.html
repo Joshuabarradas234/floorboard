@@ -829,6 +829,49 @@ td.mono{white-space:nowrap}
 .board-col .sc,.inline-board .sc{margin-top:14px;padding:14px;border-radius:var(--r-lg);background:var(--glass);border:1px solid var(--glass-line);border-top-color:rgba(255,255,255,.3)}
 .w-sc{flex:none;max-height:46%;overflow-y:auto;padding:14px;border-radius:22px}
 .widget .w-list{padding-bottom:10px}
+/* on shift / off shift, online dots, typing, voice speed, translation, shift summary */
+.av.has-dot{position:relative}
+.av-dot{position:absolute;right:-2px;bottom:-2px;width:32%;height:32%;min-width:8px;min-height:8px;max-width:13px;max-height:13px;border-radius:50%;background:var(--green-dot);box-shadow:0 0 0 2px rgba(24,18,13,.9)}
+.shift{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:4px 10px;border-radius:99px;background:var(--green-soft);color:var(--green);white-space:nowrap;border:0;cursor:pointer;font-family:inherit;flex:none}
+.shift i{width:7px;height:7px;border-radius:50%;background:var(--green-dot);flex:none}
+.shift.off{background:rgba(255,255,255,.1);color:var(--ink-2)}
+.shift.off i{background:transparent;box-shadow:inset 0 0 0 1.5px var(--ink-3)}
+.shift.sm{padding:4px 9px;font-size:11.5px}
+@media (max-width:760px){.topbar .shift .lbl{display:none}.topbar .shift{padding:7px}}
+.offtag{display:inline-flex;align-items:center;font-size:11.5px;font-weight:700;color:var(--ink-3);background:rgba(255,255,255,.08);border-radius:99px;padding:1px 8px;margin-left:6px;white-space:nowrap;vertical-align:middle}
+.offtag.esc{color:var(--red);background:var(--red-soft)}
+.typing{color:var(--green)!important;font-weight:600}
+.ldot.none{background:transparent;box-shadow:inset 0 0 0 1.5px var(--ink-3)}
+.speed{font:700 12px var(--f-mono);min-width:44px;padding:5px 8px;border-radius:99px;border:1px solid var(--glass-line);background:var(--glass);color:var(--ink);cursor:pointer;flex:none}
+.speed.on{background:var(--green-soft);color:var(--green);border-color:transparent}
+.b-tr{margin-top:6px;padding-top:6px;border-top:1px dashed rgba(255,255,255,.2);font-size:14.5px;white-space:pre-wrap}
+.b-tr small{display:block;font-size:11.5px;color:var(--ink-3);margin-bottom:2px;white-space:normal}
+.b-tr small button{background:none;border:0;color:inherit;text-decoration:underline;cursor:pointer;font:inherit;padding:0}
+.d-tr{margin:-4px 0 12px}
+.d-tr .linkish{display:inline-flex;align-items:center;gap:5px}
+.notice.esc{border-color:rgba(255,107,87,.55);background:var(--red-soft);color:var(--ink)}
+.shift-opts{display:grid;gap:8px}
+.shift-opt{display:flex;gap:12px;align-items:flex-start;text-align:left;padding:12px 14px;border-radius:var(--r-sm);border:1px solid var(--glass-line);background:var(--glass);color:var(--ink);cursor:pointer;font:inherit}
+.shift-opt .ldot{margin-top:6px;flex:none}
+.shift-opt.on{border-color:var(--green-dot);background:var(--green-soft)}
+.shift-opt b{display:block;font-size:15px}
+.shift-opt small{color:var(--ink-2);font-size:13px}
+.hours{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.hours .input{width:auto}
+.stats.sum-stats{grid-template-columns:repeat(auto-fit,minmax(118px,1fr))}
+button.stat{text-align:left;cursor:pointer;color:inherit;font:inherit}
+button.stat:hover{border-color:rgba(255,255,255,.4)}
+.sum-h{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);font-weight:700;margin:16px 0 6px}
+.sum-list{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;margin:0;padding:0;list-style:none}
+.sum-list li{min-width:0}
+.modal-body{grid-template-columns:minmax(0,1fr)}
+.sum-list button{width:100%;display:flex;gap:10px;align-items:center;text-align:left;padding:9px 12px;border-radius:var(--r-sm);border:1px solid var(--glass-line);background:var(--glass);color:var(--ink);cursor:pointer;font:inherit}
+.sum-list .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sum-empty{margin:14px 0 0;color:var(--ink-2)}
+.push-card{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:12px 14px;border-radius:var(--r-sm);background:var(--glass);border:1px solid var(--glass-line);margin-top:16px;font-size:14px}
+.push-card > span{flex:1;min-width:190px}
+.alert-ctl .push-ok{font-size:12.5px;color:var(--green);font-weight:600;align-self:center}
+.alert-ctl .push-note{font-size:12.5px;color:var(--ink-2);flex-basis:100%}
 </style>
 
 <div id="root"></div>
@@ -866,6 +909,8 @@ const TILE_COLORS = ['#9A6B2F', '#D0622B', '#3F8A2E', '#2F7FB8', '#0F8A8A', '#8A
 const NO_FILTERS = { type: 'any', level: 'any', dept: 'any' };
 
 const ICONS = {
+  translate: '<path d="M3 5h10M8 3v2M5 5c.8 3.6 3.2 6.2 6.5 7.5M11 5c-.8 3.8-3.6 7-7.5 8.5"/><path d="M12.5 21l4.25-9 4.25 9M14 18h5.5"/>',
+  sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6 6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/>',
   task: '<rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="m8 12 3 3 5-6"/>',
   feedback: '<path d="M4 5h16v11H9.5L5 20v-4H4z"/>',
   look: '<path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
@@ -1124,6 +1169,56 @@ function fileMatches(db, f, q) {
   const drv = db.drives.find((d) => d.id === f.drive);
   const hay = [f.name, f.docType, f.ref, f.party, f.hardCopy, (f.tags || []).join(' '), folderPath(db, f.folder), drv && drv.name, f.docDate, f.amount != null ? String(f.amount) : ''].join(' ').toLowerCase();
   return words.every((w) => hay.includes(w));
+}
+
+/* ---------------- on shift / off shift, and escalating ASAP items ---------------- */
+// Per person: { mode: 'on' | 'off' | 'auto', start, end, days (0 is Sunday), tz }. No status means on shift.
+// The server's alert function uses the same rule, so phone alerts and the app agree on who is on.
+const SHIFT_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const toMins = (t) => { const [h, m] = String(t || '0:0').split(':').map(Number); return (h || 0) * 60 + (m || 0); };
+function onShiftAt(st, now = Date.now()) {
+  if (!st || !st.mode || st.mode === 'on') return true;
+  if (st.mode === 'off') return false;
+  const days = st.days || [1, 2, 3, 4, 5];
+  const local = new Date(now - (st.tz || 0) * MIN);
+  const day = local.getUTCDay(), mins = local.getUTCHours() * 60 + local.getUTCMinutes();
+  const s = toMins(st.start || '08:00'), e = toMins(st.end || '17:00');
+  if (s <= e) return days.includes(day) && mins >= s && mins < e;
+  return (days.includes(day) && mins >= s) || (days.includes((day + 6) % 7) && mins < e); // overnight shift
+}
+const shiftOf = (db, id) => (db.status || {})[id] || null;
+const isOnShift = (db, id) => onShiftAt(shiftOf(db, id));
+function shiftNote(db, id) {
+  const st = shiftOf(db, id);
+  if (onShiftAt(st)) return '';
+  return st && st.mode === 'auto' ? 'Off shift · back ' + (st.start || '08:00') : 'Off shift';
+}
+// An ASAP item that nobody has opened after 30 minutes goes to the managers of the people it was sent to.
+const ESCALATE_AFTER = 30 * MIN;
+function escalationDue(p, now) {
+  if (p.level !== 'red' || p.closed || p.escalatedAt) return false;
+  const age = now - p.createdAt;
+  if (age < ESCALATE_AFTER || age > 12 * HOUR) return false;
+  const rs = Object.entries(p.recips).filter(([id]) => id !== p.author);
+  return rs.length > 0 && rs.every(([, r]) => !r.seen && r.status !== 'done');
+}
+function escalateTo(db, p) {
+  const skip = new Set([p.author, ...Object.keys(p.recips)]);
+  const depts = new Set(p.toDepts.filter((d) => !PSEUDO[d] && !isGroupId(d)));
+  Object.keys(p.recips).forEach((id) => { const u = userById(db, id); if (u) u.depts.forEach((d) => depts.add(d)); });
+  const act = db.users.filter((u) => u.active !== false && !skip.has(u.id));
+  const mgrs = act.filter((u) => u.role !== 'staff' && u.manages.some((d) => depts.has(d)));
+  return (mgrs.length ? mgrs : act.filter((u) => u.role === 'admin')).map((u) => u.id);
+}
+function escalate(d, id, now) {
+  const p = d.posts.find((x) => x.id === id);
+  if (!p || !escalationDue(p, now)) return;
+  const to = escalateTo(d, p), names = to.map((m) => firstName(userById(d, m))).join(', ');
+  p.escalatedAt = now; p.escalatedTo = to;
+  to.forEach((m) => { p.recips[m] = { status: 'todo', pct: 0, seen: null, updatedAt: null, escalated: now }; });
+  // fixed ids, so two devices doing this at the same moment still leave one entry
+  p.activity.push({ id: 'e-esc-' + p.id, kind: 'system', esc: true, user: p.author, at: now, text: 'nobody opened it within 30 minutes, ' + (to.length ? 'so it went to ' + names : 'and there’s no manager to send it to') });
+  if (p.chat && d.chats.some((c) => c.id === p.chat) && to.length) d.messages.push({ id: 'm-esc-' + p.id, chat: p.chat, user: p.author, at: now, kind: 'system', text: '⚠ #' + p.no + ' (ASAP) wasn’t opened within 30 minutes, so it went to ' + names, attachments: [], mentions: [] });
 }
 
 /* ---------------- demo store seed ---------------- */
@@ -1397,6 +1492,8 @@ function seed() {
   // everyone has read up to 45 minutes ago; Zanele hasn't opened her group since this morning
   db.chats.forEach((c) => chatMembers(db, c).forEach((id) => { c.read[id] = T - 45 * MIN; }));
   db.chats.find((c) => c.id === 'c-fv').read.u11 = T - 2 * HOUR;
+  // on shift / off shift examples: Nomsa is off today, Tumi works the late shift
+  db.status = { u7: { mode: 'off', at: T }, u14: { mode: 'auto', start: '14:00', end: '22:00', days: [1, 2, 3, 4, 5, 6], tz: new Date().getTimezoneOffset(), at: T } };
   return db;
 }
 function loadDb() {
@@ -1415,11 +1512,13 @@ function Icon({ n, s = 18 }) {
   return html`<svg className="ic" width=${s} height=${s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" dangerouslySetInnerHTML=${{ __html: ICONS[n] || '' }}></svg>`;
 }
 function Avatar({ u, s = 28 }) {
-  const { db } = useApp();
+  const { db, user } = useApp();
+  usePresence();
   if (!u) return html`<span className="av" style=${{ width: s, height: s, fontSize: Math.round(s * 0.4), background: '#777' }}>?</span>`;
   const parts = u.name.split(' ');
   const ini = parts[0][0] + (parts.length > 1 ? parts[parts.length - 1][0] : '');
-  return html`<span className="av" title=${u.name} style=${{ width: s, height: s, fontSize: Math.round(s * 0.38), background: deptById(db, u.depts[0]).color }}>${ini.toUpperCase()}</span>`;
+  const dot = s >= 26 && user && u.id !== user.id && isOnline(db, u.id);
+  return html`<span className=${'av' + (dot ? ' has-dot' : '')} title=${u.name + (dot ? ' · online' : '')} style=${{ width: s, height: s, fontSize: Math.round(s * 0.38), background: deptById(db, u.depts[0]).color }}>${ini.toUpperCase()}${dot && html`<i className="av-dot"></i>`}</span>`;
 }
 const LevelTag = ({ l }) => html`<span className=${'lvl ' + l} title=${LEVELS[l].long}>${LEVELS[l].label}</span>`;
 const TypeChip = ({ t }) => html`<span className="chip"><${Icon} n=${TYPES[t].icon} s=${13}/>${TYPES[t].label}</span>`;
@@ -1478,7 +1577,12 @@ function DocRow({ a }) {
 }
 function AudioRow({ a }) {
   const url = useAttUrl(a);
-  return html`<div className="audio-row"><${Icon} n="mic" s=${16}/>${url ? html`<audio src=${url} controls preload="metadata" aria-label=${a.name}></audio>` : html`<span className="muted sm">Voice note isn’t stored on this device</span>`}</div>`;
+  const ref = useRef(null);
+  const [rate, setRate] = useState(1);
+  useEffect(() => { if (ref.current) ref.current.playbackRate = rate; }, [rate, url]);
+  const next = (e) => { e.stopPropagation(); setRate((r) => (r === 1 ? 1.5 : r === 1.5 ? 2 : 1)); };
+  return html`<div className="audio-row"><${Icon} n="mic" s=${16}/>${url ? html`<audio ref=${ref} src=${url} controls preload="metadata" aria-label=${a.name} onPlay=${(e) => { e.currentTarget.playbackRate = rate; }}></audio>
+    <button type="button" className=${'speed' + (rate !== 1 ? ' on' : '')} onClick=${next} title="Play faster" aria-label=${'Playback speed ' + rate + ' times'}>${rate}×</button>` : html`<span className="muted sm">Voice note isn’t stored on this device</span>`}</div>`;
 }
 function Attachments({ items }) {
   const media = items.filter((a) => a.kind === 'image' || a.kind === 'video'), voice = items.filter((a) => a.kind === 'audio'), docs = items.filter((a) => a.kind === 'doc');
@@ -1564,6 +1668,7 @@ function Topbar() {
       <${Icon} n="search" s=${16}/><input id="top-search" value=${q} onChange=${(e) => setQ(e.target.value)} placeholder="Search posts, @people, #1047, invoices…" aria-label="Search"/>
     </form>
     <button className="icon-btn search-btn" onClick=${() => go('search')} aria-label="Search"><${Icon} n="search"/></button>
+    <${ShiftChip}/>
     ${CLOUD && html`<span className=${'sync ' + live} title=${live === 'ok' ? 'Connected. Changes reach everyone straight away.' : live === 'offline' ? 'No connection. Changes send when you’re back online.' : 'The server refused a change.'}>${live === 'ok' ? '● Live' : live === 'offline' ? 'Offline' : 'Not saved'}</span>`}
     <div className="bell-wrap">
       <button className="icon-btn white" onClick=${() => setBell((b) => !b)} aria-label=${unseen.length + ' new posts'} aria-expanded=${bell}><${Icon} n="bell"/>${unseen.length > 0 && html`<span className="badge">${unseen.length}</span>`}</button>
@@ -1577,7 +1682,7 @@ function Topbar() {
   </header>`;
 }
 function Rail() {
-  const { db, user, view, go, drawer, logout, ask, resetDemo, openLook } = useApp();
+  const { db, user, view, go, drawer, logout, ask, resetDemo, openLook, openShift, openSummary } = useApp();
   const myDepts = db.depts.filter((d) => user.depts.includes(d.id) || user.manages.includes(d.id));
   const item = (key, content, label, onClick) => html`<button key=${key} className=${'rail-i' + (view === key ? ' on' : '')} onClick=${onClick || (() => go(key))} aria-label=${label}>${content}<span className="lbl">${label}</span></button>`;
   return html`<nav className=${'rail glass' + (drawer ? ' open' : '')} aria-label="Departments and tools">
@@ -1592,6 +1697,8 @@ function Rail() {
     <span className="rail-sep"></span>
     ${user.role === 'admin' && item('admin', html`<${Icon} n="shield"/>`, 'People & access')}
     ${item('widget', html`<${Icon} n="sidebar"/>`, 'Sidebar view', () => { const desk = window.floorboardDesktop; if (desk && desk.showSidebar) desk.showSidebar(); else location.hash = 'widget'; })}
+    ${item('shift', html`<${Icon} n="clock"/>`, 'My shift', openShift)}
+    ${item('summary', html`<${Icon} n="sun"/>`, 'Shift summary', openSummary)}
     ${item('scene', html`<${Icon} n="palette"/>`, 'Wallpaper & glass', openLook)}
     ${!CLOUD && item('reset', html`<${Icon} n="refresh"/>`, 'Reset demo', () => ask({ title: 'Reset the demo store?', body: 'All posts, files, pins and people go back to the example data. Anything you added is removed.', confirm: 'Reset demo', danger: true, onConfirm: resetDemo }))}
     ${item('logout', html`<${Icon} n="logout"/>`, 'Log out', logout)}
@@ -1643,6 +1750,7 @@ function Widget() {
   return html`<div className="widget">
     <header className="w-head glass">
       <div className="greet"><${Avatar} u=${user} s=${36}/><div className="greet-txt" style=${{ minWidth: 0 }}><b>${greeting()}, ${firstName(user)}</b><small>${db.store}</small></div></div>
+      <${ShiftChip} small/>
       <button className="icon-btn" onClick=${openLook} title="Wallpaper & glass" aria-label="Wallpaper & glass"><${Icon} n="palette" s=${17}/></button>
       <button className="icon-btn" onClick=${openFull} title="Open the full app" aria-label="Open the full app"><${Icon} n="expand" s=${17}/></button>
       ${desk && desk.hide && html`<button className="icon-btn" onClick=${() => desk.hide()} title="Hide the sidebar" aria-label="Hide the sidebar"><${Icon} n="close" s=${17}/></button>`}
@@ -1841,7 +1949,7 @@ function People({ p, canManage }) {
     ${p.type === 'task' && html`<div className=${'bar big' + (g.pct === 100 ? ' full' : '')}><i style=${{ width: g.pct + '%' }}></i></div>`}
     <ul className="plist">${ids.map((id) => { const u = userById(db, id); const r = p.recips[id]; const v = r.status === 'done' ? 100 : r.pct || 0; return html`<li key=${id}>
       <${Avatar} u=${u} s=${30}/>
-      <div className="pl-main"><div className="pl-name">${u ? u.name : 'Former staff'}${id === user.id && html`<span className="you">you</span>`}</div><div className="muted sm">${stateLine(p, r)}</div></div>
+      <div className="pl-main"><div className="pl-name">${u ? u.name : 'Former staff'}${id === user.id && html`<span className="you">you</span>`}${shiftNote(db, id) && html`<span className="offtag">${shiftNote(db, id)}</span>`}${r.escalated && html`<span className="offtag esc">Escalated to</span>`}</div><div className="muted sm">${stateLine(p, r)}</div></div>
       ${p.type === 'task' && html`<div className="pl-bar"><div className=${'bar' + (v === 100 ? ' full' : '')}><i style=${{ width: v + '%' }}></i></div><span className="mono sm">${v}%</span></div>`}
       <div className="pl-flags">${isOverdue(p, id) && html`<span className="st bad">Overdue</span>`}${isStale(p, id) && html`<span className="st warn">No update ${since(r.updatedAt || p.createdAt)}</span>`}${r.nudgedAt && r.status !== 'done' && html`<span className="st muted">Nudged ${ago(r.nudgedAt)}</span>`}</div>
       ${canManage && r.status !== 'done' && !p.closed && id !== user.id && html`<button className="btn sm" onClick=${() => nudge(id)}><${Icon} n="bell" s=${14}/>Nudge</button>`}
@@ -1863,7 +1971,7 @@ function Thread({ p }) {
     <div className="sect-h"><h3>Updates & comments</h3><span className="muted sm">${items.length}</span></div>
     ${items.length === 0 && html`<p className="muted sm">No updates yet.</p>`}
     <ol className="thread">${items.map((it) => { const u = userById(db, it.user);
-      if (it.kind === 'system') return html`<li key=${it.id} className="t-sys"><${Icon} n="bell" s=${14}/><span><b>${firstName(u)}</b> ${it.text} · ${ago(it.at)}</span></li>`;
+      if (it.kind === 'system') return html`<li key=${it.id} className="t-sys"><${Icon} n=${it.esc ? 'flag' : 'bell'} s=${14}/><span><b>${it.esc ? 'Escalated:' : firstName(u)}</b> ${it.text} · ${ago(it.at)}</span></li>`;
       return html`<li key=${it.id} className="t-item"><${Avatar} u=${u} s=${28}/><div className="t-main">
         <div className="t-head"><b>${u ? u.name : 'Someone'}</b><span className="muted">${verb[it.kind]} · ${ago(it.at)}</span>${it.kind === 'update' && it.pct != null && html`<span className=${'pct-pill' + (it.pct >= 100 ? ' full' : '')}>${it.pct}%</span>`}</div>
         ${it.text && html`<div className="t-text">${it.text}</div>`}
@@ -1904,7 +2012,9 @@ function PostDetail({ id }) {
       <div className="d-from"><${Avatar} u=${a} s=${36}/><div><div><b>${a ? a.name : 'Someone'}</b> <span className="muted">· ${a ? a.title : ''}</span></div><div className="muted sm">${ago(p.createdAt)} · to ${toLabel(db, p)} · reaches ${n} ${n === 1 ? 'person' : 'people'}</div>
         ${(() => { const ch = p.chat && db.chats.find((x) => x.id === p.chat); return ch && chatMembers(db, ch).includes(user.id) && html`<button className="linkish sm" onClick=${() => openChat(ch.id)}>Open in chat: ${chatName(db, ch, user.id)}</button>`; })()}</div></div>
       ${p.closed && html`<div className="notice"><${Icon} n="archive" s=${16}/>Closed. No more updates are needed.</div>`}
+      ${p.escalatedAt && html`<div className="notice esc"><${Icon} n="flag" s=${16}/><span>Escalated ${ago(p.escalatedAt)}${(p.escalatedTo || []).length ? ' to ' + p.escalatedTo.map((x) => firstName(userById(db, x))).join(', ') : ''}: nobody opened this ASAP item within 30 minutes.</span></div>`}
       ${p.body && html`<div className="d-text">${p.body}</div>`}
+      <${TranslateLink} text=${[p.title, p.body].filter(Boolean).join('\n\n')}/>
       ${p.attachments.length > 0 && html`<${Attachments} items=${p.attachments}/>`}
       <${ActionBox} key=${p.id + user.id} p=${p}/>
       ${p.type === 'vote' && html`<${PollResults} p=${p}/>`}
@@ -2521,6 +2631,8 @@ function MsgText({ text, mentions }) {
 function ChatItem({ r, on, onOpen }) {
   const { db, user } = useApp();
   const { c, last, unread, ment } = r;
+  usePresence();
+  const typers = typersIn(c.id, user.id);
   let preview = 'No messages yet', who = '';
   if (last) {
     if (last.kind === 'system') preview = last.text;
@@ -2536,7 +2648,7 @@ function ChatItem({ r, on, onOpen }) {
     <${ChatAvatar} c=${c} s=${48}/>
     <span className="ci-main">
       <span className="ci-top"><b>${chatName(db, c, user.id)}</b><span className=${'ci-time' + (unread ? ' new' : '')}>${last ? shortTime(last.at) : ''}</span></span>
-      <span className="ci-bot"><span className="ci-prev">${showWho ? who + ': ' : ''}${preview}</span>${ment && html`<span className="ci-at" title="You were tagged">@</span>`}${unread > 0 && html`<span className="ci-n">${unread}</span>`}</span>
+      <span className="ci-bot">${typers.length ? html`<span className="ci-prev typing">${typingText(db, c, typers)}</span>` : html`<span className="ci-prev">${showWho ? who + ': ' : ''}${preview}</span>`}${ment && html`<span className="ci-at" title="You were tagged">@</span>`}${unread > 0 && html`<span className="ci-n">${unread}</span>`}</span>
     </span>
   </button>`;
 }
@@ -2582,7 +2694,7 @@ function alertItems(db, me) {
     if (p.author === me || !needsMe(p, me)) return;
     const r = p.recips[me];
     out.push({ key: 'p:' + p.id + ':' + (r.nudgedAt || 0), level: p.level, from: p.author, postId: p.id, chatId: p.chat || null,
-      title: (r.nudgedAt ? 'Reminder · ' : '') + TYPES[p.type].label + ' from ' + firstName(userById(db, p.author)) + ' · ' + LEVELS[p.level].label, body: p.title });
+      title: (r.nudgedAt ? 'Reminder · ' : r.escalated ? 'Escalated · ' : '') + TYPES[p.type].label + ' from ' + firstName(userById(db, p.author)) + ' · ' + LEVELS[p.level].label, body: p.title });
   });
   myChats(db, me).forEach((c) => {
     const read = (c.read || {})[me] || 0;
@@ -2637,10 +2749,14 @@ const TEST_TASKS = [
 ];
 let testIdx = 0;
 function AlertControls({ onDone }) {
-  const { soundOn, setSoundOn, sendTestTask, enablePopups } = useApp();
-  const perm = popupPermission();
+  const { soundOn, setSoundOn, sendTestTask, enablePopups, pushState, enablePush, disablePush } = useApp();
+  const perm = popupPermission(), push = pushAvailability();
   return html`<div className="alert-ctl">
-    ${perm === 'default' && html`<button className="btn sm" onClick=${() => { enablePopups(); onDone && onDone(); }}><${Icon} n="bell" s=${14}/>Turn on pop-ups</button>`}
+    ${push === 'ready' && pushState !== 'on' && html`<button className="btn sm primary" onClick=${() => { enablePush(); onDone && onDone(); }}><${Icon} n="bell" s=${14}/>Get alerts when Floorboard is closed</button>`}
+    ${push === 'ready' && pushState === 'on' && html`<span className="push-ok">✓ Alerts reach this device when Floorboard is closed</span><button className="btn sm ghost" onClick=${disablePush}>Turn off</button>`}
+    ${push === 'ios-install' && html`<span className="push-note">To get alerts on iPhone when Floorboard is closed: open it in Safari, tap Share, then “Add to Home Screen”, and open it from there.</span>`}
+    ${push === 'blocked' && html`<span className="push-note">Alerts are blocked for Floorboard in this browser’s settings. Allow notifications for this site to get them.</span>`}
+    ${push !== 'ready' && push !== 'blocked' && perm === 'default' && html`<button className="btn sm" onClick=${() => { enablePopups(); onDone && onDone(); }}><${Icon} n="bell" s=${14}/>Turn on pop-ups</button>`}
     <button className="btn sm ghost" onClick=${() => setSoundOn(!soundOn)} aria-pressed=${soundOn}>${soundOn ? 'Sound on' : 'Sound off'}</button>
     ${!CLOUD && html`<button className="btn sm ghost" onClick=${() => { sendTestTask(); onDone && onDone(); }}>Send me a test task</button>`}
   </div>`;
@@ -2651,6 +2767,7 @@ const REACTIONS = ['👍', '✅', '❤️', '😂', '🙏', '👀'];
 function canPinIn(c, u) { if (c.kind === 'dm') return true; if (c.dept) return u.role === 'admin' || u.manages.includes(c.dept); return c.createdBy === u.id || u.role === 'admin'; }
 function Bubble({ m, c, grouped, members, active, picking, canPin, onSelect, onReply, onReact, onPick, onPin }) {
   const { db, user } = useApp();
+  const [tr, translate] = useTranslate(m.text || '');
   if (m.kind === 'system') return html`<div className="cv-sys"><span>${m.text}</span></div>`;
   const mine = m.user === user.id, u = userById(db, m.user), group = c.kind !== 'dm';
   const quoted = m.replyTo && db.messages.find((x) => x.id === m.replyTo);
@@ -2667,6 +2784,7 @@ function Bubble({ m, c, grouped, members, active, picking, canPin, onSelect, onR
       ${m.postId && (p ? html`<${CardInChat} p=${p}/>` : html`<div className="muted sm">This post was deleted.</div>`)}
       ${!m.postId && m.attachments && m.attachments.length > 0 && html`<${Attachments} items=${m.attachments}/>`}
       ${!m.postId && m.text && html`<div className="b-text"><${MsgText} text=${m.text} mentions=${m.mentions}/></div>`}
+      ${tr && html`<div className="b-tr">${tr === 'busy' ? html`<small>Translating…</small>` : html`<small>Translated from ${langName(tr.from)} · <button onClick=${translate}>hide</button></small>${tr.text}`}</div>`}
       ${Object.keys(counts).length > 0 && html`<div className="b-reacts">${Object.entries(counts).map(([e, n]) => html`<button key=${e} className=${myReact === e ? 'mine' : ''} onClick=${(ev) => { ev.stopPropagation(); onReact(e); }} title=${myReact === e ? 'Remove your reaction' : 'React ' + e}>${e}${n > 1 ? ' ' + n : ''}</button>`)}</div>`}
       <div className="b-meta">${c.pinned === m.id && html`<${Icon} n="pin" s=${11}/>`}<span>${hm(m.at)}</span>${mine && html`<span className=${'ticks' + (readAll ? ' read' : '')} title=${readAll ? 'Read by everyone' : 'Delivered'}>✓✓</span>`}</div>
     </div>
@@ -2674,6 +2792,7 @@ function Bubble({ m, c, grouped, members, active, picking, canPin, onSelect, onR
       : html`<div className="b-acts" onClick=${(e) => e.stopPropagation()}>
         <button className="icon-btn sm" onClick=${onPick} aria-label="React" title="React"><${Icon} n="smile" s=${15}/></button>
         <button className="icon-btn sm" onClick=${onReply} aria-label="Reply" title="Reply"><${Icon} n="reply" s=${15}/></button>
+        ${!m.postId && m.text && html`<button className="icon-btn sm" onClick=${translate} aria-label="Translate" title="Translate"><${Icon} n="translate" s=${15}/></button>`}
         ${canPin && html`<button className="icon-btn sm" onClick=${onPin} aria-label=${c.pinned === m.id ? 'Unpin' : 'Pin to the top'} title=${c.pinned === m.id ? 'Unpin' : 'Pin to the top'}><${Icon} n="pin" s=${15}/></button>`}
       </div>`}
   </div>`;
@@ -2697,13 +2816,14 @@ function ChatComposer({ c, members, reply, clearReply }) {
   // Tagging someone makes the message a tracked "Look at this" by default; the sender can change it or keep it as plain chat.
   useEffect(() => { if (!touched) setKind(live.length ? 'look' : 'none'); }, [live.length]);
   useEffect(() => { if (reply && ta.current) ta.current.focus(); }, [reply]);
+  useEffect(() => () => Presence.typingIn(null), []);
   useEffect(() => { if (!rec) return; const t = setInterval(() => setRecSecs(Math.round((Date.now() - rec.started) / 1000)), 250); return () => clearInterval(t); }, [rec]);
   useEffect(() => () => { if (rec) rec.stream.getTracks().forEach((t) => t.stop()); }, [rec]);
   const options = useMemo(() => {
     if (!sug) return [];
     const q = sug.q.toLowerCase();
     const people = members.filter((id) => id !== user.id).map((id) => userById(db, id)).filter((u) => u && (!q || u.name.toLowerCase().includes(q)))
-      .map((u) => ({ k: 'u', id: u.id, label: labelFor(db, u), sub: u.title, u }));
+      .map((u) => ({ k: 'u', id: u.id, label: labelFor(db, u), sub: [u.title, shiftNote(db, u.id)].filter(Boolean).join(' · '), u }));
     const own = c.dept && !PSEUDO[c.dept] ? [deptById(db, c.dept)] : [];
     const teams = [...(db.groups || []).filter((g) => !g.archived), ...own, ...db.depts.filter((d) => d.id !== c.dept)].filter((d) => !q || d.name.toLowerCase().includes(q))
       .map((d) => ({ k: 'd', id: d.id, label: d.name, sub: (isGroupId(d.id) ? GROUP_KINDS[d.kind] || 'Group' : 'Team') + ' · ' + deptMembers(db, d.id).length + ' people', color: d.color }));
@@ -2713,6 +2833,7 @@ function ChatComposer({ c, members, reply, clearReply }) {
   const onChange = (e) => {
     const v = e.target.value, caret = e.target.selectionStart;
     setText(v); grow(e.target);
+    Presence.typingIn(v.trim() ? c.id : null);
     const m = v.slice(0, caret).match(/(^|\s)@([^\s@]*)$/);
     setSug(m ? { q: m[2], start: caret - m[2].length - 1 } : null); setHi(0);
   };
@@ -2768,6 +2889,7 @@ function ChatComposer({ c, members, reply, clearReply }) {
     const body = voice ? '' : text.trim(), all = voice ? [voice] : files;
     if ((!body && !all.length) || busy) return;
     setBusy(true);
+    Presence.typingIn(null);
     const atts = await storeFiles(all);
     const type = voice ? 'none' : kind, now = Date.now();
     const tags = voice ? [] : live;
@@ -2796,12 +2918,13 @@ function ChatComposer({ c, members, reply, clearReply }) {
   }
   const showBar = kind !== 'none' || live.length > 0;
   const empty = !text.trim() && !files.length;
+  const offs = live.filter((x) => x.k === 'u' && !isOnShift(db, x.id)).map((x) => x.label);
   return html`<div className="cc">
     ${sug && options.length > 0 && html`<div className="sugs cc-sugs" role="listbox">${options.map((o, i) => html`<button type="button" key=${o.k + o.id} className=${'sug' + (i === hi ? ' hi' : '')} onMouseDown=${(e) => { e.preventDefault(); pick(o); }} onMouseEnter=${() => setHi(i)}>
       ${o.k === 'd' ? html`<span className="sq" style=${{ '--c': o.color }}>@</span>` : html`<${Avatar} u=${o.u} s=${28}/>`}<span><b>${o.label}</b><div className="sug-sub">${o.sub}</div></span></button>`)}</div>`}
     ${reply && html`<div className="cc-reply"><${Icon} n="reply" s=${15}/><span><b>${reply.user === user.id ? 'You' : firstName(userById(db, reply.user))}</b>: ${reply.text || 'Attachment'}</span><button className="icon-btn sm" onClick=${clearReply} aria-label="Cancel reply"><${Icon} n="close" s=${14}/></button></div>`}
     ${showBar && html`<div className="cc-bar">
-      <span className="cc-bar-l">${live.length ? 'Tagged ' + live.map((x) => '@' + x.label).join(', ') : 'Goes to everyone in this chat'}</span>
+      <span className="cc-bar-l">${live.length ? 'Tagged ' + live.map((x) => '@' + x.label).join(', ') : 'Goes to everyone in this chat'}${offs.length ? ' · ' + offs.join(', ') + (offs.length > 1 ? ' are' : ' is') + ' off shift, so it waits on their board' : ''}</span>
       <div className="seg sm" role="group" aria-label="What is it">${[['none', 'Just chat'], ['task', 'Task'], ['feedback', 'Feedback'], ['look', 'Look at this']].map(([k, l]) => html`<button type="button" key=${k} className=${kind === k ? 'on' : ''} onClick=${() => { setKind(k); setTouched(true); }}>${l}</button>`)}</div>
       ${kind !== 'none' && html`<div className="seg sm" role="group" aria-label="Attention level">${LEVEL_KEYS.map((l) => html`<button type="button" key=${l} className=${level === l ? 'on' : ''} onClick=${() => setLevel(l)}><span className=${'ldot ' + l}></span>${LEVELS[l].label}</button>`)}</div>`}
       ${kind === 'task' && html`<input id=${'cc-due-' + c.id} type="date" className="input cc-due" value=${due} min=${dkey()} onChange=${(e) => setDue(e.target.value)} aria-label="Due date"/>`}
@@ -2854,7 +2977,11 @@ function Conversation({ c }) {
   const pinned = c.pinned && msgs.find((m) => m.id === c.pinned);
   const pinText = pinned && (pinned.text || (pinned.postId ? ((db.posts.find((p) => p.id === pinned.postId) || {}).title || 'Post') : 'Attachment'));
   const other = c.kind === 'dm' ? userById(db, c.members.find((id) => id !== user.id)) : null;
-  const sub = other ? other.title : members.map((id) => (id === user.id ? 'You' : firstName(userById(db, id)))).slice(0, 7).join(', ') + (members.length > 7 ? ' +' + (members.length - 7) : '');
+  usePresence();
+  const typers = typersIn(c.id, user.id);
+  const sub = typers.length ? html`<span className="typing">${typingText(db, c, typers)}</span>`
+    : other ? (isOnline(db, other.id) ? 'online' : shiftNote(db, other.id) || other.title)
+    : members.map((id) => (id === user.id ? 'You' : firstName(userById(db, id)))).slice(0, 7).join(', ') + (members.length > 7 ? ' +' + (members.length - 7) : '');
   let lastDay = '';
   return html`<div className="cv">
     <header className="cv-head">
@@ -2978,7 +3105,7 @@ const STAFF_DOMAIN = '@staff.floorboard.app';
 const pinPassword = (pin) => 'fb-' + pin + '-FB';
 const PIN_LEN = CLOUD ? 6 : 4;
 const CACHE_KEY = 'floorboard.cloud.cache.v1', STORE_CODE_KEY = 'floorboard.storecode.v1';
-function emptyDb() { return { v: 2, store: 'Your store', counter: 1000, depts: [], users: [], groups: [], shortcuts: [], drives: [], folders: [], files: [], tiles: [], pins: {}, chats: [], messages: [], posts: [] }; }
+function emptyDb() { return { v: 2, store: 'Your store', counter: 1000, depts: [], users: [], groups: [], shortcuts: [], drives: [], folders: [], files: [], tiles: [], pins: {}, status: {}, chats: [], messages: [], posts: [] }; }
 
 // Same data, written with sorted keys, so a record that came back from the server compares equal to ours.
 function stable(v) {
@@ -3000,6 +3127,7 @@ function toRecs(db) {
   db.files.forEach((f) => put('files', f.id, f));
   db.tiles.forEach((t) => put('tiles', t.id, t));
   Object.entries(db.pins || {}).forEach(([who, v]) => put('pins', who, v));
+  Object.entries(db.status || {}).forEach(([who, s]) => put('status', who, s));
   db.chats.forEach((c) => { const { read, ...rest } = c; put('chats', c.id, rest); Object.entries(read || {}).forEach(([who, at]) => put('read', c.id + '|' + who, { chat: c.id, user: who, at })); });
   db.messages.forEach((m) => { const { reactions, ...rest } = m; put('messages', m.id, rest); Object.entries(reactions || {}).forEach(([who, e]) => put('rx', m.id + '|' + who, { msg: m.id, user: who, e })); });
   db.posts.forEach((p) => {
@@ -3019,6 +3147,7 @@ function fromRecs(list) {
   if (meta && meta.data.store) db.store = meta.data.store;
   db.depts = of('depts'); db.users = of('users'); db.groups = of('groups'); db.shortcuts = of('shortcuts'); db.drives = of('drives'); db.folders = of('folders'); db.files = of('files'); db.tiles = of('tiles');
   (by.pins || []).forEach((r) => { db.pins[r.id] = r.data; });
+  (by.status || []).forEach((r) => { db.status[r.id] = r.data; });
   const chats = {}; db.chats = of('chats').map((c) => (chats[c.id] = { ...c, read: {} }));
   (by.read || []).forEach(({ data: x }) => { if (chats[x.chat]) chats[x.chat].read[x.user] = x.at; });
   const msgs = {}; db.messages = of('messages').map((m) => (msgs[m.id] = { ...m })).sort((a, b) => a.at - b.at);
@@ -3036,7 +3165,7 @@ const PARENT = { rcp: ['posts', 'post'], act: ['posts', 'post'], vote: ['posts',
 const parentKey = (r) => (PARENT[r.coll] ? PARENT[r.coll][0] + '|' + r.data[PARENT[r.coll][1]] : null);
 
 const Sync = {
-  recs: new Map(), queue: new Map(), drops: new Map(), timer: null, notifyTimer: null, channel: null, down: false,
+  recs: new Map(), queue: new Map(), drops: new Map(), timer: null, notifyTimer: null, channel: null, down: false, me: null, pings: [],
   listeners: new Set(), statusListeners: new Set(), status: 'ok',
   setStatus(s) { if (s === this.status) return; this.status = s; this.statusListeners.forEach((f) => f(s)); },
   async loadAll() {
@@ -3059,10 +3188,19 @@ const Sync = {
     next.forEach((r, k) => {
       const sig = stable(r.data), cur = this.recs.get(k);
       if (cur && cur.sig === sig) return;
+      // what should reach someone's phone once it's saved: new tags, nudges, direct messages and @mentions
+      if (this.me && r.coll === 'rcp' && r.data.user !== this.me && r.data.status !== 'done') {
+        if (!cur) this.pings.push({ post: r.data.post, to: r.data.user });
+        else if (r.data.nudgedAt && r.data.nudgedAt !== cur.data.nudgedAt) this.pings.push({ post: r.data.post, nudge: r.data.user });
+      }
+      if (this.me && r.coll === 'messages' && !cur && r.data.user === this.me && r.data.kind === 'msg' && !r.data.postId) {
+        const ch = this.recs.get('chats|' + r.data.chat);
+        if ((r.data.mentions || []).length || (ch && ch.data.kind === 'dm')) this.pings.push({ message: r.id });
+      }
       this.recs.set(k, { ...r, sig }); this.queue.set(k, r); this.drops.delete(k);
     });
     const gone = [];
-    this.recs.forEach((r, k) => { if (!next.has(k) && r.coll !== 'pins' && !PARENT[r.coll]) gone.push(k); });
+    this.recs.forEach((r, k) => { if (!next.has(k) && r.coll !== 'pins' && r.coll !== 'status' && !PARENT[r.coll]) gone.push(k); });
     const goneSet = new Set(gone);
     this.recs.forEach((r, k) => {
       if (next.has(k) || !PARENT[r.coll]) return;
@@ -3076,7 +3214,7 @@ const Sync = {
   async flush() {
     clearTimeout(this.timer);
     const ups = [...this.queue.values()].map((r) => ({ coll: r.coll, id: r.id, data: r.data }));
-    const dels = [...this.drops.values()];
+    const dels = [...this.drops.values()], pings = this.pings.splice(0);
     this.queue.clear(); this.drops.clear();
     if (!ups.length && !dels.length) return;
     try {
@@ -3086,14 +3224,18 @@ const Sync = {
         for (let i = 0; i < ids.length; i += 200) { const { error } = await CLOUD.from('records').delete().eq('coll', coll).in('id', ids.slice(i, i + 200)); if (error) throw error; }
       }
       this.setStatus('ok');
+      if (pings.length) this.ping(pings);
     } catch (e) {
       if (e && e.code === '42501') { this.setStatus('refused'); return; } // not allowed: don't keep retrying
+      this.pings.unshift(...pings);
       ups.forEach((r) => { const k = r.coll + '|' + r.id; if (!this.queue.has(k)) this.queue.set(k, r); });
       dels.forEach((r) => { const k = r.coll + '|' + r.id; if (!this.recs.has(k)) this.drops.set(k, r); });
       this.setStatus('offline');
       this.timer = setTimeout(() => this.flush(), 5000);
     }
   },
+  // The server works out who to alert and what to say from what was just saved, and skips anyone off shift.
+  ping(items) { for (let i = 0; i < items.length; i += 50) CLOUD.functions.invoke('notify', { body: { items: items.slice(i, i + 50) } }).catch(() => {}); },
   notify() { clearTimeout(this.notifyTimer); this.notifyTimer = setTimeout(() => { const db = fromRecs([...this.recs.values()]); this.listeners.forEach((f) => f(db)); }, 60); },
   subscribe() {
     if (this.channel) return;
@@ -3115,9 +3257,225 @@ const Sync = {
         if (s === 'CHANNEL_ERROR' || s === 'TIMED_OUT' || s === 'CLOSED') { this.down = true; this.setStatus('offline'); }
       });
   },
-  stop() { if (this.channel) CLOUD.removeChannel(this.channel); this.channel = null; this.recs = new Map(); this.queue.clear(); this.drops.clear(); clearTimeout(this.timer); },
+  stop() { if (this.channel) CLOUD.removeChannel(this.channel); this.channel = null; this.recs = new Map(); this.queue.clear(); this.drops.clear(); this.pings = []; this.me = null; clearTimeout(this.timer); },
 };
 window.addEventListener('online', () => { if (CLOUD && Sync.queue.size + Sync.drops.size) Sync.flush(); });
+
+/* ---------------- who's online and who's typing ---------------- */
+// Live store only: each open app says who is using it and which chat they're typing in. Nothing is saved.
+const Presence = {
+  online: new Set(), typing: {}, listeners: new Set(), ch: null, mine: { typing: null, away: false }, timer: null, lastSent: 0,
+  emit() { this.listeners.forEach((f) => f()); },
+  start(me) {
+    if (!CLOUD || this.ch) return;
+    const ch = CLOUD.channel('presence-store', { config: { presence: { key: me } } });
+    this.ch = ch; this.mine = { typing: null, away: document.hidden };
+    ch.on('presence', { event: 'sync' }, () => {
+      if (this.ch !== ch) return;
+      const online = new Set(), typing = {};
+      Object.entries(ch.presenceState()).forEach(([id, metas]) => {
+        if (metas.some((m) => !m.away)) online.add(id);
+        metas.forEach((m) => { if (m.typing && Date.now() - (m.at || 0) < 15000) (typing[m.typing] = typing[m.typing] || new Set()).add(id); });
+      });
+      this.online = online; this.typing = typing; this.emit();
+    }).subscribe((s) => { if (s === 'SUBSCRIBED') this.send(); });
+    this.onVis = () => { this.mine.away = document.hidden; this.send(); };
+    document.addEventListener('visibilitychange', this.onVis);
+  },
+  send() { if (this.ch) Promise.resolve(this.ch.track({ typing: this.mine.typing, away: this.mine.away, at: Date.now() })).catch(() => {}); },
+  // called as someone types: tells the others at most every 3 seconds, and stops 5 seconds after the last key
+  typingIn(chatId) {
+    if (!this.ch) return;
+    clearTimeout(this.timer);
+    if (chatId) this.timer = setTimeout(() => this.typingIn(null), 5000);
+    if (chatId === this.mine.typing && (!chatId || Date.now() - this.lastSent < 3000)) return;
+    this.mine.typing = chatId; this.lastSent = Date.now(); this.send();
+  },
+  stop() {
+    if (this.ch) { CLOUD.removeChannel(this.ch); document.removeEventListener('visibilitychange', this.onVis); }
+    clearTimeout(this.timer); this.ch = null; this.online = new Set(); this.typing = {}; this.emit();
+  },
+};
+// In the demo store a few of the example staff show as online.
+const DEMO_ONLINE = ['u1', 'u2', 'u5', 'u6', 'u9', 'u11', 'u13'];
+const isOnline = (db, id) => (CLOUD ? Presence.online.has(id) : DEMO_ONLINE.includes(id) && isOnShift(db, id));
+function usePresence() {
+  const [, force] = useState(0);
+  useEffect(() => { const f = () => force((n) => n + 1); Presence.listeners.add(f); return () => { Presence.listeners.delete(f); }; }, []);
+  return Presence;
+}
+const typersIn = (chatId, me) => [...(Presence.typing[chatId] || [])].filter((id) => id !== me);
+function typingText(db, c, ids) {
+  if (c.kind === 'dm') return 'typing…';
+  const names = ids.map((id) => firstName(userById(db, id)));
+  return (names.length > 2 ? names.length + ' people are' : names.join(' and ') + (names.length > 1 ? ' are' : ' is')) + ' typing…';
+}
+
+/* ---------------- alerts when Floorboard is closed (installed app on the live store) ---------------- */
+const VAPID_KEY = (window.FLOORBOARD_CONFIG || {}).vapidPublicKey || '';
+const PUSH_KEY = 'floorboard.push.v1';
+const isIOS = () => /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const isStandalone = () => { try { return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; } catch (e) { return false; } };
+// ready, blocked (notifications turned off for the site), ios-install (iPhone needs it on the home screen first) or none
+function pushAvailability() {
+  if (!CLOUD || !VAPID_KEY || DESKTOP_SHELL || !location.protocol.startsWith('http')) return 'none'; // the Windows app alerts from the tray
+  if (!('serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window)) return isIOS() && !isStandalone() ? 'ios-install' : 'none';
+  return Notification.permission === 'denied' ? 'blocked' : 'ready';
+}
+const b64u = (s) => { const b = atob((s + '='.repeat((4 - s.length % 4) % 4)).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(b, (ch) => ch.charCodeAt(0)); };
+const swReady = () => Promise.race([navigator.serviceWorker.ready, new Promise((_, no) => setTimeout(() => no(new Error('no service worker')), 8000))]);
+function deviceLabel() {
+  const ua = navigator.userAgent;
+  return (/Android/.test(ua) ? 'Android' : isIOS() ? 'iPhone' : /Windows/.test(ua) ? 'Windows' : /Mac/.test(ua) ? 'Mac' : 'Device') + ' · ' + (/Edg\//.test(ua) ? 'Edge' : /Chrome\//.test(ua) ? 'Chrome' : /Firefox\//.test(ua) ? 'Firefox' : /Safari\//.test(ua) ? 'Safari' : 'Browser');
+}
+// Turns alerts on for whoever is logged in on this device. Returns on, blocked, setup (the server part isn't installed yet) or error.
+async function pushOn(ask) {
+  if (pushAvailability() !== 'ready') return 'error';
+  const perm = ask ? await Notification.requestPermission() : Notification.permission;
+  if (perm !== 'granted') return perm === 'denied' ? 'blocked' : 'error';
+  try {
+    const reg = await swReady();
+    let sub = await reg.pushManager.getSubscription();
+    if (sub && lsGet(PUSH_KEY) && lsGet(PUSH_KEY) !== VAPID_KEY) { await sub.unsubscribe(); sub = null; } // the store changed its alert key
+    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64u(VAPID_KEY) });
+    const j = sub.toJSON();
+    const { data, error } = await CLOUD.rpc('save_push_sub', { p_endpoint: j.endpoint, p_p256dh: j.keys.p256dh, p_auth: j.keys.auth, p_device: deviceLabel() });
+    if (error) return /save_push_sub|function|schema/i.test(error.message || '') ? 'setup' : 'error';
+    if (!data) return 'error';
+    lsSet(PUSH_KEY, VAPID_KEY);
+    return 'on';
+  } catch (e) { return 'error'; }
+}
+// keepDevice: logging out stops this person's alerts here, but whoever logs in next on this device gets theirs.
+async function pushOff(keepDevice) {
+  try {
+    const reg = await swReady(), sub = await reg.pushManager.getSubscription();
+    if (sub) { await CLOUD.rpc('remove_push_sub', { p_endpoint: sub.endpoint }); if (!keepDevice) await sub.unsubscribe(); }
+  } catch (e) { /* nothing to turn off */ }
+  if (!keepDevice) lsSet(PUSH_KEY, '');
+}
+
+/* ---------------- one-tap translation ---------------- */
+const LANGS = [['en', 'English'], ['af', 'Afrikaans'], ['zu', 'isiZulu'], ['xh', 'isiXhosa'], ['st', 'Sesotho'], ['nso', 'Sepedi'], ['tn', 'Setswana'], ['ts', 'Xitsonga'], ['ss', 'siSwati'], ['ve', 'Tshivenḓa'], ['nr', 'isiNdebele'], ['sn', 'chiShona'], ['ny', 'Chichewa'], ['pt', 'Português'], ['fr', 'Français']];
+function langName(k) {
+  const known = LANGS.find(([c]) => c === k);
+  if (known) return known[1];
+  try { return new Intl.DisplayNames(['en'], { type: 'language' }).of(k); } catch (e) { return k; }
+}
+// Newer Chrome can translate on the device itself, so nothing leaves the phone. Returns null when it can't
+// straight away (no language pack yet), so the fallback opens while the tap still counts.
+async function translateText(text, to) {
+  try {
+    if (!('Translator' in self) || !('LanguageDetector' in self)) return null;
+    if ((await LanguageDetector.availability()) !== 'available') return null;
+    const det = await LanguageDetector.create();
+    const best = (await det.detect(text))[0];
+    const from = best && best.confidence > 0.4 ? best.detectedLanguage : null;
+    if (!from || from === 'und') return null;
+    if (from.split('-')[0] === to) return { same: true };
+    if ((await Translator.availability({ sourceLanguage: from, targetLanguage: to })) !== 'available') return null;
+    const tr = await Translator.create({ sourceLanguage: from, targetLanguage: to });
+    return { text: await tr.translate(text), from };
+  } catch (e) { return null; }
+}
+// Otherwise Google Translate opens with the text filled in.
+function useTranslate(text) {
+  const { look, toast } = useApp();
+  const [tr, setTr] = useState(null);
+  const run = async (e) => {
+    if (e && e.stopPropagation) e.stopPropagation();
+    if (tr) { if (tr !== 'busy') setTr(null); return; }
+    const to = look.lang || 'en';
+    setTr('busy');
+    const r = await translateText(text, to);
+    if (r && r.same) { setTr(null); toast('That’s already in ' + langName(to) + '.'); return; }
+    if (r) { setTr(r); return; }
+    setTr(null);
+    window.open('https://translate.google.com/?sl=auto&tl=' + encodeURIComponent(to) + '&text=' + encodeURIComponent(text.slice(0, 4000)) + '&op=translate', '_blank', 'noopener');
+  };
+  return [tr, run];
+}
+function TranslateLink({ text }) {
+  const [tr, translate] = useTranslate(text);
+  if (!text) return null;
+  return html`<div className="d-tr">
+    <button type="button" className="linkish sm" onClick=${translate}><${Icon} n="translate" s=${14}/>${tr === 'busy' ? 'Translating…' : tr ? 'Hide translation' : 'Translate'}</button>
+    ${tr && tr !== 'busy' && html`<div className="b-tr"><small>Translated from ${langName(tr.from)}</small>${tr.text}</div>`}
+  </div>`;
+}
+
+/* ---------------- my shift, and the start-of-shift summary ---------------- */
+function ShiftChip({ small }) {
+  const { db, user, openShift } = useApp();
+  const st = shiftOf(db, user.id), on = onShiftAt(st), auto = st && st.mode === 'auto';
+  const label = on ? (auto ? 'On shift · until ' + st.end : 'On shift') : auto ? 'Off · back ' + st.start : 'Off shift';
+  return html`<button type="button" className=${'shift' + (on ? '' : ' off') + (small ? ' sm' : '')} onClick=${openShift} title=${label + '. Tap to change.'} aria-label=${label + '. Change your shift'}><i></i><span className="lbl">${small ? (on ? 'On shift' : 'Off shift') : label}</span></button>`;
+}
+function ShiftModal({ onClose }) {
+  const { db, user, update, toast, openSummary } = useApp();
+  const cur = shiftOf(db, user.id) || { mode: 'on' };
+  const [mode, setMode] = useState(cur.mode || 'on');
+  const [start, setStart] = useState(cur.start || '07:00');
+  const [end, setEnd] = useState(cur.end || '16:00');
+  const [days, setDays] = useState(cur.days || [1, 2, 3, 4, 5, 6]);
+  const save = () => {
+    if (mode === 'auto' && !days.length) { toast('Pick the days you usually work.', 'warn'); return; }
+    const st = mode === 'auto' ? { mode, start, end, days: [...days].sort(), tz: new Date().getTimezoneOffset(), at: Date.now() } : { mode, at: Date.now() };
+    const wasOn = isOnShift(db, user.id), nowOn = onShiftAt(st);
+    update((d) => { d.status = d.status || {}; d.status[user.id] = st; });
+    toast(nowOn ? 'You’re on shift. Alerts are on.' : 'You’re off shift. Everything waits on your board until you’re back.');
+    onClose();
+    if (nowOn && !wasOn) openSummary();
+  };
+  const opt = (k, title, sub) => html`<button type="button" key=${k} className=${'shift-opt' + (mode === k ? ' on' : '')} onClick=${() => setMode(k)} aria-pressed=${mode === k}><span className=${'ldot ' + (k === 'off' ? 'none' : 'green')}></span><span><b>${title}</b><small>${sub}</small></span></button>`;
+  return html`<${Modal} title="My shift" onClose=${onClose} footer=${html`<button className="btn" onClick=${onClose}>Cancel</button><button className="btn primary" onClick=${save}>Save</button>`}>
+    <div className="shift-opts">
+      ${opt('on', 'On shift', 'Pop-ups, sound and phone alerts as normal.')}
+      ${opt('off', 'Off shift', 'No pop-ups, sound or phone alerts. Everything waits on your board, and people can see you’re off.')}
+      ${opt('auto', 'Follow my usual hours', 'On shift during your hours, off the rest of the time.')}
+    </div>
+    ${mode === 'auto' && html`<div className="field"><span>My usual hours</span><div className="hours">
+        <input id="shift-start" type="time" className="input" value=${start} onChange=${(e) => setStart(e.target.value)} aria-label="Shift starts"/><span>to</span>
+        <input id="shift-end" type="time" className="input" value=${end} onChange=${(e) => setEnd(e.target.value)} aria-label="Shift ends"/></div></div>
+      <div className="field"><span>Days</span><div className="seg" role="group" aria-label="Days I work">${[1, 2, 3, 4, 5, 6, 0].map((dd) => html`<button type="button" key=${dd} className=${days.includes(dd) ? 'on' : ''} aria-pressed=${days.includes(dd)} onClick=${() => setDays((x) => (x.includes(dd) ? x.filter((y) => y !== dd) : [...x, dd]))}>${SHIFT_DAYS[dd]}</button>`)}</div></div>`}
+    <p className="muted sm">ASAP items still go to a manager if nobody opens them within 30 minutes, so nothing urgent gets stuck while you’re off.</p>
+  <//>`;
+}
+const SUMMARY_KEY = 'floorboard.summary.v1';
+function summaryShownToday(id) { try { return (JSON.parse(lsGet(SUMMARY_KEY)) || {})[id] === dkey(); } catch (e) { return false; } }
+function markSummary(id) { let m = {}; try { m = JSON.parse(lsGet(SUMMARY_KEY)) || {}; } catch (e) { /* start again */ } m[id] = dkey(); lsSet(SUMMARY_KEY, JSON.stringify(m)); }
+// What's waiting at the start of a shift, so nobody has to scroll back through chats to find out.
+function ShiftSummary({ onClose }) {
+  const { db, user, openPost, jump, setFilters, pushState, enablePush } = useApp();
+  const c = useCounts();
+  const st = shiftOf(db, user.id);
+  const mine = [...c.mine].sort(sortNeeds(user.id));
+  const asap = mine.filter((p) => p.level === 'red').length;
+  const chats = myChats(db, user.id).map((ch) => ({ ch, n: unreadIn(db, ch, user.id), at: mentionsIn(db, ch, user.id) })).filter((x) => x.n > 0).sort((a, b) => b.at - a.at || b.n - a.n);
+  const msgs = chats.reduce((a, x) => a + x.n, 0);
+  const waiting = c.vis.filter((p) => p.author === user.id && !p.closed && Object.values(p.recips).some((r) => r.status !== 'done')).length;
+  const esc = db.posts.filter((p) => p.escalatedAt && Date.now() - p.escalatedAt < DAY && !p.closed && (p.author === user.id || (p.escalatedTo || []).includes(user.id)));
+  const teamLate = user.role !== 'staff' ? c.vis.filter((p) => p.author !== user.id && !p.recips[user.id] && isOverdue(p)).length : 0;
+  const push = pushAvailability();
+  const openNeeds = () => { onClose(); setFilters(NO_FILTERS); jump('view:needs'); };
+  const row = (p, extra) => html`<li key=${p.id}><button onClick=${() => { onClose(); openPost(p.id); }}><${LevelTag} l=${p.level}/><span className="t">${p.title}</span>${extra}</button></li>`;
+  return html`<${Modal} title=${greeting() + ', ' + firstName(user)} onClose=${onClose} footer=${html`<button className="btn primary" onClick=${onClose}>Start my shift</button>`}>
+    <p className="muted" style=${{ margin: '0 0 12px' }}>${fmtDay(Date.now(), { weekday: 'long', day: 'numeric', month: 'long' })}${st && st.mode === 'auto' ? ' · your shift is ' + st.start + ' to ' + st.end : ''}</p>
+    <div className="stats sum-stats">
+      <button className=${'stat' + (asap ? ' bad' : '')} onClick=${openNeeds}><b>${mine.length}</b><span>${mine.length === 1 ? 'thing needs' : 'things need'} you${asap ? ' · ' + asap + ' ASAP' : ''}</span></button>
+      <div className=${'stat' + (c.overdue ? ' warn' : '')}><b>${c.overdue}</b><span>overdue</span></div>
+      <div className="stat"><b>${msgs}</b><span>unread ${msgs === 1 ? 'message' : 'messages'}</span></div>
+      <div className="stat"><b>${waiting}</b><span>sent by you, still open</span></div>
+      ${user.role !== 'staff' && html`<div className=${'stat' + (teamLate ? ' warn' : '')}><b>${teamLate}</b><span>overdue in your teams</span></div>`}
+    </div>
+    ${mine.length > 0 && html`<div className="sum-h">Start with these</div><ul className="sum-list">${mine.slice(0, 5).map((p) => row(p, isOverdue(p, user.id) && html`<span className="st bad">Overdue</span>`))}</ul>`}
+    ${esc.length > 0 && html`<div className="sum-h">Escalated in the last day</div><ul className="sum-list">${esc.slice(0, 4).map((p) => row(p, html`<span className="st bad">Escalated</span>`))}</ul>`}
+    ${chats.length > 0 && html`<div className="sum-h">Chats</div><ul className="sum-list">${chats.slice(0, 4).map(({ ch, n, at }) => html`<li key=${ch.id}><button onClick=${() => { onClose(); jump('chat:' + ch.id); }}><${ChatAvatar} c=${ch} s=${26}/><span className="t">${chatName(db, ch, user.id)}</span>${at && html`<span className="ci-at" title="You were tagged">@</span>`}<span className="ci-n">${n}</span></button></li>`)}</ul>`}
+    ${!mine.length && !msgs && html`<p className="sum-empty">Nothing is waiting on you. Have a good shift.</p>`}
+    ${push === 'ready' && pushState !== 'on' && html`<div className="push-card"><${Icon} n="bell"/><span>Get alerts on this device even when Floorboard is closed.</span><button className="btn sm primary" onClick=${enablePush}>Turn on</button></div>`}
+    ${push === 'ios-install' && html`<div className="push-card"><${Icon} n="bell"/><span>To get alerts on iPhone when Floorboard is closed: open it in Safari, tap Share, then “Add to Home Screen”, and open it from there.</span></div>`}
+  <//>`;
+}
 
 function CloudLogin() {
   const { cloudSignedIn } = useApp();
@@ -3314,7 +3672,7 @@ function GroupView({ id }) {
 // Saved privately with the person's pins, so it follows them to their other devices,
 // and on this device too, so the login screen already looks like theirs.
 const LOOK_KEY = 'floorboard.look.v1';
-const DEFAULT_LOOK = { scene: 'warm', photo: null, dim: 0.3, blur: 'soft', glass: 'frosted' };
+const DEFAULT_LOOK = { scene: 'warm', photo: null, dim: 0.3, blur: 'soft', glass: 'frosted', lang: 'en' };
 const WALLPAPERS = [['warm', 'Back office'], ['night', 'Night shift'], ['fresh', 'Fresh produce'], ['ocean', 'Ocean'], ['sunset', 'Sunset'], ['blossom', 'Blossom'], ['graphite', 'Graphite'], ['aurora', 'Aurora']];
 function readLocalLook() {
   try { const l = JSON.parse(localStorage.getItem(LOOK_KEY)); if (l && typeof l === 'object') return { ...DEFAULT_LOOK, ...l }; } catch (e) { }
@@ -3360,7 +3718,7 @@ function LookModal({ onClose }) {
     setBusy(false);
   };
   const seg = (key, options) => html`<div className="seg" role="group">${options.map(([k, l]) => html`<button type="button" key=${k} className=${look[key] === k ? 'on' : ''} onClick=${() => setLook({ [key]: k })} aria-pressed=${look[key] === k}>${l}</button>`)}</div>`;
-  return html`<${Modal} title="Wallpaper & glass" onClose=${onClose} wide footer=${html`<button className="btn ghost" style=${{ marginRight: 'auto' }} onClick=${() => setLook({ ...DEFAULT_LOOK })}>Back to the original</button><button className="btn primary" onClick=${onClose}>Done</button>`}>
+  return html`<${Modal} title="Wallpaper, glass & language" onClose=${onClose} wide footer=${html`<button className="btn ghost" style=${{ marginRight: 'auto' }} onClick=${() => setLook({ ...DEFAULT_LOOK, lang: look.lang })}>Back to the original</button><button className="btn primary" onClick=${onClose}>Done</button>`}>
     <div className="field"><span>Wallpaper</span>
       <div className="wall-grid">
         <button type="button" className=${'wall own' + (look.photo ? ' on has-photo' : '')} onClick=${() => fileRef.current && fileRef.current.click()} style=${photoUrl ? { backgroundImage: 'url("' + photoUrl + '")' } : null} disabled=${busy}>
@@ -3376,6 +3734,9 @@ function LookModal({ onClose }) {
       <input id="look-dim" className="look-range" type="range" min="0" max="0.7" step="0.05" value=${look.dim} onChange=${(e) => setLook({ dim: +e.target.value })}/>
       <small>Darker makes writing easier to read on a bright photo.</small></label>
     <div className="field"><span>Glass</span>${seg('glass', [['clear', 'Clear'], ['frosted', 'Frosted'], ['solid', 'Solid']])}<small>Clear shows the most of your wallpaper. Solid is the easiest to read.</small></div>
+    <label className="field"><span>Translate messages into</span>
+      <select id="look-lang" className="input" value=${look.lang || 'en'} onChange=${(e) => setLook({ lang: e.target.value })}>${LANGS.map(([k, l]) => html`<option key=${k} value=${k}>${l}</option>`)}</select>
+      <small>Tap Translate on a message or post to read it in this language.</small></label>
     <p className="muted sm">Only you see your wallpaper. It follows you to your other phones and computers when you log in.</p>
   <//>`;
 }
@@ -3546,6 +3907,13 @@ function App() {
   const [filters, setFilters] = useState(NO_FILTERS);
   const [searchQ, setSearchQ] = useState('');
   const [saved, setSaved] = useState(true);
+  const [shiftOpen, setShiftOpen] = useState(false);
+  const [summary, setSummary] = useState(false);
+  const [pushState, setPushState] = useState(() => (lsGet(PUSH_KEY) ? 'on' : 'off'));
+  // a tick every minute: shifts start and end, and ASAP items get checked for escalation
+  const [tick, setTick] = useState(0);
+  useEffect(() => { const t = setInterval(() => setTick((n) => n + 1), MIN); return () => clearInterval(t); }, []);
+  const dbRef = useRef(db); dbRef.current = db;
   useEffect(() => {
     if (!CLOUD) { setSaved(saveDb(db)); return; }
     if (cloud !== 'ready') return;
@@ -3560,8 +3928,11 @@ function App() {
       if (error) throw error;
       if (!mem) { setMe(null); setCloud('signedout'); return; }
       const fresh = await Sync.loadAll();
+      Sync.me = mem.staff_id;
       setDb(fresh); setMe(mem.staff_id); setCloud('ready'); lsSet('floorboard.cloud.me', mem.staff_id);
-      Sync.subscribe();
+      Sync.subscribe(); Presence.start(mem.staff_id);
+      // this device already had alerts on: make sure they now go to whoever just logged in
+      if (lsGet(PUSH_KEY) && pushAvailability() === 'ready' && Notification.permission === 'granted') pushOn(false).then((r) => setPushState(r === 'on' ? 'on' : r === 'setup' ? 'setup' : 'off'));
     } catch (e) {
       // no connection: show the last copy this device had, without sending anything
       const last = lsGet('floorboard.cloud.me');
@@ -3573,7 +3944,7 @@ function App() {
     const onDb = (d) => setDb(d);
     Sync.listeners.add(onDb); Sync.statusListeners.add(setSyncStatus);
     CLOUD.auth.getSession().then(({ data }) => startCloud(data.session));
-    const { data: sub } = CLOUD.auth.onAuthStateChange((ev) => { if (ev === 'SIGNED_OUT') { Sync.stop(); setMe(null); setCloud('signedout'); } });
+    const { data: sub } = CLOUD.auth.onAuthStateChange((ev) => { if (ev === 'SIGNED_OUT') { Sync.stop(); Presence.stop(); setMe(null); setCloud('signedout'); } });
     const retry = () => { if (cloudRef.current === 'offline') CLOUD.auth.getSession().then(({ data }) => startCloud(data.session)); };
     window.addEventListener('online', retry);
     return () => { Sync.listeners.delete(onDb); Sync.statusListeners.delete(setSyncStatus); sub.subscription.unsubscribe(); window.removeEventListener('online', retry); };
@@ -3596,7 +3967,7 @@ function App() {
       if (hs.startsWith('#go-')) {
         const t = decodeURIComponent(hs.slice(4));
         setMode('full');
-        if (t.startsWith('chat:')) { setOpenChatId(t.slice(5)); setView('chats'); } else if (t.startsWith('view:')) setView(t.slice(5));
+        if (t.startsWith('chat:')) { setOpenChatId(t.slice(5)); setView('chats'); } else if (t.startsWith('view:')) setView(t.slice(5)); else if (t.startsWith('post:')) setOpenId(t.slice(5));
         try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { /* the hash just stays */ }
         return;
       }
@@ -3606,6 +3977,12 @@ function App() {
     window.addEventListener('hashchange', h); return () => window.removeEventListener('hashchange', h);
   }, []);
   useEffect(() => { document.documentElement.classList.toggle('native-glass', DESKTOP_SHELL && mode === 'widget'); }, [mode]);
+  // a tapped phone alert, when the app was already open in the background: go to what it was about
+  useEffect(() => {
+    if (!('serviceWorker' in navigator)) return;
+    const h = (e) => { const d = e.data || {}; if (d.floorboard === 'go' && typeof d.hash === 'string' && d.hash.startsWith('#go-')) location.hash = d.hash.slice(1); };
+    navigator.serviceWorker.addEventListener('message', h); return () => navigator.serviceWorker.removeEventListener('message', h);
+  }, []);
   const update = useCallback((fn) => setDb((prev) => { const next = structuredClone(prev); fn(next); return next; }), []);
   const user = me ? db.users.find((u) => u.id === me && u.active !== false) : null;
   // this person's wallpaper and glass: their saved look once logged in, otherwise this device's last one
@@ -3659,8 +4036,9 @@ function App() {
     if (!known.current) { known.current = new Set(items.map((i) => i.key)); if (desk && desk.attention) desk.attention({ count, urgent: false }); return; }
     const fresh = items.filter((i) => !known.current.has(i.key));
     fresh.forEach((i) => known.current.add(i.key));
-    if (desk && desk.attention) desk.attention({ count, urgent: fresh.some((i) => i.level === 'red') });
-    if (!fresh.length) return;
+    const quiet = !isOnShift(db, user.id);
+    if (desk && desk.attention) desk.attention({ count, urgent: !quiet && fresh.some((i) => i.level === 'red') });
+    if (!fresh.length || quiet) return; // off shift: it all waits on the board, with no pop-ups or sound
     fresh.slice(-3).forEach((i) => {
       const a = { ...i, id: uid('al') };
       setAlerts((l) => [...l.slice(-3), a]);
@@ -3674,6 +4052,18 @@ function App() {
     });
     if (soundOn) chime(fresh.some((i) => i.level === 'red'));
   }, [db, user && user.id]);
+  // ASAP items nobody opened within 30 minutes go to the managers. Any open app can do it; two at once end up the same.
+  useEffect(() => {
+    if (!user || (CLOUD && cloud !== 'ready')) return;
+    const now = Date.now();
+    const due = dbRef.current.posts.filter((p) => escalationDue(p, now)).map((p) => p.id);
+    if (due.length) update((d) => due.forEach((id) => escalate(d, id, now)));
+  }, [user && user.id, cloud, tick]);
+  // the start-of-shift summary: once a day, once this person is on shift
+  useEffect(() => {
+    if (!user || (CLOUD && cloud !== 'ready')) return;
+    if (!summaryShownToday(user.id) && isOnShift(dbRef.current, user.id)) { markSummary(user.id); setSummary(true); }
+  }, [user && user.id, cloud, tick]);
   useEffect(() => {
     const h = (e) => { if (e.key !== 'Escape' || document.querySelector('.modal-wrap,.lightbox')) return; if (openId) setOpenId(null); else if (drawer) setDrawer(false); };
     window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h);
@@ -3684,11 +4074,19 @@ function App() {
     jump: (t) => {
       if (mode === 'widget') { const desk = window.floorboardDesktop; if (desk && desk.openFull) desk.openFull(t); else location.hash = 'go-' + t; return; }
       setOpenId(null); setDrawer(false);
-      if (t.startsWith('chat:')) { setOpenChatId(t.slice(5)); setView('chats'); } else if (t.startsWith('view:')) setView(t.slice(5));
+      if (t.startsWith('chat:')) { setOpenChatId(t.slice(5)); setView('chats'); } else if (t.startsWith('view:')) setView(t.slice(5)); else if (t.startsWith('post:')) setOpenId(t.slice(5));
     },
     openChat: (id) => { setOpenChatId(id); setView('chats'); setOpenId(null); setDrawer(false); },
     closeChat: () => setOpenChatId(null),
-    alerts, dismissAlert, openAlert, soundOn,
+    alerts, dismissAlert, openAlert, soundOn, pushState,
+    enablePush: async () => {
+      const r = await pushOn(true);
+      setPushState(r === 'on' ? 'on' : r === 'setup' ? 'setup' : 'off');
+      toast({ on: 'Alerts are on. This device gets them even when Floorboard is closed.', blocked: 'Alerts are blocked for Floorboard in this browser’s settings.', setup: 'Alerts aren’t switched on for the store yet. Ask your admin to finish the alerts setup.' }[r] || 'Couldn’t turn alerts on here. Try again in a moment.', r === 'on' ? undefined : 'warn');
+    },
+    disablePush: async () => { await pushOff(false); setPushState('off'); toast('This device won’t get alerts while Floorboard is closed'); },
+    openShift: () => { setShiftOpen(true); setDrawer(false); },
+    openSummary: () => { setSummary(true); setDrawer(false); },
     setSoundOn: (v) => { setSoundOnState(v); lsSet('floorboard.sound.v1', v ? 'on' : 'off'); if (v) chime(false); },
     enablePopups: () => {
       try { Notification.requestPermission().then((p) => toast(p === 'granted' ? 'Pop-up alerts are on for this device' : 'Pop-ups were blocked. Alerts still show inside the app.', p === 'granted' ? undefined : 'warn')); }
@@ -3719,8 +4117,9 @@ function App() {
       setOpenId(null); setDrawer(false); setComposer(null); setOpenChatId(null);
       if (!CLOUD) { lsSet(SESSION_KEY, ''); setMe(null); return; }
       // shared devices: don't leave the store's data behind
-      lsSet(CACHE_KEY, ''); lsSet('floorboard.cloud.me', ''); Sync.stop(); setDb(emptyDb()); setMe(null); setCloud('signedout');
-      CLOUD.auth.signOut();
+      lsSet(CACHE_KEY, ''); lsSet('floorboard.cloud.me', ''); Sync.stop(); Presence.stop(); setDb(emptyDb()); setMe(null); setCloud('signedout');
+      // this person's alerts stop on this device before signing out (the next person to log in here gets theirs)
+      (lsGet(PUSH_KEY) ? pushOff(true) : Promise.resolve()).finally(() => CLOUD.auth.signOut());
     },
     cloud, syncStatus, cloudSignedIn: (session) => { setView('chats'); setOpenChatId(null); startCloud(session); },
     resetDemo: async () => { await Blobs.clear(); setDb(seed()); setOpenId(null); setOpenChatId(null); setView('chats'); setFilters(NO_FILTERS); toast('Demo store reset'); },
@@ -3731,6 +4130,8 @@ function App() {
       : !user ? (CLOUD ? html`<${CloudLogin}/>` : html`<${Login}/>`) : mode === 'widget' ? html`<${Widget}/>` : html`<${Shell}/>`}
     <${AlertStack}/>
     ${lookOpen && html`<${LookModal} onClose=${() => setLookOpen(false)}/>`}
+    ${user && shiftOpen && html`<${ShiftModal} onClose=${() => setShiftOpen(false)}/>`}
+    ${user && summary && !shiftOpen && html`<${ShiftSummary} onClose=${() => setSummary(false)}/>`}
     <${Toasts}/>
   <//>`;
 }

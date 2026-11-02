@@ -54,7 +54,7 @@ function createSidebar() {
 
 // target (from a sidebar shortcut) names what to open, e.g. chat:c-bakery or view:drive
 function openFull(_e, target) {
-  const hash = typeof target === 'string' && /^(chat|view):[\w:.-]+$/.test(target) ? 'go-' + target : undefined;
+  const hash = typeof target === 'string' && /^(chat|view|post):[\w:.-]+$/.test(target) ? 'go-' + target : undefined;
   if (full && !full.isDestroyed()) {
     if (hash) full.loadFile(PAGE, { query: { shell: 'desktop' }, hash });
     full.show(); full.focus(); return;
