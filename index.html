@@ -526,7 +526,8 @@ td .fname .ic{color:var(--ink-3);margin-top:1px}
 .pin-in{font-family:var(--f-mono);font-size:26px;letter-spacing:.5em;text-align:center;padding:10px}
 .err{color:var(--red);font-size:13.5px;font-weight:700}
 .hint{background:rgba(255,255,255,.12);border:1px solid var(--glass-line);border-radius:var(--r);padding:12px 14px;font-size:13.5px;line-height:1.5}
-@media (max-width:860px){.login{grid-template-columns:1fr;height:auto;min-height:100%}.login-l{padding:26px 22px;gap:16px}.login-demo{display:none}.login-r{padding:20px 16px 28px}}
+@media (max-width:860px){.login{grid-template-columns:1fr;height:100%;align-content:start}.login-l{padding:26px 22px;gap:16px}.login-demo{display:none}.login-r{padding:20px 16px 28px;overflow:visible}}
+@media (max-width:520px){.login-l h1,.login-l p{display:none}.login-l{padding:14px 16px}.login{gap:12px;padding-top:12px}}
 
 /* widget: the narrow sidebar / phone view */
 .widget{height:100%;display:flex;flex-direction:column;gap:10px;padding:10px max(10px,env(safe-area-inset-right,0px)) 10px max(10px,env(safe-area-inset-left,0px))}
@@ -3019,6 +3020,12 @@ function CloudLogin() {
     lsSet(STORE_CODE_KEY, c.trim().toUpperCase()); setDir(data || []);
   };
   useEffect(() => { if (code) loadDir(code); }, []);
+  // The list may be minutes old: check again whether this person has already set up their login somewhere.
+  const pickUser = async (u) => {
+    setSel(u); setErr(''); setPin(''); setPin2(''); setSetup('');
+    const { data } = await CLOUD.rpc('staff_directory', { p_code: lsGet(STORE_CODE_KEY) || code });
+    if (data) { setDir(data); const fresh = data.find((x) => x.id === u.id); if (fresh) setSel((cur) => (cur && cur.id === fresh.id ? fresh : cur)); }
+  };
   const digits = (v) => v.replace(/\D/g, '').slice(0, 6);
   async function submit(e) {
     e.preventDefault(); setErr('');
@@ -3038,6 +3045,9 @@ function CloudLogin() {
     let { data, error } = await CLOUD.auth.signUp({ email, password: pinPassword(pin) });
     if (error && /registered/i.test(error.message)) ({ data, error } = await CLOUD.auth.signInWithPassword({ email, password: pinPassword(pin) }));
     if (error || !data.session) { setBusy(false); return setErr(error ? 'Couldn’t set up your login: ' + error.message : 'The server still asks for email confirmation. Your admin needs to switch “Confirm email” off in Supabase.'); }
+    // already set up on another phone or computer: the PIN worked, so just go in
+    const { data: mem } = await CLOUD.from('members').select('staff_id').maybeSingle();
+    if (mem && mem.staff_id === sel.id) { setBusy(false); return cloudSignedIn(data.session); }
     const { data: ok } = await CLOUD.rpc('claim_login', { p_staff: sel.id, p_code: setup });
     if (!ok) { await CLOUD.auth.signOut(); setBusy(false); return setErr('That setup code isn’t right or has expired. Ask your manager for a new one.'); }
     setBusy(false); cloudSignedIn(data.session);
@@ -3062,7 +3072,7 @@ function CloudLogin() {
         <div><h2>Who’s logging in?</h2><p className="muted" style=${{ marginTop: 4 }}>Pick your name.</p></div>
         <label className="bigsearch" style=${{ height: 44, fontSize: 15 }}><${Icon} n="search" s=${17}/><input id="login-q" value=${q} onChange=${(e) => setQ(e.target.value)} placeholder="Find your name" aria-label="Find your name"/></label>
         ${dir.length === 0 && html`<p className="muted">No one has been added yet.</p>`}
-        <div className="ugrid">${Object.entries(groups).map(([g, list]) => html`<div key=${g}><div className="ug-h"><i style=${{ background: '#5E6B65' }}></i>${g}</div><div className="ulist">${list.map((u) => html`<button key=${u.id} className="ubtn" onClick=${() => { setSel(u); setErr(''); setPin(''); setPin2(''); setSetup(''); }}><${Ava} u=${u} s=${34}/><span><b>${u.name}</b><small>${u.title}${u.claimed ? '' : ' · first time'}</small></span></button>`)}</div></div>`)}</div>
+        <div className="ugrid">${Object.entries(groups).map(([g, list]) => html`<div key=${g}><div className="ug-h"><i style=${{ background: '#5E6B65' }}></i>${g}</div><div className="ulist">${list.map((u) => html`<button key=${u.id} className="ubtn" onClick=${() => pickUser(u)}><${Ava} u=${u} s=${34}/><span><b>${u.name}</b><small>${u.title}${u.claimed ? '' : ' · first time'}</small></span></button>`)}</div></div>`)}</div>
         <button type="button" className="linkish" onClick=${() => { setDir(null); setCode(''); lsSet(STORE_CODE_KEY, ''); }}>Use a different store code</button>`
       : html`<form className="pinbox" onSubmit=${submit}>
           <div style=${{ display: 'flex', gap: 12, alignItems: 'center' }}><${Ava} u=${sel} s=${48}/><div><h2>${sel.name}</h2><span className="muted">${sel.title}</span></div></div>
