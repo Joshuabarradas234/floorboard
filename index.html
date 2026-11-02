@@ -756,6 +756,7 @@ td.mono{white-space:nowrap}
 .steps{margin:0;padding-left:20px;display:grid;gap:6px;line-height:1.5}
 .login-cell{display:flex;align-items:center;gap:8px;flex-wrap:wrap;white-space:nowrap}
 @media (max-width:760px){.sync{display:none}}
+.rail-emoji{font-size:19px;line-height:1}
 </style>
 
 <div id="root"></div>
@@ -772,7 +773,7 @@ const html = htm.bind(React.createElement);
 
 /* ---------------- constants ---------------- */
 const MIN = 6e4, HOUR = 36e5, DAY = 864e5;
-const LS_KEY = 'floorboard.demo.v3', SESSION_KEY = 'floorboard.session.v1';
+const LS_KEY = 'floorboard.demo.v4', SESSION_KEY = 'floorboard.session.v1';
 const TYPES = {
   task: { label: 'Task', plural: 'Tasks', icon: 'task', hint: 'Something that needs doing' },
   feedback: { label: 'Feedback', plural: 'Feedback', icon: 'feedback', hint: 'Ask for an answer or opinion' },
@@ -840,6 +841,7 @@ const ICONS = {
   chat: '<path d="M4.5 19.5 5.6 16A7.8 7.8 0 1 1 8.9 18.6z"/>',
   mic: '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21"/>',
   smile: '<circle cx="12" cy="12" r="9"/><path d="M8.5 14.5a4.5 4.5 0 0 0 7 0M9 9.5h.01M15 9.5h.01"/>',
+  flag: '<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',
 };
 
 /* ---------------- small utils ---------------- */
@@ -988,12 +990,15 @@ function demoArt(kind) {
 
 /* ---------------- data helpers ---------------- */
 const userById = (db, id) => db.users.find((u) => u.id === id);
-const deptById = (db, id) => PSEUDO[id] || db.depts.find((d) => d.id === id) || { id, name: 'Removed team', color: '#777' };
+// A tag target is a department, Everyone/All managers, or a project/issue group (ids start with g-).
+const isGroupId = (id) => typeof id === 'string' && id.startsWith('g-');
+const deptById = (db, id) => PSEUDO[id] || db.depts.find((d) => d.id === id) || (db.groups || []).find((g) => g.id === id) || { id, name: 'Removed team', color: '#777' };
 const firstName = (u) => (u ? u.name.split(' ')[0] : 'Someone');
 function deptMembers(db, id) {
   const act = db.users.filter((u) => u.active !== false);
   if (id === 'all') return act.map((u) => u.id);
   if (id === 'managers') return act.filter((u) => u.role !== 'staff').map((u) => u.id);
+  if (isGroupId(id)) { const g = (db.groups || []).find((x) => x.id === id); return g ? act.filter((u) => g.members.includes(u.id)).map((u) => u.id) : []; }
   return act.filter((u) => u.depts.includes(id) || u.manages.includes(id)).map((u) => u.id);
 }
 function expand(db, toUsers, toDepts, author) {
@@ -1051,7 +1056,7 @@ function fileMatches(db, f, q) {
 /* ---------------- demo store seed ---------------- */
 function seed() {
   const T = Date.now();
-  const db = { v: 2, store: 'Riverside Fresh Market', counter: 1040, posts: [], files: [], folders: [], tiles: [], pins: {}, chats: [], messages: [] };
+  const db = { v: 2, store: 'Riverside Fresh Market', counter: 1040, posts: [], files: [], folders: [], tiles: [], pins: {}, chats: [], messages: [], groups: [] };
   db.depts = [
     { id: 'mgmt', name: 'Management', color: '#3D4A5C' },
     { id: 'admin', name: 'Admin', color: '#0F8A8A' },
@@ -1080,6 +1085,10 @@ function seed() {
     U('u12', 'Bongani Zulu', 'Receiving Clerk', 'staff', ['receiving']),
     U('u13', 'Chantel Naidoo', 'Admin Assistant', 'staff', ['admin', 'tills']),
     U('u14', 'Tumi Sithole', 'Front End Supervisor', 'manager', ['tills'], ['tills']),
+  ];
+  db.groups = [
+    { id: 'g-packhouse', name: 'Packhouse project', kind: 'project', icon: '📦', color: '#B8860B', desc: 'Moving fruit & veg packing into the old storeroom by December.', members: ['u10', 'u11', 'u12', 'u2', 'u1'], createdBy: 'u10', createdAt: T - 6 * DAY, archived: false },
+    { id: 'g-sunpack', name: 'SunPack statement', kind: 'issue', icon: '🧾', color: '#2F7FB8', desc: 'October statement missing, so month-end can’t close.', members: ['u3', 'u4', 'u2', 'u1'], createdBy: 'u3', createdAt: T - 2 * DAY, archived: false },
   ];
   const img = (demo, name) => ({ id: uid('a'), name, mime: 'image/jpeg', kind: 'image', demo, size: 180000 + Math.round(Math.random() * 90000) });
   const doc = (name, size) => ({ id: uid('a'), name, mime: 'application/pdf', kind: 'doc', demo: 'doc', size });
@@ -1183,6 +1192,16 @@ function seed() {
     title: 'Load-shedding moved: stage 4 starts 2 hours later today',
     body: 'Generator check 30 minutes before it starts (Pieter). Hot deli: no new batches in the last 45 minutes before. Tills: card machines on backup, cash floats ready.',
     st: { u2: { s: 'done' }, u14: { s: 'done' } } });
+  P({ type: 'task', level: 'amber', about: 'fv', author: 'u10', toDepts: ['g-packhouse'], at: T - 30 * HOUR, due: keyPlus(3),
+    title: 'Measure the old storeroom and list the shelving we need',
+    body: 'Floor space, door width and where the power points are. Photos please.',
+    st: { u11: { s: 'doing', p: 40, t: T - 7 * HOUR }, u12: { seen: true } },
+    log: [{ u: 'u11', at: T - 7 * HOUR, pct: 40, text: 'Measured: 6.2 m × 4.8 m. Door is 90 cm. Photos tomorrow when the room is cleared.' }] });
+  P({ type: 'feedback', level: 'red', about: 'finance', author: 'u3', toDepts: ['g-sunpack'], at: T - 4 * HOUR,
+    title: 'Has anyone got a direct contact in SunPack accounts?',
+    body: 'Their call centre keeps promising the October statement. I need it by Wednesday to close the month.',
+    st: { u2: { s: 'done', t: T - 3 * HOUR } },
+    log: [{ u: 'u2', at: T - 3 * HOUR, kind: 'reply', text: 'Try Bongi in their Midrand office. I’ll send you her number.' }] });
   db.posts.sort((a, b) => b.createdAt - a.createdAt);
 
   // drives: one per department plus a shared one
@@ -1283,6 +1302,7 @@ function seed() {
   M('c-dm2', 'u6', 4.8 * HOUR, 'Yes, no problem.');
   // every post also shows as a card in the group it belongs to
   db.posts.forEach((p) => {
+    if (p.toDepts.some(isGroupId)) return; // sent to a project or issue: only its people see it, so no group-chat card
     const ids = [p.author, ...Object.keys(p.recips)];
     let ch = p.toDepts.length ? db.chats.find((c) => c.dept === p.toDepts[0]) : null;
     if (!ch) ch = db.chats.filter((c) => c.kind === 'group' && ids.every((id) => chatMembers(db, c).includes(id))).sort((a, b) => chatMembers(db, a).length - chatMembers(db, b).length)[0];
@@ -1486,6 +1506,9 @@ function Rail() {
     <span className="rail-sep"></span>
     ${myDepts.map((d) => item('dept:' + d.id, html`<i className="sq" style=${{ '--c': d.color }}></i>`, d.name))}
     ${item('teams', html`<${Icon} n="store"/>`, 'All departments')}
+    <span className="rail-sep"></span>
+    ${myGroups(db, user).filter((g) => !g.archived).slice(0, 5).map((g) => item('group:' + g.id, html`<span className="rail-emoji">${g.icon}</span>`, g.name))}
+    ${item('groups', html`<${Icon} n="flag"/>`, 'Projects & issues')}
     <span className="rail-sep"></span>
     ${user.role === 'admin' && item('admin', html`<${Icon} n="shield"/>`, 'People & access')}
     ${item('widget', html`<${Icon} n="sidebar"/>`, 'Sidebar view', () => { const desk = window.floorboardDesktop; if (desk && desk.showSidebar) desk.showSidebar(); else location.hash = 'widget'; })}
@@ -1826,13 +1849,13 @@ function Composer({ preset, onClose }) {
   const qq = q.replace(/^@/, '').trim().toLowerCase();
   const sugs = useMemo(() => {
     const has = (k, id) => to.some((x) => x.k === k && x.id === id);
-    const teams = [PSEUDO.all, PSEUDO.managers, ...db.depts].filter((d) => !has('d', d.id) && (!qq || d.name.toLowerCase().includes(qq)))
-      .map((d) => ({ k: 'd', id: d.id, label: d.name, sub: 'Team · ' + deptMembers(db, d.id).filter((i) => i !== user.id).length + ' people', color: d.color }));
+    const teams = [...(db.groups || []).filter((g) => !g.archived), PSEUDO.all, PSEUDO.managers, ...db.depts].filter((d) => !has('d', d.id) && (!qq || d.name.toLowerCase().includes(qq)))
+      .map((d) => ({ k: 'd', id: d.id, label: d.name, sub: (isGroupId(d.id) ? GROUP_KINDS[d.kind] || 'Group' : 'Team') + ' · ' + deptMembers(db, d.id).filter((i) => i !== user.id).length + ' people', color: d.color }));
     const people = db.users.filter((u) => u.active !== false && u.id !== user.id && !has('u', u.id) && (!qq || u.name.toLowerCase().includes(qq) || u.title.toLowerCase().includes(qq)))
       .map((u) => ({ k: 'u', id: u.id, label: u.name, sub: u.title + ' · ' + u.depts.map((d) => deptById(db, d).name).join(', '), u }));
     return [...teams, ...people].slice(0, 10);
   }, [qq, to, db]);
-  const add = (s) => { setTo((prev) => [...prev, { k: s.k, id: s.id }]); setQ(''); setHi(0); setOpen(false); if (!about && s.k === 'd' && !PSEUDO[s.id]) setAbout(s.id); if (!about && s.k === 'u') setAbout(userById(db, s.id).depts[0]); setErr(''); inputRef.current && inputRef.current.focus(); };
+  const add = (s) => { setTo((prev) => [...prev, { k: s.k, id: s.id }]); setQ(''); setHi(0); setOpen(false); if (!about && s.k === 'd' && !PSEUDO[s.id] && !isGroupId(s.id)) setAbout(s.id); if (!about && s.k === 'u') setAbout(userById(db, s.id).depts[0]); setErr(''); inputRef.current && inputRef.current.focus(); };
   const toUsers = to.filter((x) => x.k === 'u').map((x) => x.id); const toDepts = to.filter((x) => x.k === 'd').map((x) => x.id);
   const reach = expand(db, toUsers, toDepts, user.id);
   const onKey = (e) => {
@@ -2592,8 +2615,8 @@ function ChatComposer({ c, members, reply, clearReply }) {
     const people = members.filter((id) => id !== user.id).map((id) => userById(db, id)).filter((u) => u && (!q || u.name.toLowerCase().includes(q)))
       .map((u) => ({ k: 'u', id: u.id, label: labelFor(db, u), sub: u.title, u }));
     const own = c.dept && !PSEUDO[c.dept] ? [deptById(db, c.dept)] : [];
-    const teams = [...own, ...db.depts.filter((d) => d.id !== c.dept)].filter((d) => !q || d.name.toLowerCase().includes(q))
-      .map((d) => ({ k: 'd', id: d.id, label: d.name, sub: 'Team · ' + deptMembers(db, d.id).length + ' people', color: d.color }));
+    const teams = [...(db.groups || []).filter((g) => !g.archived), ...own, ...db.depts.filter((d) => d.id !== c.dept)].filter((d) => !q || d.name.toLowerCase().includes(q))
+      .map((d) => ({ k: 'd', id: d.id, label: d.name, sub: (isGroupId(d.id) ? GROUP_KINDS[d.kind] || 'Group' : 'Team') + ' · ' + deptMembers(db, d.id).length + ' people', color: d.color }));
     return [...people, ...teams].slice(0, 8);
   }, [sug, members, db]);
   const grow = (el) => { if (!el) return; el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 140) + 'px'; };
@@ -2865,7 +2888,7 @@ const STAFF_DOMAIN = '@staff.floorboard.app';
 const pinPassword = (pin) => 'fb-' + pin + '-FB';
 const PIN_LEN = CLOUD ? 6 : 4;
 const CACHE_KEY = 'floorboard.cloud.cache.v1', STORE_CODE_KEY = 'floorboard.storecode.v1';
-function emptyDb() { return { v: 2, store: 'Your store', counter: 1000, depts: [], users: [], drives: [], folders: [], files: [], tiles: [], pins: {}, chats: [], messages: [], posts: [] }; }
+function emptyDb() { return { v: 2, store: 'Your store', counter: 1000, depts: [], users: [], groups: [], drives: [], folders: [], files: [], tiles: [], pins: {}, chats: [], messages: [], posts: [] }; }
 
 // Same data, written with sorted keys, so a record that came back from the server compares equal to ours.
 function stable(v) {
@@ -2880,6 +2903,7 @@ function toRecs(db) {
   put('meta', 'store', { store: db.store });
   db.depts.forEach((d) => put('depts', d.id, d));
   db.users.forEach((u) => { const { pin, ...rest } = u; put('users', u.id, rest); });
+  (db.groups || []).forEach((g) => put('groups', g.id, g));
   db.drives.forEach((d) => put('drives', d.id, d));
   db.folders.forEach((f) => put('folders', f.id, f));
   db.files.forEach((f) => put('files', f.id, f));
@@ -2902,7 +2926,7 @@ function fromRecs(list) {
   const of = (c) => (by[c] || []).map((r) => r.data);
   const meta = (by.meta || []).find((r) => r.id === 'store');
   if (meta && meta.data.store) db.store = meta.data.store;
-  db.depts = of('depts'); db.users = of('users'); db.drives = of('drives'); db.folders = of('folders'); db.files = of('files'); db.tiles = of('tiles');
+  db.depts = of('depts'); db.users = of('users'); db.groups = of('groups'); db.drives = of('drives'); db.folders = of('folders'); db.files = of('files'); db.tiles = of('tiles');
   (by.pins || []).forEach((r) => { db.pins[r.id] = r.data; });
   const chats = {}; db.chats = of('chats').map((c) => (chats[c.id] = { ...c, read: {} }));
   (by.read || []).forEach(({ data: x }) => { if (chats[x.chat]) chats[x.chat].read[x.user] = x.at; });
@@ -3091,6 +3115,110 @@ function CloudLoading({ text }) {
   return html`<div className="login" style=${{ gridTemplateColumns: '1fr', placeItems: 'center' }}><div className="pinbox glass" style=${{ textAlign: 'center', maxWidth: 360 }}><span className="brand-mark" style=${{ margin: '0 auto' }}><${Icon} n="logo" s=${20}/></span><h2>${text}</h2></div></div>`;
 }
 
+/* ---------------- projects & issues: named @groups of people ---------------- */
+// Admins and managers make one for a project or a problem and pick who's in it.
+// Tagging @Packhouse project anywhere sends the post to those people only.
+const GROUP_KINDS = { project: 'Project', issue: 'Issue', other: 'Group' };
+const canMakeGroups = (u) => u.role !== 'staff';
+const canEditGroup = (u, g) => u.role === 'admin' || g.createdBy === u.id;
+const groupLabel = (db, g) => (GROUP_KINDS[g.kind] || 'Group') + ' · ' + deptMembers(db, g.id).length + ' people';
+const postOpen = (p) => !p.closed && Object.values(p.recips).some((r) => r.status !== 'done');
+function groupPosts(db, g, u) { return db.posts.filter((p) => p.toDepts.includes(g.id) && canSee(db, p, u)).sort((a, b) => b.createdAt - a.createdAt); }
+function myGroups(db, u) { return (db.groups || []).filter((g) => u.role === 'admin' || g.members.includes(u.id) || g.createdBy === u.id); }
+
+function GroupModal({ groupId, onClose }) {
+  const { db, user, update, toast, go } = useApp();
+  const g = (db.groups || []).find((x) => x.id === groupId);
+  const [v, setV] = useState(() => (g ? { ...g } : { name: '', kind: 'project', icon: '📦', color: TILE_COLORS[7], desc: '', members: [user.id] }));
+  const [q, setQ] = useState(''); const [err, setErr] = useState('');
+  const set = (k, x) => { setV((o) => ({ ...o, [k]: x })); setErr(''); };
+  const flip = (id) => set('members', v.members.includes(id) ? v.members.filter((x) => x !== id) : [...v.members, id]);
+  const addTeam = (deptId) => set('members', [...new Set([...v.members, ...deptMembers(db, deptId)])]);
+  const people = db.users.filter((u) => u.active !== false && (!q || (u.name + ' ' + u.title).toLowerCase().includes(q.toLowerCase())));
+  const save = () => {
+    const name = v.name.trim();
+    if (!name) return setErr('Give it a name, like Packhouse project or Finance issue.');
+    if (v.members.filter((id) => id !== user.id).length < 1) return setErr('Add at least one other person.');
+    const taken = [...db.depts, ...(db.groups || []).filter((x) => x.id !== groupId), PSEUDO.all, PSEUDO.managers].some((x) => x.name.toLowerCase() === name.toLowerCase());
+    if (taken) return setErr('There’s already a team or group called “' + name + '”. Pick another name.');
+    const id = g ? g.id : 'g-' + uid('');
+    const data = { name, kind: v.kind, icon: v.icon, color: v.color, desc: (v.desc || '').trim(), members: v.members };
+    update((d) => {
+      d.groups = d.groups || [];
+      if (g) Object.assign(d.groups.find((x) => x.id === g.id), data);
+      else d.groups.push({ id, createdBy: user.id, createdAt: Date.now(), archived: false, ...data });
+    });
+    onClose();
+    toast(g ? 'Saved' : 'Made @' + name + '. Tag it in any post or chat.');
+    if (!g) go('group:' + id);
+  };
+  const others = v.members.filter((id) => id !== user.id).length;
+  return html`<${Modal} title=${g ? 'Edit ' + g.name : 'New project or issue'} onClose=${onClose} wide footer=${html`<span className="reach">${v.members.length} ${v.members.length === 1 ? 'person' : 'people'}</span><button className="btn" onClick=${onClose}>Cancel</button><button className="btn primary" onClick=${save}>${g ? 'Save' : 'Create'}</button>`}>
+    <div className="field"><span>What is it?</span><div className="seg" role="group">${Object.entries(GROUP_KINDS).map(([k, l]) => html`<button type="button" key=${k} className=${v.kind === k ? 'on' : ''} onClick=${() => set('kind', k)}>${l}</button>`)}</div></div>
+    <div className="row2">
+      <label className="field"><span>Name people will tag</span><input id="g-name2" className="input" value=${v.name} onChange=${(e) => set('name', e.target.value)} placeholder=${v.kind === 'issue' ? 'e.g. Finance issue' : 'e.g. Packhouse project'} maxLength="40"/><small>${v.name.trim() ? 'People type @' + v.name.trim() : 'Short and clear works best.'}</small></label>
+      <div className="field"><span>Colour</span><div className="swatches">${TILE_COLORS.map((col) => html`<button type="button" key=${col} className=${v.color === col ? 'on' : ''} style=${{ '--c': col }} onClick=${() => set('color', col)} aria-label=${'Colour ' + col}></button>`)}</div></div>
+    </div>
+    <div className="field"><span>Icon</span><div className="iconpick">${TILE_ICONS.map((ic) => html`<button type="button" key=${ic} className=${v.icon === ic ? 'on' : ''} onClick=${() => set('icon', ic)} aria-label=${'Icon ' + ic}>${ic}</button>`)}</div></div>
+    <label className="field"><span>What it’s about (optional)</span><textarea id="g-desc" rows="2" value=${v.desc} onChange=${(e) => set('desc', e.target.value)} placeholder="e.g. Moving fruit & veg packing into the old storeroom by December."></textarea></label>
+    <div className="field"><span>Who’s in it · ${others} ${others === 1 ? 'other person' : 'other people'}</span>
+      <div className="toggles">${db.depts.map((d) => html`<button type="button" key=${d.id} className="toggle" style=${{ '--c': d.color }} onClick=${() => addTeam(d.id)}><i></i>+ ${d.name}</button>`)}</div>
+      <small>Adding a team adds the people in it now. Later joiners aren’t added automatically.</small>
+    </div>
+    <label className="bigsearch" style=${{ height: 44, fontSize: 15 }}><${Icon} n="search" s=${17}/><input id="g-q" value=${q} onChange=${(e) => setQ(e.target.value)} placeholder="Search people" aria-label="Search people"/></label>
+    <div className="people">${people.map((u) => { const on = v.members.includes(u.id); return html`<button key=${u.id} className=${'person pick' + (on ? ' on' : '')} onClick=${() => flip(u.id)} aria-pressed=${on}><${Avatar} u=${u} s=${34}/><span className="pm"><b>${u.name}${u.id === user.id ? ' (you)' : ''}</b><span className="muted sm">${u.title}</span></span><span className=${'tick-box' + (on ? ' on' : '')}>${on && html`<${Icon} n="check" s=${14}/>`}</span></button>`; })}</div>
+    ${err && html`<p className="err" role="alert">${err}</p>`}
+  <//>`;
+}
+function GroupsView() {
+  const { db, user, go } = useApp();
+  const [modal, setModal] = useState(null);
+  const [closed, setClosed] = useState(false);
+  const all = myGroups(db, user);
+  const list = all.filter((g) => !!g.archived === closed).sort((a, b) => b.createdAt - a.createdAt);
+  return html`<${Page} title="Projects & issues" sub="Named groups of people for a project or a problem. Tag one with @, like @Packhouse project, and only those people get it."
+    actions=${canMakeGroups(user) && html`<button className="btn primary" onClick=${() => setModal('new')}><${Icon} n="plus" s=${16}/>New project or issue</button>`}>
+    <div className="filters"><div className="seg" role="group"><button className=${!closed ? 'on' : ''} onClick=${() => setClosed(false)}>Open <b>${all.filter((g) => !g.archived).length}</b></button><button className=${closed ? 'on' : ''} onClick=${() => setClosed(true)}>Closed <b>${all.filter((g) => g.archived).length}</b></button></div></div>
+    ${list.length ? html`<div className="dgrid">${list.map((g) => { const posts = groupPosts(db, g, user), open = posts.filter(postOpen).length; return html`<button key=${g.id} className="dcard" onClick=${() => go('group:' + g.id)}>
+        <div className="dcard-h"><span className="chat-av" style=${{ width: 42, height: 42, fontSize: 21, '--c': g.color }}>${g.icon}</span><div style=${{ minWidth: 0 }}><h3>${g.name}</h3><span className="muted sm">${groupLabel(db, g)}</span></div></div>
+        ${g.desc && html`<p className="muted sm">${g.desc}</p>`}
+        <div className="stack">${deptMembers(db, g.id).slice(0, 8).map((id) => html`<${Avatar} key=${id} u=${userById(db, id)} s=${26}/>`)}</div>
+        <span className="sm">${open ? html`<b>${open} open</b>` : 'Nothing open'} · ${posts.length} sent</span>
+      </button>`; })}</div>`
+    : html`<div className="empty"><${Icon} n="flag" s=${24}/><h3>${closed ? 'Nothing closed yet' : 'No projects or issues yet'}</h3><p>${canMakeGroups(user) ? 'Make one for a project or a problem, add the people involved, then tag it with @ in any post or chat.' : 'When a manager adds you to a project or issue, it shows up here.'}</p>${!closed && canMakeGroups(user) && html`<button className="btn primary" onClick=${() => setModal('new')}>New project or issue</button>`}</div>`}
+    ${modal && html`<${GroupModal} groupId=${modal === 'new' ? null : modal} onClose=${() => setModal(null)}/>`}
+  <//>`;
+}
+function GroupView({ id }) {
+  const { db, user, compose, update, toast } = useApp();
+  const g = (db.groups || []).find((x) => x.id === id);
+  const [tab, setTab] = useState('posts');
+  const [edit, setEdit] = useState(false);
+  if (!g) return html`<${Page} title="Not found"><div className="empty"><p>This project or issue was removed.</p></div><//>`;
+  const posts = groupPosts(db, g, user), members = deptMembers(db, g.id);
+  const open = posts.filter(postOpen), overdue = posts.filter((p) => isOverdue(p)).length;
+  const tasks = posts.filter((p) => p.type === 'task' && !p.closed);
+  const pct = tasks.length ? Math.round(tasks.reduce((a, p) => a + progressOf(p).pct, 0) / tasks.length) : null;
+  const editable = canEditGroup(user, g);
+  const closeWord = g.kind === 'issue' ? 'Mark resolved' : 'Close';
+  const toggle = () => { update((d) => { const x = d.groups.find((y) => y.id === g.id); x.archived = !x.archived; }); toast(g.archived ? 'Reopened. People can tag it again.' : (g.kind === 'issue' ? 'Marked resolved' : 'Closed') + '. It can’t be tagged any more.'); };
+  return html`<${Page} title=${g.icon + '  ' + g.name} sub=${groupLabel(db, g) + (g.desc ? ' · ' + g.desc : '')}
+    actions=${html`${editable && html`<button className="btn" onClick=${() => setEdit(true)}><${Icon} n="edit" s=${15}/>Edit</button>`}${editable && html`<button className="btn" onClick=${toggle}>${g.archived ? 'Reopen' : closeWord}</button>`}${!g.archived && html`<button className="btn primary" onClick=${() => compose({ to: [{ k: 'd', id: g.id }] })}><${Icon} n="at" s=${16}/>Post to @${g.name}</button>`}`}>
+    ${g.archived && html`<div className="notice"><${Icon} n="archive" s=${16}/>${g.kind === 'issue' ? 'Resolved' : 'Closed'}. It no longer shows up when people type @.</div>`}
+    <div className="stats">
+      <div className="stat"><b>${open.length}</b><span>Still open</span></div>
+      <div className=${'stat' + (overdue ? ' bad' : '')}><b>${overdue}</b><span>Overdue</span></div>
+      <div className="stat"><b>${pct == null ? '–' : pct + '%'}</b><span>Task progress</span></div>
+      <div className="stat"><b>${members.length}</b><span>People</span></div>
+    </div>
+    <div className="tabs" role="tablist"><button className=${tab === 'posts' ? 'on' : ''} onClick=${() => setTab('posts')}>Everything sent <b>${posts.length}</b></button><button className=${tab === 'people' ? 'on' : ''} onClick=${() => setTab('people')}>People <b>${members.length}</b></button></div>
+    ${tab === 'posts' && (posts.length ? html`<div className="cards">${posts.map((p) => html`<${PostCard} key=${p.id} p=${p}/>`)}</div>`
+      : html`<div className="empty"><p>Nothing sent yet. Tag @${g.name} in a post or chat, or use the button above.</p></div>`)}
+    ${tab === 'people' && html`<div className="people">${members.map((uid2) => { const u = userById(db, uid2); return html`<div className="person" key=${uid2}><${Avatar} u=${u} s=${36}/><div className="pm"><b>${u.name}</b><span className="muted sm">${u.title}</span></div>${g.createdBy === uid2 && html`<span className="rolebadge manager">Started it</span>`}</div>`; })}</div>`}
+    ${edit && html`<${GroupModal} groupId=${g.id} onClose=${() => setEdit(false)}/>`}
+  <//>`;
+}
+
 /* ---------------- shell + app ---------------- */
 const SCENES = ['warm', 'night', 'fresh'];
 const SCENE_KEY = 'floorboard.scene.v1';
@@ -3102,6 +3230,8 @@ function Shell() {
   if (view === 'needs' || view === 'all' || view === 'sent') content = html`<${FeedView} kind=${view}/>`;
   else if (view === 'team') content = html`<${TeamView}/>`;
   else if (view === 'teams') content = html`<${TeamsView}/>`;
+  else if (view === 'groups') content = html`<${GroupsView}/>`;
+  else if (view.startsWith('group:')) content = html`<${GroupView} key=${view} id=${view.slice(6)}/>`;
   else if (view.startsWith('dept:')) content = html`<${DeptView} id=${view.slice(5)}/>`;
   else if (view === 'drive') content = html`<${DriveView}/>`;
   else if (view === 'pins') content = html`<${PinsView}/>`;
