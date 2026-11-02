@@ -745,6 +745,13 @@ td.mono{white-space:nowrap}
 .rec-dot{width:10px;height:10px;border-radius:50%;background:var(--red-dot);animation:blink 1s infinite}
 @keyframes blink{50%{opacity:.25}}
 @media (max-width:760px){.b-acts{opacity:0;pointer-events:none}.bw.active .b-acts{opacity:1;pointer-events:auto}.alerts{left:10px;right:10px;width:auto}}
+.sync{font-size:12px;font-weight:700;padding:3px 10px;border-radius:99px;background:var(--green-soft);color:var(--green);white-space:nowrap}
+.sync.offline{background:var(--amber-soft);color:var(--amber)}
+.sync.refused{background:var(--red-soft);color:var(--red)}
+.code-big{font-size:44px;letter-spacing:.25em;text-align:center;font-weight:500;padding:8px 0}
+.steps{margin:0;padding-left:20px;display:grid;gap:6px;line-height:1.5}
+.login-cell{display:flex;align-items:center;gap:8px;flex-wrap:wrap;white-space:nowrap}
+@media (max-width:760px){.sync{display:none}}
 </style>
 
 <div id="root"></div>
@@ -752,6 +759,8 @@ td.mono{white-space:nowrap}
 <script src="vendor/react.production.min.js"></script>
 <script src="vendor/react-dom.production.min.js"></script>
 <script src="vendor/htm.umd.js"></script>
+<script src="vendor/supabase.js"></script>
+<script src="config.js"></script>
 <script>
 'use strict';
 const { useState, useEffect, useMemo, useRef, useCallback, createContext, useContext } = React;
@@ -881,15 +890,28 @@ const Blobs = (() => {
   }
   async function get(id) {
     if (mem.has(id)) return mem.get(id);
-    const d = await open(); if (!d) return null;
-    try { return await new Promise((res) => { const rq = d.transaction('b', 'readonly').objectStore('b').get(id); rq.onsuccess = () => res(rq.result || null); rq.onerror = () => res(null); }); } catch (e) { return null; }
+    const d = await open();
+    if (d) {
+      try { const b = await new Promise((res) => { const rq = d.transaction('b', 'readonly').objectStore('b').get(id); rq.onsuccess = () => res(rq.result || null); rq.onerror = () => res(null); }); if (b) return b; } catch (e) { }
+    }
+    // not on this device yet: fetch it from the store's server and keep a copy
+    if (CLOUD) { try { const { data, error } = await CLOUD.storage.from('files').download('att/' + id); if (!error && data) { await put(id, data); return data; } } catch (e) { } }
+    return null;
   }
   async function clear() { mem.clear(); const d = await open(); if (!d) return; try { d.transaction('b', 'readwrite').objectStore('b').clear(); } catch (e) { } }
   return { put, get, clear };
 })();
 async function storeFiles(files) {
   const out = [];
-  for (const f of files) { const id = uid('a'); await Blobs.put(id, f.file); out.push({ id, name: f.name, mime: f.mime, size: f.size, kind: f.kind }); }
+  for (const f of files) {
+    const id = uid('a');
+    await Blobs.put(id, f.file);
+    if (CLOUD) {
+      try { const { error } = await CLOUD.storage.from('files').upload('att/' + id, f.file, { contentType: f.mime, upsert: true }); if (error) console.warn('Upload failed: ' + error.message); }
+      catch (e) { console.warn('Upload failed', e); }
+    }
+    out.push({ id, name: f.name, mime: f.mime, size: f.size, kind: f.kind });
+  }
   return out;
 }
 
@@ -1427,9 +1449,10 @@ function Board({ onPick, note }) {
   </section>`;
 }
 function Topbar() {
-  const { db, user, setDrawer, go, setSearchQ, openPost } = useApp();
+  const { db, user, setDrawer, go, setSearchQ, openPost, syncStatus, cloud } = useApp();
   const [bell, setBell] = useState(false); const [q, setQ] = useState('');
   const { unseen } = useCounts();
+  const live = cloud === 'offline' ? 'offline' : syncStatus;
   return html`<header className="topbar glass">
     <button className="icon-btn menu-btn" onClick=${() => setDrawer(true)} aria-label="Open menu"><${Icon} n="menu"/></button>
     <div className="greet"><${Avatar} u=${user} s=${42}/><div className="greet-txt" style=${{ minWidth: 0 }}><b>${greeting()}, ${firstName(user)}</b><small>${user.title} · ${db.store}</small></div></div>
@@ -1437,6 +1460,7 @@ function Topbar() {
       <${Icon} n="search" s=${16}/><input id="top-search" value=${q} onChange=${(e) => setQ(e.target.value)} placeholder="Search posts, @people, #1047, invoices…" aria-label="Search"/>
     </form>
     <button className="icon-btn search-btn" onClick=${() => go('search')} aria-label="Search"><${Icon} n="search"/></button>
+    ${CLOUD && html`<span className=${'sync ' + live} title=${live === 'ok' ? 'Connected. Changes reach everyone straight away.' : live === 'offline' ? 'No connection. Changes send when you’re back online.' : 'The server refused a change.'}>${live === 'ok' ? '● Live' : live === 'offline' ? 'Offline' : 'Not saved'}</span>`}
     <div className="bell-wrap">
       <button className="icon-btn white" onClick=${() => setBell((b) => !b)} aria-label=${unseen.length + ' new posts'} aria-expanded=${bell}><${Icon} n="bell"/>${unseen.length > 0 && html`<span className="badge">${unseen.length}</span>`}</button>
       ${bell && html`<div className="pop-scrim" onClick=${() => setBell(false)}></div><div className="pop">
@@ -1462,7 +1486,7 @@ function Rail() {
     ${user.role === 'admin' && item('admin', html`<${Icon} n="shield"/>`, 'People & access')}
     ${item('widget', html`<${Icon} n="sidebar"/>`, 'Sidebar view', () => { const desk = window.floorboardDesktop; if (desk && desk.showSidebar) desk.showSidebar(); else location.hash = 'widget'; })}
     ${item('scene', html`<${Icon} n="palette"/>`, 'Change backdrop', () => setScene(SCENES[(SCENES.indexOf(scene) + 1) % SCENES.length]))}
-    ${item('reset', html`<${Icon} n="refresh"/>`, 'Reset demo', () => ask({ title: 'Reset the demo store?', body: 'All posts, files, pins and people go back to the example data. Anything you added is removed.', confirm: 'Reset demo', danger: true, onConfirm: resetDemo }))}
+    ${!CLOUD && item('reset', html`<${Icon} n="refresh"/>`, 'Reset demo', () => ask({ title: 'Reset the demo store?', body: 'All posts, files, pins and people go back to the example data. Anything you added is removed.', confirm: 'Reset demo', danger: true, onConfirm: resetDemo }))}
     ${item('logout', html`<${Icon} n="logout"/>`, 'Log out', logout)}
   </nav>`;
 }
@@ -1478,9 +1502,10 @@ function Dock() {
   </nav>`;
 }
 function Page({ title, sub, actions, children }) {
-  const { saved } = useApp();
+  const { saved, cloud } = useApp();
   return html`<div className="page">
     ${!saved && html`<div className="save-warn">This browser isn’t saving changes. They’ll be lost when you close the page.</div>`}
+    ${cloud === 'offline' && html`<div className="save-warn">You’re offline, so this is what you had last time. Reconnect to see new messages and send changes.</div>`}
     <div className="page-head"><div><h1>${title}</h1>${sub && html`<p className="sub">${sub}</p>`}</div>${actions && html`<div className="page-actions">${actions}</div>`}</div>
     ${children}
   </div>`;
@@ -2203,7 +2228,7 @@ function SearchView() {
 }
 
 /* ---------------- admin ---------------- */
-function PersonModal({ personId, onClose }) {
+function PersonModal({ personId, onClose, onAdded }) {
   const { db, update, toast, user } = useApp();
   const p = userById(db, personId);
   const [v, setV] = useState(() => (p ? { ...p } : { name: '', title: '', role: 'staff', depts: [], manages: [], pin: '', active: true }));
@@ -2213,18 +2238,21 @@ function PersonModal({ personId, onClose }) {
   const save = () => {
     if (!v.name.trim()) return setErr('Enter a name.');
     if (!v.depts.length) return setErr('Put them in at least one department.');
-    if (!/^\d{4}$/.test(v.pin || '')) return setErr('The PIN must be 4 digits.');
+    if (!CLOUD && !/^\d{4}$/.test(v.pin || '')) return setErr('The PIN must be 4 digits.');
     if (p && p.id === user.id && v.role !== 'admin') return setErr('You can’t remove your own admin access.');
     const clean = { ...v, name: v.name.trim(), title: v.title.trim() || 'Staff', manages: v.role === 'staff' ? [] : v.manages };
-    update((d) => { if (p) Object.assign(d.users.find((u) => u.id === p.id), clean); else d.users.push({ ...clean, id: uid('u') }); });
-    toast(p ? 'Saved ' + clean.name : clean.name + ' can now log in'); onClose();
+    const id = p ? p.id : uid('u');
+    update((d) => { if (p) Object.assign(d.users.find((u) => u.id === p.id), clean); else d.users.push({ ...clean, id }); });
+    onClose();
+    if (!p && CLOUD && onAdded) onAdded({ ...clean, id }); else toast(p ? 'Saved ' + clean.name : clean.name + ' can now log in');
   };
   return html`<${Modal} title=${p ? 'Edit ' + p.name : 'Add a person'} onClose=${onClose} wide footer=${html`<button className="btn" onClick=${onClose}>Cancel</button><button className="btn primary" onClick=${save}>${p ? 'Save' : 'Add person'}</button>`}>
     <div className="row2">
       <label className="field"><span>Full name</span><input id="pm-name" className="input" value=${v.name} onChange=${(e) => set('name', e.target.value)}/></label>
       <label className="field"><span>Job title</span><input id="pm-title" className="input" value=${v.title} onChange=${(e) => set('title', e.target.value)} placeholder="e.g. Baker"/></label>
       <label className="field"><span>Access level</span><select id="pm-role" className="select" value=${v.role} onChange=${(e) => set('role', e.target.value)}><option value="staff">Staff: sees their own posts and team tools</option><option value="manager">Manager: also sees their team’s progress</option><option value="admin">Admin: sees everything, manages people</option></select></label>
-      <label className="field"><span>Login PIN (4 digits)</span><input id="pm-pin" className="input mono" inputMode="numeric" maxLength="4" value=${v.pin} onChange=${(e) => set('pin', e.target.value.replace(/\D/g, ''))}/></label>
+      ${CLOUD ? html`<div className="field"><span>Login</span><small>After you add them, you get a setup code to give them. They choose their own PIN with it.</small></div>`
+        : html`<label className="field"><span>Login PIN (4 digits)</span><input id="pm-pin" className="input mono" inputMode="numeric" maxLength="4" value=${v.pin} onChange=${(e) => set('pin', e.target.value.replace(/\D/g, ''))}/></label>`}
     </div>
     <div className="field"><span>Departments they belong to</span><div className="checks">${db.depts.map((d) => html`<label key=${d.id}><input type="checkbox" checked=${v.depts.includes(d.id)} onChange=${() => flip('depts', d.id)}/>${d.name}</label>`)}</div><small>Tagging one of these teams reaches this person.</small></div>
     <div className="field"><span>Departments they manage</span><div className="checks">${db.depts.map((d) => html`<label key=${d.id} className=${v.role === 'staff' ? 'dis' : ''}><input type="checkbox" disabled=${v.role === 'staff'} checked=${v.manages.includes(d.id)} onChange=${() => flip('manages', d.id)}/>${d.name}</label>`)}</div><small>Managers see the progress of everyone in these teams and can edit the team’s tools.</small></div>
@@ -2238,7 +2266,26 @@ function AdminView() {
   const [tab, setTab] = useState('people');
   const [edit, setEdit] = useState(null);
   const [nd, setNd] = useState({ name: '', color: TILE_COLORS[0] });
-  if (tab === 'x') return null;
+  const [storeName, setStoreName] = useState(db.store);
+  // Live store only: who has set up their login, and one-time setup codes for new people or forgotten PINs.
+  const [logins, setLogins] = useState({});
+  const [code, setCode] = useState(null);
+  const loadLogins = useCallback(async () => {
+    if (!CLOUD) return;
+    const { data } = await CLOUD.rpc('login_status');
+    if (data) setLogins(Object.fromEntries(data.map((r) => [r.staff_id, r])));
+  }, []);
+  useEffect(() => { loadLogins(); }, [db.users.length]);
+  const getCode = async (u) => {
+    // make sure the server has the person before asking for their code (a new person was only just added)
+    await new Promise((r) => setTimeout(r, 400));
+    await Sync.flush();
+    const { data, error } = await CLOUD.rpc('new_setup_code', { p_staff: u.id });
+    if (error) { toast(error.message, 'warn'); return; }
+    setCode({ name: u.name, code: data }); loadLogins();
+  };
+  const appLink = location.origin + location.pathname;
+  const codeText = code && 'Floorboard login for ' + code.name + ': open ' + appLink + ' , store code ' + (lsGet(STORE_CODE_KEY) || '') + ', setup code ' + code.code + '. Then choose your own 6-digit PIN.';
   const addDept = (e) => {
     e.preventDefault(); const name = nd.name.trim(); if (!name) return;
     const id = name.toLowerCase().replace(/[^a-z0-9]+/g, '').slice(0, 12) + Math.random().toString(36).slice(2, 5);
@@ -2253,15 +2300,19 @@ function AdminView() {
   return html`<${Page} title="People & access" sub="Who can log in, which departments they’re in, and which drives each department can open." actions=${tab === 'people' && html`<button className="btn primary" onClick=${() => setEdit('new')}><${Icon} n="plus" s=${16}/>Add person</button>`}>
     <div className="tabs" role="tablist">${[['people', 'People', db.users.length], ['depts', 'Departments', db.depts.length], ['drives', 'Drive access', db.drives.filter((dr) => driveOn(db, dr)).length]].map(([k, l, n]) => html`<button key=${k} className=${tab === k ? 'on' : ''} onClick=${() => setTab(k)}>${l} <b>${n}</b></button>`)}</div>
     ${tab === 'people' && html`<div className="table-wrap"><table>
-      <thead><tr><th>Name</th><th>Access</th><th>Departments</th><th>Manages</th><th>PIN</th></tr></thead>
+      <thead><tr><th>Name</th><th>Access</th><th>Departments</th><th>Manages</th><th>${CLOUD ? 'Login' : 'PIN'}</th></tr></thead>
       <tbody>${db.users.map((u) => html`<tr key=${u.id} onClick=${() => setEdit(u.id)} tabIndex="0" onKeyDown=${(e) => { if (e.key === 'Enter') setEdit(u.id); }} style=${u.active === false ? { opacity: 0.5 } : null}>
         <td><div className="fname" style=${{ alignItems: 'center' }}><${Avatar} u=${u} s=${28}/><span>${u.name}<span className="muted sm" style=${{ display: 'block', fontWeight: 400 }}>${u.title}${u.active === false ? ' · deactivated' : ''}</span></span></div></td>
         <td><span className=${'rolebadge ' + u.role}>${u.role}</span></td>
         <td>${u.depts.map((d) => deptById(db, d).name).join(', ')}</td>
         <td>${u.manages.map((d) => deptById(db, d).name).join(', ') || html`<span className="muted">–</span>`}</td>
-        <td className="mono">••••</td>
+        ${CLOUD ? html`<td><div className="login-cell" onClick=${(e) => e.stopPropagation()}>${u.id === user.id ? html`<span className="st ok">This is you</span>`
+            : html`${logins[u.id] && logins[u.id].claimed ? html`<span className="st ok">Logged in</span>` : logins[u.id] && logins[u.id].code_waiting ? html`<span className="st warn">Code given</span>` : html`<span className="st muted">Not set up</span>`}
+              <button className="btn sm" onClick=${() => getCode(u)}>${logins[u.id] && logins[u.id].claimed ? 'Reset PIN' : logins[u.id] && logins[u.id].code_waiting ? 'New code' : 'Get setup code'}</button>`}</div></td>`
+          : html`<td className="mono">••••</td>`}
       </tr>`)}</tbody></table></div>`}
     ${tab === 'depts' && html`<div style=${{ display: 'grid', gap: 14 }}>
+      <form className="dtool" onSubmit=${(e) => { e.preventDefault(); if (storeName.trim()) { update((d) => { d.store = storeName.trim(); }); toast('Store name saved'); } }}><label className="field" style=${{ flex: 1, maxWidth: 360 }}><span>Store name</span><input id="store-name" className="input" value=${storeName} onChange=${(e) => setStoreName(e.target.value)}/></label><button className="btn" style=${{ alignSelf: 'flex-end' }}>Save name</button></form>
       <form className="dtool" onSubmit=${addDept}><input id="nd-name" className="input" style=${{ maxWidth: 280 }} value=${nd.name} onChange=${(e) => setNd({ ...nd, name: e.target.value })} placeholder="New department, e.g. Butchery"/><div className="swatches">${TILE_COLORS.map((c) => html`<button type="button" key=${c} className=${nd.color === c ? 'on' : ''} style=${{ '--c': c }} onClick=${() => setNd({ ...nd, color: c })} aria-label=${'Colour ' + c}></button>`)}</div><button className="btn primary">Add department</button></form>
       <p className="feat-note">Every department starts with its group chat, tagging and the “Needs you” board. Switch on the extra tools as each department comes on board.</p>
       <div className="dgrid">${db.depts.map((d) => html`<div key=${d.id} className="dcard"><div className="dcard-h"><span className="dsw" style=${{ '--c': d.color }}></span><div><h3>${d.name}</h3><span className="muted sm">${deptMembers(db, d.id).length} people · ${db.users.filter((u) => u.manages.includes(d.id)).map((u) => firstName(u)).join(', ') || 'no manager'}</span></div></div>
@@ -2273,7 +2324,16 @@ function AdminView() {
       ${db.drives.filter((dr) => driveOn(db, dr)).map((dr) => html`<tr key=${dr.id} style=${{ cursor: 'default' }}><td><b>${dr.name}</b><span className="muted sm" style=${{ display: 'block' }}>${db.files.filter((f) => f.drive === dr.id).length} documents</span></td>
         <td><div className="toggles">${[PSEUDO.all, ...db.depts].map((d) => html`<button key=${d.id} className=${'toggle' + (dr.access.includes(d.id) ? ' on' : '')} style=${{ '--c': d.color }} onClick=${() => flipAccess(dr.id, d.id)} aria-pressed=${dr.access.includes(d.id)}><i></i>${d.name}</button>`)}</div></td></tr>`)}</tbody>
     </table></div><p className="muted sm">Admins can open every drive. Managers can edit and delete records in drives their department can open.</p>`}
-    ${edit && html`<${PersonModal} personId=${edit === 'new' ? null : edit} onClose=${() => setEdit(null)}/>`}
+    ${edit && html`<${PersonModal} personId=${edit === 'new' ? null : edit} onClose=${() => setEdit(null)} onAdded=${getCode}/>`}
+    ${code && html`<${Modal} title=${'Setup code for ' + code.name} onClose=${() => setCode(null)} footer=${html`<button className="btn" onClick=${() => { try { navigator.clipboard.writeText(codeText).then(() => toast('Copied. Paste it to them in a message.'), () => toast('Couldn’t copy here. Write the code down instead.', 'warn')); } catch (e) { toast('Couldn’t copy here. Write the code down instead.', 'warn'); } }}><${Icon} n="copy" s=${15}/>Copy as a message</button><button className="btn primary" onClick=${() => setCode(null)}>Done</button>`}>
+      <div className="code-big mono">${code.code}</div>
+      <ol className="steps">
+        <li>On their phone or computer, open <b>${appLink}</b></li>
+        <li>Type the store code <b className="mono">${lsGet(STORE_CODE_KEY) || ''}</b></li>
+        <li>Pick their name, type this setup code, and choose their own 6-digit PIN.</li>
+      </ol>
+      <p className="muted sm">The code works once and expires in 14 days. If someone forgets their PIN, make a new code for them: it resets their login.</p>
+    <//>`}
   <//>`;
 }
 
@@ -2347,7 +2407,7 @@ function ChatAvatar({ c, s = 44 }) {
 function MsgText({ text, mentions }) {
   if (!mentions || !mentions.length) return text;
   const labels = mentions.map((m) => '@' + m.label).sort((a, b) => b.length - a.length);
-  const re = new RegExp('(' + labels.map((l) => l.replace(/[.*+?^${}()|[\]\\]/g, '\\/* ---------------- shell + app ---------------- */')).join('|') + ')', 'g');
+  const re = new RegExp('(' + labels.map((l) => l.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('|') + ')', 'g');
   return text.split(re).map((part, i) => (labels.includes(part) ? html`<b key=${i} className="mention">${part}</b>` : part));
 }
 function ChatItem({ r, on, onOpen }) {
@@ -2465,7 +2525,7 @@ function AlertControls({ onDone }) {
   return html`<div className="alert-ctl">
     ${perm === 'default' && html`<button className="btn sm" onClick=${() => { enablePopups(); onDone && onDone(); }}><${Icon} n="bell" s=${14}/>Turn on pop-ups</button>`}
     <button className="btn sm ghost" onClick=${() => setSoundOn(!soundOn)} aria-pressed=${soundOn}>${soundOn ? 'Sound on' : 'Sound off'}</button>
-    <button className="btn sm ghost" onClick=${() => { sendTestTask(); onDone && onDone(); }}>Send me a test task</button>
+    ${!CLOUD && html`<button className="btn sm ghost" onClick=${() => { sendTestTask(); onDone && onDone(); }}>Send me a test task</button>`}
   </div>`;
 }
 
@@ -2788,6 +2848,236 @@ function ChatsView() {
   </div>`;
 }
 
+/* ---------------- shared server (Supabase): logins, live sync and file storage ---------------- */
+// The installed app gets its server address from config.js. Without it (the preview link, or ?demo) it runs the demo store.
+const CLOUD = (() => {
+  try {
+    const c = window.FLOORBOARD_CONFIG;
+    if (/[?&]demo\b/.test(location.search) || !c || !c.supabaseUrl || !c.supabaseKey || !window.supabase) return null;
+    return window.supabase.createClient(c.supabaseUrl, c.supabaseKey, { auth: { persistSession: true, autoRefreshToken: true, storageKey: 'floorboard.auth' } });
+  } catch (e) { return null; }
+})();
+const STAFF_DOMAIN = '@staff.floorboard.app';
+const pinPassword = (pin) => 'fb-' + pin + '-FB';
+const PIN_LEN = CLOUD ? 6 : 4;
+const CACHE_KEY = 'floorboard.cloud.cache.v1', STORE_CODE_KEY = 'floorboard.storecode.v1';
+function emptyDb() { return { v: 2, store: 'Your store', counter: 1000, depts: [], users: [], drives: [], folders: [], files: [], tiles: [], pins: {}, chats: [], messages: [], posts: [] }; }
+
+// Same data, written with sorted keys, so a record that came back from the server compares equal to ours.
+function stable(v) {
+  if (v === null || typeof v !== 'object') return JSON.stringify(v);
+  if (Array.isArray(v)) return '[' + v.map((x) => (x === undefined ? 'null' : stable(x))).join(',') + ']';
+  return '{' + Object.keys(v).filter((k) => v[k] !== undefined).sort().map((k) => JSON.stringify(k) + ':' + stable(v[k])).join(',') + '}';
+}
+// The app works on one nested object; the server keeps one small record per item, and per person where two people
+// could change the same thing at once (progress on a task, a reaction, read receipts, votes).
+function toRecs(db) {
+  const out = [], put = (coll, id, data) => out.push({ coll, id: String(id), data });
+  put('meta', 'store', { store: db.store });
+  db.depts.forEach((d) => put('depts', d.id, d));
+  db.users.forEach((u) => { const { pin, ...rest } = u; put('users', u.id, rest); });
+  db.drives.forEach((d) => put('drives', d.id, d));
+  db.folders.forEach((f) => put('folders', f.id, f));
+  db.files.forEach((f) => put('files', f.id, f));
+  db.tiles.forEach((t) => put('tiles', t.id, t));
+  Object.entries(db.pins || {}).forEach(([who, v]) => put('pins', who, v));
+  db.chats.forEach((c) => { const { read, ...rest } = c; put('chats', c.id, rest); Object.entries(read || {}).forEach(([who, at]) => put('read', c.id + '|' + who, { chat: c.id, user: who, at })); });
+  db.messages.forEach((m) => { const { reactions, ...rest } = m; put('messages', m.id, rest); Object.entries(reactions || {}).forEach(([who, e]) => put('rx', m.id + '|' + who, { msg: m.id, user: who, e })); });
+  db.posts.forEach((p) => {
+    const { recips, activity, poll, ...rest } = p;
+    put('posts', p.id, { ...rest, poll: poll ? { ...poll, votes: undefined } : null });
+    Object.entries(recips || {}).forEach(([who, r]) => put('rcp', p.id + '|' + who, { ...r, post: p.id, user: who }));
+    (activity || []).forEach((e) => put('act', e.id, { ...e, post: p.id }));
+    if (poll) Object.entries(poll.votes || {}).forEach(([who, v]) => put('vote', p.id + '|' + who, { post: p.id, user: who, choice: v }));
+  });
+  return out;
+}
+function fromRecs(list) {
+  const db = emptyDb(), by = {};
+  list.forEach((r) => { (by[r.coll] = by[r.coll] || []).push(r); });
+  const of = (c) => (by[c] || []).map((r) => r.data);
+  const meta = (by.meta || []).find((r) => r.id === 'store');
+  if (meta && meta.data.store) db.store = meta.data.store;
+  db.depts = of('depts'); db.users = of('users'); db.drives = of('drives'); db.folders = of('folders'); db.files = of('files'); db.tiles = of('tiles');
+  (by.pins || []).forEach((r) => { db.pins[r.id] = r.data; });
+  const chats = {}; db.chats = of('chats').map((c) => (chats[c.id] = { ...c, read: {} }));
+  (by.read || []).forEach(({ data: x }) => { if (chats[x.chat]) chats[x.chat].read[x.user] = x.at; });
+  const msgs = {}; db.messages = of('messages').map((m) => (msgs[m.id] = { ...m })).sort((a, b) => a.at - b.at);
+  (by.rx || []).forEach(({ data: x }) => { const m = msgs[x.msg]; if (m) (m.reactions = m.reactions || {})[x.user] = x.e; });
+  const posts = {};
+  db.posts = of('posts').map((p) => (posts[p.id] = { ...p, recips: {}, activity: [], poll: p.poll ? { ...p.poll, votes: {} } : null })).sort((a, b) => b.createdAt - a.createdAt);
+  (by.rcp || []).forEach(({ data: x }) => { const p = posts[x.post]; if (p) { const { post, user, ...r } = x; p.recips[user] = r; } });
+  (by.act || []).forEach(({ data: x }) => { const p = posts[x.post]; if (p) { const { post, ...e } = x; p.activity.push(e); } });
+  Object.values(posts).forEach((p) => p.activity.sort((a, b) => a.at - b.at));
+  (by.vote || []).forEach(({ data: x }) => { const p = posts[x.post]; if (p && p.poll) p.poll.votes[x.user] = x.choice; });
+  db.counter = db.posts.reduce((a, p) => Math.max(a, p.no || 0), 1000);
+  return db;
+}
+const PARENT = { rcp: ['posts', 'post'], act: ['posts', 'post'], vote: ['posts', 'post'], rx: ['messages', 'msg'], read: ['chats', 'chat'] };
+const parentKey = (r) => (PARENT[r.coll] ? PARENT[r.coll][0] + '|' + r.data[PARENT[r.coll][1]] : null);
+
+const Sync = {
+  recs: new Map(), queue: new Map(), drops: new Map(), timer: null, notifyTimer: null, channel: null, down: false,
+  listeners: new Set(), statusListeners: new Set(), status: 'ok',
+  setStatus(s) { if (s === this.status) return; this.status = s; this.statusListeners.forEach((f) => f(s)); },
+  async loadAll() {
+    const fresh = new Map();
+    for (let from = 0; ; from += 1000) {
+      const { data, error } = await CLOUD.from('records').select('coll,id,data').order('coll').order('id').range(from, from + 999);
+      if (error) throw error;
+      data.forEach((r) => fresh.set(r.coll + '|' + r.id, { coll: r.coll, id: r.id, data: r.data, sig: stable(r.data) }));
+      if (data.length < 1000) break;
+    }
+    this.queue.forEach((r, k) => fresh.set(k, { ...r, sig: stable(r.data) })); // changes not sent yet stay ours
+    this.drops.forEach((r, k) => fresh.delete(k));
+    this.recs = fresh;
+    return fromRecs([...this.recs.values()]);
+  },
+  // Compare the app's data with what the server has, and send only what changed.
+  push(db) {
+    const next = new Map();
+    toRecs(db).forEach((r) => next.set(r.coll + '|' + r.id, r));
+    next.forEach((r, k) => {
+      const sig = stable(r.data), cur = this.recs.get(k);
+      if (cur && cur.sig === sig) return;
+      this.recs.set(k, { ...r, sig }); this.queue.set(k, r); this.drops.delete(k);
+    });
+    const gone = [];
+    this.recs.forEach((r, k) => { if (!next.has(k) && r.coll !== 'pins' && !PARENT[r.coll]) gone.push(k); });
+    const goneSet = new Set(gone);
+    this.recs.forEach((r, k) => {
+      if (next.has(k) || !PARENT[r.coll]) return;
+      const pk = parentKey(r);
+      if (next.has(pk) || goneSet.has(pk)) gone.push(k); // removed, or its post/message/chat was deleted
+      // otherwise its parent simply hasn't arrived yet: leave it alone
+    });
+    gone.forEach((k) => { const r = this.recs.get(k); this.recs.delete(k); this.queue.delete(k); this.drops.set(k, r); });
+    if (this.queue.size || this.drops.size) { clearTimeout(this.timer); this.timer = setTimeout(() => this.flush(), 250); }
+  },
+  async flush() {
+    clearTimeout(this.timer);
+    const ups = [...this.queue.values()].map((r) => ({ coll: r.coll, id: r.id, data: r.data }));
+    const dels = [...this.drops.values()];
+    this.queue.clear(); this.drops.clear();
+    if (!ups.length && !dels.length) return;
+    try {
+      for (let i = 0; i < ups.length; i += 500) { const { error } = await CLOUD.from('records').upsert(ups.slice(i, i + 500)); if (error) throw error; }
+      const byColl = {}; dels.forEach((r) => (byColl[r.coll] = byColl[r.coll] || []).push(r.id));
+      for (const [coll, ids] of Object.entries(byColl)) {
+        for (let i = 0; i < ids.length; i += 200) { const { error } = await CLOUD.from('records').delete().eq('coll', coll).in('id', ids.slice(i, i + 200)); if (error) throw error; }
+      }
+      this.setStatus('ok');
+    } catch (e) {
+      if (e && e.code === '42501') { this.setStatus('refused'); return; } // not allowed: don't keep retrying
+      ups.forEach((r) => { const k = r.coll + '|' + r.id; if (!this.queue.has(k)) this.queue.set(k, r); });
+      dels.forEach((r) => { const k = r.coll + '|' + r.id; if (!this.recs.has(k)) this.drops.set(k, r); });
+      this.setStatus('offline');
+      this.timer = setTimeout(() => this.flush(), 5000);
+    }
+  },
+  notify() { clearTimeout(this.notifyTimer); this.notifyTimer = setTimeout(() => { const db = fromRecs([...this.recs.values()]); this.listeners.forEach((f) => f(db)); }, 60); },
+  subscribe() {
+    if (this.channel) return;
+    this.channel = CLOUD.channel('records-live')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'records' }, (pl) => {
+        if (pl.eventType === 'DELETE') {
+          const o = pl.old || {}, k = o.coll + '|' + o.id;
+          if (!this.recs.has(k) || this.queue.has(k)) return;
+          this.recs.delete(k);
+        } else {
+          const r = pl.new, k = r.coll + '|' + r.id, sig = stable(r.data), cur = this.recs.get(k);
+          if ((cur && cur.sig === sig) || this.queue.has(k)) return; // our own echo, or we have a newer change waiting
+          this.recs.set(k, { coll: r.coll, id: r.id, data: r.data, sig });
+        }
+        this.notify();
+      })
+      .subscribe((s) => {
+        if (s === 'SUBSCRIBED') { if (this.down) { this.down = false; this.loadAll().then(() => this.notify()).catch(() => {}); } this.setStatus('ok'); }
+        if (s === 'CHANNEL_ERROR' || s === 'TIMED_OUT' || s === 'CLOSED') { this.down = true; this.setStatus('offline'); }
+      });
+  },
+  stop() { if (this.channel) CLOUD.removeChannel(this.channel); this.channel = null; this.recs = new Map(); this.queue.clear(); this.drops.clear(); clearTimeout(this.timer); },
+};
+window.addEventListener('online', () => { if (CLOUD && Sync.queue.size + Sync.drops.size) Sync.flush(); });
+
+function CloudLogin() {
+  const { cloudSignedIn } = useApp();
+  const [code, setCode] = useState(() => lsGet(STORE_CODE_KEY) || '');
+  const [dir, setDir] = useState(null);
+  const [sel, setSel] = useState(null);
+  const [q, setQ] = useState('');
+  const [pin, setPin] = useState(''); const [pin2, setPin2] = useState(''); const [setup, setSetup] = useState('');
+  const [err, setErr] = useState(''); const [busy, setBusy] = useState(false);
+  const loadDir = async (c) => {
+    setBusy(true); setErr('');
+    const { data, error } = await CLOUD.rpc('staff_directory', { p_code: c.trim() });
+    setBusy(false);
+    if (error) { setDir(null); setErr(/store code/i.test(error.message) ? 'That store code isn’t right. Ask your manager for it.' : 'Can’t reach the store’s server. Check your internet connection.'); return; }
+    lsSet(STORE_CODE_KEY, c.trim().toUpperCase()); setDir(data || []);
+  };
+  useEffect(() => { if (code) loadDir(code); }, []);
+  const digits = (v) => v.replace(/\D/g, '').slice(0, 6);
+  async function submit(e) {
+    e.preventDefault(); setErr('');
+    const email = sel.handle + STAFF_DOMAIN;
+    if (sel.claimed) {
+      if (pin.length !== 6) return setErr('Your PIN is 6 digits.');
+      setBusy(true);
+      const { data, error } = await CLOUD.auth.signInWithPassword({ email, password: pinPassword(pin) });
+      setBusy(false);
+      if (error) { setPin(''); return setErr('That PIN doesn’t match. If you’ve forgotten it, ask your manager for a new setup code.'); }
+      return cloudSignedIn(data.session);
+    }
+    if (setup.length !== 6) return setErr('The setup code from your manager is 6 digits.');
+    if (pin.length !== 6) return setErr('Choose a 6-digit PIN you’ll remember.');
+    if (pin !== pin2) return setErr('The two PINs don’t match. Type the same PIN twice.');
+    setBusy(true);
+    let { data, error } = await CLOUD.auth.signUp({ email, password: pinPassword(pin) });
+    if (error && /registered/i.test(error.message)) ({ data, error } = await CLOUD.auth.signInWithPassword({ email, password: pinPassword(pin) }));
+    if (error || !data.session) { setBusy(false); return setErr(error ? 'Couldn’t set up your login: ' + error.message : 'The server still asks for email confirmation. Your admin needs to switch “Confirm email” off in Supabase.'); }
+    const { data: ok } = await CLOUD.rpc('claim_login', { p_staff: sel.id, p_code: setup });
+    if (!ok) { await CLOUD.auth.signOut(); setBusy(false); return setErr('That setup code isn’t right or has expired. Ask your manager for a new one.'); }
+    setBusy(false); cloudSignedIn(data.session);
+  }
+  const groups = {};
+  (dir || []).filter((u) => !q || u.name.toLowerCase().includes(q.toLowerCase())).forEach((u) => { const k = u.dept_name || 'Other'; (groups[k] = groups[k] || []).push(u); });
+  const Ava = ({ u, s }) => html`<span className="av" style=${{ width: s, height: s, fontSize: Math.round(s * 0.38), background: '#5E6B65' }}>${u.name.split(' ').map((w) => w[0]).slice(0, 2).join('').toUpperCase()}</span>`;
+  return html`<div className="login">
+    <div className="login-l glass">
+      <div className="brand"><span className="brand-mark"><${Icon} n="logo" s=${20}/></span><div><div className="brand-name">Floorboard</div><div className="brand-store">Your store, live</div></div></div>
+      <h1>Only what involves you. Nothing else.</h1>
+      <p>Tasks, feedback requests, heads-ups and votes, tagged to you or your team, sorted by how urgent they are. No scrolling through twenty WhatsApp groups to find your name.</p>
+    </div>
+    <div className="login-r glass"><div className="login-card">
+      ${!dir ? html`<form className="pinbox" onSubmit=${(e) => { e.preventDefault(); if (code.trim()) loadDir(code); }}>
+          <div><h2>Enter your store code</h2><p className="muted" style=${{ marginTop: 4 }}>Your manager gives you this once. This phone or computer remembers it.</p></div>
+          <label className="field"><span>Store code</span><input id="store-code" className="input pin-in" style=${{ letterSpacing: '.3em' }} autoFocus autoComplete="off" value=${code} onChange=${(e) => setCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 8))}/></label>
+          ${err && html`<p className="err" role="alert">${err}</p>`}
+          <button className="btn primary" style=${{ padding: 12 }} disabled=${busy || !code.trim()}>${busy ? 'Checking…' : 'Continue'}</button>
+        </form>`
+      : !sel ? html`
+        <div><h2>Who’s logging in?</h2><p className="muted" style=${{ marginTop: 4 }}>Pick your name.</p></div>
+        <label className="bigsearch" style=${{ height: 44, fontSize: 15 }}><${Icon} n="search" s=${17}/><input id="login-q" value=${q} onChange=${(e) => setQ(e.target.value)} placeholder="Find your name" aria-label="Find your name"/></label>
+        ${dir.length === 0 && html`<p className="muted">No one has been added yet.</p>`}
+        <div className="ugrid">${Object.entries(groups).map(([g, list]) => html`<div key=${g}><div className="ug-h"><i style=${{ background: '#5E6B65' }}></i>${g}</div><div className="ulist">${list.map((u) => html`<button key=${u.id} className="ubtn" onClick=${() => { setSel(u); setErr(''); setPin(''); setPin2(''); setSetup(''); }}><${Ava} u=${u} s=${34}/><span><b>${u.name}</b><small>${u.title}${u.claimed ? '' : ' · first time'}</small></span></button>`)}</div></div>`)}</div>
+        <button type="button" className="linkish" onClick=${() => { setDir(null); setCode(''); lsSet(STORE_CODE_KEY, ''); }}>Use a different store code</button>`
+      : html`<form className="pinbox" onSubmit=${submit}>
+          <div style=${{ display: 'flex', gap: 12, alignItems: 'center' }}><${Ava} u=${sel} s=${48}/><div><h2>${sel.name}</h2><span className="muted">${sel.title}</span></div></div>
+          ${!sel.claimed && html`<p className="hint">First time here? Type the 6-digit setup code your manager gave you, then choose your own 6-digit PIN. You’ll use that PIN from now on.</p>
+            <label className="field"><span>Setup code from your manager</span><input id="setup-code" className="input pin-in" inputMode="numeric" autoComplete="off" autoFocus value=${setup} onChange=${(e) => setSetup(digits(e.target.value))}/></label>`}
+          <label className="field"><span>${sel.claimed ? 'Your PIN' : 'Choose a 6-digit PIN'}</span><input id="login-pin" className="input pin-in" type="password" inputMode="numeric" autoComplete="off" autoFocus=${sel.claimed} value=${pin} onChange=${(e) => { setPin(digits(e.target.value)); setErr(''); }}/></label>
+          ${!sel.claimed && html`<label className="field"><span>Type the PIN again</span><input id="login-pin2" className="input pin-in" type="password" inputMode="numeric" autoComplete="off" value=${pin2} onChange=${(e) => setPin2(digits(e.target.value))}/></label>`}
+          ${err && html`<p className="err" role="alert">${err}</p>`}
+          <button className="btn primary" style=${{ padding: 12 }} disabled=${busy}>${busy ? 'One moment…' : sel.claimed ? 'Log in' : 'Set up my login'}</button>
+          <button type="button" className="linkish" onClick=${() => setSel(null)}>Not ${sel.name.split(' ')[0]}? Pick someone else</button>
+        </form>`}
+    </div></div>
+  </div>`;
+}
+function CloudLoading({ text }) {
+  return html`<div className="login" style=${{ gridTemplateColumns: '1fr', placeItems: 'center' }}><div className="pinbox glass" style=${{ textAlign: 'center', maxWidth: 360 }}><span className="brand-mark" style=${{ margin: '0 auto' }}><${Icon} n="logo" s=${20}/></span><h2>${text}</h2></div></div>`;
+}
+
 /* ---------------- shell + app ---------------- */
 const SCENES = ['warm', 'night', 'fresh'];
 const SCENE_KEY = 'floorboard.scene.v1';
@@ -2804,7 +3094,7 @@ function Shell() {
   else if (view === 'pins') content = html`<${PinsView}/>`;
   else if (view === 'search') content = html`<${SearchView}/>`;
   else if (view === 'admin') content = html`<${AdminView}/>`;
-  const note = html`<p className="board-note">Demo store with example staff. Changes stay on this device. <button onClick=${() => ask({ title: 'Reset the demo store?', body: 'All posts, files, pins and people go back to the example data. Anything you added is removed.', confirm: 'Reset demo', danger: true, onConfirm: resetDemo })}>Reset demo</button></p>`;
+  const note = CLOUD ? html`<p className="board-note">Live: everyone in the store sees changes as they happen.</p>` : html`<p className="board-note">Demo store with example staff. Changes stay on this device. <button onClick=${() => ask({ title: 'Reset the demo store?', body: 'All posts, files, pins and people go back to the example data. Anything you added is removed.', confirm: 'Reset demo', danger: true, onConfirm: resetDemo })}>Reset demo</button></p>`;
   return html`<div className=${'shell' + (openId ? ' has-detail' : '') + (chatsMode && openChatId ? ' chat-open' : '')}>
     <${Topbar}/>
     <${Rail}/>
@@ -2821,9 +3111,16 @@ function Shell() {
     <${Lightbox}/>
   </div>`;
 }
+function cachedCloudDb() {
+  try { const d = JSON.parse(localStorage.getItem(CACHE_KEY)); if (d && Array.isArray(d.posts) && Array.isArray(d.chats)) return d; } catch (e) { }
+  return emptyDb();
+}
 function App() {
-  const [db, setDb] = useState(loadDb);
-  const [me, setMe] = useState(() => lsGet(SESSION_KEY));
+  const [db, setDb] = useState(() => (CLOUD ? cachedCloudDb() : loadDb()));
+  const [me, setMe] = useState(() => (CLOUD ? null : lsGet(SESSION_KEY)));
+  // off: demo store in this browser. checking/loading: connecting. signedout, ready, or offline (showing the last copy, read only).
+  const [cloud, setCloud] = useState(CLOUD ? 'checking' : 'off');
+  const [syncStatus, setSyncStatus] = useState('ok');
   const [mode, setMode] = useState(() => (location.hash === '#widget' ? 'widget' : 'full'));
   const [scene, setSceneState] = useState(() => { const s = lsGet(SCENE_KEY); return SCENES.includes(s) ? s : 'warm'; });
   const [view, setView] = useState('chats');
@@ -2837,7 +3134,39 @@ function App() {
   const [filters, setFilters] = useState(NO_FILTERS);
   const [searchQ, setSearchQ] = useState('');
   const [saved, setSaved] = useState(true);
-  useEffect(() => { setSaved(saveDb(db)); }, [db]);
+  useEffect(() => {
+    if (!CLOUD) { setSaved(saveDb(db)); return; }
+    if (cloud !== 'ready') return;
+    Sync.push(db);
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(db)); } catch (e) { /* the copy for offline viewing is optional */ }
+  }, [db]);
+  const startCloud = useCallback(async (session) => {
+    if (!session) { setMe(null); setCloud('signedout'); return; }
+    setCloud('loading');
+    try {
+      const { data: mem, error } = await CLOUD.from('members').select('staff_id').maybeSingle();
+      if (error) throw error;
+      if (!mem) { setMe(null); setCloud('signedout'); return; }
+      const fresh = await Sync.loadAll();
+      setDb(fresh); setMe(mem.staff_id); setCloud('ready'); lsSet('floorboard.cloud.me', mem.staff_id);
+      Sync.subscribe();
+    } catch (e) {
+      // no connection: show the last copy this device had, without sending anything
+      const last = lsGet('floorboard.cloud.me');
+      if (last) { setMe(last); setCloud('offline'); } else { setMe(null); setCloud('signedout'); }
+    }
+  }, []);
+  useEffect(() => {
+    if (!CLOUD) return;
+    const onDb = (d) => setDb(d);
+    Sync.listeners.add(onDb); Sync.statusListeners.add(setSyncStatus);
+    CLOUD.auth.getSession().then(({ data }) => startCloud(data.session));
+    const { data: sub } = CLOUD.auth.onAuthStateChange((ev) => { if (ev === 'SIGNED_OUT') { Sync.stop(); setMe(null); setCloud('signedout'); } });
+    const retry = () => { if (cloudRef.current === 'offline') CLOUD.auth.getSession().then(({ data }) => startCloud(data.session)); };
+    window.addEventListener('online', retry);
+    return () => { Sync.listeners.delete(onDb); Sync.statusListeners.delete(setSyncStatus); sub.subscription.unsubscribe(); window.removeEventListener('online', retry); };
+  }, []);
+  const cloudRef = useRef(cloud); cloudRef.current = cloud;
   // The desktop sidebar, the full app and other tabs share this storage: follow their changes live.
   useEffect(() => {
     const h = (e) => {
@@ -2931,12 +3260,20 @@ function App() {
     openPost: (id) => { setOpenId(id); setDrawer(false); }, closePost: () => setOpenId(null),
     compose: (preset) => setComposer(preset || {}), closeComposer: () => setComposer(null),
     login: (id) => { lsSet(SESSION_KEY, id); setMe(id); setView('chats'); setOpenChatId(null); setOpenId(null); setFilters(NO_FILTERS); },
-    logout: () => { lsSet(SESSION_KEY, ''); setMe(null); setOpenId(null); setDrawer(false); setComposer(null); },
+    logout: () => {
+      setOpenId(null); setDrawer(false); setComposer(null); setOpenChatId(null);
+      if (!CLOUD) { lsSet(SESSION_KEY, ''); setMe(null); return; }
+      // shared devices: don't leave the store's data behind
+      lsSet(CACHE_KEY, ''); lsSet('floorboard.cloud.me', ''); Sync.stop(); setDb(emptyDb()); setMe(null); setCloud('signedout');
+      CLOUD.auth.signOut();
+    },
+    cloud, syncStatus, cloudSignedIn: (session) => { setView('chats'); setOpenChatId(null); startCloud(session); },
     resetDemo: async () => { await Blobs.clear(); setDb(seed()); setOpenId(null); setOpenChatId(null); setView('chats'); setFilters(NO_FILTERS); toast('Demo store reset'); },
   };
   return html`<${Ctx.Provider} value=${ctx}>
     <div className="scene" data-scene=${scene} aria-hidden="true"></div>
-    ${!user ? html`<${Login}/>` : mode === 'widget' ? html`<${Widget}/>` : html`<${Shell}/>`}
+    ${cloud === 'checking' || cloud === 'loading' ? html`<${CloudLoading} text=${cloud === 'loading' ? 'Loading your store…' : 'Connecting…'}/>`
+      : !user ? (CLOUD ? html`<${CloudLogin}/>` : html`<${Login}/>`) : mode === 'widget' ? html`<${Widget}/>` : html`<${Shell}/>`}
     <${AlertStack}/>
     <${Toasts}/>
   <//>`;

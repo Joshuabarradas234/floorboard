@@ -26,7 +26,20 @@ Add `#widget` to the end of the link to open the compact sidebar view.
 
 `../floorboard.html` is the single source file. After editing it, run `node build.js` in the folder above this one to rebuild `floorboard-app`.
 
-## Limits of this prototype
+## Connecting your store's server (Supabase)
 
-- Data is stored on each device. To share tasks between phones and computers, it needs a server with real logins (for example Supabase or Firebase).
-- Real home-screen widgets (the live tiles on an iPhone or Android home screen) need a native app built on top of that server.
+Without a server, the app runs the demo store and keeps everything on one device. Connected, everyone shares one live store.
+
+1. Create a free project at supabase.com.
+2. In the project, open **SQL Editor → New query**, paste all of `supabase/setup.sql` and click **Run**. The result shows your **store code** and your **setup code**.
+3. **Authentication → Sign In / Providers → Email**: switch **Confirm email** off (staff log in with a PIN, not an email address).
+4. **Project Settings → API**: copy the **Project URL** and the **publishable** (or **anon public**) key into `config.js`.
+5. Open the app, type the store code, pick **Store admin**, type your setup code and choose a 6-digit PIN. Rename yourself under People & access.
+6. Add your staff under People & access. Each new person gets a one-time setup code; they choose their own PIN with it. A new code also resets a forgotten PIN.
+
+Add `?demo` to the link to open the demo store instead.
+
+## Still to come
+
+- Push notifications when the app is closed on a phone (alerts work while it's open, and on the always-running desktop sidebar).
+- Real home-screen widgets (the live tiles on an iPhone or Android home screen) need a native app built on top of the server.
