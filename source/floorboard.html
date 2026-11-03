@@ -700,6 +700,48 @@ td.mono{white-space:nowrap}
 .person.pick.on{border-color:#fff;background:var(--glass-2)}
 .tick-box{width:22px;height:22px;border-radius:50%;border:2px solid var(--glass-line-2);display:grid;place-items:center;flex:none}
 .tick-box.on{background:var(--green-dot);border-color:var(--green-dot);color:#0b2a17}
+.sdock-scrim{position:fixed;inset:0;z-index:58;background:rgba(0,0,0,.2)}
+.sdock{position:fixed;left:10px;top:68px;z-index:59;display:flex;flex-direction:column;gap:2px;padding:8px;border-radius:26px;min-width:196px;max-height:calc(100% - 82px);overflow-y:auto;box-shadow:0 18px 50px rgba(0,0,0,.4);animation:sdock-in .22s cubic-bezier(.2,.8,.3,1)}
+@keyframes sdock-in{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:none}}
+.sdock-i{display:flex;align-items:center;gap:11px;border:0;background:transparent;color:var(--ink-2);padding:10px 14px;border-radius:999px;font-weight:700;font-size:14px;white-space:nowrap;text-align:left}
+.sdock-i:hover,.sdock-i:focus-visible{color:var(--ink);background:var(--glass-2)}
+.sdock-i span{flex:1}
+.sdock-i b{font-family:var(--f-mono);font-weight:500;font-size:11.5px;background:var(--red-dot);color:#fff;border-radius:99px;padding:0 6px;line-height:17px}
+.sdock-i b.g{background:var(--green-dot);color:#0b2a17}
+.sdock-sep{height:1px;background:var(--glass-line);margin:4px 12px;flex:none}
+.sdock-new{display:flex;align-items:center;gap:11px;border:0;background:transparent;color:var(--ink);font-weight:700;font-size:14px;padding:6px 8px;margin-top:4px;border-radius:999px;text-align:left}
+.sdock-new:hover{background:var(--glass-2)}
+.sdock-new .plus{width:42px;height:42px;border-radius:50%;background:#fff;color:var(--accent-ink);display:grid;place-items:center;box-shadow:0 6px 20px rgba(0,0,0,.3);flex:none}
+@media (prefers-reduced-motion:reduce){.sdock{animation:none}}
+.stk{display:grid;gap:10px}
+.board-col .stk,.inline-board .stk{margin-top:14px;padding:14px;border-radius:var(--r-lg);background:var(--glass);border:1px solid var(--glass-line);border-top-color:rgba(255,255,255,.3)}
+.w-stk{flex:none;padding:12px 14px;border-radius:22px}
+.stk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:9px;max-height:214px;overflow-y:auto;padding:2px 2px 4px;scrollbar-width:thin}
+/* in the sidebar: one row that scrolls sideways, so the list below keeps its room */
+.stk.compact .stk-grid{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:94px;max-height:none;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;padding-bottom:6px}
+.stk.compact .stk-n,.stk.compact .stk-add{aspect-ratio:1/.86;scroll-snap-align:start}
+.stk.compact .stk-t{-webkit-line-clamp:3}
+.stk-n,.stk-add{position:relative;aspect-ratio:1/.9;border-radius:5px 5px 14px 5px}
+.stk-n{display:flex;background:var(--n);color:#2a2414;box-shadow:0 6px 14px rgba(0,0,0,.22),inset 0 -14px 20px -12px rgba(0,0,0,.12);background-image:linear-gradient(135deg,transparent 86%,rgba(0,0,0,.07) 86%)}
+.stk-body{flex:1;min-width:0;border:0;background:none;color:inherit;text-align:left;padding:9px 22px 8px 9px;display:flex;flex-direction:column;gap:5px;font:600 12.5px/1.32 var(--f-body);cursor:pointer}
+.stk-t{flex:1;min-height:0;overflow:hidden;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow-wrap:anywhere}
+.stk-r{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;opacity:.7}
+.stk-x{position:absolute;top:4px;right:4px;width:22px;height:22px;border-radius:50%;border:0;background:rgba(0,0,0,.09);color:#2a2414;display:grid;place-items:center;opacity:0;transition:opacity .15s}
+.stk-n:hover .stk-x,.stk-x:focus-visible{opacity:1}
+@media (hover:none){.stk-x{opacity:.75}}
+.stk-n.ring{outline:2px solid #fff;outline-offset:1px;animation:stk-ring .9s ease-in-out infinite alternate}
+.stk-n.ring .stk-r{opacity:1}
+@keyframes stk-ring{from{transform:rotate(-1.4deg)}to{transform:rotate(1.4deg)}}
+.stk-n.done{opacity:.55}
+.stk-n.done .stk-t{text-decoration:line-through}
+.stk-add{border:1.5px dashed var(--glass-line-2);background:transparent;color:var(--ink-2);display:grid;place-items:center;align-content:center;gap:4px;font-size:12px;font-weight:700}
+.stk-add:hover{background:var(--glass-2);color:var(--ink)}
+.stk-hint{margin:0;font-size:12.5px;color:var(--ink-3)}
+.stk-edit{background:var(--n);color:#2a2414;border:0;border-radius:6px 6px 18px 6px;font:600 16px/1.4 var(--f-body);padding:14px 16px;min-height:130px;resize:vertical;box-shadow:0 8px 20px rgba(0,0,0,.25)}
+.stk-edit::placeholder{color:rgba(42,36,20,.45)}
+.stk-edit:focus{outline:2px solid #fff;outline-offset:2px;background:var(--n)}
+.alert-stk{width:38px;height:38px;border-radius:10px;display:grid;place-items:center;font-size:20px;background:#FFE38A;flex:none}
+@media (prefers-reduced-motion:reduce){.stk-n.ring{animation:none}}
 .ap-list{display:grid;gap:8px}
 .ap-sum{display:block;font-style:normal;font-family:var(--f-mono);font-size:13px;color:var(--ink);white-space:nowrap}
 .ap-top .meta-i{display:inline-flex;align-items:center;gap:3px;font-size:12px;color:var(--ink-3)}
@@ -994,7 +1036,8 @@ const TYPES = {
   vote: { label: 'Vote', plural: 'Votes', icon: 'vote', hint: 'Let people choose' },
   approval: { label: 'Approval', plural: 'Approvals', icon: 'stamp', hint: 'An invoice or payment to OK' },
 };
-const TYPE_KEYS = ['task', 'feedback', 'look', 'vote'];
+// Votes were taken out of the board and new posts; older vote posts still open and work.
+const TYPE_KEYS = ['task', 'feedback', 'look'];
 const LEVELS = {
   red: { label: 'ASAP', long: 'Needs attention ASAP', rank: 0 },
   amber: { label: 'Important', long: 'Important, not urgent', rank: 1 },
@@ -1611,6 +1654,7 @@ function seed() {
   // on shift / off shift examples: Nomsa is off today, Tumi works the late shift
   db.status = { u7: { mode: 'off', at: T }, u14: { mode: 'auto', start: '14:00', end: '22:00', days: [1, 2, 3, 4, 5, 6], tz: new Date().getTimezoneOffset(), at: T } };
   demoApprovals(db, T);
+  demoStickies(db, T);
   return db;
 }
 function loadDb() {
@@ -1867,11 +1911,35 @@ function WidgetItem({ p, tab }) {
     ${tab !== 'sent' && html`<${QuickActions} p=${p}/>`}
   </article>`;
 }
+// The full app's bottom bar, for the sidebar: slides out from the left. Needs you stays here; the rest open in the full app.
+function SideDock({ onClose, onNeeds }) {
+  const { db, user, jump, compose } = useApp();
+  const c = useCounts();
+  useEffect(() => {
+    const h = (e) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h);
+  }, [onClose]);
+  const unreadChats = myChats(db, user.id).filter((ch) => unreadIn(db, ch, user.id) > 0).length;
+  const toApprove = db.posts.filter((p) => p.type === 'approval' && needsMe(p, user.id)).length;
+  const main = [['chats', 'chat', 'Chats', unreadChats], ['needs', 'inbox', 'Needs you', c.mine.length], ['all', 'list', 'Everything'], ['sent', 'send', 'Sent'],
+    user.role !== 'staff' && ['team', 'team', 'Team'], db.drives.some((d) => driveOn(db, d)) && ['drive', 'folder', 'Drive'], ['pins', 'pin', 'Pins']].filter(Boolean);
+  const finance = [canSeeME(db, user) && ['monthend', 'calendar', 'Month end'], canSeeAP(db, user) && ['approvals', 'stamp', 'Approvals', toApprove]].filter(Boolean);
+  const go = (id) => { onClose(); if (id === 'needs') onNeeds(); else jump('view:' + id); };
+  const row = ([id, icon, label, n]) => html`<button key=${id} className="sdock-i" onClick=${() => go(id)} title=${id === 'needs' ? 'Show Needs you here' : 'Open ' + label + ' in the full app'}><${Icon} n=${icon} s=${18}/><span>${label}</span>${n > 0 && html`<b className=${id === 'chats' ? 'g' : ''}>${n}</b>`}</button>`;
+  return html`<div className="sdock-scrim" onClick=${onClose}></div>
+    <nav className="sdock glass" aria-label="Views">
+      ${main.map(row)}
+      ${finance.length > 0 && html`<span className="sdock-sep"></span>${finance.map(row)}`}
+      <button className="sdock-new" onClick=${() => { onClose(); compose(); }}><span className="plus"><${Icon} n="plus" s=${22}/></span>New post</button>
+    </nav>`;
+}
 function Widget() {
   const { db, user, openId, composer, closeComposer, compose, openLook, openPhone } = useApp();
   const c = useCounts();
   const [tab, setTab] = useState('needs');
   const [f, setF] = useState(NO_FILTERS);
+  const [bar, setBar] = useState(false);
+  const closeBar = useCallback(() => setBar(false), []);
   const desk = window.floorboardDesktop;
   const list = tab === 'needs' ? applyFilters(c.mine, f).sort(sortNeeds(user.id))
     : c.vis.filter((p) => p.author === user.id && !p.closed && Object.values(p.recips).some((r) => r.status !== 'done')).sort((a, b) => b.createdAt - a.createdAt);
@@ -1880,6 +1948,7 @@ function Widget() {
   const filtered = f.type !== 'any' || f.level !== 'any';
   return html`<div className="widget">
     <header className="w-head glass">
+      <button className=${'icon-btn' + (bar ? ' solid' : '')} onClick=${() => setBar((b) => !b)} title="Chats, Sent, Team, Drive and more" aria-label="Open the menu bar" aria-expanded=${bar}><${Icon} n="grid" s=${17}/></button>
       <div className="greet"><${Avatar} u=${user} s=${36}/><div className="greet-txt" style=${{ minWidth: 0 }}><b>${greeting()}, ${firstName(user)}</b><small>${db.store}</small></div></div>
       <${ShiftChip} small/>
       <button className="icon-btn" onClick=${openPhone} title="Get it on your phone" aria-label="Get it on your phone"><${Icon} n="phone" s=${17}/></button>
@@ -1888,6 +1957,7 @@ function Widget() {
       ${desk && desk.hide && html`<button className="icon-btn" onClick=${() => desk.hide()} title="Hide the sidebar" aria-label="Hide the sidebar"><${Icon} n="close" s=${17}/></button>`}
     </header>
     <${Board} onPick=${pick}/>
+    <div className="w-stk glass"><${StickyNotes} compact/></div>
     <div className="filters" style=${{ justifyContent: 'space-between' }}>
       <div className="seg" role="group" aria-label="List">
         <button className=${tab === 'needs' ? 'on' : ''} onClick=${() => { setTab('needs'); setF(NO_FILTERS); }}>Needs you <b>${c.mine.length}</b></button>
@@ -1901,6 +1971,7 @@ function Widget() {
       <div className="w-demo"><${AlertControls}/></div>
     </div>
     <div className="w-sc glass"><${Shortcuts} compact/></div>
+    ${bar && html`<${SideDock} onClose=${closeBar} onNeeds=${() => { setTab('needs'); setF(NO_FILTERS); }}/>`}
     ${openId && html`<aside className="detail" aria-label="Post details"><${PostDetail} key=${openId} id=${openId}/></aside>`}
     ${composer && html`<${Composer} preset=${composer} onClose=${closeComposer}/>`}
     <${ConfirmModal}/>
@@ -1991,7 +2062,7 @@ function FeedView({ kind }) {
     <p>${filtered ? 'Try another type, level or department.' : kind === 'needs' ? 'Nothing needs you right now. New tasks, feedback requests and votes will show up here.' : kind === 'sent' ? 'Tag a person or a team to hand out a task, ask for feedback or run a vote.' : 'When someone tags you or your team, it shows up here.'}</p>
     ${filtered ? html`<button className="btn" onClick=${() => setFilters(NO_FILTERS)}>Clear filters</button>` : kind !== 'needs' && html`<button className="btn primary" onClick=${() => compose()}>New post</button>`}</div>`;
   return html`<${Page} title=${meta[0]} sub=${meta[1]}>
-    ${kind === 'needs' && html`<div className="inline-board"><${Board}/><${Shortcuts}/></div>`}
+    ${kind === 'needs' && html`<div className="inline-board"><${Board}/><${StickyNotes}/><${Shortcuts}/></div>`}
     <${FilterBar} base=${base} status=${status} setStatus=${kind === 'needs' ? null : setStatus}/>
     ${shown.length === 0 ? empty : kind === 'needs'
       ? LEVEL_KEYS.map((l) => { const g = shown.filter((p) => p.level === l); return g.length > 0 && html`<section key=${l} className="group"><h2 className="group-h"><${LevelTag} l=${l}/>${LEVELS[l].long}<span className="n">${g.length}</span></h2><div className="cards">${g.map((p) => html`<${PostCard} key=${p.id} p=${p}/>`)}</div></section>`; })
@@ -2913,10 +2984,11 @@ function AlertStack() {
     return [];
   };
   return html`<div className="alerts" role="status" aria-live="polite">${alerts.map((a) => { const quick = quickFor(a); return html`<div key=${a.id} className=${'alert ' + a.level}>
-    <${Avatar} u=${userById(db, a.from)} s=${38}/>
+    ${a.sticky ? html`<span className="alert-stk" aria-hidden="true">📝</span>` : html`<${Avatar} u=${userById(db, a.from)} s=${38}/>`}
     <div className="alert-main"><div className="alert-t">${a.title}</div><div className="alert-b">${a.body}</div>
+      ${a.sticky ? html`<div className="alert-a"><button className="btn sm primary" onClick=${() => { stickyAct(update, user.id, a.sticky, 'done'); dismissAlert(a.id); toast('Done'); }}><${Icon} n="check" s=${14}/>Done</button><button className="btn sm" onClick=${() => { stickyAct(update, user.id, a.sticky, 'snooze'); dismissAlert(a.id); toast('It’ll remind you again in an hour'); }}><${Icon} n="clock" s=${14}/>In 1 hour</button><button className="btn sm ghost" onClick=${() => dismissAlert(a.id)}>Dismiss</button></div>` : html`
       <div className="alert-a">${quick.map(([l, act, msg]) => html`<button key=${act} className="btn sm primary" onClick=${() => { quickAct(update, db.posts.find((x) => x.id === a.postId), user.id, act); dismissAlert(a.id); toast(msg); }}><${Icon} n=${act === 'start' ? 'clock' : 'check'} s=${14}/>${l}</button>`)}
-        <button className=${'btn sm' + (quick.length ? '' : ' primary')} onClick=${() => openAlert(a)}>Open</button><button className="btn sm ghost" onClick=${() => dismissAlert(a.id)}>Dismiss</button></div></div>
+        <button className=${'btn sm' + (quick.length ? '' : ' primary')} onClick=${() => openAlert(a)}>Open</button><button className="btn sm ghost" onClick=${() => dismissAlert(a.id)}>Dismiss</button></div>`}</div>
   </div>`; })}</div>`;
 }
 const TEST_TASKS = [
@@ -4252,6 +4324,103 @@ function GroupView({ id }) {
   <//>`;
 }
 
+/* ---------------- sticky notes: the paper ones on the desk, kept neat ---------------- */
+// Each person's own, kept with their pins (which only they can read): { id, text, color, remindAt, firedAt, done, doneAt, at }.
+// A reminder pops up on time on any device with Floorboard open; done notes can be brought back for a week.
+const STICKY_COLORS = { yellow: '#FFE38A', pink: '#FFBDD0', green: '#BDEBAA', blue: '#B4DAFF', lilac: '#DCC8FF' };
+const stickiesOf = (db, id) => (db.pins[id] || {}).stickies || [];
+function editStickies(d, who, fn) {
+  d.pins[who] = d.pins[who] || { posts: [], notes: [] };
+  const p = d.pins[who];
+  p.stickies = p.stickies || [];
+  fn(p);
+  const now = Date.now();
+  p.stickies = p.stickies.filter((n) => !n.done || now - (n.doneAt || 0) < 7 * DAY);
+}
+function stickyAct(update, who, id, act) {
+  update((d) => editStickies(d, who, (p) => {
+    const x = p.stickies.find((y) => y.id === id), now = Date.now();
+    if (!x) return;
+    if (act === 'done' || act === 'back') { x.done = act === 'done'; x.doneAt = x.done ? now : null; }
+    if (act === 'snooze') { x.remindAt = now + HOUR; x.firedAt = null; }
+  }));
+}
+function remindLabel(t) {
+  const k = dkey(t), day = k === dkey() ? '' : k === keyPlus(1) ? 'Tomorrow ' : fmtDay(t, { weekday: 'short', day: 'numeric', month: 'short' }) + ' ';
+  return day + hm(t);
+}
+const atHour = (h, plusDays) => { const d = new Date(); d.setDate(d.getDate() + (plusDays || 0)); d.setHours(h, 0, 0, 0); return d.getTime(); };
+const toLocalInput = (t) => { const d = new Date(t); return dkey(t) + 'T' + pad(d.getHours()) + ':' + pad(d.getMinutes()); };
+function StickyModal({ id, onClose }) {
+  const { db, user, update, toast } = useApp();
+  const n = stickiesOf(db, user.id).find((x) => x.id === id);
+  const [text, setText] = useState(n ? n.text : '');
+  const [color, setColor] = useState(n ? n.color : 'yellow');
+  const [when, setWhen] = useState(n ? n.remindAt || null : null);
+  const [pick, setPick] = useState(n && n.remindAt ? 'set' : 'none');
+  const [err, setErr] = useState('');
+  const later = new Date().getHours() < 15;
+  const presets = [['none', 'No reminder', null], ['hour', 'In 1 hour', () => Math.ceil((Date.now() + HOUR) / (5 * MIN)) * 5 * MIN],
+    later && ['today', 'Today 16:00', () => atHour(16)], ['tomorrow', 'Tomorrow 08:00', () => atHour(8, 1)], ['custom', 'Pick a time', null]].filter(Boolean);
+  const choose = ([k, , f]) => { setPick(k); setErr(''); if (k === 'none') setWhen(null); else if (f) setWhen(f()); else if (k === 'custom' && !when) setWhen(atHour(9, 1)); };
+  const save = () => {
+    const t = text.trim();
+    if (!t) return setErr('Write something on it first.');
+    if (when && when < Date.now() - MIN && (!n || when !== n.remindAt)) return setErr('That time has already passed. Pick a later one.');
+    update((d) => editStickies(d, user.id, (p) => {
+      const x = n && p.stickies.find((y) => y.id === n.id);
+      if (x) { x.text = t; x.color = color; if (x.remindAt !== when) { x.remindAt = when; x.firedAt = null; } }
+      else p.stickies.unshift({ id: uid('s'), text: t, color, remindAt: when, firedAt: null, done: false, doneAt: null, at: Date.now() });
+    }));
+    onClose();
+    toast(when && (!n || when !== n.remindAt) ? 'Stuck on. It’ll remind you ' + (dkey(when) === dkey() ? 'at ' : '') + remindLabel(when) + '.' : n ? 'Saved' : 'Stuck on your desk');
+  };
+  const remove = () => { update((d) => editStickies(d, user.id, (p) => { p.stickies = p.stickies.filter((y) => y.id !== n.id); })); onClose(); toast('Thrown away'); };
+  return html`<${Modal} title=${n ? 'Sticky note' : 'New sticky note'} onClose=${onClose} footer=${html`${n && html`<button className="btn ghost" style=${{ marginRight: 'auto' }} onClick=${remove}><${Icon} n="trash" s=${15}/>Throw away</button>`}<button className="btn" onClick=${onClose}>Cancel</button><button className="btn primary" onClick=${save}>${n ? 'Save' : 'Stick it on'}</button>`}>
+    <textarea id="stk-text" className="stk-edit" rows="4" maxLength="160" autoFocus value=${text} style=${{ '--n': STICKY_COLORS[color] }} onChange=${(e) => { setText(e.target.value); setErr(''); }}
+      onKeyDown=${(e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); save(); } }} placeholder="e.g. Call SunPack about the short delivery" aria-label="What the note says"></textarea>
+    <div className="field"><span>Colour</span><div className="swatches">${Object.entries(STICKY_COLORS).map(([k, c]) => html`<button type="button" key=${k} className=${color === k ? 'on' : ''} style=${{ '--c': c }} onClick=${() => setColor(k)} aria-label=${k} aria-pressed=${color === k}></button>`)}</div></div>
+    <div className="field"><span>Remind me</span>
+      <div className="seg" role="group">${presets.map((p) => html`<button type="button" key=${p[0]} className=${pick === p[0] ? 'on' : ''} onClick=${() => choose(p)} aria-pressed=${pick === p[0]}>${p[1]}</button>`)}</div>
+      ${pick === 'custom' && html`<input id="stk-when" type="datetime-local" className="input" value=${when ? toLocalInput(when) : ''} min=${toLocalInput(Date.now())} onChange=${(e) => { setWhen(e.target.value ? new Date(e.target.value).getTime() : null); setErr(''); }}/>`}
+      ${when && html`<small><${Icon} n="bell" s=${12}/> ${n && n.firedAt && when === n.remindAt ? 'Reminded you at ' : 'Pops up '}${dkey(when) === dkey() ? 'today at ' : ''}${remindLabel(when)}, on any device with Floorboard open.</small>`}
+    </div>
+    ${err && html`<p className="err" role="alert">${err}</p>`}
+  <//>`;
+}
+function StickyNotes({ compact }) {
+  const { db, user, update, toast } = useApp();
+  const [edit, setEdit] = useState(null);
+  const [showDone, setShowDone] = useState(false);
+  const all = stickiesOf(db, user.id), now = Date.now();
+  const open = all.filter((n) => !n.done), done = all.filter((n) => n.done);
+  const due = (n) => !n.done && n.remindAt && n.remindAt <= now;
+  // ringing ones first, then the next reminders, then the newest
+  const list = showDone ? done.slice().sort((a, b) => b.doneAt - a.doneAt)
+    : open.slice().sort((a, b) => due(b) - due(a) || (a.remindAt || Infinity) - (b.remindAt || Infinity) || b.at - a.at);
+  return html`<section className=${'stk' + (compact ? ' compact' : '')} aria-label="Sticky notes">
+    <div className="sc-h"><span className="eyebrow">Sticky notes</span>${(done.length > 0 || showDone) && html`<button className="linkish sm" onClick=${() => setShowDone((s) => !s)}>${showDone ? 'Back to my notes' : done.length + ' done'}</button>`}</div>
+    <div className="stk-grid" onWheel=${compact ? (e) => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) e.currentTarget.scrollLeft += e.deltaY; } : null}>
+      ${!showDone && html`<button className="stk-add" onClick=${() => setEdit('new')} aria-label="New sticky note"><${Icon} n="plus" s=${20}/><small>Add a note</small></button>`}
+      ${list.map((n) => html`<div key=${n.id} className=${'stk-n' + (due(n) ? ' ring' : '') + (n.done ? ' done' : '')} style=${{ '--n': STICKY_COLORS[n.color] || STICKY_COLORS.yellow }}>
+        <button className="stk-body" onClick=${() => !n.done && setEdit(n.id)} title=${n.done ? n.text : 'Edit'} aria-label=${'Sticky note: ' + n.text}><span className="stk-t">${n.text}</span>${n.remindAt && !n.done && html`<span className="stk-r"><${Icon} n="bell" s=${11}/>${due(n) ? 'Now' : remindLabel(n.remindAt)}</span>`}</button>
+        <button className="stk-x" onClick=${() => { stickyAct(update, user.id, n.id, n.done ? 'back' : 'done'); toast(n.done ? 'Back on your desk' : 'Done. It’s under “done” for a week if you need it back.'); }} title=${n.done ? 'Put it back' : 'Done'} aria-label=${(n.done ? 'Put back: ' : 'Done: ') + n.text}><${Icon} n=${n.done ? 'refresh' : 'check'} s=${13}/></button>
+      </div>`)}
+    </div>
+    ${!all.length && html`<p className="stk-hint">For anything you’d scribble on paper and stick to your desk. Only you see them.</p>`}
+    ${edit && html`<${StickyModal} id=${edit === 'new' ? null : edit} onClose=${() => setEdit(null)}/>`}
+  </section>`;
+}
+function demoStickies(db, T) {
+  const add = (who, list) => {
+    db.pins[who] = db.pins[who] || { posts: [], notes: [] };
+    db.pins[who].stickies = list.map((n, i) => ({ id: 's-' + who + '-' + i, color: 'yellow', remindAt: null, firedAt: null, done: false, doneAt: null, at: T - i * HOUR, ...n }));
+  };
+  add('u3', [{ text: 'Call SunPack about the October statement', remindAt: T + 2 * HOUR }, { text: 'Bank the petty cash slips before Friday', color: 'pink' }, { text: 'Ask Thandi to sign the fryer quote', color: 'blue' }]);
+  add('u1', [{ text: 'Alarm company: zone 3 keeps tripping', remindAt: T + 90 * MIN }, { text: 'Leave forms for December', color: 'green' }]);
+  add('u4', [{ text: 'Airtime x2 every Thursday', color: 'green' }, { text: 'Check the customer refund went through', color: 'pink', remindAt: T + 3 * HOUR }]);
+}
+
 /* ---------------- approvals: invoices, payments and expense claims that need an OK ---------------- */
 // An approval is a post (type 'approval') sent to its approvers, with p.approval = { kind, party, amount, ref, rule: 'any' | 'all',
 // approvers, paidAt, paidBy, payNote }. Each approver's decision sits on their own recipient record, so two people deciding at
@@ -5063,7 +5232,7 @@ function Shell() {
     <${Rail}/>
     ${drawer && html`<div className="side-scrim" onClick=${() => setDrawer(false)}></div>`}
     ${chatsMode ? html`<main className="stage glass chats-mode"><${ChatsView}/></main>` : html`<main className="stage glass">
-      <aside className="board-col"><${Board} note=${note}/><${Shortcuts}/></aside>
+      <aside className="board-col"><${Board} note=${note}/><${StickyNotes}/><${Shortcuts}/></aside>
       <section className="content" key=${view}>${content}</section>
     </main>`}
     <${Dock}/>
@@ -5246,6 +5415,33 @@ function App() {
     });
     if (soundOn) chime(fresh.some((i) => i.level === 'red'));
   }, [db, user && user.id]);
+  // sticky note reminders: pop up on time on any device with Floorboard open, then wait for the next one
+  const stickySig = user ? stickiesOf(db, user.id).map((n) => n.id + ':' + (n.remindAt || 0) + ':' + (n.firedAt || 0) + ':' + (n.done ? 1 : 0)).join('|') : '';
+  const [stickyWake, setStickyWake] = useState(0);
+  useEffect(() => {
+    if (!user || (CLOUD && cloud !== 'ready')) return;
+    const now = Date.now(), waiting = stickiesOf(dbRef.current, user.id).filter((n) => !n.done && n.remindAt && !n.firedAt);
+    const due = waiting.filter((n) => n.remindAt <= now + 1000);
+    if (due.length) {
+      const ids = new Set(due.map((n) => n.id));
+      update((d) => editStickies(d, user.id, (p) => p.stickies.forEach((x) => { if (ids.has(x.id)) x.firedAt = now; })));
+      due.slice(-3).forEach((n) => {
+        const a = { id: uid('al'), key: 's:' + n.id, sticky: n.id, level: 'amber', from: user.id, title: 'Sticky note', body: n.text };
+        setAlerts((l) => [...l.slice(-3), a]);
+        try {
+          if (popupPermission() === 'granted' && (document.hidden || !document.hasFocus())) {
+            const pop = new Notification('📝 ' + n.text.slice(0, 80), { body: 'Sticky note reminder', icon: 'icon-192.png', tag: 's:' + n.id, requireInteraction: true });
+            pop.onclick = () => { window.focus(); const desk = window.floorboardDesktop; if (desk && desk.focus) desk.focus(); pop.close(); };
+          }
+        } catch (e) { /* the pop-up inside the app still shows */ }
+      });
+      if (soundOn) chime(false);
+    }
+    const next = Math.min(...waiting.filter((n) => n.remindAt > now + 1000).map((n) => n.remindAt));
+    if (!isFinite(next)) return;
+    const t = setTimeout(() => setStickyWake((x) => x + 1), Math.min(next - now + 250, 2e9));
+    return () => clearTimeout(t);
+  }, [user && user.id, cloud, stickySig, stickyWake]);
   // ASAP items nobody opened within 30 minutes go to the managers. Any open app can do it; two at once end up the same.
   useEffect(() => {
     if (!user || (CLOUD && cloud !== 'ready')) return;
