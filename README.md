@@ -73,7 +73,8 @@ Switch it on in **People & access**: under Finance, turn on **Approvals**. Anyon
 
 Switch it on in **People & access**: under Admin (or whichever department handles new business), turn on **Quote drop box**, and turn on **Drive** there too so signed copies have somewhere to go.
 
-- Drag quotes straight from Outlook (or the desktop) onto **Drop quotes here** in the sidebar, or click it to pick files. Choose once who approves them (for example the owner).
+- Under the department, **Drop box for** gives the drop box to one person only (otherwise everyone in the department has it), and **Quotes go to** sends every quote to one approver, for example the owner, with no choosing.
+- Drag quotes straight from Outlook (or the desktop) onto **Drop quotes here** in the sidebar, or click it to pick files. If **Quotes go to** isn't set, choose once who approves them.
 - Each quote needs a short note saying what it is. The approver sees that note first, on the card, in the sidebar and in the alert.
 - PDFs are read when they're dropped: the supplier, number, date, total, VAT, the main lines and how long it's valid show as a **Quick look**, so the approver knows what they're signing without opening it. Scans (photos of paper) have no text to read.
 - Once it's approved and signed, a signed PDF (a cover page with the signature and the note, then the quote) is saved in the department's Drive under **Signed quotes**. No printing, signing on paper or scanning back in.

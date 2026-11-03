@@ -810,6 +810,9 @@ td.mono{white-space:nowrap}
 .w-qd{flex:none;padding:10px 12px;border-radius:22px}
 .qd-to{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-3);font-weight:700}
 .qd-to .select,.qd-print .select{width:auto;max-width:160px;padding:3px 8px;font-size:12.5px;border-radius:999px}
+.qd-fixed{color:var(--ink);font-size:12.5px}
+.dq{display:grid;gap:6px}
+.dq .qd-to{justify-content:space-between}
 .qd-zone{display:flex;align-items:center;gap:12px;border:1.5px dashed var(--glass-line-2);border-radius:16px;padding:12px 14px;cursor:pointer;color:var(--ink-2);transition:background-color .15s,border-color .15s,transform .15s}
 .qd.compact .qd-zone{padding:9px 12px}
 .qd-zone b{display:block;color:var(--ink);font-size:14px}
@@ -2920,6 +2923,7 @@ function PersonModal({ personId, onClose, onAdded }) {
 function AdminView() {
   const { db, user, update, toast, startSeeing } = useApp();
   const flipFeature = (deptId, key) => update((d) => { const x = d.depts.find((y) => y.id === deptId); x.features = { ...(x.features || {}), [key]: !featureOn(x, key) }; });
+  const setQuote = (deptId, k, id) => update((d) => { const x = d.depts.find((y) => y.id === deptId); x[k] = id || null; });
   const [tab, setTab] = useState('people');
   const [edit, setEdit] = useState(null);
   const [nd, setNd] = useState({ name: '', color: TILE_COLORS[0] });
@@ -2975,7 +2979,10 @@ function AdminView() {
       <form className="dtool" onSubmit=${addDept}><input id="nd-name" className="input" style=${{ maxWidth: 280 }} value=${nd.name} onChange=${(e) => setNd({ ...nd, name: e.target.value })} placeholder="New department, e.g. Butchery"/><div className="swatches">${TILE_COLORS.map((c) => html`<button type="button" key=${c} className=${nd.color === c ? 'on' : ''} style=${{ '--c': c }} onClick=${() => setNd({ ...nd, color: c })} aria-label=${'Colour ' + c}></button>`)}</div><button className="btn primary">Add department</button></form>
       <p className="feat-note">Every department starts with its group chat, tagging and the “Needs you” board. Switch on the extra tools as each department comes on board.</p>
       <div className="dgrid">${db.depts.map((d) => html`<div key=${d.id} className="dcard"><div className="dcard-h"><span className="dsw" style=${{ '--c': d.color }}></span><div><h3>${d.name}</h3><span className="muted sm">${deptMembers(db, d.id).length} people · ${db.users.filter((u) => u.manages.includes(d.id)).map((u) => firstName(u)).join(', ') || 'no manager'}</span></div></div>
-        <div className="toggles">${[['tools', 'Tools & manuals'], ['drive', 'Drive'], ['monthend', 'Month end'], ['approvals', 'Approvals'], ['quotes', 'Quote drop box']].map(([k, l]) => html`<button key=${k} className=${'toggle' + (featureOn(d, k) ? ' on' : '')} style=${{ '--c': d.color }} onClick=${() => flipFeature(d.id, k)} aria-pressed=${featureOn(d, k)}><i></i>${l}${featureOn(d, k) ? ' · on' : ' · off'}</button>`)}</div></div>`)}</div>
+        <div className="toggles">${[['tools', 'Tools & manuals'], ['drive', 'Drive'], ['monthend', 'Month end'], ['approvals', 'Approvals'], ['quotes', 'Quote drop box']].map(([k, l]) => html`<button key=${k} className=${'toggle' + (featureOn(d, k) ? ' on' : '')} style=${{ '--c': d.color }} onClick=${() => flipFeature(d.id, k)} aria-pressed=${featureOn(d, k)}><i></i>${l}${featureOn(d, k) ? ' · on' : ' · off'}</button>`)}</div>
+        ${featureOn(d, 'quotes') && html`<div className="dq">
+          <label className="qd-to"><span>Drop box for</span><select id=${'dq-for-' + d.id} className="select" value=${d.quoteFor || ''} onChange=${(e) => setQuote(d.id, 'quoteFor', e.target.value)}><option value="">Everyone in ${d.name}</option>${deptMembers(db, d.id).map((id) => userById(db, id)).map((u) => html`<option key=${u.id} value=${u.id}>${u.name}</option>`)}</select></label>
+          <label className="qd-to"><span>Quotes go to</span><select id=${'dq-to-' + d.id} className="select" value=${d.quoteTo || ''} onChange=${(e) => setQuote(d.id, 'quoteTo', e.target.value)}><option value="">Whoever sends them picks</option>${db.users.filter((u) => u.active !== false).map((u) => html`<option key=${u.id} value=${u.id}>${u.name}</option>`)}</select></label></div>`}</div>`)}</div>
     </div>`}
     ${tab === 'drives' && html`<div className="table-wrap"><table>
       <thead><tr><th>Drive</th><th>Who can open it (tap to change)</th></tr></thead>
@@ -4724,10 +4731,14 @@ function ApproveButton({ p, note, files, onDone, cls, s }) {
 const sigOf = (p, who) => (p.activity.slice().reverse().find((e) => e.kind === 'approve' && e.user === who && e.sig) || {}).sig;
 
 /* ---------------- quote drop box: drag quotes in from Outlook and they go off to be approved ---------------- */
-// Switched on per department (Quote drop box). Each person picks who approves their quotes; that choice is kept with their pins.
+// Switched on per department (Quote drop box). An admin can set who the department's quotes always go to; otherwise each
+// person picks who approves theirs, and that choice is kept with their pins.
 const quoteDepts = (db) => db.depts.filter((d) => featureOn(d, 'quotes'));
-// only the people in that department: an approver like the store manager doesn't need a drop box of their own
-const canQuoteDrop = (db, u) => quoteDepts(db).some((d) => u.depts.includes(d.id) || u.manages.includes(d.id));
+// only the people in that department: an approver like the store manager doesn't need a drop box of their own. An admin can
+// give it to one person in the department only (if they leave, it goes back to everyone in it).
+const quoteDeptFor = (db, u) => quoteDepts(db).find((d) => (u.depts.includes(d.id) || u.manages.includes(d.id))
+  && (!d.quoteFor || d.quoteFor === u.id || !db.users.some((x) => x.id === d.quoteFor && x.active !== false && (x.depts.includes(d.id) || x.manages.includes(d.id)))));
+const canQuoteDrop = (db, u) => !!quoteDeptFor(db, u);
 const FILE_WORDS = /\b(quote|quotation|qte|invoice|inv|final|copy|scan|scanned|signed|pdf|document|attachment|untitled)\b/gi;
 // "Coldline_Quote_Q-1182.pdf" → Coldline, Q-1182
 function guessFromFile(name) {
@@ -4747,7 +4758,10 @@ function apCreate(d, o) {
 function QuoteDrop({ compact }) {
   const { db, user, update, toast, jump } = useApp();
   const mine = db.pins[user.id] || {};
-  const approver = mine.dropTo ? userById(db, mine.dropTo) : null;
+  const qdept = quoteDeptFor(db, user);
+  const fixed = qdept && qdept.quoteTo ? userById(db, qdept.quoteTo) : null;
+  const fixedOn = !!fixed && fixed.active !== false;
+  const approver = fixedOn ? fixed : mine.dropTo ? userById(db, mine.dropTo) : null;
   const to = approver && approver.active !== false ? approver.id : '';
   const [over, setOver] = useState(false);
   const [tray, setTray] = useState([]);
@@ -4757,7 +4771,7 @@ function QuoteDrop({ compact }) {
   const people = db.users.filter((u) => u.active !== false && u.id !== user.id).sort((a, b) => (a.role === 'staff') - (b.role === 'staff') || a.name.localeCompare(b.name));
   const sent = db.posts.filter((p) => p.type === 'approval' && p.approval && p.author === user.id);
   const waiting = sent.filter((p) => apState(p) === 'waiting').length, queries = sent.filter((p) => apState(p) === 'query').length;
-  const about = (quoteDepts(db).find((d) => user.depts.includes(d.id) || user.manages.includes(d.id)) || {}).id || user.depts[0];
+  const about = (qdept || {}).id || user.depts[0];
   const send = async (items) => {
     if (!to) { toast('Choose who approves the quotes first.', 'warn'); return; }
     // the approver always gets a note saying what it is, so they know the team has looked at it
@@ -4798,7 +4812,8 @@ function QuoteDrop({ compact }) {
   if (!canQuoteDrop(db, user)) return null;
   return html`<section className=${'qd' + (compact ? ' compact' : '')} aria-label="Quotes for approval">
     <div className="sc-h"><span className="eyebrow">Quotes to approve</span>
-      <label className="qd-to"><span>To</span><select id=${'qd-to' + sfx} className="select" value=${to} onChange=${(e) => setPin({ dropTo: e.target.value })} aria-label="Who approves the quotes"><option value="">Choose…</option>${people.map((u) => html`<option key=${u.id} value=${u.id}>${u.name}</option>`)}</select></label></div>
+      ${fixedOn ? html`<span className="qd-to" title=${'Set in People & access: this department’s quotes go to ' + fixed.name}><span>To</span><b className="qd-fixed">${fixed.name}</b></span>`
+      : html`<label className="qd-to"><span>To</span><select id=${'qd-to' + sfx} className="select" value=${to} onChange=${(e) => setPin({ dropTo: e.target.value })} aria-label="Who approves the quotes"><option value="">Choose…</option>${people.map((u) => html`<option key=${u.id} value=${u.id}>${u.name}</option>`)}</select></label>`}</div>
     <div className=${'qd-zone' + (over ? ' over' : '') + (busy ? ' busy' : '')} role="button" tabIndex="0" aria-label="Drop quotes here, or choose files"
       onClick=${() => pick.current && pick.current.click()} onKeyDown=${(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick.current.click(); } }}
       onDragEnter=${(e) => { if (isFiles(e)) { e.preventDefault(); setOver(true); } }} onDragOver=${(e) => { if (isFiles(e)) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; if (!over) setOver(true); } }}
