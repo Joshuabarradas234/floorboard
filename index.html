@@ -4442,7 +4442,8 @@ function ApprovalsView() {
     paid: all.filter((x) => x.s === 'paid'),
     rejected: all.filter((x) => x.s === 'rejected'),
   };
-  const [tab, setTab] = useState(() => (groups.me.length ? 'me' : payer && groups.pay.length ? 'pay' : 'waiting'));
+  // open on the first tab with something in it, so nobody lands on an empty list
+  const [tab, setTab] = useState(() => (groups.me.length ? 'me' : payer && groups.pay.length ? 'pay' : ['waiting', 'pay', 'paid', 'rejected'].find((k) => groups[k].length) || 'waiting'));
   const sum = (l) => l.reduce((t, x) => t + (Number(x.p.approval.amount) || 0), 0);
   const month = dkey().slice(0, 7), paidMonth = groups.paid.filter((x) => dkey(x.p.approval.paidAt).slice(0, 7) === month);
   const oldest = (a, b) => (a.p.due || '9999').localeCompare(b.p.due || '9999') || a.p.createdAt - b.p.createdAt;
