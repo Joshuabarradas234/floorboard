@@ -24,7 +24,7 @@ Add `#widget` to the end of the link to open the compact sidebar view.
 
 ## Changing the app
 
-`../floorboard.html` is the single source file. After editing it, run `node build.js` in the folder above this one to rebuild `floorboard-app`.
+`source/floorboard.html` is the single source file (every build also copies it here, with `source/build.js`). After editing it, run `node source/build.js` to rebuild the app. Nothing secret is in `source/`: the server address and publishable key live in `config.js`, and the private alert key only in Supabase.
 
 ## Connecting your store's server (Supabase)
 
