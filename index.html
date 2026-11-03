@@ -840,6 +840,11 @@ td.mono{white-space:nowrap}
 .sig-slip.sm img{max-height:56px}
 .sig-what{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;font-size:15px}
 .stk{display:grid;gap:10px}
+.stk-slim{display:flex;align-items:center;gap:8px;width:100%;border:0;background:none;color:var(--ink-2);font-weight:700;font-size:13px;padding:0}
+.stk-slim:hover{color:var(--ink)}
+.w-stk:has(.stk-slim){padding:10px 14px}
+.widget{overflow-y:auto}
+.widget .w-list{flex:1 0 260px;min-height:260px}
 .board-col .stk,.inline-board .stk{margin-top:14px;padding:14px;border-radius:var(--r-lg);background:var(--glass);border:1px solid var(--glass-line);border-top-color:rgba(255,255,255,.3)}
 .w-stk{flex:none;padding:12px 14px;border-radius:22px}
 .stk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:9px;max-height:214px;overflow-y:auto;padding:2px 2px 4px;scrollbar-width:thin}
@@ -4585,6 +4590,8 @@ function StickyNotes({ compact }) {
   // ringing ones first, then the next reminders, then the newest
   const list = showDone ? done.slice().sort((a, b) => b.doneAt - a.doneAt)
     : open.slice().sort((a, b) => due(b) - due(a) || (a.remindAt || Infinity) - (b.remindAt || Infinity) || b.at - a.at);
+  // in the sidebar, no notes yet is one slim line, so the list below keeps its room
+  if (compact && !all.length) return html`<${React.Fragment}><button className="stk-slim" onClick=${() => setEdit('new')}><${Icon} n="plus" s=${15}/>Add a sticky note</button>${edit && html`<${StickyModal} id=${null} onClose=${() => setEdit(null)}/>`}<//>`;
   return html`<section className=${'stk' + (compact ? ' compact' : '')} aria-label="Sticky notes">
     <div className="sc-h"><span className="eyebrow">Sticky notes</span>${(done.length > 0 || showDone) && html`<button className="linkish sm" onClick=${() => setShowDone((s) => !s)}>${showDone ? 'Back to my notes' : done.length + ' done'}</button>`}</div>
     <div className="stk-grid" onWheel=${compact ? (e) => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) e.currentTarget.scrollLeft += e.deltaY; } : null}>
