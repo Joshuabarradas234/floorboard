@@ -60,12 +60,23 @@ Switch it on in **People & access**: under Finance, turn on **Month end**. A **M
 
 ## Approvals (Finance)
 
-Switch it on in **People & access**: under Finance, turn on **Approvals**. Anyone can then pick **Approval** as the kind of post: what it is (invoice, payment, expense claim), the supplier, the amount, the invoice number, a photo or PDF of it, and who approves it (any one of them, or all of them).
+Switch it on in **People & access**: under Finance, turn on **Approvals**. Anyone can then pick **Approval** as the kind of post: what it is (quote, invoice, payment, expense claim), the supplier, the amount, the invoice number, a photo or PDF of it, and who approves it (any one of them, or all of them).
 
-- Approvers get it in Needs you and on their phones, and can **Approve** in one tap, **Reject** with a reason, or **Ask a question**. A question goes back to whoever asked for approval until they answer it.
-- The **Approvals** page shows what's waiting, what's approved and still to pay, what's paid and what was rejected, with rand totals. Finance and the admins see everything there and **Mark paid**, with the payment reference if they like. The person who asked hears when it's paid or rejected.
-- Every decision keeps who made it and when, so "who approved this?" is answered on the post itself.
+- Approvers get it in Needs you and on their phones, and choose **Approve** (they sign on screen, and can keep their signature for next time), **Don't approve** (with a reason) or **Query**. A query goes back to whoever asked for approval until they answer it.
+- The **Approvals** page shows what's waiting, what's approved, what's paid and what wasn't approved, with rand totals. Finance and the admins see everything there and **Mark paid**, with the payment reference if they like. The person who asked hears when it's paid or not approved.
+- Every decision keeps who made it, when, and the signature, so "who approved this?" is answered on the post itself.
 - Redeploy the `notify` function (step 2 of the alerts setup) to get phone alerts that say "Paid · your invoice" instead of a general heading. Everything works without it.
+
+## Quote drop box (Admin)
+
+Switch it on in **People & access**: under Admin (or whichever department handles new business), turn on **Quote drop box**, and turn on **Drive** there too so signed copies have somewhere to go.
+
+- Drag quotes straight from Outlook (or the desktop) onto **Drop quotes here** in the sidebar, or click it to pick files. Choose once who approves them (for example the owner).
+- Each quote needs a short note saying what it is. The approver sees that note first, on the card, in the sidebar and in the alert.
+- PDFs are read when they're dropped: the supplier, number, date, total, VAT, the main lines and how long it's valid show as a **Quick look**, so the approver knows what they're signing without opening it. Scans (photos of paper) have no text to read.
+- Once it's approved and signed, a signed PDF (a cover page with the signature and the note, then the quote) is saved in the department's Drive under **Signed quotes**. No printing, signing on paper or scanning back in.
+- **Printing**, if paper is still wanted: every approval has **Print with slip**. In the desktop app the drop box can also print each quote by itself, as it's sent or once it's approved, on the printer chosen on that computer.
+- In the desktop sidebar, the **pin** at the top keeps Floorboard in front of Outlook while dragging.
 
 ## Still to come
 

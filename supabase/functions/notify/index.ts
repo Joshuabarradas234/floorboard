@@ -153,8 +153,8 @@ Deno.serve(async (req) => {
         if (!p || !r || r.status === 'done' || p.closed) continue;
         sends.push({
           to: who, tag: 'p:' + p.id + (it.nudge ? ':n' : ''), url: '#go-post:' + p.id, urgent: p.level === 'red',
-          // a requester only hears back about their own approval with a question, a rejection, or once it's paid
-          title: who === p.author && (r.paid || r.rejected || r.answer) ? (r.paid ? 'Paid · your ' : r.rejected ? 'Rejected · your ' : 'A question about your ') + String((p.approval || {}).kind || 'request').toLowerCase()
+          // a requester only hears back about their own approval with a query, when it isn't approved, or once it's paid
+          title: who === p.author && (r.paid || r.rejected || r.answer) ? (r.paid ? 'Paid · your ' : r.rejected ? 'Not approved · your ' : 'A query about your ') + String((p.approval || {}).kind || 'request').toLowerCase()
             : (it.nudge ? 'Reminder · ' : r.escalated ? 'Escalated · ' : '') + (TYPES[p.type] || 'Post') + ' from ' + first(p.author) + ' · ' + (LEVELS[p.level] || ''),
           body: String(p.title || '').slice(0, 180),
         });

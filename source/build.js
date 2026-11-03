@@ -9,6 +9,11 @@ const VENDOR = {
   'htm.umd.js': 'https://cdn.jsdelivr.net/npm/htm@3.1.1/dist/htm.umd.js',
   'qrcode.min.js': 'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js',
 };
+// The PDF reader and the PDF maker are loaded by the page only when they're needed, so they have no script tags to swap.
+const LAZY = [
+  { base: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/', files: ['pdf.min.js', 'pdf.worker.min.js'] },
+  { base: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/', files: ['jspdf.umd.min.js'] },
+];
 // Only the installed app talks to the store's server, so this one isn't in floorboard.html.
 const SUPABASE = { file: 'supabase.js', url: 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js' };
 const CONFIG_TEMPLATE = `// Your store's server. Leave both empty to run the demo store instead.
@@ -158,6 +163,18 @@ async function main() {
     }
     if (!src.includes(`src="${url}"`)) throw new Error('Script tag not found for ' + url);
     src = src.replace(`src="${url}"`, `src="vendor/${file}"`);
+  }
+  for (const lib of LAZY) {
+    for (const file of lib.files) {
+      const dest = path.join(OUT, 'vendor', file);
+      if (!fs.existsSync(dest)) {
+        const res = await fetch(lib.base + file);
+        if (!res.ok) throw new Error('Download failed: ' + lib.base + file + ' (' + res.status + ')');
+        fs.writeFileSync(dest, Buffer.from(await res.arrayBuffer()));
+      }
+    }
+    if (src.split("'" + lib.base + "'").length !== 2) throw new Error('Address not found in the page: ' + lib.base);
+    src = src.replace("'" + lib.base + "'", "'vendor/'");
   }
   const sbDest = path.join(OUT, 'vendor', SUPABASE.file);
   if (!fs.existsSync(sbDest)) {

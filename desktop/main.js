@@ -64,20 +64,47 @@ function openFull(_e, target) {
   openLinksOutside(full);
 }
 
-function buildTray() {
-  tray = new Tray(nativeImage.createFromPath(ICON).resize({ width: 16, height: 16 }));
-  tray.setToolTip('Floorboard');
-  tray.on('click', toggleSidebar);
-  tray.setContextMenu(Menu.buildFromTemplate([
+// Keep the sidebar in front of Outlook and everything else (from the pin in the sidebar, or the tray menu).
+function setOnTop(on) {
+  prefs.onTop = !!on;
+  if (sidebar) sidebar.setAlwaysOnTop(prefs.onTop);
+  savePrefs();
+  if (tray) tray.setContextMenu(trayMenu());
+}
+
+// Printing quotes from the drop box: the print-out goes into a hidden window and straight to the chosen printer.
+async function printHtml(_e, job) {
+  const file = path.join(app.getPath('temp'), 'floorboard-print-' + Date.now() + '.html');
+  const win = new BrowserWindow({ show: false, webPreferences: { javascript: false, sandbox: true, contextIsolation: true } });
+  try {
+    fs.writeFileSync(file, String((job && job.html) || ''));
+    await win.loadFile(file);
+    const printer = job && typeof job.printer === 'string' ? job.printer : '';
+    return await new Promise((ok) => win.webContents.print({ silent: true, printBackground: true, ...(printer ? { deviceName: printer } : {}) }, (success, why) => ok({ ok: success, why: why || '' })));
+  } catch (e) {
+    return { ok: false, why: String((e && e.message) || e) };
+  } finally {
+    setTimeout(() => { try { win.destroy(); } catch (x) { /* already gone */ } try { fs.unlinkSync(file); } catch (x) { /* already gone */ } }, 5000);
+  }
+}
+
+function trayMenu() {
+  return Menu.buildFromTemplate([
     { label: 'Show or hide the sidebar   Ctrl+Alt+F', click: toggleSidebar },
     { label: 'Open the full app', click: openFull },
     { type: 'separator' },
-    { label: 'Keep the sidebar on top', type: 'checkbox', checked: prefs.onTop, click: (i) => { prefs.onTop = i.checked; sidebar.setAlwaysOnTop(i.checked); savePrefs(); } },
+    { label: 'Keep the sidebar on top', type: 'checkbox', checked: prefs.onTop, click: (i) => setOnTop(i.checked) },
     { label: 'Dock on the left', type: 'checkbox', checked: prefs.side === 'left', click: (i) => { prefs.side = i.checked ? 'left' : 'right'; savePrefs(); dock(); } },
     { label: 'Start with Windows', type: 'checkbox', checked: app.getLoginItemSettings().openAtLogin, click: (i) => app.setLoginItemSettings({ openAtLogin: i.checked }) },
     { type: 'separator' },
     { label: 'Quit Floorboard', click: () => { app.isQuitting = true; app.quit(); } },
-  ]));
+  ]);
+}
+function buildTray() {
+  tray = new Tray(nativeImage.createFromPath(ICON).resize({ width: 16, height: 16 }));
+  tray.setToolTip('Floorboard');
+  tray.on('click', toggleSidebar);
+  tray.setContextMenu(trayMenu());
 }
 
 // Red items slide the sidebar into view without stealing focus and flash it on the taskbar;
@@ -103,6 +130,10 @@ else {
     ipcMain.on('hide-sidebar', () => sidebar && sidebar.hide());
     ipcMain.on('show-sidebar', showSidebar);
     ipcMain.on('attention', attention);
+    ipcMain.handle('on-top-get', () => !!prefs.onTop);
+    ipcMain.handle('on-top-set', (_e, on) => { setOnTop(on); return prefs.onTop; });
+    ipcMain.handle('printers', async (e) => { try { return (await e.sender.getPrintersAsync()).map((p) => ({ name: p.name, isDefault: !!p.isDefault })); } catch (x) { return []; } });
+    ipcMain.handle('print-html', printHtml);
   });
   app.on('window-all-closed', () => { /* keep running in the tray */ });
   app.on('will-quit', () => globalShortcut.unregisterAll());

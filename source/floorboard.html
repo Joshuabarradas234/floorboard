@@ -713,6 +713,64 @@ td.mono{white-space:nowrap}
 .sdock-new:hover{background:var(--glass-2)}
 .sdock-new .plus{width:42px;height:42px;border-radius:50%;background:#fff;color:var(--accent-ink);display:grid;place-items:center;box-shadow:0 6px 20px rgba(0,0,0,.3);flex:none}
 @media (prefers-reduced-motion:reduce){.sdock{animation:none}}
+.ql{background:rgba(255,255,255,.08);border:1px solid var(--glass-line);border-radius:14px;padding:10px 12px;display:grid;gap:6px;font-size:13.5px}
+.ql-h{display:flex;align-items:baseline;gap:6px;font-weight:800;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-2)}
+.ql-h small{font-weight:500;letter-spacing:0;text-transform:none;color:var(--ink-3)}
+.ql-top{font-weight:700}
+.ql-total b{font-size:15px}
+.ql ul{margin:0;padding:0;list-style:none;display:grid;gap:3px}
+.ql li{display:flex;justify-content:space-between;gap:10px;color:var(--ink-2)}
+.ql li span:first-child{min-width:0;overflow-wrap:anywhere}
+.ql li .mono{white-space:nowrap;color:var(--ink)}
+.ql-valid{font-size:12.5px;color:var(--ink-3)}
+.qd-read{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--ink-2)}
+.ap-sticky.sm{font-size:13.5px;padding:9px 11px;max-width:none}
+.ap-filed{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--green)}
+.card-sticky{margin:4px 0 2px;background:#FFE38A;color:#2a2414;border-radius:4px 4px 12px 4px;padding:6px 10px;font-weight:700;font-size:13px;line-height:1.35;width:fit-content;max-width:100%;overflow-wrap:anywhere;box-shadow:0 3px 8px rgba(0,0,0,.18)}
+.qd-sticky.need{outline:2px solid var(--red-dot);outline-offset:1px}
+.alert-b{white-space:pre-line}
+.ap-actions{display:flex;gap:8px;flex-wrap:wrap}
+.qd{display:grid;gap:8px}
+.board-col .qd,.inline-board .qd{margin-top:14px;padding:14px;border-radius:var(--r-lg);background:var(--glass);border:1px solid var(--glass-line);border-top-color:rgba(255,255,255,.3)}
+.w-qd{flex:none;padding:10px 12px;border-radius:22px}
+.qd-to{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-3);font-weight:700}
+.qd-to .select,.qd-print .select{width:auto;max-width:160px;padding:3px 8px;font-size:12.5px;border-radius:999px}
+.qd-zone{display:flex;align-items:center;gap:12px;border:1.5px dashed var(--glass-line-2);border-radius:16px;padding:12px 14px;cursor:pointer;color:var(--ink-2);transition:background-color .15s,border-color .15s,transform .15s}
+.qd.compact .qd-zone{padding:9px 12px}
+.qd-zone b{display:block;color:var(--ink);font-size:14px}
+.qd-zone small{display:block;font-size:12px;color:var(--ink-3);line-height:1.3}
+.qd-zone:hover{background:var(--glass-2)}
+.qd-zone.over{border-color:#fff;background:rgba(255,255,255,.18);transform:scale(1.015)}
+.qd-zone.busy{opacity:.7;pointer-events:none}
+.qd-print{display:flex;align-items:center;gap:6px;flex-wrap:wrap;color:var(--ink-3)}
+.qd-tray{display:grid;gap:8px}
+.qd-item{display:grid;gap:6px;background:rgba(255,255,255,.07);border:1px solid var(--glass-line);border-radius:12px;padding:8px}
+.qd-file{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;min-width:0}
+.qd-file span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qd-fields{display:grid;grid-template-columns:1fr 104px;gap:6px}
+.qd-fields .input{padding:6px 9px;font-size:13px}
+.qd-sticky{background:#FFE38A;color:#2a2414;border:0;border-radius:5px 5px 14px 5px;font:600 13.5px/1.35 var(--f-body);padding:9px 11px;resize:vertical;box-shadow:0 4px 12px rgba(0,0,0,.2)}
+.qd-sticky::placeholder{color:rgba(42,36,20,.5)}
+.qd-sticky:focus{outline:2px solid #fff;outline-offset:1px;background:#FFE38A}
+.qd-add-note{justify-self:start}
+.qd-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.qd-foot label{display:flex;align-items:center;gap:6px;color:var(--ink-2)}
+.qd-status{justify-self:start;font-size:12.5px}
+.ap-sticky{background:#FFE38A;color:#2a2414;border-radius:5px 5px 16px 5px;padding:12px 14px;display:grid;gap:4px;font:600 15px/1.4 var(--f-body);box-shadow:0 6px 16px rgba(0,0,0,.22);max-width:420px}
+.ap-sticky small{font:500 12px var(--f-body);color:#6b5a1e}
+.ap-sticky .linkish{color:#6b4a00}
+.ap-note-edit{display:grid;gap:8px;max-width:420px}
+.ap-note-a{display:flex;gap:6px}
+.ap-note{font-size:13px}
+.sig-pad{position:relative;background:#fbfaf6;border-radius:14px;height:170px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)}
+.sig-pad canvas{display:block;width:100%;height:100%;touch-action:none;cursor:crosshair;border-radius:14px}
+.sig-line{position:absolute;left:18px;right:18px;bottom:34px;border-top:1.5px solid rgba(23,35,63,.25);font-size:11px;color:rgba(23,35,63,.5);padding-top:3px;pointer-events:none}
+.sig-clear{position:absolute;top:8px;right:12px;color:#2f5fb8}
+.sig-saved{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.sig-saved img,.sig-slip img{display:block;background:#fbfaf6;border-radius:10px;padding:6px 10px;max-width:100%;height:auto;max-height:90px}
+.sig-slip{margin-top:6px}
+.sig-slip.sm img{max-height:56px}
+.sig-what{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:baseline;font-size:15px}
 .stk{display:grid;gap:10px}
 .board-col .stk,.inline-board .stk{margin-top:14px;padding:14px;border-radius:var(--r-lg);background:var(--glass);border:1px solid var(--glass-line);border-top-color:rgba(255,255,255,.3)}
 .w-stk{flex:none;padding:12px 14px;border-radius:22px}
@@ -1051,6 +1109,7 @@ const TILE_COLORS = ['#9A6B2F', '#D0622B', '#3F8A2E', '#2F7FB8', '#0F8A8A', '#8A
 const NO_FILTERS = { type: 'any', level: 'any', dept: 'any' };
 
 const ICONS = {
+  print: '<path d="M7 9V3.5h10V9"/><rect x="3.5" y="9" width="17" height="8" rx="2"/><path d="M7 14h10v6.5H7z"/>',
   stamp: '<path d="M10 3.5h4A1.5 1.5 0 0 1 15.5 5c0 2-1.5 3-1.5 5.5V12h3.5a2 2 0 0 1 2 2v2.5h-15V14a2 2 0 0 1 2-2H10v-1.5C10 8 8.5 7 8.5 5A1.5 1.5 0 0 1 10 3.5z"/><path d="M5 20.5h14"/>',
   calendar: '<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="m9 15 2 2 4-4"/>',
   phone: '<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/>',
@@ -1395,6 +1454,7 @@ function seed() {
   // Extra tools are switched on department by department as each one comes on board.
   db.depts.forEach((d) => { d.features = { tools: false, drive: false }; });
   db.depts.find((d) => d.id === 'finance').features.monthend = true; // Finance came on board first, with month end
+  Object.assign(db.depts.find((d) => d.id === 'admin').features, { quotes: true, drive: true }); // Admin drops new-business quotes in for approval and keeps the signed copies
   db.deadlines = demoDeadlines(T);
   const U = (id, name, title, role, depts, manages) => ({ id, name, title, role, depts, manages: manages || [], pin: '1234', active: true });
   db.users = [
@@ -1666,6 +1726,11 @@ function loadDb() {
         // demo stores saved before month end existed get Finance's example sheet
         if (!Array.isArray(d.deadlines)) { d.deadlines = demoDeadlines(); const f = (d.depts || []).find((x) => x.id === 'finance'); if (f) f.features = { ...(f.features || {}), monthend: true }; }
         if (!(d.depts || []).some((x) => x.features && 'approvals' in x.features)) demoApprovals(d);
+        if (!(d.depts || []).some((x) => x.features && 'quotes' in x.features)) {
+          const ad = (d.depts || []).find((x) => x.id === 'admin');
+          if (ad) ad.features = { ...(ad.features || {}), quotes: true, drive: true };
+          d.pins = d.pins || {}; d.pins.u13 = { posts: [], notes: [], ...(d.pins.u13 || {}), dropTo: 'u1' };
+        }
         return d;
       }
     } catch (e) { }
@@ -1907,13 +1972,14 @@ function WidgetItem({ p, tab }) {
   return html`<article className=${'witem' + (p.level === 'red' ? ' is-red' : '')} role="button" tabIndex="0" aria-label=${p.title} onClick=${() => openPost(p.id)} onKeyDown=${(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPost(p.id); } }}>
     <div className="witem-top"><${LevelTag} l=${p.level}/><span>${TYPES[p.type].label}</span><span className="mono">#${p.no}</span></div>
     <div className="witem-t">${r && !r.seen && html`<span className="dot-new" title="New"></span>`}<span>${p.title}</span></div>
+    ${p.approval && p.approval.sticky && html`<p className="card-sticky">${p.approval.sticky}</p>`}
     <div className="witem-m"><span>${tab === 'sent' ? 'To ' + toLabel(db, p) : 'From ' + firstName(a)}</span>${p.due && html`<${DueTag} p=${p} uid=${r ? user.id : null}/>`}<span style=${{ marginLeft: 'auto' }}>${tab === 'sent' || !r ? html`<${Overall} p=${p}/>` : html`<${MyState} p=${p} who=${user.id}/>`}</span></div>
     ${tab !== 'sent' && html`<${QuickActions} p=${p}/>`}
   </article>`;
 }
 // The full app's bottom bar, for the sidebar: slides out from the left. Needs you stays here; the rest open in the full app.
 function SideDock({ onClose, onNeeds }) {
-  const { db, user, jump, compose } = useApp();
+  const { db, user, jump, compose, openPhone, openLook } = useApp();
   const c = useCounts();
   useEffect(() => {
     const h = (e) => { if (e.key === 'Escape') onClose(); };
@@ -1930,16 +1996,23 @@ function SideDock({ onClose, onNeeds }) {
     <nav className="sdock glass" aria-label="Views">
       ${main.map(row)}
       ${finance.length > 0 && html`<span className="sdock-sep"></span>${finance.map(row)}`}
+      <span className="sdock-sep"></span>
+      <button className="sdock-i" onClick=${() => { onClose(); openPhone(); }}><${Icon} n="phone" s=${18}/><span>Get it on your phone</span></button>
+      <button className="sdock-i" onClick=${() => { onClose(); openLook(); }}><${Icon} n="palette" s=${18}/><span>Wallpaper & glass</span></button>
       <button className="sdock-new" onClick=${() => { onClose(); compose(); }}><span className="plus"><${Icon} n="plus" s=${22}/></span>New post</button>
     </nav>`;
 }
 function Widget() {
-  const { db, user, openId, composer, closeComposer, compose, openLook, openPhone } = useApp();
+  const { db, user, openId, composer, closeComposer, compose, toast } = useApp();
   const c = useCounts();
   const [tab, setTab] = useState('needs');
   const [f, setF] = useState(NO_FILTERS);
   const [bar, setBar] = useState(false);
   const closeBar = useCallback(() => setBar(false), []);
+  // the desktop sidebar can stay in front of Outlook and everything else, for dragging quotes in
+  const [onTop, setOnTop] = useState(null);
+  useEffect(() => { const d = window.floorboardDesktop; if (d && d.onTop) d.onTop.get().then((v) => setOnTop(!!v)).catch(() => {}); }, []);
+  const flipTop = () => { const v = !onTop; setOnTop(v); window.floorboardDesktop.onTop.set(v); toast(v ? 'Floorboard stays in front of your other windows' : 'Floorboard can go behind other windows again'); };
   const desk = window.floorboardDesktop;
   const list = tab === 'needs' ? applyFilters(c.mine, f).sort(sortNeeds(user.id))
     : c.vis.filter((p) => p.author === user.id && !p.closed && Object.values(p.recips).some((r) => r.status !== 'done')).sort((a, b) => b.createdAt - a.createdAt);
@@ -1951,12 +2024,12 @@ function Widget() {
       <button className=${'icon-btn' + (bar ? ' solid' : '')} onClick=${() => setBar((b) => !b)} title="Chats, Sent, Team, Drive and more" aria-label="Open the menu bar" aria-expanded=${bar}><${Icon} n="grid" s=${17}/></button>
       <div className="greet"><${Avatar} u=${user} s=${36}/><div className="greet-txt" style=${{ minWidth: 0 }}><b>${greeting()}, ${firstName(user)}</b><small>${db.store}</small></div></div>
       <${ShiftChip} small/>
-      <button className="icon-btn" onClick=${openPhone} title="Get it on your phone" aria-label="Get it on your phone"><${Icon} n="phone" s=${17}/></button>
-      <button className="icon-btn" onClick=${openLook} title="Wallpaper & glass" aria-label="Wallpaper & glass"><${Icon} n="palette" s=${17}/></button>
+      ${onTop !== null && html`<button className=${'icon-btn' + (onTop ? ' white' : '')} onClick=${flipTop} aria-pressed=${onTop} title=${onTop ? 'Staying in front of other windows. Click to let it go behind.' : 'Keep Floorboard in front of other windows'} aria-label="Keep Floorboard in front"><${Icon} n="pin" s=${17}/></button>`}
       <button className="icon-btn" onClick=${openFull} title="Open the full app" aria-label="Open the full app"><${Icon} n="expand" s=${17}/></button>
       ${desk && desk.hide && html`<button className="icon-btn" onClick=${() => desk.hide()} title="Hide the sidebar" aria-label="Hide the sidebar"><${Icon} n="close" s=${17}/></button>`}
     </header>
     <${Board} onPick=${pick}/>
+    ${canQuoteDrop(db, user) && html`<div className="w-qd glass"><${QuoteDrop} compact/></div>`}
     <div className="w-stk glass"><${StickyNotes} compact/></div>
     <div className="filters" style=${{ justifyContent: 'space-between' }}>
       <div className="seg" role="group" aria-label="List">
@@ -1984,10 +2057,10 @@ function MyState({ p, who }) {
   const r = p.recips[who];
   if (p.closed) return html`<span className="st muted">Closed</span>`;
   if (p.type === 'approval') {
-    if (r.rejected) return r.status === 'done' ? html`<span className="st bad">Rejected</span>` : html`<span className="st bad">Rejected · tap Got it</span>`;
+    if (r.rejected) return r.status === 'done' ? html`<span className="st bad">Not approved</span>` : html`<span className="st bad">Not approved · tap Got it</span>`;
     if (r.paid) return r.status === 'done' ? html`<span className="st ok"><${Icon} n="check" s=${14}/>Paid</span>` : html`<span className="st todo">Paid · tap Got it</span>`;
-    if (r.answer && r.status !== 'done') return html`<span className="st warn">Answer the question</span>`;
-    if (r.decision) return html`<span className=${'st ' + (r.decision === 'approve' ? 'ok' : 'bad')}>${r.decision === 'approve' ? 'You approved' : 'You rejected'}</span>`;
+    if (r.answer && r.status !== 'done') return html`<span className="st warn">Answer the query</span>`;
+    if (r.decision) return html`<span className=${'st ' + (r.decision === 'approve' ? 'ok' : 'bad')}>${r.decision === 'approve' ? 'You approved' : 'You didn’t approve'}</span>`;
     if (apOpen(p) && p.approval.approvers.includes(who)) return html`<span className="st todo">Waiting for your OK</span>`;
     return html`<${ApPill} p=${p}/>`;
   }
@@ -2014,6 +2087,7 @@ function PostCard({ p, mode }) {
   return html`<article className=${'card' + (p.level === 'red' ? ' is-red' : '') + (openId === p.id ? ' is-open' : '') + (p.closed ? ' is-closed' : '')} tabIndex="0" role="button" aria-label=${p.title} onClick=${open} onKeyDown=${(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } }}>
     <div className="card-top"><${LevelTag} l=${p.level}/><${TypeChip} t=${p.type}/><${DeptTag} id=${p.about}/><span className="when"><span className="mono">#${p.no}</span> · ${ago(p.createdAt)}</span></div>
     <h3 className="card-title">${r && !r.seen && html`<span className="dot-new" title="New"></span>`}<span>${p.title}</span></h3>
+    ${p.approval && p.approval.sticky && html`<p className="card-sticky">${p.approval.sticky}</p>`}
     ${p.body && html`<p className="card-body">${p.body}</p>`}
     <div className="card-meta">
       <span className="from"><${Avatar} u=${a} s=${20}/><span><b>${firstName(a)}</b> → ${toLabel(db, p)}</span></span>
@@ -2062,7 +2136,7 @@ function FeedView({ kind }) {
     <p>${filtered ? 'Try another type, level or department.' : kind === 'needs' ? 'Nothing needs you right now. New tasks, feedback requests and votes will show up here.' : kind === 'sent' ? 'Tag a person or a team to hand out a task, ask for feedback or run a vote.' : 'When someone tags you or your team, it shows up here.'}</p>
     ${filtered ? html`<button className="btn" onClick=${() => setFilters(NO_FILTERS)}>Clear filters</button>` : kind !== 'needs' && html`<button className="btn primary" onClick=${() => compose()}>New post</button>`}</div>`;
   return html`<${Page} title=${meta[0]} sub=${meta[1]}>
-    ${kind === 'needs' && html`<div className="inline-board"><${Board}/><${StickyNotes}/><${Shortcuts}/></div>`}
+    ${kind === 'needs' && html`<div className="inline-board"><${Board}/><${QuoteDrop}/><${StickyNotes}/><${Shortcuts}/></div>`}
     <${FilterBar} base=${base} status=${status} setStatus=${kind === 'needs' ? null : setStatus}/>
     ${shown.length === 0 ? empty : kind === 'needs'
       ? LEVEL_KEYS.map((l) => { const g = shown.filter((p) => p.level === l); return g.length > 0 && html`<section key=${l} className="group"><h2 className="group-h"><${LevelTag} l=${l}/>${LEVELS[l].long}<span className="n">${g.length}</span></h2><div className="cards">${g.map((p) => html`<${PostCard} key=${p.id} p=${p}/>`)}</div></section>`; })
@@ -2144,10 +2218,10 @@ function PollResults({ p }) {
 }
 function stateLine(p, r) {
   if (p.type === 'approval') {
-    if (r.rejected) return r.status === 'done' ? 'Saw it was rejected' : 'Told it was rejected';
+    if (r.rejected) return r.status === 'done' ? 'Saw it wasn’t approved' : 'Told it wasn’t approved';
     if (r.paid) return r.status === 'done' ? 'Saw it was paid' : 'Told it’s been paid';
-    if (r.answer) return r.status === 'done' ? 'Answered ' + ago(r.updatedAt) : 'Asked a question, not answered yet';
-    if (r.decision) return (r.decision === 'approve' ? 'Approved ' : 'Rejected ') + ago(r.updatedAt);
+    if (r.answer) return r.status === 'done' ? 'Answered ' + ago(r.updatedAt) : 'Got a query, not answered yet';
+    if (r.decision) return (r.decision === 'approve' ? (r.signed ? 'Approved and signed ' : 'Approved ') : 'Not approved ') + ago(r.updatedAt);
     if (!apOpen(p)) return 'Not needed any more';
     return r.seen ? 'Opened, not decided yet' : 'Not opened yet';
   }
@@ -2189,7 +2263,7 @@ function Thread({ p }) {
     update((d) => { d.posts.find((x) => x.id === p.id).activity.push({ id: uid('e'), kind: 'comment', user: user.id, at: Date.now(), text: text.trim(), attachments: atts }); });
     setText(''); setFiles([]); setBusy(false);
   }
-  const verb = { update: 'posted an update', reply: 'replied', comment: 'commented', approve: 'approved it', reject: 'rejected it', query: 'asked a question', answer: 'answered', paid: 'marked it paid' };
+  const verb = { update: 'posted an update', reply: 'replied', comment: 'commented', approve: 'approved it', reject: 'didn’t approve it', query: 'sent a query', answer: 'answered', paid: 'marked it paid' };
   return html`<section className="sect">
     <div className="sect-h"><h3>Updates & comments</h3><span className="muted sm">${items.length}</span></div>
     ${items.length === 0 && html`<p className="muted sm">No updates yet.</p>`}
@@ -2198,6 +2272,7 @@ function Thread({ p }) {
       return html`<li key=${it.id} className="t-item"><${Avatar} u=${u} s=${28}/><div className="t-main">
         <div className="t-head"><b>${u ? u.name : 'Someone'}</b><span className="muted">${verb[it.kind]} · ${ago(it.at)}</span>${it.kind === 'update' && it.pct != null && html`<span className=${'pct-pill' + (it.pct >= 100 ? ' full' : '')}>${it.pct}%</span>`}</div>
         ${it.text && html`<div className="t-text">${it.text}</div>`}
+        ${it.sig && html`<div className="sig-slip"><img src=${it.sig} alt=${'Signature of ' + (u ? u.name : 'the approver')}/></div>`}
         ${it.attachments && it.attachments.length > 0 && html`<${Attachments} items=${it.attachments}/>`}
       </div></li>`; })}</ol>
     <form className="comment" onSubmit=${send}>
@@ -2773,7 +2848,7 @@ function AdminView() {
       <form className="dtool" onSubmit=${addDept}><input id="nd-name" className="input" style=${{ maxWidth: 280 }} value=${nd.name} onChange=${(e) => setNd({ ...nd, name: e.target.value })} placeholder="New department, e.g. Butchery"/><div className="swatches">${TILE_COLORS.map((c) => html`<button type="button" key=${c} className=${nd.color === c ? 'on' : ''} style=${{ '--c': c }} onClick=${() => setNd({ ...nd, color: c })} aria-label=${'Colour ' + c}></button>`)}</div><button className="btn primary">Add department</button></form>
       <p className="feat-note">Every department starts with its group chat, tagging and the “Needs you” board. Switch on the extra tools as each department comes on board.</p>
       <div className="dgrid">${db.depts.map((d) => html`<div key=${d.id} className="dcard"><div className="dcard-h"><span className="dsw" style=${{ '--c': d.color }}></span><div><h3>${d.name}</h3><span className="muted sm">${deptMembers(db, d.id).length} people · ${db.users.filter((u) => u.manages.includes(d.id)).map((u) => firstName(u)).join(', ') || 'no manager'}</span></div></div>
-        <div className="toggles">${[['tools', 'Tools & manuals'], ['drive', 'Drive'], ['monthend', 'Month end'], ['approvals', 'Approvals']].map(([k, l]) => html`<button key=${k} className=${'toggle' + (featureOn(d, k) ? ' on' : '')} style=${{ '--c': d.color }} onClick=${() => flipFeature(d.id, k)} aria-pressed=${featureOn(d, k)}><i></i>${l}${featureOn(d, k) ? ' · on' : ' · off'}</button>`)}</div></div>`)}</div>
+        <div className="toggles">${[['tools', 'Tools & manuals'], ['drive', 'Drive'], ['monthend', 'Month end'], ['approvals', 'Approvals'], ['quotes', 'Quote drop box']].map(([k, l]) => html`<button key=${k} className=${'toggle' + (featureOn(d, k) ? ' on' : '')} style=${{ '--c': d.color }} onClick=${() => flipFeature(d.id, k)} aria-pressed=${featureOn(d, k)}><i></i>${l}${featureOn(d, k) ? ' · on' : ' · off'}</button>`)}</div></div>`)}</div>
     </div>`}
     ${tab === 'drives' && html`<div className="table-wrap"><table>
       <thead><tr><th>Drive</th><th>Who can open it (tap to change)</th></tr></thead>
@@ -2907,7 +2982,6 @@ function CardInChat({ p }) {
 }
 /* ---------------- one-tap answers, alerts and the demo task ---------------- */
 function quickAct(update, p, who, action) {
-  if (action === 'approve') { update((d) => apDecide(d, p.id, who, 'approve', '', [])); return; }
   if (action === 'gotpaid') { update((d) => { const q = d.posts.find((x) => x.id === p.id), r = q && q.recips[who]; if (r) { r.status = 'done'; r.seen = r.seen || Date.now(); r.updatedAt = Date.now(); r.nudgedAt = null; } }); return; }
   update((d) => {
     const q = d.posts.find((x) => x.id === p.id); const r = q && q.recips[who];
@@ -2925,11 +2999,12 @@ function QuickActions({ p }) {
   if (!r || !needsMe(p, user.id)) return null;
   const act = (a, msg) => { quickAct(update, p, user.id, a); toast(msg); };
   const btns = p.type === 'approval' ? (r.paid || r.rejected ? [['Got it', 'check', true, () => act('gotpaid', 'Thanks')]] : r.answer ? [['Answer', 'reply', false, () => openPost(p.id)]]
-      : [['Approve', 'check', true, () => act('approve', 'Approved')], ['Review', 'look', false, () => openPost(p.id)]])
+      : [['Review', 'look', false, () => openPost(p.id)]])
     : p.type === 'look' ? [['Got it', 'check', true, () => act('seen', 'Marked as seen')]]
     : p.type === 'task' ? [r.status === 'todo' && ['On it', 'clock', false, () => act('start', 'Marked as started')], ['Done', 'check', true, () => act('done', 'Marked done')]].filter(Boolean)
     : [[p.type === 'vote' ? 'Vote' : 'Reply', p.type === 'vote' ? 'vote' : 'reply', false, () => openPost(p.id)]];
-  return html`<div className="qa" onClick=${(e) => e.stopPropagation()} onKeyDown=${(e) => e.stopPropagation()}>${btns.map(([l, ic, go, fn]) => html`<button key=${l} className=${'qa-b' + (go ? ' go' : '')} onClick=${fn}><${Icon} n=${ic} s=${14}/>${l}</button>`)}</div>`;
+  const sign = p.type === 'approval' && !r.paid && !r.rejected && !r.answer;
+  return html`<div className="qa" onClick=${(e) => e.stopPropagation()} onKeyDown=${(e) => e.stopPropagation()}>${sign && html`<${ApproveButton} p=${p} cls="qa-b go" s=${14}/>`}${btns.map(([l, ic, go, fn]) => html`<button key=${l} className=${'qa-b' + (go ? ' go' : '')} onClick=${fn}><${Icon} n=${ic} s=${14}/>${l}</button>`)}</div>`;
 }
 // Everything that should pop up for this person: new tags on their board, reminders, @mentions and direct messages.
 function alertItems(db, me) {
@@ -2941,8 +3016,8 @@ function alertItems(db, me) {
     const why = r && r.paid ? 'paid' : r && r.rejected ? 'reject' : 'query';
     const by = own ? ([...p.activity].reverse().find((e) => e.kind === why) || {}).user : null;
     out.push({ key: 'p:' + p.id + ':' + (r.nudgedAt || 0) + (own ? ':' + why : ''), level: p.level, from: by || p.author, postId: p.id, chatId: p.chat || null,
-      title: own ? ({ paid: 'Paid · your ', reject: 'Rejected · your ', query: 'A question about your ' }[why]) + (p.approval ? p.approval.kind.toLowerCase() : 'request') + (by ? ' from ' + firstName(userById(db, by)) : '')
-        : (r.nudgedAt ? 'Reminder · ' : r.escalated ? 'Escalated · ' : '') + TYPES[p.type].label + ' from ' + firstName(userById(db, p.author)) + ' · ' + LEVELS[p.level].label, body: p.title });
+      title: own ? ({ paid: 'Paid · your ', reject: 'Not approved · your ', query: 'A query about your ' }[why]) + (p.approval ? p.approval.kind.toLowerCase() : 'request') + (by ? ' from ' + firstName(userById(db, by)) : '')
+        : (r.nudgedAt ? 'Reminder · ' : r.escalated ? 'Escalated · ' : '') + TYPES[p.type].label + ' from ' + firstName(userById(db, p.author)) + ' · ' + LEVELS[p.level].label, body: p.approval && p.approval.sticky ? p.title + '\n📝 ' + p.approval.sticky : p.title });
   });
   myChats(db, me).forEach((c) => {
     const read = (c.read || {})[me] || 0;
@@ -2978,7 +3053,7 @@ function AlertStack() {
   const quickFor = (a) => {
     const p = a.postId && db.posts.find((x) => x.id === a.postId);
     if (!p || !user || !needsMe(p, user.id)) return [];
-    if (p.type === 'approval') { const r = p.recips[user.id]; return r.paid || r.rejected ? [['Got it', 'gotpaid', 'Thanks']] : r.answer ? [] : [['Approve', 'approve', 'Approved']]; }
+    if (p.type === 'approval') { const r = p.recips[user.id]; return r.paid || r.rejected ? [['Got it', 'gotpaid', 'Thanks']] : []; }
     if (p.type === 'look') return [['Got it', 'seen', 'Marked as seen']];
     if (p.type === 'task') return [p.recips[user.id].status === 'todo' && ['On it', 'start', 'Marked as started'], ['Done', 'done', 'Marked done']].filter(Boolean);
     return [];
@@ -4421,13 +4496,478 @@ function demoStickies(db, T) {
   add('u4', [{ text: 'Airtime x2 every Thursday', color: 'green' }, { text: 'Check the customer refund went through', color: 'pink', remindAt: T + 3 * HOUR }]);
 }
 
+/* ---------------- signing an approval ---------------- */
+// Approving always takes a signature. It's saved on the approval's record with the name and time; a person can
+// keep theirs (privately, with their pins) so next time it's one tap on it.
+function exportSig(cv) {
+  const g = cv.getContext('2d'), w = cv.width, h = cv.height, px = g.getImageData(0, 0, w, h).data;
+  let x0 = w, y0 = h, x1 = -1, y1 = -1;
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) if (px[(y * w + x) * 4 + 3] > 20) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  if (x1 - x0 < 30 && y1 - y0 < 30) return null; // a dot or a tiny tick isn't a signature
+  const pad = 8, sw = x1 - x0 + 1 + pad * 2, sh = y1 - y0 + 1 + pad * 2, k = Math.min(1, 110 / sh, 380 / sw);
+  const out = document.createElement('canvas');
+  out.width = Math.max(1, Math.round(sw * k)); out.height = Math.max(1, Math.round(sh * k));
+  out.getContext('2d').drawImage(cv, x0 - pad, y0 - pad, sw, sh, 0, 0, out.width, out.height);
+  return out.toDataURL('image/png');
+}
+function SignPad({ onChange }) {
+  const ref = useRef(null), st = useRef({ down: false, last: null });
+  useEffect(() => {
+    const cv = ref.current, dpr = Math.max(1, window.devicePixelRatio || 1), r = cv.getBoundingClientRect();
+    cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr);
+    const g = cv.getContext('2d');
+    g.scale(dpr, dpr); g.lineCap = 'round'; g.lineJoin = 'round'; g.strokeStyle = g.fillStyle = '#17233f'; g.lineWidth = 2.6;
+  }, []);
+  const at = (e) => { const r = ref.current.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+  const down = (e) => {
+    e.preventDefault();
+    try { ref.current.setPointerCapture(e.pointerId); } catch (x) { /* drawing still works */ }
+    const p = at(e), g = ref.current.getContext('2d');
+    st.current = { down: true, last: p };
+    g.beginPath(); g.arc(p[0], p[1], 1.3, 0, Math.PI * 2); g.fill();
+  };
+  const move = (e) => {
+    if (!st.current.down) return;
+    const p = at(e), [lx, ly] = st.current.last, g = ref.current.getContext('2d');
+    g.beginPath(); g.moveTo(lx, ly); g.lineTo(p[0], p[1]); g.stroke();
+    st.current.last = p;
+  };
+  const up = () => { if (!st.current.down) return; st.current.down = false; onChange(exportSig(ref.current)); };
+  const clear = () => { const cv = ref.current; cv.getContext('2d').clearRect(0, 0, cv.width, cv.height); onChange(null); };
+  return html`<div className="sig-pad">
+    <canvas ref=${ref} onPointerDown=${down} onPointerMove=${move} onPointerUp=${up} onPointerCancel=${up} aria-label="Sign here with your mouse or finger"></canvas>
+    <span className="sig-line">Sign here</span>
+    <button type="button" className="linkish sm sig-clear" onClick=${clear}>Clear</button>
+  </div>`;
+}
+function SignModal({ p, note: note0, onClose }) {
+  const { db, user, update, toast } = useApp();
+  const saved = (db.pins[user.id] || {}).signature || null;
+  const [sig, setSig] = useState(saved);
+  const [redraw, setRedraw] = useState(!saved);
+  const [remember, setRemember] = useState(true);
+  const [note, setNote] = useState(note0 || '');
+  const a = p.approval, author = userById(db, p.author);
+  const approve = () => {
+    if (!sig) return;
+    update((d) => {
+      apDecide(d, p.id, user.id, 'approve', note, [], sig);
+      d.pins[user.id] = d.pins[user.id] || { posts: [], notes: [] };
+      if (redraw) { if (remember) d.pins[user.id].signature = sig; else delete d.pins[user.id].signature; }
+    });
+    onClose();
+    toast('Approved and signed. ' + firstName(author) + ' can see it.');
+  };
+  return html`<${Modal} title="Sign to approve" onClose=${onClose} footer=${html`<button className="btn" onClick=${onClose}>Cancel</button><button className="btn primary" disabled=${!sig} onClick=${approve}><${Icon} n="check" s=${16}/>Approve and sign</button>`}>
+    <div className="sig-what"><b>${a.kind}${a.party ? ': ' + a.party : ''}</b>${a.amount > 0 && html`<span className="mono">${rand(a.amount)}</span>`}${a.ref && html`<span className="mono muted sm">${a.ref}</span>`}<span className="muted sm">from ${firstName(author)}</span></div>
+    ${a.sticky && html`<div className="ap-sticky sm"><span>${a.sticky}</span></div>`}
+    <${QuickLook} s=${a.summary}/>
+    ${redraw ? html`<${SignPad} onChange=${setSig}/>`
+      : html`<div className="sig-saved"><img src=${saved} alt="Your saved signature"/><button type="button" className="linkish sm" onClick=${() => { setRedraw(true); setSig(null); }}>Sign again instead</button></div>`}
+    ${redraw && html`<label className="me-check sm"><input id="sig-remember" type="checkbox" checked=${remember} onChange=${(e) => setRemember(e.target.checked)}/>Remember my signature for next time</label>`}
+    <label className="field"><span>Note (optional)</span><input id="sig-note" className="input" value=${note} onChange=${(e) => setNote(e.target.value)} placeholder="e.g. Go ahead, but ask for delivery by the 20th" maxLength="200"/></label>
+    <p className="muted sm" style=${{ margin: 0 }}>Your signature is kept with this approval, with your name and the date and time.</p>
+  <//>`;
+}
+function ApproveButton({ p, note, cls, s }) {
+  const [open, setOpen] = useState(false);
+  return html`<${React.Fragment}><button type="button" className=${cls || 'btn primary'} onClick=${(e) => { e.stopPropagation(); setOpen(true); }}><${Icon} n="check" s=${s || 16}/>Approve</button>${open && html`<${SignModal} p=${p} note=${note} onClose=${() => setOpen(false)}/>`}<//>`;
+}
+const sigOf = (p, who) => (p.activity.slice().reverse().find((e) => e.kind === 'approve' && e.user === who && e.sig) || {}).sig;
+
+/* ---------------- quote drop box: drag quotes in from Outlook and they go off to be approved ---------------- */
+// Switched on per department (Quote drop box). Each person picks who approves their quotes; that choice is kept with their pins.
+const quoteDepts = (db) => db.depts.filter((d) => featureOn(d, 'quotes'));
+// only the people in that department: an approver like the store manager doesn't need a drop box of their own
+const canQuoteDrop = (db, u) => quoteDepts(db).some((d) => u.depts.includes(d.id) || u.manages.includes(d.id));
+const FILE_WORDS = /\b(quote|quotation|qte|invoice|inv|final|copy|scan|scanned|signed|pdf|document|attachment|untitled)\b/gi;
+// "Coldline_Quote_Q-1182.pdf" → Coldline, Q-1182
+function guessFromFile(name) {
+  const base = name.replace(/\.[a-z0-9]{2,5}$/i, '').replace(/_/g, ' ');
+  const m = base.match(/\b([A-Z]{0,4}-?\d{3,}[A-Z0-9-]*)\b/i);
+  const party = base.replace(m ? m[0] : '', ' ').replace(/[-.()+#,]+/g, ' ').replace(FILE_WORDS, ' ').replace(/\b\d+\b/g, ' ').replace(/\s+/g, ' ').trim();
+  return { party: party.replace(/\b[a-z]/g, (c) => c.toUpperCase()).slice(0, 60), ref: m ? m[1].toUpperCase().slice(0, 30) : '' };
+}
+function apCreate(d, o) {
+  d.counter += 1;
+  const recips = {};
+  o.approvers.forEach((id) => { recips[id] = { status: 'todo', pct: 0, seen: null, updatedAt: null }; });
+  d.posts.unshift({ id: uid('p'), chat: null, no: d.counter, type: 'approval', title: apTitle(o.kind, o.party, o.amount), body: o.body || '', author: o.author, createdAt: Date.now(), toUsers: o.approvers, toDepts: [],
+    about: o.about, level: 'amber', due: null, attachments: o.atts || [], recips, activity: [], poll: null, closed: false,
+    approval: { kind: o.kind, party: o.party, amount: o.amount, ref: o.ref || '', rule: 'any', approvers: o.approvers, sticky: o.sticky || '', summary: o.summary || null, paidAt: null, paidBy: null, payNote: '' } });
+}
+function QuoteDrop({ compact }) {
+  const { db, user, update, toast, jump } = useApp();
+  const mine = db.pins[user.id] || {};
+  const approver = mine.dropTo ? userById(db, mine.dropTo) : null;
+  const to = approver && approver.active !== false ? approver.id : '';
+  const [over, setOver] = useState(false);
+  const [tray, setTray] = useState([]);
+  const [busy, setBusy] = useState(false);
+  const pick = useRef(null);
+  const setPin = (patch) => update((d) => { d.pins[user.id] = d.pins[user.id] || { posts: [], notes: [] }; Object.assign(d.pins[user.id], patch); });
+  const people = db.users.filter((u) => u.active !== false && u.id !== user.id).sort((a, b) => (a.role === 'staff') - (b.role === 'staff') || a.name.localeCompare(b.name));
+  const sent = db.posts.filter((p) => p.type === 'approval' && p.approval && p.author === user.id);
+  const waiting = sent.filter((p) => apState(p) === 'waiting').length, queries = sent.filter((p) => apState(p) === 'query').length;
+  const about = (quoteDepts(db).find((d) => user.depts.includes(d.id) || user.manages.includes(d.id)) || {}).id || user.depts[0];
+  const send = async (items) => {
+    if (!to) { toast('Choose who approves the quotes first.', 'warn'); return; }
+    // the approver always gets a note saying what it is, so they know the team has looked at it
+    const bare = items.filter((it) => !(it.sticky || '').trim());
+    if (bare.length) {
+      setTray((t) => t.map((x) => (bare.some((b) => b.key === x.key) ? { ...x, needNote: true } : x)));
+      toast('Write a note on ' + (bare.length === 1 ? 'the quote' : 'each quote') + ' saying what it is, so ' + firstName(approver) + ' knows.', 'warn');
+      return;
+    }
+    setBusy(true);
+    try {
+      for (const it of items) {
+        const mime = it.file.type || 'application/octet-stream';
+        const summary = it.summary !== undefined ? it.summary : await summarizeFile(it.file);
+        const atts = await storeFiles([{ file: it.file, name: it.file.name, mime, size: it.file.size, kind: kindOf(mime) }]);
+        const amount = Number(String(it.amount || '').replace(/[\sR]/g, '').replace(',', '.')) || (summary && summary.total) || 0;
+        const party = it.party.trim() || (summary && summary.company) || it.file.name.replace(/\.[a-z0-9]{2,5}$/i, '');
+        update((d) => apCreate(d, { author: user.id, approvers: [to], kind: 'Quote', party, amount, ref: (it.ref || '').trim() || (summary && summary.number) || '', sticky: (it.sticky || '').trim(), summary, atts, about }));
+      }
+      setTray([]);
+      toast(items.length + (items.length === 1 ? ' quote' : ' quotes') + ' sent to ' + firstName(approver) + ' to approve');
+    } finally { setBusy(false); }
+  };
+  const take = (files) => {
+    const list = [...(files || [])].filter((f) => f && f.size > 0), ok = list.filter((f) => f.size <= 100 * 1048576);
+    if (ok.length < list.length) toast('Files over 100 MB were left out', 'warn');
+    if (!ok.length) { if (!list.length) toast('Nothing came through. Drag the attachment itself, or click to choose the file.', 'warn'); return; }
+    const items = ok.map((file) => ({ key: uid('q'), file, amount: '', sticky: '', reading: file.type === 'application/pdf' || /\.pdf$/i.test(file.name), ...guessFromFile(file.name) }));
+    setTray((t) => [...t, ...items]);
+    // each PDF is read for its quick look, which also fills in the supplier and total if they're still empty
+    items.filter((it) => it.reading).forEach((it) => summarizeFile(it.file).then((s) => setTray((t) => t.map((x) => (x.key !== it.key ? x : {
+      ...x, reading: false, summary: s, party: x.partyEdited || !s || !s.company ? x.party : s.company.slice(0, 60), amount: x.amount || (s && s.total ? String(s.total) : ''),
+    })))));
+  };
+  const setItem = (key, patch) => setTray((t) => t.map((x) => (x.key === key ? { ...x, ...patch } : x)));
+  const isFiles = (e) => [...(e.dataTransfer.types || [])].includes('Files');
+  const sfx = compact ? '-w' : '';
+  if (!canQuoteDrop(db, user)) return null;
+  return html`<section className=${'qd' + (compact ? ' compact' : '')} aria-label="Quotes for approval">
+    <div className="sc-h"><span className="eyebrow">Quotes to approve</span>
+      <label className="qd-to"><span>To</span><select id=${'qd-to' + sfx} className="select" value=${to} onChange=${(e) => setPin({ dropTo: e.target.value })} aria-label="Who approves the quotes"><option value="">Choose…</option>${people.map((u) => html`<option key=${u.id} value=${u.id}>${u.name}</option>`)}</select></label></div>
+    <div className=${'qd-zone' + (over ? ' over' : '') + (busy ? ' busy' : '')} role="button" tabIndex="0" aria-label="Drop quotes here, or choose files"
+      onClick=${() => pick.current && pick.current.click()} onKeyDown=${(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick.current.click(); } }}
+      onDragEnter=${(e) => { if (isFiles(e)) { e.preventDefault(); setOver(true); } }} onDragOver=${(e) => { if (isFiles(e)) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; if (!over) setOver(true); } }}
+      onDragLeave=${(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setOver(false); }} onDrop=${(e) => { e.preventDefault(); setOver(false); take(e.dataTransfer.files); }}>
+      <${Icon} n="download" s=${20}/><span><b>${busy ? 'Sending…' : over ? 'Let go to add them' : 'Drop quotes here'}</b><small>${to ? 'From Outlook or your desktop. They go to ' + firstName(approver) + '.' : 'Choose who approves them first.'}</small></span>
+    </div>
+    <input id=${'qd-file' + sfx} ref=${pick} type="file" multiple hidden onChange=${(e) => { take(e.target.files); e.target.value = ''; }}/>
+    <${PrintSettings}/>
+    ${tray.length > 0 && html`<div className="qd-tray">
+      ${tray.map((it) => html`<div className="qd-item" key=${it.key}>
+        <div className="qd-file"><${Icon} n="doc" s=${14}/><span title=${it.file.name}>${it.file.name}</span><button type="button" className="icon-btn sm" onClick=${() => setTray((t) => t.filter((x) => x.key !== it.key))} aria-label=${'Take out ' + it.file.name}><${Icon} n="close" s=${13}/></button></div>
+        <div className="qd-fields"><input className="input" value=${it.party} onChange=${(e) => setItem(it.key, { party: e.target.value, partyEdited: true })} placeholder="Supplier" aria-label="Supplier" maxLength="80"/><input className="input mono" inputMode="decimal" value=${it.amount} onChange=${(e) => setItem(it.key, { amount: e.target.value })} placeholder="R amount" aria-label="Amount, if you know it" maxLength="16"/></div>
+        ${it.reading ? html`<small className="qd-read">Reading the PDF…</small>` : it.summary && html`<small className="qd-read"><${Icon} n="look" s=${12}/> ${[it.summary.company, it.summary.total != null && 'total ' + rand(it.summary.total), it.summary.items.length > 0 && it.summary.items.length + (it.summary.items.length === 1 ? ' line' : ' lines')].filter(Boolean).join(' · ')}</small>`}
+        <textarea className=${'qd-sticky' + (it.needNote && !it.sticky.trim() ? ' need' : '')} rows="2" maxLength="200" value=${it.sticky} onChange=${(e) => setItem(it.key, { sticky: e.target.value })}
+          placeholder=${'What is it? A note for ' + (to ? firstName(approver) : 'the approver') + ', e.g. shelving for the second entrance, needed by Friday'} aria-label="Note on this quote: what it is" aria-required="true"></textarea>
+      </div>`)}
+      <div className="qd-foot"><small className="muted">Every quote needs a note saying what it is.</small>
+        <button className="btn primary sm" disabled=${busy || !to} onClick=${() => send(tray)}><${Icon} n="send" s=${14}/>${busy ? 'Sending…' : 'Send ' + tray.length + ' to ' + (to ? firstName(approver) : '…')}</button></div>
+    </div>`}
+    ${(waiting > 0 || queries > 0) && html`<button className="qd-status linkish sm" onClick=${() => jump('view:approvals')}>${waiting} waiting for approval${queries ? ' · ' + queries + (queries === 1 ? ' query' : ' queries') + ' for you to answer' : ''}</button>`}
+  </section>`;
+}
+
+/* ---------------- printing quotes, each with a cover slip ---------------- */
+// The slip has the sticky note, supplier, amount and the approver's signature; the quote's pages follow (PDF pages are
+// drawn with pdf.js, loaded only when something is printed). The desktop app prints straight to the printer chosen on
+// that computer; a browser shows its print dialog once for the lot.
+const PDFJS_BASE = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
+const PRINT_KEY = 'floorboard.print.v1';
+function printPrefs() { try { return { when: 'off', printer: '', since: 0, ...(JSON.parse(lsGet(PRINT_KEY)) || {}) }; } catch (e) { return { when: 'off', printer: '', since: 0 }; } }
+let pdfjsLoading = null;
+function loadPdfJs() {
+  if (window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+  if (!pdfjsLoading) {
+    pdfjsLoading = new Promise((ok, no) => {
+      const s = document.createElement('script');
+      s.src = PDFJS_BASE + 'pdf.min.js';
+      s.onload = () => { try { window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_BASE + 'pdf.worker.min.js'; ok(window.pdfjsLib); } catch (e) { no(e); } };
+      s.onerror = () => { pdfjsLoading = null; no(new Error('Couldn’t load the PDF reader')); };
+      document.head.appendChild(s);
+    });
+  }
+  return pdfjsLoading;
+}
+async function pdfPages(blob, max = 20) {
+  const lib = await loadPdfJs();
+  const doc = await lib.getDocument({ data: new Uint8Array(await blob.arrayBuffer()) }).promise;
+  const pages = [];
+  for (let i = 1; i <= Math.min(doc.numPages, max); i++) {
+    const page = await doc.getPage(i), vp = page.getViewport({ scale: 1.7 });
+    const cv = document.createElement('canvas');
+    cv.width = Math.round(vp.width); cv.height = Math.round(vp.height);
+    const g = cv.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, cv.width, cv.height);
+    await page.render({ canvasContext: g, viewport: vp }).promise;
+    pages.push(cv.toDataURL('image/jpeg', 0.86));
+  }
+  return { pages, more: doc.numPages - pages.length };
+}
+const escHtml = (s) => String(s == null ? '' : s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const blobToDataUrl = (b) => new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(r.result); r.onerror = () => no(r.error); r.readAsDataURL(b); });
+const PRINT_CSS = '@page{size:A4;margin:14mm}html,body{background:#fff;color-scheme:light}body{margin:0;font:13px/1.45 Arial,Helvetica,sans-serif;color:#151515}section{page-break-after:always}section:last-child{page-break-after:auto}'
+  + '.top{display:flex;justify-content:space-between;color:#666;font-size:12px;border-bottom:2px solid #222;padding-bottom:6px}h1{font-size:22px;margin:14px 0 12px}'
+  + 'table{border-collapse:collapse;width:100%;max-width:150mm}td{padding:6px 0;border-bottom:1px solid #ddd;vertical-align:top}td:first-child{color:#666;width:38mm}'
+  + '.sticky{background:#FFE38A;padding:14px 16px;border-radius:3px 3px 16px 3px;font:700 16px/1.4 Arial,sans-serif;max-width:105mm;margin:18px 0;white-space:pre-wrap;-webkit-print-color-adjust:exact;print-color-adjust:exact}'
+  + '.sticky small{display:block;font-weight:400;font-size:11px;color:#6b5a1e;margin-top:6px}.sign{margin-top:16px;padding-top:8px;border-top:1px dashed #bbb}.sign img{display:block;max-height:26mm;max-width:80mm;margin-top:6px}'
+  + '.why{color:#9b2c1a;margin-top:4px}.wait{margin-top:16px;font-weight:700;color:#9a6a00}.foot{margin-top:22px;color:#888;font-size:11px}'
+  + '.doc img{display:block;width:100%;height:auto;max-height:268mm;object-fit:contain;margin:0 auto}.miss{color:#9b2c1a;font-weight:700}';
+async function quotePrintHtml(db, posts) {
+  const parts = [];
+  for (const p of posts) {
+    const a = p.approval, s = apState(p), author = userById(db, p.author);
+    const row = (k, v) => (v ? '<tr><td>' + escHtml(k) + '</td><td>' + escHtml(v) + '</td></tr>' : '');
+    const decided = a.approvers.map((id) => ({ id, u: userById(db, id), r: p.recips[id] || {} })).filter((x) => x.r.decision);
+    const signs = decided.map((x) => {
+      const why = x.r.decision === 'reject' ? ([...p.activity].reverse().find((e) => e.kind === 'reject' && e.user === x.id) || {}).text : '';
+      const sig = x.r.decision === 'approve' ? sigOf(p, x.id) : null;
+      return '<div class="sign">' + (x.r.decision === 'approve' ? 'Approved' : 'Not approved') + ' by <b>' + escHtml(x.u ? x.u.name : 'Former staff') + '</b> · ' + escHtml(whenAt(x.r.updatedAt))
+        + (sig ? '<img src="' + sig + '" alt="Signature">' : '') + (why ? '<div class="why">Reason: ' + escHtml(why) + '</div>' : '') + '</div>';
+    }).join('');
+    parts.push('<section><div class="top"><b>' + escHtml(db.store) + '</b><span>#' + p.no + '</span></div>'
+      + '<h1>' + escHtml(a.kind + (a.party ? ': ' + a.party : '')) + '</h1><table>'
+      + row('Amount', a.amount > 0 ? rand(a.amount) : '') + row('Reference', a.ref) + row('From', author ? author.name : '') + row('Sent', whenAt(p.createdAt))
+      + row('To approve', a.approvers.map((id) => (userById(db, id) || {}).name).filter(Boolean).join(', ')) + row('Status', AP_STATES[s][0]) + '</table>'
+      + (a.sticky ? '<div class="sticky">' + escHtml(a.sticky) + '<small>Sticky note from ' + escHtml(firstName(author)) + '</small></div>' : '')
+      + signs + (s === 'waiting' || s === 'query' ? '<p class="wait">Not approved yet</p>' : '')
+      + '<div class="foot">Printed ' + escHtml(whenAt(Date.now())) + ' from Floorboard</div></section>');
+    for (const att of p.attachments) {
+      const blob = att.demo ? null : await Blobs.get(att.id);
+      const mime = att.mime || '';
+      if (!blob) { parts.push('<section class="doc"><p class="miss">' + escHtml(att.name) + ' isn’t on this computer yet, so it isn’t in this print-out.</p></section>'); continue; }
+      if (mime.startsWith('image/')) { parts.push('<section class="doc"><img src="' + (await blobToDataUrl(blob)) + '" alt=""></section>'); continue; }
+      if (mime === 'application/pdf' || /\.pdf$/i.test(att.name)) {
+        try {
+          const { pages, more } = await pdfPages(blob);
+          pages.forEach((src) => parts.push('<section class="doc"><img src="' + src + '" alt=""></section>'));
+          if (more > 0) parts.push('<section class="doc"><p class="miss">' + more + ' more pages of ' + escHtml(att.name) + ' weren’t printed. Open it to print the rest.</p></section>');
+        } catch (e) { parts.push('<section class="doc"><p class="miss">' + escHtml(att.name) + ' couldn’t be read for printing. Open it and print it separately.</p></section>'); }
+        continue;
+      }
+      parts.push('<section class="doc"><p class="miss">' + escHtml(att.name) + ' can’t be printed from Floorboard. Open it and print it separately.</p></section>');
+    }
+  }
+  return '<!doctype html><html><head><meta charset="utf-8"><title>Quotes</title><style>' + PRINT_CSS + '</style></head><body>' + parts.join('') + '</body></html>';
+}
+async function printQuotes(db, posts, printer) {
+  const doc = await quotePrintHtml(db, posts);
+  const desk = window.floorboardDesktop;
+  if (desk && desk.print) { const r = await desk.print(doc, printer || ''); return r && r.ok ? 'printed' : 'failed'; }
+  const f = document.createElement('iframe');
+  f.setAttribute('aria-hidden', 'true');
+  f.style.cssText = 'position:fixed;right:0;bottom:0;width:1px;height:1px;border:0;opacity:0';
+  document.body.appendChild(f);
+  await new Promise((ok) => { f.onload = ok; f.srcdoc = doc; });
+  try { f.contentWindow.focus(); f.contentWindow.print(); } catch (e) { f.remove(); return 'failed'; }
+  setTimeout(() => f.remove(), 60000);
+  return 'dialog';
+}
+function PrintButton({ p }) {
+  const { db, toast } = useApp();
+  const [busy, setBusy] = useState(false);
+  const go = async () => {
+    setBusy(true);
+    try {
+      const r = await printQuotes(db, [p], printPrefs().printer);
+      if (r === 'printed') toast('Sent to the printer');
+      else if (r === 'failed') toast('Couldn’t print it. Check the printer is on and chosen in the drop box.', 'warn');
+    } finally { setBusy(false); }
+  };
+  return html`<button className="btn sm" onClick=${go} disabled=${busy}><${Icon} n="print" s=${15}/>${busy ? 'Getting it ready…' : 'Print with slip'}</button>`;
+}
+// The drop box's printing choice, kept on this computer, since printers belong to it
+function PrintSettings() {
+  const desk = window.floorboardDesktop;
+  const [cfg, setCfg] = useState(printPrefs);
+  const [printers, setPrinters] = useState([]);
+  useEffect(() => { if (desk && desk.printers) desk.printers().then((l) => setPrinters(Array.isArray(l) ? l : [])).catch(() => {}); }, []);
+  if (!desk || !desk.print) return null;
+  const save = (patch) => { const next = { ...cfg, ...patch }; if (patch.when && patch.when !== 'off' && cfg.when === 'off') next.since = Date.now(); setCfg(next); lsSet(PRINT_KEY, JSON.stringify(next)); };
+  return html`<div className="qd-print"><${Icon} n="print" s=${15}/>
+    <select id="qd-when" className="select" value=${cfg.when} onChange=${(e) => save({ when: e.target.value })} aria-label="Print quotes automatically"><option value="off">Don’t print</option><option value="sent">Print as I send them</option><option value="approved">Print once approved</option></select>
+    ${cfg.when !== 'off' && html`<select id="qd-printer" className="select" value=${cfg.printer} onChange=${(e) => save({ printer: e.target.value })} aria-label="Printer"><option value="">Default printer</option>${printers.map((x) => html`<option key=${x.name} value=${x.name}>${x.name}</option>`)}</select>`}
+  </div>`;
+}
+
+/* ---------------- a quick look at a PDF: the facts read straight from its text ---------------- */
+// No AI, and nothing leaves the computer: pdf.js gives the text, and simple rules pick out who it's from, the number,
+// the date, the total and VAT, how long it's valid, and the main lines with amounts. A scan (a photo of paper) has no text.
+const MONEY = /(?:R\s?)?-?\d{1,3}(?:[  ,.]\d{3})*[.,]\d{2}\b|R\s?\d+\b/g;
+function toAmount(s) {
+  let t = s.replace(/[R\s ]/g, '');
+  t = /,\d{2}$/.test(t) ? t.replace(/[.,](?=\d{3}(\D|$))/g, '').replace(',', '.') : t.replace(/,/g, '');
+  const n = parseFloat(t);
+  return isFinite(n) ? n : null;
+}
+async function pdfText(blob, maxPages = 4) {
+  const lib = await loadPdfJs();
+  const doc = await lib.getDocument({ data: new Uint8Array(await blob.arrayBuffer()) }).promise;
+  const pages = [];
+  for (let i = 1; i <= Math.min(doc.numPages, maxPages); i++) {
+    const tc = await (await doc.getPage(i)).getTextContent(), rows = [];
+    tc.items.forEach((it) => {
+      if (!it.str || !it.str.trim()) return;
+      const y = Math.round(it.transform[5]), h = it.height || Math.abs(it.transform[3]) || 0;
+      let row = rows.find((r) => Math.abs(r.y - y) <= 3);
+      if (!row) { row = { y, parts: [], h: 0 }; rows.push(row); }
+      row.parts.push({ x: it.transform[4], s: it.str }); row.h = Math.max(row.h, h);
+    });
+    rows.sort((a, b) => b.y - a.y);
+    pages.push(rows.map((r) => ({ text: r.parts.sort((a, b) => a.x - b.x).map((p) => p.s).join(' ').replace(/\s+/g, ' ').trim(), h: r.h })));
+  }
+  return pages;
+}
+function summarizeText(pages) {
+  const lines = pages.flat().filter((l) => l.text);
+  if (lines.reduce((n, l) => n + l.text.length, 0) < 20) return null;
+  const amountIn = (t) => { const m = t.match(MONEY); return m ? toAmount(m[m.length - 1]) : null; };
+  const firstMatch = (re) => { for (const l of lines) { const m = l.text.match(re); if (m) return m; } return null; };
+  const totalLine = lines.find((l) => /\b(grand total|total (incl|due|payable)|amount (due|payable)|balance due)\b/i.test(l.text) && amountIn(l.text) != null)
+    || [...lines].reverse().find((l) => /\btotal\b/i.test(l.text) && !/sub ?-?total/i.test(l.text) && amountIn(l.text) != null);
+  const vatLine = lines.find((l) => /\b(vat|tax)\b/i.test(l.text) && !/\b(tax invoice|vat (no|reg|number))\b/i.test(l.text) && amountIn(l.text) != null);
+  const kind = firstMatch(/\b(tax invoice|quotation|quote|invoice|estimate|pro ?forma)\b/i);
+  const num = firstMatch(/\b(?:quote|quotation|invoice|inv|estimate|ref(?:erence)?)\s*(?:no\.?|number|#)?\s*[:#-]?\s*([A-Z]{0,4}[-/]?\d[\w/-]{2,})/i);
+  const date = firstMatch(/\b(\d{1,2}[/.\- ](?:\d{1,2}|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*[/.\- ]\d{2,4}|\d{4}-\d{2}-\d{2})\b/i);
+  const valid = firstMatch(/\bvalid(?:ity)?\b[^.]{0,60}/i);
+  const skip = /^(tax invoice|quotation|quote|invoice|estimate|page \d|date|to:|attention)/i;
+  const company = (pages[0] || []).filter((l) => /[a-z]{3}/i.test(l.text) && !skip.test(l.text) && l.text.length < 60).sort((a, b) => b.h - a.h)[0];
+  const stop = /\b(total|sub ?-?total|vat|tax|balance|amount due|deposit|discount|bank|account|branch|page)\b/i;
+  const items = lines.filter((l) => !stop.test(l.text) && /[a-z]{3}/i.test(l.text) && amountIn(l.text) != null).slice(0, 6).map((l) => {
+    const m = l.text.match(MONEY), last = m[m.length - 1];
+    return { text: l.text.slice(0, l.text.lastIndexOf(last)).replace(/[\s:–-]+$/, '').slice(0, 70), amount: toAmount(last) };
+  }).filter((x) => x.text.length > 2);
+  const out = { company: company ? company.text.slice(0, 60) : '', kind: kind ? kind[1] : '', number: num ? num[1] : '', date: date ? date[1] : '',
+    total: totalLine ? amountIn(totalLine.text) : null, vat: vatLine ? amountIn(vatLine.text) : null, valid: valid ? valid[0].trim().slice(0, 70) : '', items };
+  return out.total != null || out.items.length || out.company ? out : null;
+}
+async function summarizeFile(file) {
+  if (!file || !(file.type === 'application/pdf' || /\.pdf$/i.test(file.name || ''))) return null;
+  try { return summarizeText(await pdfText(file)); } catch (e) { return null; }
+}
+const titleWord = (s) => (s ? s[0].toUpperCase() + s.slice(1).toLowerCase() : '');
+function QuickLook({ s }) {
+  if (!s) return null;
+  const head = [s.company, titleWord(s.kind) + (s.number ? ' ' + s.number : ''), s.date].map((x) => (x || '').trim()).filter(Boolean).join(' · ');
+  return html`<div className="ql">
+    <div className="ql-h"><${Icon} n="look" s=${14}/>Quick look<small>read from the PDF, so check it if anything looks off</small></div>
+    ${head && html`<div className="ql-top">${head}</div>`}
+    ${s.total != null && html`<div className="ql-total">Total <b className="mono">${rand(s.total)}</b>${s.vat != null && s.vat !== s.total && html`<span> · VAT ${rand(s.vat)}</span>`}</div>`}
+    ${s.items.length > 0 && html`<ul>${s.items.map((it, i) => html`<li key=${i}><span>${it.text}</span><span className="mono">${rand(it.amount)}</span></li>`)}</ul>`}
+    ${s.valid && html`<div className="ql-valid">${s.valid}</div>`}
+  </div>`;
+}
+
+/* ---------------- signed copies go into the Drive, instead of printing, signing and scanning ---------------- */
+// Once a quote is approved and signed, the person who sent it gets a signed PDF (a cover page with the signature and the
+// sticky note, then the quote's own pages) filed in their department's Drive, in a "Signed quotes" folder.
+const JSPDF_BASE = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/';
+let jspdfLoading = null;
+function loadJsPdf() {
+  if (window.jspdf && window.jspdf.jsPDF) return Promise.resolve(window.jspdf.jsPDF);
+  if (!jspdfLoading) {
+    jspdfLoading = new Promise((ok, no) => {
+      const s = document.createElement('script');
+      s.src = JSPDF_BASE + 'jspdf.umd.min.js';
+      s.onload = () => (window.jspdf && window.jspdf.jsPDF ? ok(window.jspdf.jsPDF) : no(new Error('PDF maker missing')));
+      s.onerror = () => { jspdfLoading = null; no(new Error('Couldn’t load the PDF maker')); };
+      document.head.appendChild(s);
+    });
+  }
+  return jspdfLoading;
+}
+// the PDF's built-in font only has Western letters, so curly quotes and the like are swapped for plain ones
+const pdfSafe = (s) => String(s == null ? '' : s).replace(/[  ]/g, ' ').replace(/[‘’]/g, "'").replace(/[“”]/g, '"').replace(/[–—·]/g, '-').replace(/[^\x20-\x7E\xA1-\xFF\n]/g, '');
+async function signedPdf(db, p) {
+  const JsPDF = await loadJsPdf();
+  const doc = new JsPDF({ unit: 'mm', format: 'a4' });
+  const a = p.approval, author = userById(db, p.author);
+  let y = 18;
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(90);
+  doc.text(pdfSafe(db.store), 14, y); doc.text('#' + p.no, 196, y, { align: 'right' });
+  doc.setDrawColor(30); doc.setLineWidth(0.6); doc.line(14, y + 2, 196, y + 2);
+  y += 13; doc.setFontSize(18); doc.setTextColor(20);
+  doc.text(pdfSafe(a.kind + (a.party ? ': ' + a.party : '')), 14, y, { maxWidth: 182 });
+  y += 11; doc.setFontSize(11);
+  const row = (k, v) => { if (!v) return; doc.setFont('helvetica', 'normal'); doc.setTextColor(110); doc.text(k, 14, y); doc.setTextColor(20); doc.text(pdfSafe(v), 54, y, { maxWidth: 140 }); y += 7.5; };
+  row('Amount', a.amount > 0 ? rand(a.amount) : ''); row('Reference', a.ref); row('From', author ? author.name : ''); row('Sent', whenAt(p.createdAt)); row('Status', AP_STATES[apState(p)][0]);
+  if (a.sticky) {
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(12);
+    const lines = doc.splitTextToSize(pdfSafe(a.sticky), 94), h = 13 + lines.length * 5.5;
+    y += 3; doc.setFillColor(255, 227, 138); doc.rect(14, y, 104, h, 'F'); doc.setTextColor(42, 36, 20); doc.text(lines, 18, y + 8);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.text('Sticky note from ' + pdfSafe(firstName(author)), 18, y + h - 3);
+    y += h + 6; doc.setFontSize(11);
+  }
+  a.approvers.map((id) => ({ id, u: userById(db, id), r: p.recips[id] || {} })).filter((x) => x.r.decision).forEach((x) => {
+    y += 2; doc.setDrawColor(190); doc.setLineWidth(0.3); doc.line(14, y, 196, y); y += 7;
+    doc.setFont('helvetica', 'normal'); doc.setTextColor(20);
+    doc.text((x.r.decision === 'approve' ? 'Approved by ' : 'Not approved by ') + pdfSafe(x.u ? x.u.name : 'Former staff') + ', ' + whenAt(x.r.updatedAt), 14, y);
+    y += 3;
+    const sig = x.r.decision === 'approve' && sigOf(p, x.id);
+    if (sig) { const pr = doc.getImageProperties(sig), h = 22, w = Math.min(80, (pr.width / pr.height) * h); doc.addImage(sig, 'PNG', 14, y, w, h); y += h + 3; }
+  });
+  doc.setFontSize(8); doc.setTextColor(140); doc.text('Signed in Floorboard. This copy was saved ' + whenAt(Date.now()) + '.', 14, 285);
+  for (const att of p.attachments) {
+    const blob = att.demo ? null : await Blobs.get(att.id);
+    if (!blob) continue;
+    const mime = att.mime || '';
+    const pages = mime.startsWith('image/') ? [await blobToDataUrl(blob)] : mime === 'application/pdf' || /\.pdf$/i.test(att.name) ? (await pdfPages(blob, 30)).pages : [];
+    for (const src of pages) {
+      const pr = doc.getImageProperties(src), k = Math.min(182 / pr.width, 269 / pr.height), w = pr.width * k, h = pr.height * k;
+      doc.addPage(); doc.addImage(src, /^data:image\/png/.test(src) ? 'PNG' : 'JPEG', 14 + (182 - w) / 2, 14, w, h);
+    }
+  }
+  return doc.output('blob');
+}
+// where this person's signed copies go: their own department's drive, or else the shared one
+function fileTarget(db, u) {
+  const ok = db.drives.filter((dr) => driveOn(db, dr) && canDrive(u, dr));
+  return ok.find((dr) => dr.id !== 'd-shared' && (u.depts.includes(dr.id.slice(2)) || u.manages.includes(dr.id.slice(2)))) || ok.find((dr) => dr.id === 'd-shared') || ok[0] || null;
+}
+// it always goes to the sender's drive, whoever presses the button
+async function fileSigned(db, p, u, update) {
+  const target = fileTarget(db, userById(db, p.author) || u);
+  if (!target) return 'nodrive';
+  const blob = await signedPdf(db, p);
+  const a = p.approval, name = 'Signed ' + a.kind.toLowerCase() + (a.party ? ' ' + a.party : '') + (a.ref ? ' ' + a.ref : '');
+  const atts = await storeFiles([{ file: blob, name: name.replace(/[\\/:*?"<>|]+/g, ' ') + '.pdf', mime: 'application/pdf', size: blob.size, kind: 'doc' }]);
+  update((d) => {
+    const q = d.posts.find((x) => x.id === p.id);
+    if (!q || !q.approval || q.approval.filedAt) return;
+    const fid = 'f-signed-' + target.id, docId = 'doc-signed-' + p.id; // fixed ids, so a second device can't file it twice
+    if (!d.folders.some((f) => f.id === fid)) d.folders.push({ id: fid, drive: target.id, name: 'Signed quotes', parent: null });
+    d.files = d.files.filter((f) => f.id !== docId);
+    d.files.push({ id: docId, drive: target.id, folder: fid, by: u.id, at: Date.now(), name, docType: a.kind === 'Invoice' ? 'Invoice' : 'Quote', ref: a.ref || '', party: a.party || '', docDate: dkey(),
+      amount: a.amount || null, hardCopy: '', tags: ['signed', 'approval #' + q.no], att: atts[0] });
+    q.approval.filedAt = Date.now(); q.approval.filedDoc = docId;
+  });
+  return 'filed';
+}
+function FileSignedButton({ p }) {
+  const { db, user, update, toast } = useApp();
+  const [busy, setBusy] = useState(false);
+  const go = async () => {
+    setBusy(true);
+    try {
+      const r = await fileSigned(db, p, user, update);
+      toast(r === 'filed' ? 'Signed copy saved in Drive › Signed quotes' : 'Switch on Drive for your department first (People & access).', r === 'filed' ? undefined : 'warn');
+    } catch (e) { toast('Couldn’t make the signed copy. Try again in a moment.', 'warn'); } finally { setBusy(false); }
+  };
+  return html`<button className="btn sm" onClick=${go} disabled=${busy}><${Icon} n="folder" s=${15}/>${busy ? 'Saving…' : 'Save signed copy to Drive'}</button>`;
+}
+
 /* ---------------- approvals: invoices, payments and expense claims that need an OK ---------------- */
 // An approval is a post (type 'approval') sent to its approvers, with p.approval = { kind, party, amount, ref, rule: 'any' | 'all',
 // approvers, paidAt, paidBy, payNote }. Each approver's decision sits on their own recipient record, so two people deciding at
 // once can't overwrite each other; the state is worked out from those. A question puts the requester on the post until they answer,
 // and so does "paid", so they hear about it.
-const AP_KINDS = ['Invoice', 'Payment', 'Expense claim', 'Other'];
-const AP_STATES = { waiting: ['Waiting for approval', 'todo'], query: ['Question asked', 'warn'], approved: ['Approved, to pay', 'ok'], paid: ['Paid', 'ok'], rejected: ['Rejected', 'bad'] };
+const AP_KINDS = ['Quote', 'Invoice', 'Payment', 'Expense claim', 'Other'];
+const AP_STATES = { waiting: ['Waiting for approval', 'todo'], query: ['Query sent', 'warn'], approved: ['Approved', 'ok'], paid: ['Paid', 'ok'], rejected: ['Not approved', 'bad'] };
 const approvalsOn = (db) => db.depts.some((d) => featureOn(d, 'approvals'));
 // Finance, and the admins, see every approval and mark them paid
 function canPay(db, u) {
@@ -4451,13 +4991,14 @@ const apOpen = (p) => { const s = apState(p); return s === 'waiting' || s === 'q
 const apWho = (db, p, d) => p.approval.approvers.filter((id) => (p.recips[id] || {}).decision === d).map((id) => firstName(userById(db, id))).join(', ');
 const whenAt = (t) => fmtDay(t, { day: 'numeric', month: 'short' }) + ', ' + hm(t);
 // approve, reject or ask the requester a question
-function apDecide(d, pid, who, decision, note, atts) {
+function apDecide(d, pid, who, decision, note, atts, sig) {
   const q = d.posts.find((x) => x.id === pid), r = q && q.recips[who];
   if (!r || !q.approval) return;
   const now = Date.now();
   r.seen = r.seen || now; r.updatedAt = now; r.nudgedAt = null;
   if (decision !== 'query') { r.status = 'done'; r.decision = decision; r.pct = 100; }
-  q.activity.push({ id: uid('e'), kind: decision, user: who, at: now, text: (note || '').trim(), attachments: atts || [] });
+  q.activity.push({ id: uid('e'), kind: decision, user: who, at: now, text: (note || '').trim(), attachments: atts || [], ...(sig ? { sig } : {}) });
+  if (decision === 'approve' && sig) r.signed = now;
   if (decision === 'reject' && q.author !== who) {
     const a = q.recips[q.author];
     q.recips[q.author] = { pct: 0, ...(a || {}), status: 'todo', rejected: true, seen: null, updatedAt: null, nudgedAt: a ? now : null };
@@ -4500,24 +5041,24 @@ function ApprovalAction({ p, r }) {
   const [note, setNote] = useState(''); const [files, setFiles] = useState([]); const [busy, setBusy] = useState(false);
   const s = apState(p), author = userById(db, p.author), approver = p.approval.approvers.includes(user.id);
   const run = async (kind) => {
-    if (kind !== 'approve' && !note.trim() && !files.length) { toast({ reject: 'Say why it’s rejected first.', query: 'Write your question first.', answer: 'Write your answer first.' }[kind], 'warn'); return; }
+    if (kind !== 'approve' && !note.trim() && !files.length) { toast({ reject: 'Say why you’re not approving it first.', query: 'Write your query first.', answer: 'Write your answer first.' }[kind], 'warn'); return; }
     setBusy(true); const atts = await storeFiles(files);
     update((d) => (kind === 'answer' ? apAnswer(d, p.id, user.id, note, atts) : apDecide(d, p.id, user.id, kind, note, atts)));
     setNote(''); setFiles([]); setBusy(false);
-    toast({ approve: 'Approved. ' + firstName(author) + ' and Finance can see it.', reject: 'Rejected. ' + firstName(author) + ' can see why.', query: 'Question sent to ' + firstName(author) + '.', answer: 'Answer sent. The approvers have been reminded.' }[kind]);
+    toast({ approve: 'Approved. ' + firstName(author) + ' and Finance can see it.', reject: 'Not approved. ' + firstName(author) + ' can see why.', query: 'Query sent to ' + firstName(author) + '.', answer: 'Answer sent. The approvers have been reminded.' }[kind]);
   };
   if (r.paid && r.status !== 'done') return html`<div className="action look"><div><b>It’s been paid</b><div className="muted sm">${firstName(userById(db, p.approval.paidBy))} marked it paid ${ago(p.approval.paidAt)}${p.approval.payNote ? ' · ' + p.approval.payNote : ''}.</div></div>
     <button className="btn primary" onClick=${() => { quickAct(update, p, user.id, 'gotpaid'); toast('Thanks'); }}><${Icon} n="check" s=${16}/>Got it</button></div>`;
   if (r.rejected && r.status !== 'done') {
     const why = [...p.activity].reverse().find((e) => e.kind === 'reject');
-    return html`<div className="action"><div className="action-h"><span className="eyebrow">It was rejected</span>${why && html`<span className="muted sm">${firstName(userById(db, why.user))} · ${ago(why.at)}</span>`}</div>
+    return html`<div className="action"><div className="action-h"><span className="eyebrow">It wasn’t approved</span>${why && html`<span className="muted sm">${firstName(userById(db, why.user))} · ${ago(why.at)}</span>`}</div>
       ${why && why.text && html`<div className="ap-q no">${why.text}</div>`}
       <div className="action-foot"><span className="muted sm">Sort it out, then ask for approval again if it’s still needed.</span><button className="btn primary" onClick=${() => { quickAct(update, p, user.id, 'gotpaid'); toast('Thanks'); }}><${Icon} n="check" s=${16}/>Got it</button></div></div>`;
   }
   if (r.answer && r.status !== 'done') {
     const asked = [...p.activity].reverse().find((e) => e.kind === 'query');
     return html`<form className="action" onSubmit=${(e) => { e.preventDefault(); run('answer'); }}>
-      <div className="action-h"><span className="eyebrow">A question for you</span>${asked && html`<span className="muted sm">${firstName(userById(db, asked.user))} asked ${ago(asked.at)}</span>`}</div>
+      <div className="action-h"><span className="eyebrow">A query for you</span>${asked && html`<span className="muted sm">${firstName(userById(db, asked.user))} asked ${ago(asked.at)}</span>`}</div>
       ${asked && asked.text && html`<div className="ap-q">${asked.text}</div>`}
       <textarea id=${'ans-' + p.id} rows="2" value=${note} onChange=${(e) => setNote(e.target.value)} placeholder="Your answer…"></textarea>
       <${AttachPicker} files=${files} setFiles=${setFiles} label="Add a photo of the slip or invoice"/>
@@ -4525,14 +5066,14 @@ function ApprovalAction({ p, r }) {
     </form>`;
   }
   if (!approver) return null;
-  if (r.decision) return html`<div className=${'action done' + (r.decision === 'reject' ? ' no' : '')}><${Icon} n=${r.decision === 'approve' ? 'check' : 'close'}/>You ${r.decision === 'approve' ? 'approved' : 'rejected'} this ${ago(r.updatedAt)}.</div>`;
-  if (!apOpen(p)) return html`<div className="action done"><${Icon} n="check"/>${s === 'rejected' ? 'Rejected by ' + apWho(db, p, 'reject') : 'Approved by ' + apWho(db, p, 'approve')}. Nothing more is needed from you.</div>`;
-  return html`<form className="action" onSubmit=${(e) => { e.preventDefault(); run('approve'); }}>
+  if (r.decision) return html`<div className=${'action done' + (r.decision === 'reject' ? ' no' : '')}><${Icon} n=${r.decision === 'approve' ? 'check' : 'close'}/>You ${r.decision === 'approve' ? 'approved' : 'didn’t approve'} this ${ago(r.updatedAt)}.</div>`;
+  if (!apOpen(p)) return html`<div className="action done"><${Icon} n="check"/>${s === 'rejected' ? 'Not approved by ' + apWho(db, p, 'reject') : 'Approved by ' + apWho(db, p, 'approve')}. Nothing more is needed from you.</div>`;
+  return html`<form className="action" onSubmit=${(e) => e.preventDefault()}>
     <div className="action-h"><span className="eyebrow">Your decision</span><span className="muted sm">${rand(p.approval.amount)}${p.approval.rule === 'all' && p.approval.approvers.length > 1 ? ' · everyone tagged has to approve' : ''}</span></div>
-    ${s === 'query' && html`<div className="notice"><${Icon} n="clock" s=${16}/>Waiting for ${firstName(author)} to answer a question. You can still decide now.</div>`}
-    <textarea id=${'dec-' + p.id} rows="2" value=${note} onChange=${(e) => setNote(e.target.value)} placeholder="A note (needed to reject it or ask a question)"></textarea>
+    ${s === 'query' && html`<div className="notice"><${Icon} n="clock" s=${16}/>Waiting for ${firstName(author)} to answer your query. You can still decide now.</div>`}
+    <textarea id=${'dec-' + p.id} rows="2" value=${note} onChange=${(e) => setNote(e.target.value)} placeholder="A note (needed for a query, or if you don’t approve it)"></textarea>
     <${AttachPicker} files=${files} setFiles=${setFiles}/>
-    <div className="action-foot ap-foot"><button type="button" className="btn" disabled=${busy} onClick=${() => run('query')}><${Icon} n="feedback" s=${15}/>Ask a question</button><button type="button" className="btn danger" disabled=${busy} onClick=${() => run('reject')}><${Icon} n="close" s=${15}/>Reject</button><button className="btn primary" disabled=${busy}><${Icon} n="check" s=${16}/>Approve</button></div>
+    <div className="action-foot ap-foot"><button type="button" className="btn" disabled=${busy} onClick=${() => run('query')}><${Icon} n="feedback" s=${15}/>Query</button><button type="button" className="btn danger" disabled=${busy} onClick=${() => run('reject')}><${Icon} n="close" s=${15}/>Don’t approve</button><${ApproveButton} p=${p} note=${note}/></div>
   </form>`;
 }
 // the facts at the top of an approval, and where Finance marks it paid
@@ -4541,20 +5082,33 @@ function ApprovalFacts({ p }) {
   const [ref, setRef] = useState('');
   const a = p.approval, s = apState(p), payer = canPay(db, user);
   const decided = a.approvers.map((id) => ({ id, r: p.recips[id] || {} })).filter((x) => x.r.decision);
+  const [note, setNote] = useState(null);
+  const mine = p.author === user.id && apOpen(p);
+  const saveNote = () => { const t = (note || '').trim(); update((d) => { const q = d.posts.find((x) => x.id === p.id); if (q && q.approval) q.approval.sticky = t; }); setNote(null); toast(t ? 'Sticky note saved' : 'Sticky note taken off'); };
   return html`<section className="ap-facts">
     <div className="ap-facts-h"><span className="ap-big mono">${rand(a.amount) || 'No amount'}</span><${ApPill} p=${p}/></div>
+    ${note !== null ? html`<div className="ap-note-edit"><textarea className="qd-sticky" rows="3" maxLength="200" value=${note} onChange=${(e) => setNote(e.target.value)} placeholder="A note for whoever approves it" aria-label="Sticky note"></textarea><div className="ap-note-a"><button className="btn sm primary" onClick=${saveNote}>Stick it on</button><button className="btn sm ghost" onClick=${() => setNote(null)}>Cancel</button></div></div>`
+      : a.sticky ? html`<div className="ap-sticky"><span>${a.sticky}</span><small>Sticky note from ${firstName(userById(db, p.author))}${mine && html` · <button className="linkish sm" onClick=${() => setNote(a.sticky)}>Change</button>`}</small></div>`
+      : mine && html`<button className="linkish sm" style=${{ justifySelf: 'start' }} onClick=${() => setNote('')}>+ Stick a note on it</button>`}
+    <${QuickLook} s=${a.summary}/>
     <dl className="dl">
       <dt>What</dt><dd>${a.kind}</dd>
       <dt>Supplier or payee</dt><dd>${a.party || '–'}</dd>
       ${a.ref && html`<dt>Invoice or ref</dt><dd className="mono">${a.ref}</dd>`}
       ${p.due && html`<dt>Pay by</dt><dd>${fmtKey(p.due, { weekday: 'long', day: 'numeric', month: 'long' })}</dd>`}
       <dt>Needs</dt><dd>${a.approvers.length < 2 ? 'One approval' : a.rule === 'all' ? 'All ' + a.approvers.length + ' approvers' : 'Any one of ' + a.approvers.length + ' approvers'}</dd>
-      ${decided.map((x) => html`<dt key=${'t' + x.id}>${x.r.decision === 'approve' ? 'Approved by' : 'Rejected by'}</dt><dd key=${'d' + x.id}>${(userById(db, x.id) || {}).name || 'Former staff'} · ${whenAt(x.r.updatedAt)}</dd>`)}
+      ${decided.map((x) => { const sig = x.r.decision === 'approve' && sigOf(p, x.id); return html`<dt key=${'t' + x.id}>${x.r.decision === 'approve' ? 'Approved by' : 'Not approved by'}</dt><dd key=${'d' + x.id}>${(userById(db, x.id) || {}).name || 'Former staff'} · ${whenAt(x.r.updatedAt)}${sig && html`<div className="sig-slip sm"><img src=${sig} alt=${'Signature of ' + ((userById(db, x.id) || {}).name || 'the approver')}/></div>`}</dd>`; })}
       ${a.paidAt && html`<dt>Paid</dt><dd>${(userById(db, a.paidBy) || {}).name || 'Someone'} · ${whenAt(a.paidAt)}${a.payNote ? ' · ' + a.payNote : ''}</dd>`}
     </dl>
     ${payer && s === 'approved' && html`<form className="ap-pay" onSubmit=${(e) => { e.preventDefault(); update((d) => apPaid(d, p.id, user.id, ref)); setRef(''); toast('Marked paid. ' + firstName(userById(db, p.author)) + ' has been told.'); }}>
       <input id=${'pay-' + p.id} className="input" value=${ref} onChange=${(e) => setRef(e.target.value)} placeholder="Payment reference (optional), e.g. EFT 77812" maxLength="80"/><button className="btn primary"><${Icon} n="check" s=${16}/>Mark paid</button></form>`}
     ${payer && s === 'paid' && html`<button className="linkish sm" onClick=${() => { update((d) => apPaid(d, p.id, user.id, '', true)); toast('Paid mark taken off'); }}>Not paid after all? Take the paid mark off</button>`}
+    ${(() => {
+      const filed = a.filedDoc && db.files.find((f) => f.id === a.filedDoc), drive = filed && db.drives.find((dr) => dr.id === filed.drive);
+      const canFile = !filed && (s === 'approved' || s === 'paid') && (p.author === user.id || payer) && p.attachments.length > 0;
+      return html`${filed && html`<div className="ap-filed"><${Icon} n="folder" s=${15}/><span>Signed copy saved in Drive › ${drive ? drive.name : 'Drive'} › Signed quotes</span></div>${filed.att && html`<${Attachments} items=${[filed.att]}/>`}`}
+        <div className="ap-actions"><${PrintButton} p=${p}/>${canFile && html`<${FileSignedButton} p=${p}/>`}</div>`;
+    })()}
   </section>`;
 }
 function ApprovalRow({ p, s, payer }) {
@@ -4567,6 +5121,7 @@ function ApprovalRow({ p, s, payer }) {
   return html`<div className=${'ap-row' + (late ? ' late' : '')} role="button" tabIndex="0" aria-label=${p.title} onClick=${() => openPost(p.id)} onKeyDown=${(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPost(p.id); } }}>
     <div className="ap-main">
       <div className="ap-top"><span className="chip">${a.kind}</span><b className="ap-party">${a.party || p.title}</b>${a.ref && html`<span className="mono sm muted">${a.ref}</span>`}${p.attachments.length > 0 && html`<span className="meta-i" title="Attachments"><${Icon} n="clip" s=${13}/>${p.attachments.length}</span>`}</div>
+      ${a.sticky && html`<p className="card-sticky">${a.sticky}</p>`}
       <div className="ap-meta">
         <span>From ${firstName(author)}</span>
         <span className=${slow ? 'st warn' : ''}>${s === 'paid' ? 'Paid ' + ago(a.paidAt) : open ? 'Waiting ' + since(p.createdAt) : ago(p.createdAt)}</span>
@@ -4576,7 +5131,7 @@ function ApprovalRow({ p, s, payer }) {
     </div>
     <div className="ap-amt mono">${rand(a.amount)}</div>
     <div className="ap-act" onClick=${(e) => e.stopPropagation()} onKeyDown=${(e) => e.stopPropagation()}>
-      ${toDecide ? html`<button className="btn sm primary" onClick=${() => { update((d) => apDecide(d, p.id, user.id, 'approve', '', [])); toast('Approved ' + rand(a.amount) + (a.party ? ' for ' + a.party : '')); }}><${Icon} n="check" s=${14}/>Approve</button>`
+      ${toDecide ? html`<${ApproveButton} p=${p} cls="btn sm primary" s=${14}/>`
         : payer && s === 'approved' ? html`<button className="btn sm primary" onClick=${() => { update((d) => apPaid(d, p.id, user.id, '')); toast('Marked paid. ' + firstName(author) + ' has been told.'); }}>Mark paid</button>`
         : html`<${ApPill} p=${p}/>`}
     </div>
@@ -4599,8 +5154,8 @@ function ApprovalsView() {
   const month = dkey().slice(0, 7), paidMonth = groups.paid.filter((x) => dkey(x.p.approval.paidAt).slice(0, 7) === month);
   const oldest = (a, b) => (a.p.due || '9999').localeCompare(b.p.due || '9999') || a.p.createdAt - b.p.createdAt;
   const list = groups[tab].slice().sort(tab === 'paid' ? (a, b) => b.p.approval.paidAt - a.p.approval.paidAt : tab === 'rejected' ? (a, b) => b.p.createdAt - a.p.createdAt : oldest);
-  const tabs = [['me', 'For you'], ['waiting', 'Waiting'], ['pay', 'Approved, to pay'], ['paid', 'Paid'], ['rejected', 'Rejected']];
-  const empty = { me: 'Nothing is waiting for your OK.', waiting: 'Nothing is waiting for approval.', pay: 'Nothing approved is waiting to be paid.', paid: 'Nothing has been marked paid yet.', rejected: 'Nothing has been rejected.' }[tab];
+  const tabs = [['me', 'For you'], ['waiting', 'Waiting'], ['pay', 'Approved, to pay'], ['paid', 'Paid'], ['rejected', 'Not approved']];
+  const empty = { me: 'Nothing is waiting for your OK.', waiting: 'Nothing is waiting for approval.', pay: 'Nothing approved is waiting to be paid.', paid: 'Nothing has been marked paid yet.', rejected: 'Nothing has been turned down.' }[tab];
   return html`<${Page} title="Approvals" sub="Invoices, payments and expense claims that need an OK. Approve in one tap, Finance marks them paid, and there’s always a record of who approved what, and when."
     actions=${html`<button className="btn primary" onClick=${() => compose({ type: 'approval' })}><${Icon} n="stamp" s=${16}/>Ask for approval</button>`}>
     <div className="stats">
@@ -4618,7 +5173,8 @@ function ApprovalsView() {
 function demoApprovals(db, T = Date.now()) {
   const f = db.depts.find((x) => x.id === 'finance');
   if (f) f.features = { ...(f.features || {}), approvals: true };
-  if (!['u1', 'u3', 'u4', 'u5', 'u8', 'u10', 'u14'].every((id) => db.users.some((u) => u.id === id))) return;
+  if (!['u1', 'u3', 'u4', 'u5', 'u8', 'u10', 'u13', 'u14'].every((id) => db.users.some((u) => u.id === id))) return;
+  db.pins.u13 = { posts: [], notes: [], ...(db.pins.u13 || {}), dropTo: 'u1' };
   const doc = (name, size) => ({ id: uid('a'), name, mime: 'application/pdf', kind: 'doc', demo: 'doc', size });
   const mk = (o) => {
     db.counter += 1;
@@ -4628,8 +5184,12 @@ function demoApprovals(db, T = Date.now()) {
     db.posts.push({ id: 'p' + db.counter, no: db.counter, chat: null, type: 'approval', title: apTitle(o.kind, o.party, o.amount), body: o.body || '', author: o.author, createdAt: o.at, toUsers: o.approvers, toDepts: [],
       about: o.about, level: o.level || 'amber', due: o.due || null, attachments: o.att || [], recips, poll: null, closed: false,
       activity: (o.log || []).map((e) => ({ id: uid('e'), attachments: [], text: '', ...e })),
-      approval: { kind: o.kind, party: o.party, amount: o.amount, ref: o.ref || '', rule: o.rule || 'any', approvers: o.approvers, paidAt: null, paidBy: null, payNote: '', ...(o.paid || {}) } });
+      approval: { kind: o.kind, party: o.party, amount: o.amount, ref: o.ref || '', rule: o.rule || 'any', approvers: o.approvers, sticky: o.sticky || '', summary: o.summary || null, paidAt: null, paidBy: null, payNote: '', ...(o.paid || {}) } });
   };
+  mk({ kind: 'Quote', party: 'BrightSign Shopfitters', amount: 48600, ref: 'Q-2207', author: 'u13', approvers: ['u1'], about: 'admin', at: T - 50 * MIN, att: [doc('BrightSign quote Q-2207.pdf', 240000)],
+    sticky: 'New business: shelving for the second entrance. They can start on the 16th if we approve this week.',
+    summary: { company: 'BrightSign Shopfitters (Pty) Ltd', kind: 'Quotation', number: 'Q-2207', date: '29 Oct 2026', total: 48600, vat: 6339.13, valid: 'Valid for 30 days from the date of the quote',
+      items: [{ text: 'Gondola shelving units x 12', amount: 31200 }, { text: 'End caps and fittings', amount: 9800 }, { text: 'Delivery and installation', amount: 7600 }] } });
   mk({ kind: 'Invoice', party: 'SunPack Produce', amount: 18450, ref: 'INV-20931', author: 'u10', approvers: ['u3'], about: 'fv', at: T - 3 * HOUR, due: keyPlus(2),
     body: 'Tomatoes, peppers and butternut delivered Monday. Checked against the delivery note, all there.', att: [doc('INV-20931 SunPack.pdf', 182000)] });
   mk({ kind: 'Payment', party: 'Coldline Services', amount: 6200, ref: 'Q-1182', author: 'u8', approvers: ['u3', 'u1'], rule: 'all', about: 'deli', at: T - 26 * HOUR, due: keyPlus(1), level: 'red',
@@ -5232,7 +5792,7 @@ function Shell() {
     <${Rail}/>
     ${drawer && html`<div className="side-scrim" onClick=${() => setDrawer(false)}></div>`}
     ${chatsMode ? html`<main className="stage glass chats-mode"><${ChatsView}/></main>` : html`<main className="stage glass">
-      <aside className="board-col"><${Board} note=${note}/><${StickyNotes}/><${Shortcuts}/></aside>
+      <aside className="board-col"><${Board} note=${note}/><${QuoteDrop}/><${StickyNotes}/><${Shortcuts}/></aside>
       <section className="content" key=${view}>${content}</section>
     </main>`}
     <${Dock}/>
@@ -5442,6 +6002,45 @@ function App() {
     const t = setTimeout(() => setStickyWake((x) => x + 1), Math.min(next - now + 250, 2e9));
     return () => clearTimeout(t);
   }, [user && user.id, cloud, stickySig, stickyWake]);
+  // A file dropped anywhere but a drop box mustn't open in place of the app (the desktop window would go to it).
+  useEffect(() => {
+    const stop = (e) => { if (e.defaultPrevented || !e.dataTransfer || ![...(e.dataTransfer.types || [])].includes('Files')) return; e.preventDefault(); if (e.type === 'dragover') e.dataTransfer.dropEffect = 'none'; };
+    window.addEventListener('dragover', stop); window.addEventListener('drop', stop);
+    return () => { window.removeEventListener('dragover', stop); window.removeEventListener('drop', stop); };
+  }, []);
+  // Signed quotes are filed in the sender's Drive by one of their own windows (on the desktop, the sidebar).
+  const filing = useRef({ busy: false, failedAt: 0 });
+  useEffect(() => {
+    const fl = filing.current;
+    if (!user || (CLOUD && cloud !== 'ready') || (DESKTOP_SHELL && mode !== 'widget') || fl.busy || Date.now() - fl.failedAt < 5 * MIN) return;
+    const due = db.posts.filter((p) => p.type === 'approval' && p.approval && p.approval.kind === 'Quote' && p.author === user.id && !p.approval.filedAt && p.attachments.some((x) => !x.demo)
+      && ['approved', 'paid'].includes(apState(p)));
+    if (!due.length || !fileTarget(db, user)) return;
+    fl.busy = true;
+    (async () => {
+      let n = 0;
+      for (const p of due) { if ((await fileSigned(dbRef.current, p, user, update)) === 'filed') n++; }
+      if (n) toast(n + (n === 1 ? ' signed quote' : ' signed quotes') + ' saved in Drive › Signed quotes');
+    })().catch(() => { fl.failedAt = Date.now(); }).finally(() => { fl.busy = false; });
+  }, [db, user && user.id, cloud, mode]);
+  // Printing quotes by themselves: only the desktop sidebar does it (it's always running), on the printer chosen on this computer.
+  const printing = useRef({ busy: false, failedAt: 0 });
+  useEffect(() => {
+    const desk = window.floorboardDesktop, pr = printing.current;
+    if (!user || !desk || !desk.print || mode !== 'widget' || (CLOUD && cloud !== 'ready') || pr.busy || Date.now() - pr.failedAt < 5 * MIN) return;
+    const cfg = printPrefs();
+    if (cfg.when !== 'sent' && cfg.when !== 'approved') return;
+    const done = (db.pins[user.id] || {}).printed || {};
+    const due = db.posts.filter((p) => p.type === 'approval' && p.approval && p.approval.kind === 'Quote' && p.author === user.id && p.createdAt >= (cfg.since || 0) && !done[p.id]
+      && (cfg.when === 'sent' || ['approved', 'paid'].includes(apState(p))));
+    if (!due.length) return;
+    pr.busy = true;
+    printQuotes(db, due, cfg.printer).then((r) => {
+      if (r !== 'printed') { pr.failedAt = Date.now(); toast('Couldn’t print the quotes. Check the printer chosen in the drop box.', 'warn'); return; }
+      update((d) => { d.pins[user.id] = d.pins[user.id] || { posts: [], notes: [] }; const m = (d.pins[user.id].printed = d.pins[user.id].printed || {}); due.forEach((p) => { m[p.id] = Date.now(); }); });
+      toast('Printed ' + due.length + (due.length === 1 ? ' quote' : ' quotes'));
+    }).catch(() => { pr.failedAt = Date.now(); }).finally(() => { pr.busy = false; });
+  }, [db, user && user.id, cloud, mode]);
   // ASAP items nobody opened within 30 minutes go to the managers. Any open app can do it; two at once end up the same.
   useEffect(() => {
     if (!user || (CLOUD && cloud !== 'ready')) return;
