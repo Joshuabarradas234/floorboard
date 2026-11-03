@@ -22,6 +22,8 @@ The `floorboard-app` folder is an installable web app (a PWA). For a phone to in
 
 Add `#widget` to the end of the link to open the compact sidebar view.
 
+The **Get it on your phone** QR code opens the **sidebar view** by default (switch it to **Full app** under the code). A phone that scanned it keeps opening the sidebar view from its home-screen icon; the ↗ at its top opens the full app. To change it on a phone, use **Open Floorboard like this from my home screen** at the bottom of the sidebar view.
+
 ## Changing the app
 
 `source/floorboard.html` is the single source file (every build also copies it here, with `source/build.js`). After editing it, run `node source/build.js` to rebuild the app. Nothing secret is in `source/`: the server address and publishable key live in `config.js`, and the private alert key only in Supabase.

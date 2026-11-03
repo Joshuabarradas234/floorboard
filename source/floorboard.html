@@ -1206,6 +1206,10 @@ button.stat:hover{border-color:rgba(255,255,255,.4)}
 .qr-tabs button:hover{background:rgba(60,40,20,.06)}
 .qr-tabs button.on{background:rgba(120,85,50,.13);color:#3b3128}
 .qr-tabs .snd{flex:none;width:38px}
+.qr-view{justify-content:center;flex-wrap:wrap}
+.qr-view>span{font-size:12.5px;font-weight:700;color:#7a6e62;margin-right:4px}
+.w-start{display:flex;gap:8px;align-items:center;justify-content:center;font-size:12.5px;color:var(--ink-2);padding:2px 4px 8px}
+.w-start input{width:16px;height:16px;margin:0}
 .qr-help{font-size:12.5px;color:#7a6e62;margin:0;text-align:center;line-height:1.5}
 @media (max-width:420px){.qr-tabs button:not(.snd) .ic{display:none}}
 .phone-link{align-self:flex-start}
@@ -2254,6 +2258,7 @@ function Widget() {
       ${list.length === 0 && html`<div className="empty"><p>${tab === 'needs' ? (filtered ? 'Nothing of this kind is waiting on you.' : 'You’re all caught up.') : 'Nothing you sent is still open.'}</p></div>`}
       ${list.map((p) => html`<${WidgetItem} key=${p.id} p=${p} tab=${tab}/>`)}
       <div className="w-demo"><${AlertControls}/></div>
+      ${!DESKTOP_SHELL && html`<${StartSwitch}/>`}
     </div>
     <div className="w-sc glass"><${Shortcuts} compact/></div>
     ${bar && html`<${SideDock} onClose=${closeBar} onNeeds=${() => { setTab('needs'); setF(NO_FILTERS); }}/>`}
@@ -3323,6 +3328,10 @@ const TEST_TASKS = [
   { type: 'task', level: 'amber', title: 'Count the crates on the receiving dock before 15:00' },
 ];
 let testIdx = 0;
+function StartSwitch() {
+  const [on, setOn] = useState(() => lsGet(START_KEY) === 'board');
+  return html`<label className="w-start"><input type="checkbox" checked=${on} onChange=${(e) => { setOn(e.target.checked); lsSet(START_KEY, e.target.checked ? 'board' : ''); }}/>Open Floorboard like this from my home screen</label>`;
+}
 function AlertControls({ onDone }) {
   const { soundOn, setSoundOn, sendTestTask, enablePopups, pushState, enablePush, disablePush, testPush } = useApp();
   const perm = popupPermission(), push = pushAvailability();
@@ -4000,11 +4009,26 @@ function TranslateLink({ text }) {
 const APP_URL = 'https://joshuabarradas234.github.io/floorboard/';
 const SEASON_KEY = 'floorboard.season.v1';
 function storeFromLink() { try { const v = new URLSearchParams(location.search).get('store'); return v && /^[A-Za-z0-9]{4,12}$/.test(v) ? v.toUpperCase() : ''; } catch (e) { return ''; } }
-function phoneLink() {
-  if (!CLOUD) return APP_URL + '?demo';
-  const code = lsGet(STORE_CODE_KEY);
-  return APP_URL + (code ? '?store=' + encodeURIComponent(code) : '');
+// board: the phone opens on the sidebar view (and keeps opening that way from its home screen)
+function phoneLink(board) {
+  const code = CLOUD && lsGet(STORE_CODE_KEY);
+  const base = !CLOUD ? APP_URL + '?demo' : APP_URL + (code ? '?store=' + encodeURIComponent(code) : '');
+  return board ? base + (base.includes('?') ? '&' : '?') + 'view=board' : base;
 }
+// How the app opens from a phone's home screen: the sidebar view or the full app. A QR link can set it (?view=board or
+// ?view=full), and so can the switch at the bottom of the sidebar view. It's this device's choice, kept on the device.
+const START_KEY = 'floorboard.start.v1';
+const STANDALONE = (() => { try { return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; } catch (e) { return false; } })();
+(() => {
+  try {
+    const q = new URLSearchParams(location.search), v = q.get('view');
+    if (v === 'board' || v === 'full') {
+      lsSet(START_KEY, v === 'board' ? 'board' : '');
+      q.delete('view');
+      history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + (v === 'board' && !location.hash ? '#widget' : location.hash));
+    } else if (STANDALONE && !/[?&]shell=desktop\b/.test(location.search) && !location.hash && lsGet(START_KEY) === 'board') history.replaceState(null, '', location.pathname + location.search + '#widget');
+  } catch (e) { /* opens as it is */ }
+})();
 const SEASONS = {
   spring: { label: 'Spring', icon: 'flower', ink: '#7a2d4c', leaves: ['#f8c9da', '#f4b4cc', '#fbdde8', '#ee9fbd', '#fde9f0', '#f6bfd3'], density: 0.8,
     grass: ['#a6d47e', '#8cc566', '#bfe39a'], litter: ['#f6bfd3', '#fbdde8'], litterAmount: 0.14, fall: { kind: 'petal', colors: ['#f7c3d6', '#fbdde8', '#f1a9c4', '#ffffff'], rate: 3 }, rain: true },
@@ -4286,7 +4310,9 @@ function PhoneModal({ onClose }) {
   const { toast, season, setSeason } = useApp();
   const [showQr, setShowQr] = useState(false);
   const [sound, setSound] = useState(false);
-  const [link, setLink] = useState(phoneLink);
+  const [board, setBoard] = useState(true);
+  const [link, setLink] = useState(() => phoneLink(true));
+  const pickView = (b) => { setBoard(b); setLink(phoneLink(b)); };
   const stage = useRef(null), sceneCv = useRef(null), live = useRef({ parts: [], drops: [], k: 0, target: 0 });
   const S = SEASONS[season];
   useEffect(() => { live.current.qr = qrMatrix(link.trim()); }, [link]);
@@ -4336,11 +4362,14 @@ function PhoneModal({ onClose }) {
       <input id="qr-link" value=${link} onChange=${(e) => setLink(e.target.value)} aria-label="Link in the QR code" spellCheck="false"/>
       <button type="button" className="qr-share" onClick=${share} aria-label="Share or copy the link" title="Share or copy the link"><${Icon} n="share" s=${17}/></button>
     </div>
+    <div className="qr-tabs qr-view" role="group" aria-label="What the phone opens"><span>Opens as</span>
+      <button type="button" className=${board ? 'on' : ''} aria-pressed=${board} onClick=${() => pickView(true)}><${Icon} n="sidebar" s=${15}/>Sidebar view</button>
+      <button type="button" className=${!board ? 'on' : ''} aria-pressed=${!board} onClick=${() => pickView(false)}><${Icon} n="expand" s=${15}/>Full app</button></div>
     <div className="qr-tabs" role="group" aria-label="Season">
       ${SEASON_KEYS.map((k) => html`<button type="button" key=${k} className=${season === k ? 'on' : ''} aria-pressed=${season === k} onClick=${() => setSeason(k)}><${Icon} n=${SEASONS[k].icon} s=${15}/>${SEASONS[k].label}</button>`)}
       <button type="button" className="snd" onClick=${() => setSound((v) => !v)} aria-pressed=${sound} aria-label=${sound ? 'Turn the sound off' : 'Turn the sound on'} title=${sound ? 'Sound on' : 'Sound off'}><${Icon} n=${sound ? 'sound' : 'mute'} s=${16}/></button>
     </div>
-    <p className="qr-help">On Android, Floorboard offers to <b>Install</b>. On iPhone, open it in Safari, tap <b>Share</b>, then <b>Add to Home Screen</b>.${prefilled ? ' The store code is already filled in.' : ''}</p>
+    <p className="qr-help">On Android, Floorboard offers to <b>Install</b>. On iPhone, open it in Safari, tap <b>Share</b>, then <b>Add to Home Screen</b>.${prefilled ? ' The store code is already filled in.' : ''}${board ? ' The home-screen icon opens the sidebar view; the ↗ at its top opens the full app.' : ''}</p>
   <//>`;
 }
 // The little tree beside "Needs you": same season, a few petals. Tap it and it turns into the QR code right there
@@ -5666,7 +5695,7 @@ const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
 const canListen = () => !!SpeechRec && !DESKTOP_SHELL;
 const RECDRAFT = 'floorboard.recording.v1';
 // the web app, straight to this meeting's recorder (the desktop app hands recording to the browser)
-const recordLink = (ev, k) => phoneLink() + '#go-rec:' + encodeURIComponent(ev.id + ':' + k);
+const recordLink = (ev, k) => phoneLink(false) + '#go-rec:' + encodeURIComponent(ev.id + ':' + k);
 const WEEKDAY_RE = /\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday|tomorrow|next week)\b/i;
 function matchUser(db, who) {
   const w = String(who || '').trim().toLowerCase();
