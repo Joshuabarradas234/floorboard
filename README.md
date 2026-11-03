@@ -66,6 +66,7 @@ Switch it on in **People & access**: under the department, turn on **My week**. 
 
 - **Everyday tasks** (like reading email or the bank recons) fill in every day you pick by themselves. Taking one off keeps it on the days already gone.
 - Add each day's other jobs in its column, or paste a list from Excel. Click a task to note the time or the reason it's late, move it to the next day, or take it off.
+- Tasks other people send you appear on their due day (today, if they have no date or are late), with who sent them. Ticking one there marks it done for the sender too; clicking it opens the task.
 - Today's list is in the sidebar and on Needs you. Managers (and admins) can open their team's weeks, set up someone's everyday tasks and add tasks for them; only the person ticks their own.
 
 ## OneDrive

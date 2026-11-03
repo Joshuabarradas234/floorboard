@@ -884,6 +884,7 @@ td.mono{white-space:nowrap}
 .wk-row input[type=checkbox]{width:18px;height:18px;margin:2px 0 0;flex:none;accent-color:var(--green,#4caf50)}
 .wk-t{flex:1;min-width:0;text-align:left;background:none;border:0;padding:0;color:var(--ink);font:inherit;font-size:13.5px;line-height:1.35;cursor:pointer;display:grid;gap:2px}
 .wk-t>span svg{display:inline;vertical-align:-1px;margin-left:5px;opacity:.55}
+.wk-row.tagged .ldot{margin-right:2px;vertical-align:1px}
 .od{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:var(--glass);border:1px solid var(--glass-line);border-top-color:rgba(255,255,255,.3);border-radius:var(--r);padding:14px 16px;box-shadow:var(--hi);margin-bottom:16px}
 .od-ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:#0f6cbd;color:#fff;flex:none}
 .od-t{flex:1;min-width:180px;display:grid;gap:2px}
@@ -6482,6 +6483,24 @@ function dayList(db, who, k) {
   return [...staples.map((s) => ({ id: s.id, title: s.title, staple: true })), ...own.map((t) => ({ id: t.id, title: t.title, by: t.by, staple: false }))]
     .map((t) => ({ ...t, st: (db.pdone || {})[pkey(who, k, t.id)] || {} }));
 }
+// tasks other people sent this person: on their due day (today if there's none or it has gone by), and on the day they were done
+function taggedFor(db, who, k, today) {
+  return db.posts.filter((p) => p.type === 'task' && !p.closed && p.recips[who] && p.author !== who && (() => {
+    const r = p.recips[who];
+    if (r.status === 'done') return !!r.updatedAt && dkey(r.updatedAt) === k;
+    return (!p.due || p.due < today ? today : p.due) === k;
+  })()).sort((a, b) => (LEVEL_ORDER[a.level] ?? 3) - (LEVEL_ORDER[b.level] ?? 3) || a.createdAt - b.createdAt);
+}
+const LEVEL_ORDER = { red: 0, amber: 1, green: 2 };
+function TagRow({ p, who, mine }) {
+  const { db, update, openPost } = useApp();
+  const r = p.recips[who], done = r.status === 'done', late = !done && p.due && p.due < dkey(), from = userById(db, p.author);
+  const meta = ['#' + p.no, from && 'from ' + firstName(from), !done && r.pct ? r.pct + '% done' : '', late ? 'was due ' + fmtKey(p.due) : ''].filter(Boolean).join(' · ');
+  return html`<div className=${'wk-row tagged' + (done ? ' done' : late ? ' late' : '')}>
+    <input type="checkbox" checked=${done} disabled=${!mine || done} onChange=${() => quickAct(update, p, who, 'done')} aria-label=${'Done: ' + p.title}/>
+    <button type="button" className="wk-t" onClick=${() => openPost(p.id)}><span><i className=${'ldot ' + (p.level || 'none')}></i> ${p.title}</span><small>${meta}</small></button>
+  </div>`;
+}
 function setDone(d, who, k, id, patch) { d.pdone = d.pdone || {}; const key = pkey(who, k, id); d.pdone[key] = { ...(d.pdone[key] || {}), user: who, date: k, task: id, ...patch }; }
 const splitLines = (raw) => String(raw || '').split(/\r?\n/).map((s) => s.split('\t')[0].trim()).filter(Boolean).map((s) => s.slice(0, 200));
 function demoSpotted(db, T = Date.now()) {
@@ -6535,7 +6554,8 @@ function DayColumn({ who, k, mine, canAdd, compact }) {
   const { db, user, update, toast, jump } = useApp();
   const [open, setOpen] = useState(null);
   const [text, setText] = useState('');
-  const today = dkey(), list = dayList(db, who, k), nd = list.filter((t) => t.st.done).length;
+  const today = dkey(), list = dayList(db, who, k), tagged = taggedFor(db, who, k, today);
+  const nd = list.filter((t) => t.st.done).length + tagged.filter((p) => p.recips[who].status === 'done').length, total = list.length + tagged.length;
   const shown = compact ? [...list.filter((t) => !t.st.done), ...list.filter((t) => t.st.done)] : list;
   const add = (raw) => {
     const lines = splitLines(raw); if (!lines.length) return;
@@ -6545,9 +6565,10 @@ function DayColumn({ who, k, mine, canAdd, compact }) {
   };
   return html`<section className=${'wk-day' + (k === today ? ' today' : '') + (compact ? ' tdc' : '')} aria-label=${fmtKey(k, { weekday: 'long', day: 'numeric', month: 'long' })}>
     <div className="wk-h">${compact ? html`<span className="eyebrow" style=${{ flex: 1 }}>Today · ${fmtKey(k)}</span>` : html`<b>${fmtKey(k, { weekday: 'long' })}</b><span>${fmtKey(k, { day: 'numeric', month: 'short' })}</span>`}
-      <em>${nd}/${list.length}</em>${compact && html`<button className="linkish" onClick=${() => jump('view:week')}>My week</button>`}</div>
+      <em>${nd}/${total}</em>${compact && html`<button className="linkish" onClick=${() => jump('view:week')}>My week</button>`}</div>
     ${k === today && who === user.id && html`<${ToPay} compact=${compact}/>`}
-    ${!list.length && html`<p className="muted sm" style=${{ margin: '2px 4px' }}>${compact ? 'Nothing planned for today yet.' : 'Nothing planned.'}</p>`}
+    ${!total && html`<p className="muted sm" style=${{ margin: '2px 4px' }}>${compact ? 'Nothing planned for today yet.' : 'Nothing planned.'}</p>`}
+    ${tagged.map((p) => html`<${TagRow} key=${p.id} p=${p} who=${who} mine=${mine}/>`)}
     ${shown.map((t) => html`<${React.Fragment} key=${t.id}><${WkRow} who=${who} k=${k} t=${t} mine=${mine} open=${open === t.id} onOpen=${() => setOpen(open === t.id ? null : t.id)}/>
       ${open === t.id && html`<${WkMore} who=${who} k=${k} t=${t} mine=${mine} onClose=${() => setOpen(null)}/>`}<//>`)}
     ${canAdd && html`<input className="input wk-add" value=${text} onChange=${(e) => setText(e.target.value)} placeholder=${mine ? 'Add a task…' : 'Add a task for ' + firstName(userById(db, who)) + '…'} aria-label=${'Add a task for ' + fmtKey(k, { weekday: 'long' })}
@@ -6603,7 +6624,7 @@ function WeekView() {
   if (!person) return html`<${Page} title="My week"><div className="empty"><${Icon} n="list" s=${24}/><h3>Nobody uses My week yet</h3><p>Switch it on for a department in People & access.</p></div><//>`;
   const days = [0, 1, 2, 3, 4].map((i) => addDays(wk, i));
   [5, 6].forEach((i) => { const k = addDays(wk, i); if (dayList(db, who, k).length) days.push(k); }); // the weekend only when something's on it
-  const all = days.flatMap((k) => dayList(db, who, k).map((t) => ({ k, t }))), today = dkey();
+  const today = dkey(), all = days.flatMap((k) => [...dayList(db, who, k), ...taggedFor(db, who, k, today).map((p) => ({ id: p.id, st: { done: p.recips[who].status === 'done' } }))].map((t) => ({ k, t })));
   const open = all.filter((x) => !x.t.st.done && x.k < today).length;
   return html`<${Page} title=${mine ? 'My week' : firstName(person) + '’s week'}
     sub=${'Week of ' + fmtKey(wk, { day: 'numeric', month: 'long' }) + ' · ' + all.filter((x) => x.t.st.done).length + ' of ' + all.length + ' done' + (open ? ' · ' + open + ' not done from earlier days' : '')}
