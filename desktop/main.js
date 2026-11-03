@@ -7,6 +7,9 @@ const PAGE = path.join(__dirname, '..', 'index.html');
 const ICON = path.join(__dirname, '..', 'icon-192.png');
 const SIDEBAR_WIDTH = 380;
 const SMOKE = process.env.FLOORBOARD_SMOKE === '1'; // load once, print the result, quit (used for testing)
+// Windows can wrongly judge the full window to be covered (with the sidebar kept in front, or some screen tools), and it
+// then stops drawing and stays black. Draw it whenever it's open.
+app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
 let prefs = { onTop: false, side: 'right' };
 let sidebar = null, full = null, tray = null;
 
