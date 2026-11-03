@@ -887,8 +887,9 @@ button.stat:hover{border-color:rgba(255,255,255,.4)}
 /* the little live tree beside Needs you */
 .board{position:relative}
 .board-top{padding-right:100px}
-.mini-tree{position:absolute;top:2px;right:6px;width:110px;padding:0;border:0;background:none;cursor:pointer;border-radius:14px;transition:transform .2s ease}
+.mini-tree{position:absolute;top:1px;right:8px;width:96px;padding:0;border:0;background:none;cursor:pointer;border-radius:14px;z-index:2;transform-origin:top right;transition:transform .55s cubic-bezier(.2,.7,.2,1)}
 .mini-tree:hover{transform:translateY(-2px) scale(1.04)}
+.mini-tree.qr,.mini-tree.qr:hover{transform:scale(1.6)}
 .mini-tree canvas{display:block;width:100%;height:auto}
 .sum-list button{width:100%;display:flex;gap:10px;align-items:center;text-align:left;padding:9px 12px;border-radius:var(--r-sm);border:1px solid var(--glass-line);background:var(--glass);color:var(--ink);cursor:pointer;font:inherit}
 .sum-list .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -3520,10 +3521,11 @@ function treeVoxels(season) {
 // how far the tallest season's tree reaches above the slab, so all four line up (worked out once)
 let treeLift = null;
 // Draws the tree once into its own canvas; the animation then only adds what falls.
-function renderTree(season, W) {
+function renderTree(season, W, tight) {
   const N = TREE_N, a = W / (2 * N + 4), b = a / 2, h = a * 1.08, V = treeVoxels(season);
   if (treeLift === null) { treeLift = 0; for (const k of SEASON_KEYS) for (const v of treeVoxels(k).values()) treeLift = Math.max(treeLift, (v.z + 1) * 1.08 - (v.x + v.y) * 0.5); }
-  const top = Math.ceil(treeLift * a) + 10, H = Math.ceil(top + 2 * N * b + 22), ox = W / 2;
+  // tight: the small version, with less room round the edges
+  const top = Math.ceil(treeLift * a) + (tight ? 3 : 10), H = Math.ceil(top + 2 * N * b + (tight ? 9 : 22)), ox = W / 2;
   const P = (x, y, z) => [ox + (x - y) * a, top + (x + y) * b - z * h];
   const list = [...V.values()].sort((p, q) => p.x + p.y + p.z - (q.x + q.y + q.z));
   const dpr = Math.min(window.devicePixelRatio || 1, 2), cv = document.createElement('canvas');
@@ -3756,30 +3758,35 @@ function PhoneModal({ onClose }) {
     <p className="qr-help">On Android, Floorboard offers to <b>Install</b>. On iPhone, open it in Safari, tap <b>Share</b>, then <b>Add to Home Screen</b>.${prefilled ? ' The store code is already filled in.' : ''}</p>
   <//>`;
 }
-// The little tree beside "Needs you": same season, a few petals, about 24 frames a second; tap it for the phone card.
+// The little tree beside "Needs you": same season, a few petals. Tap it and it turns into the QR code right there
+// (the same change as the phone card), growing a little so a phone can read it; tap again for the tree.
 function MiniTree() {
-  const { season, openPhone } = useApp();
-  const cvRef = useRef(null), live = useRef({ parts: [], drops: [], k: 0 });
+  const { season } = useApp();
+  const [qrOn, setQrOn] = useState(false);
+  const cvRef = useRef(null), live = useRef({ parts: [], drops: [], k: 0, target: 0 });
+  useEffect(() => { live.current.target = qrOn ? 1 : 0; if (qrOn) live.current.qr = qrMatrix(phoneLink()); if (calmMotion()) live.current.k = live.current.target; }, [qrOn]);
   useEffect(() => {
     const cv = cvRef.current;
     if (!cv) return;
     const L = live.current, g = cv.getContext('2d'), S = SEASONS[season], calm = calmMotion();
-    const sc = renderTree(season, 110);
-    sc.unit = Math.max(sc.unit, 0.55); // big enough petals and drops to see at this size
+    const sc = renderTree(season, 150, true); // drawn bigger than it shows, so the code stays sharp when it grows
+    sc.unit = Math.max(sc.unit, 0.8); // big enough petals and drops to see at this size
     if (L.scene) { L.prev = L.scene; L.fadeT = 0; }
     L.scene = sc; cv.width = sc.canvas.width; cv.height = sc.canvas.height;
     let raf = 0, last = performance.now();
     const frame = (now) => {
       raf = requestAnimationFrame(frame);
-      const dt = (now - last) / 1000;
-      if (dt < 1 / 24) return;
+      const real = (now - last) / 1000, moving = L.k !== L.target;
+      if (!moving && real < 1 / 24) return; // about 24 frames a second while it just sways; full speed while it changes
       last = now;
-      drawTreeFrame(L, g, cv, S, Math.min(0.08, dt), calm, S.ink);
+      if (!calm) L.k = clamp01(L.k + (L.target ? 1 : -1) * (Math.min(0.25, real) / 1.4));
+      drawTreeFrame(L, g, cv, S, Math.min(0.08, real), calm, S.ink);
     };
     raf = requestAnimationFrame(frame);
     return () => cancelAnimationFrame(raf);
   }, [season]);
-  return html`<button type="button" className="mini-tree" onClick=${openPhone} title="Get Floorboard on your phone" aria-label="Get Floorboard on your phone"><canvas ref=${cvRef} aria-hidden="true"></canvas></button>`;
+  return html`<button type="button" className=${'mini-tree' + (qrOn ? ' qr' : '')} onClick=${() => setQrOn((v) => !v)} aria-pressed=${qrOn}
+    title=${qrOn ? 'Tap to see the tree again' : 'Tap for a QR code that opens Floorboard on a phone'} aria-label=${qrOn ? 'Show the tree again' : 'Show a QR code that opens Floorboard on a phone'}><canvas ref=${cvRef} aria-hidden="true"></canvas></button>`;
 }
 /* ---------------- my shift, and the start-of-shift summary ---------------- */
 function ShiftChip({ small }) {
