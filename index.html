@@ -880,13 +880,12 @@ button.stat:hover{border-color:rgba(255,255,255,.4)}
 .qr-modal .modal-head h2{color:#3b3128}
 .qr-modal .icon-btn{color:#5c5046}
 .qr-modal .icon-btn:hover{background:rgba(60,40,20,.08)}
-.qr-modal .modal-body{gap:12px}
+.qr-modal .modal-body{gap:12px;padding-top:14px}
+.modal.qr-modal{position:relative}
+.modal-x{position:absolute;top:10px;right:10px;z-index:3}
 .qr-stage{position:relative;width:100%;cursor:pointer;touch-action:manipulation;border-radius:16px;outline:none}
 .qr-stage:focus-visible{box-shadow:0 0 0 3px rgba(200,105,44,.45)}
-.qr-stage canvas{display:block;width:100%;height:auto;transition:opacity .45s ease,transform .55s cubic-bezier(.2,.7,.2,1)}
-.qr-stage .qr-code{position:absolute;inset:0;height:100%;opacity:0;transform:scale(.9)}
-.qr-stage.on .qr-scene{opacity:0;transform:scale(.95)}
-.qr-stage.on .qr-code{opacity:1;transform:none}
+.qr-stage canvas{display:block;width:100%;height:auto}
 .qr-hint{text-align:center;font-size:12px;color:#8a7d70;margin:0}
 .qr-link{display:flex;gap:8px}
 .qr-link input{flex:1;min-width:0;border:1px solid rgba(60,40,20,.14);background:rgba(255,253,248,.85);border-radius:12px;padding:10px 12px;font:13px var(--f-mono);color:#3b3128}
@@ -901,6 +900,12 @@ button.stat:hover{border-color:rgba(255,255,255,.4)}
 .qr-help{font-size:12.5px;color:#7a6e62;margin:0;text-align:center;line-height:1.5}
 @media (max-width:420px){.qr-tabs button:not(.snd) .ic{display:none}}
 .phone-link{align-self:flex-start}
+/* the little live tree beside Needs you */
+.board{position:relative}
+.board-top{padding-right:100px}
+.mini-tree{position:absolute;top:2px;right:6px;width:110px;padding:0;border:0;background:none;cursor:pointer;border-radius:14px;transition:transform .2s ease}
+.mini-tree:hover{transform:translateY(-2px) scale(1.04)}
+.mini-tree canvas{display:block;width:100%;height:auto}
 .sum-list button{width:100%;display:flex;gap:10px;align-items:center;text-align:left;padding:9px 12px;border-radius:var(--r-sm);border:1px solid var(--glass-line);background:var(--glass);color:var(--ink);cursor:pointer;font:inherit}
 .sum-list .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sum-empty{margin:14px 0 0;color:var(--ink-2)}
@@ -1572,7 +1577,7 @@ function DueTag({ p, uid: who }) {
   const past = !over && p.due < dkey();
   return html`<span className=${'due' + (over ? ' over' : '')}><${Icon} n="clock" s=${14}/>${past ? 'Was due ' + fmtKey(p.due, { day: 'numeric', month: 'short' }) : dueText(p.due)}</span>`;
 }
-function Modal({ title, onClose, children, wide, footer, light, cls }) {
+function Modal({ title, onClose, children, wide, footer, light, cls, bare }) {
   const ref = useRef(null);
   useEffect(() => {
     const h = (e) => { if (e.key !== 'Escape') return; const all = document.querySelectorAll('.modal-wrap'); if (all[all.length - 1] === ref.current) onClose(); };
@@ -1581,7 +1586,7 @@ function Modal({ title, onClose, children, wide, footer, light, cls }) {
   // drawn on top of the whole page, so a glass panel it was opened from can't squeeze it
   return ReactDOM.createPortal(html`<div className=${'modal-wrap' + (light ? ' light' : '')} ref=${ref} onMouseDown=${(e) => { if (e.target === e.currentTarget) onClose(); }}>
     <div className=${'modal' + (wide ? ' wide' : '') + (cls ? ' ' + cls : '')} role="dialog" aria-modal="true" aria-label=${title}>
-      <div className="modal-head"><h2>${title}</h2><button className="icon-btn" onClick=${onClose} aria-label="Close"><${Icon} n="close"/></button></div>
+      ${bare ? html`<button className="icon-btn modal-x" onClick=${onClose} aria-label="Close"><${Icon} n="close"/></button>` : html`<div className="modal-head"><h2>${title}</h2><button className="icon-btn" onClick=${onClose} aria-label="Close"><${Icon} n="close"/></button></div>`}
       <div className="modal-body">${children}</div>
       ${footer && html`<div className="modal-foot">${footer}</div>`}
     </div>
@@ -1693,6 +1698,7 @@ function Board({ onPick, note }) {
   const c = useCounts();
   const pick = onPick || ((f) => { setFilters({ ...NO_FILTERS, ...f }); go('needs'); });
   return html`<section className="board" aria-label="Needs you">
+    <${MiniTree}/>
     <div className="eyebrow">Needs you</div>
     <div className="board-top"><span className="board-num">${c.mine.length}</span><span className="board-cap">${c.mine.length === 1 ? 'thing is' : 'things are'} waiting on you${c.overdue > 0 && html`<br/><em>${c.overdue} overdue</em>`}</span></div>
     <div className="lvlbar" aria-hidden="true">${LEVEL_KEYS.map((l) => c.nL(l) > 0 && html`<i key=${l} className=${l} style=${{ flex: c.nL(l) }}></i>`)}</div>
@@ -3480,55 +3486,62 @@ const vhash = (x, y, z, k) => { let t = (x * 374761393 + y * 668265263 + z * 144
 const pickBy = (arr, r) => arr[Math.floor(r * arr.length) % arr.length];
 const hexRgb = (h) => { const n = parseInt(h.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; };
 const rgbCss = (c, f) => 'rgb(' + c.map((v) => Math.max(0, Math.min(255, Math.round(v * f)))).join(',') + ')';
-const TREE_N = 22;
+const TREE_N = 30;
 function treeVoxels(season) {
   const S = SEASONS[season], N = TREE_N, V = new Map();
   const put = (x, y, z, hex, leaf, f) => { const c = hexRgb(hex); V.set(x + ',' + y + ',' + z, { x, y, z, c: f ? c.map((v) => v * f) : c, leaf }); };
   const has = (x, y, z) => V.has(x + ',' + y + ',' + z);
-  // the ground: a two-layer slab, grass round the edge, paving in the middle with the season's litter on it
+  // the ground: a three-layer slab, tufted grass round the edge, paving in the middle with the season's litter on it
   for (let x = 0; x < N; x++) for (let y = 0; y < N; y++) {
-    put(x, y, 0, '#b8b0a5');
+    put(x, y, 0, '#ada499'); put(x, y, 1, '#b9b1a6');
     const edge = Math.min(x, y, N - 1 - x, N - 1 - y), r = vhash(x, y, 1, 1);
-    if (edge < 3) {
-      put(x, y, 1, pickBy(S.grass, vhash(x, y, 1, 2)));
-      if (r < 0.55) put(x, y, 2, pickBy(S.grass, vhash(x, y, 2, 2)));
-      if (r < 0.18) put(x, y, 3, pickBy(S.grass, vhash(x, y, 3, 2)));
+    if (edge < 4) {
+      put(x, y, 2, pickBy(S.grass, vhash(x, y, 2, 2)), false, 0.9);
+      // blades: single columns of different heights, so the edge looks tufted rather than boxy
+      if (r < 0.4) { const tall = 1 + Math.floor(vhash(x, y, 3, 3) * (edge < 2 ? 3 : 2)); for (let z = 3; z < 3 + tall; z++) put(x, y, z, pickBy(S.grass, vhash(x, y, z, 2)), false, 0.9 + 0.05 * (z - 3)); }
     } else {
-      const slab = Math.floor((x + (Math.floor(y / 2) % 2)) / 2) * 3 + Math.floor(y / 2) * 5;
-      put(x, y, 1, vhash(x, y, 1, 3) < S.litterAmount ? pickBy(S.litter, vhash(x, y, 1, 4)) : STONES[Math.floor(vhash(slab, 0, 0, 5) * STONES.length)]);
+      const slab = Math.floor((x + (Math.floor(y / 2) % 2) * 2) / 3) * 3 + Math.floor(y / 2) * 7;
+      put(x, y, 2, vhash(x, y, 2, 3) < S.litterAmount ? pickBy(S.litter, vhash(x, y, 2, 4)) : STONES[Math.floor(vhash(slab, 0, 0, 5) * STONES.length)]);
+      if (edge === 4 && r < 0.18) put(x, y, 3, pickBy(S.grass, vhash(x, y, 3, 2)));
     }
   }
-  // trunk, roots and branches
+  // trunk and roots
   const c0 = N / 2 - 1;
-  for (let z = 2; z <= 13; z++) for (let dx = 0; dx < 2; dx++) for (let dy = 0; dy < 2; dy++) put(c0 + dx, c0 + dy, z, pickBy(BARK, vhash(dx, dy, z, 6)));
-  [[-1, 0], [-1, 1], [2, 0], [2, 1], [0, -1], [1, -1], [0, 2], [1, 2]].forEach(([dx, dy], i) => { if (i % 3 !== 2) put(c0 + dx, c0 + dy, 2, BARK[1]); });
-  const blobs = [[c0 + 0.5, c0 + 0.5, 18, 6.4], [c0 + 0.5, c0 + 0.5, 13.5, 5.2]];
-  for (let i = 0; i < 6; i++) {
-    const ang = (i / 6) * Math.PI * 2 + vhash(i, 0, 0, 7) * 0.7, len = 5 + vhash(i, 0, 0, 8) * 3;
-    let px = c0 + 0.5, py = c0 + 0.5, pz = 8 + vhash(i, 0, 0, 9) * 5;
-    for (let s = 0; s < len; s += 0.5) { px += Math.cos(ang) * 0.5; py += Math.sin(ang) * 0.5; pz += 0.4; put(Math.round(px), Math.round(py), Math.round(pz), BARK[0]); }
-    blobs.push([px, py, pz + 1.5, 4 + vhash(i, 0, 0, 10) * 1.8]);
-  }
-  // the crown: fluffy blobs of leaves (or blossom, or snow), lighter on top
-  for (const [bx, by, bz, r] of blobs) {
+  for (let z = 3; z <= 19; z++) for (let dx = 0; dx < 2; dx++) for (let dy = 0; dy < 2; dy++) put(c0 + dx, c0 + dy, z, pickBy(BARK, vhash(dx, dy, z, 6)));
+  [[-1, 0], [-1, 1], [2, 0], [2, 1], [0, -1], [1, -1], [0, 2], [1, 2]].forEach(([dx, dy], i) => { if (i % 3 !== 2) put(c0 + dx, c0 + dy, 3, BARK[1]); });
+  // branches, most with a side branch, each ending in a clump of leaves (or blossom, or snow), with gaps between
+  const clumps = [[c0 + 0.5, c0 + 0.5, 25, 5.4]];
+  const limb = (px, py, pz, ang, len, rise, k) => {
+    for (let s = 0; s < len; s += 0.5) {
+      px += Math.cos(ang) * 0.5; py += Math.sin(ang) * 0.5; pz += rise * 0.5;
+      put(Math.round(px), Math.round(py), Math.round(pz), BARK[s < len / 2 ? 0 : 2]);
+      if (k && Math.abs(s - len * 0.55) < 0.26) {
+        limb(px, py, pz, ang + (vhash(k, 1, 0, 20) < 0.5 ? -0.75 : 0.75), 3 + vhash(k, 1, 0, 21) * 2, 0.7, 0);
+        clumps.push([px, py, pz + 1, 2.6 + vhash(k, 1, 0, 22) * 1.2]);
+      }
+    }
+    clumps.push([px, py, pz + 1.2, 3.4 + vhash(Math.round(px), Math.round(py), Math.round(pz), 23) * 1.4]);
+  };
+  for (let i = 0; i < 8; i++) limb(c0 + 0.5, c0 + 0.5, 13 + vhash(i, 0, 0, 9) * 6, (i / 8) * Math.PI * 2 + vhash(i, 0, 0, 7) * 0.6, 6 + vhash(i, 0, 0, 8) * 3.5, 0.55, i + 1);
+  for (const [bx, by, bz, r] of clumps) {
     for (let x = Math.floor(bx - r); x <= Math.ceil(bx + r); x++) for (let y = Math.floor(by - r); y <= Math.ceil(by + r); y++) for (let z = Math.floor(bz - r); z <= Math.ceil(bz + r); z++) {
       if (x < 0 || y < 0 || x >= N || y >= N || has(x, y, z)) continue;
-      if (Math.hypot(x - bx, y - by, (z - bz) * 1.25) > r * (0.66 + 0.44 * vhash(x, y, z, 11))) continue;
+      if (Math.hypot(x - bx, y - by, (z - bz) * 1.3) > r * (0.62 + 0.5 * vhash(x, y, z, 11))) continue;
       if (vhash(x, y, z, 12) > S.density) continue;
-      put(x, y, z, pickBy(S.leaves, vhash(x, y, z, 13)), true, 0.9 + 0.12 * ((z - bz) / r));
+      put(x, y, z, pickBy(S.leaves, vhash(x, y, z, 13)), true, 0.88 + 0.14 * ((z - bz) / r));
     }
   }
   // winter: snow settles on top of everything
-  if (S.snowy) [...V.values()].forEach((v) => { if (v.z >= 2 && !v.leaf && !has(v.x, v.y, v.z + 1) && vhash(v.x, v.y, v.z, 14) < 0.8) put(v.x, v.y, v.z + 1, '#ffffff', true); });
+  if (S.snowy) [...V.values()].forEach((v) => { if (v.z >= 3 && !v.leaf && !has(v.x, v.y, v.z + 1) && vhash(v.x, v.y, v.z, 14) < 0.8) put(v.x, v.y, v.z + 1, '#ffffff', true); });
   return V;
 }
+// how far the tallest season's tree reaches above the slab, so all four line up (worked out once)
+let treeLift = null;
 // Draws the tree once into its own canvas; the animation then only adds what falls.
 function renderTree(season, W) {
   const N = TREE_N, a = W / (2 * N + 4), b = a / 2, h = a * 1.08, V = treeVoxels(season);
-  // the tree's own height sets the top, using the tallest shape any season makes (so seasons line up)
-  let lift = 0;
-  for (const k of SEASON_KEYS) for (const v of treeVoxels(k).values()) lift = Math.max(lift, (v.z + 1) * h - (v.x + v.y) * b);
-  const top = Math.ceil(lift) + 10, H = Math.ceil(top + 2 * N * b + 22), ox = W / 2;
+  if (treeLift === null) { treeLift = 0; for (const k of SEASON_KEYS) for (const v of treeVoxels(k).values()) treeLift = Math.max(treeLift, (v.z + 1) * 1.08 - (v.x + v.y) * 0.5); }
+  const top = Math.ceil(treeLift * a) + 10, H = Math.ceil(top + 2 * N * b + 22), ox = W / 2;
   const P = (x, y, z) => [ox + (x - y) * a, top + (x + y) * b - z * h];
   const list = [...V.values()].sort((p, q) => p.x + p.y + p.z - (q.x + q.y + q.z));
   const dpr = Math.min(window.devicePixelRatio || 1, 2), cv = document.createElement('canvas');
@@ -3544,13 +3557,13 @@ function renderTree(season, W) {
     if (!V.has(x + ',' + y + ',' + (z + 1))) face([P(x, y, z + 1), P(x + 1, y, z + 1), P(x + 1, y + 1, z + 1), P(x, y + 1, z + 1)], rgbCss(c, 1));
     if (!V.has(x + ',' + (y + 1) + ',' + z)) face([P(x, y + 1, z + 1), P(x + 1, y + 1, z + 1), P(x + 1, y + 1, z), P(x, y + 1, z)], rgbCss(c, 0.86));
     if (!V.has(x + 1 + ',' + y + ',' + z)) face([P(x + 1, y, z + 1), P(x + 1, y + 1, z + 1), P(x + 1, y + 1, z), P(x + 1, y, z)], rgbCss(c, 0.73));
-    if (v.leaf && z > 6) leaves.push(P(x + 0.5, y + 0.5, z));
+    if (v.leaf && z > 9) leaves.push(P(x + 0.5, y + 0.5, z));
   }
   return { canvas: cv, W, H, dpr, unit: a / 7, leaves, P, N };
 }
 // where something falling at screen x comes to rest on the paving (or nowhere, past its edge)
 function landY(sc, x) {
-  const t = sc.P(0, 0, 2), bot = sc.P(sc.N, sc.N, 2), half = sc.P(sc.N, 0, 2)[0] - t[0], dx = Math.abs(x - t[0]);
+  const t = sc.P(0, 0, 3), bot = sc.P(sc.N, sc.N, 3), half = sc.P(sc.N, 0, 3)[0] - t[0], dx = Math.abs(x - t[0]);
   if (dx > half * 0.92) return Infinity;
   const slope = (bot[1] - t[1]) / 2 / half, y0 = t[1] + dx * slope, y1 = bot[1] - dx * slope;
   return y0 + (0.15 + Math.random() * 0.75) * (y1 - y0);
@@ -3566,7 +3579,7 @@ function newFaller(sc, S) {
   p.land = k === 'pollen' ? Infinity : landY(sc, p.x);
   return p;
 }
-function stepFallers(L, sc, S, dt, g) {
+function stepFallers(L, sc, S, dt, g, alpha = 1) {
   L.acc = (L.acc || 0) + dt * S.fall.rate * (sc.W / 320);
   while (L.acc >= 1) { L.acc -= 1; if (L.parts.length < 70) L.parts.push(newFaller(sc, S)); }
   for (const p of L.parts) {
@@ -3577,7 +3590,7 @@ function stepFallers(L, sc, S, dt, g) {
     }
     if (p.landed) p.fade -= dt * 0.3;
     if (p.k === 'pollen') p.fade -= dt * 0.15;
-    g.save(); g.globalAlpha = Math.max(0, Math.min(1, p.fade)); g.translate(p.x, p.y); g.rotate(p.rot);
+    g.save(); g.globalAlpha = alpha * Math.max(0, Math.min(1, p.fade)); g.translate(p.x, p.y); g.rotate(p.rot);
     if (p.k === 'snow') { g.beginPath(); g.arc(0, 0, p.sz, 0, Math.PI * 2); g.fillStyle = '#fff'; g.fill(); g.strokeStyle = 'rgba(110,135,165,.35)'; g.lineWidth = 0.6; g.stroke(); }
     else if (p.k === 'pollen') { g.globalAlpha *= 0.6 + 0.4 * Math.sin(p.t * 4 + p.ph); g.beginPath(); g.arc(0, 0, p.sz, 0, Math.PI * 2); g.fillStyle = p.c; g.shadowColor = p.c; g.shadowBlur = 6; g.fill(); }
     else {
@@ -3606,20 +3619,75 @@ function stepRain(L, sc, dt, g, on) {
   L.drops = L.drops.filter((d) => !d.gone);
   if (L.drops.length > want && on) L.drops.length = want;
 }
-function drawQr(cv, text, ink, W, H) {
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
-  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
-  const g = cv.getContext('2d');
-  g.clearRect(0, 0, cv.width, cv.height);
-  if (typeof qrcode !== 'function' || !text) return;
-  let q;
-  try { q = qrcode(0, 'M'); q.addData(text); q.make(); } catch (e) { return; }
-  const n = q.getModuleCount(), cell = Math.max(2, Math.floor((Math.min(cv.width, cv.height) * 0.74) / (n + 4)));
-  const size = cell * (n + 4), x0 = Math.round((cv.width - size) / 2), y0 = Math.round((cv.height - size) / 2);
-  g.save(); g.shadowColor = 'rgba(90,65,40,.18)'; g.shadowBlur = 24 * dpr; g.shadowOffsetY = 8 * dpr; g.fillStyle = '#fffdf8';
-  g.beginPath(); if (g.roundRect) g.roundRect(x0, y0, size, size, 18 * dpr); else g.rect(x0, y0, size, size); g.fill(); g.restore();
-  g.fillStyle = ink;
-  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (q.isDark(r, c)) g.fillRect(x0 + (c + 2) * cell, y0 + (r + 2) * cell, cell, cell);
+// The QR code as a list of dark squares, nearest the middle first, so the blocks can rise in a ripple.
+function qrMatrix(text) {
+  if (typeof qrcode !== 'function' || !text) return null;
+  try {
+    const q = qrcode(0, 'M');
+    q.addData(text); q.make();
+    const n = q.getModuleCount(), M = n + 4, dark = [];
+    for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (q.isDark(r, c)) dark.push([c + 2, r + 2, Math.hypot(c - n / 2, r - n / 2) / (n * 0.71)]);
+    dark.sort((p, o) => p[0] + p[1] - (o[0] + o[1])); // back to front
+    return { n, M, dark };
+  } catch (e) { return null; }
+}
+const clamp01 = (t) => Math.max(0, Math.min(1, t));
+const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+// k runs 0 to 1: the code rises out of the paving as blocks, then the view tilts flat so a camera can read it.
+function drawQrMorph(g, sc, qr, ink, k) {
+  const dpr = sc.dpr, Wd = sc.canvas.width, Hd = sc.canvas.height, M = qr.M;
+  const cell = Math.max(2, Math.floor((Math.min(Wd, Hd) * 0.74) / M)), size = cell * M;
+  const x0 = Math.round((Wd - size) / 2), y0 = Math.round((Hd - size) / 2);
+  const rise = clamp01((k - 0.18) / 0.42), m = easeInOut(clamp01((k - 0.55) / 0.45));
+  const mid = sc.P(sc.N / 2, sc.N / 2, 3), cx = mid[0] * dpr, cy = mid[1] * dpr;
+  const ai = (0.8 * sc.N * (sc.P(1, 0, 0)[0] - sc.P(0, 0, 0)[0]) * dpr) / M, bi = ai / 2, hi = ai * 0.95;
+  const Q = (u, v, z) => {
+    const ix = cx + (u - v) * ai, iy = cy + (u + v - M) * bi - z * hi * (1 - m);
+    return [ix + (x0 + u * cell - ix) * m, iy + (y0 + v * cell - iy) * m];
+  };
+  const poly = (pts, col) => { g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); g.fillStyle = col; g.fill(); };
+  const plate = easeInOut(clamp01(rise * 2.2)), c = hexRgb(ink);
+  g.save(); g.setTransform(1, 0, 0, 1, 0, 0); g.globalAlpha = plate;
+  const th = 0.8 * (1 - m);
+  if (th > 0.02) { poly([Q(0, M, 0), Q(M, M, 0), Q(M, M, -th), Q(0, M, -th)], '#e7dfd2'); poly([Q(M, 0, 0), Q(M, M, 0), Q(M, M, -th), Q(M, 0, -th)], '#d9cfc0'); }
+  if (m > 0) { g.shadowColor = 'rgba(90,65,40,' + (0.18 * m).toFixed(3) + ')'; g.shadowBlur = 24 * dpr * m; g.shadowOffsetY = 8 * dpr * m; }
+  poly([Q(0, 0, 0), Q(M, 0, 0), Q(M, M, 0), Q(0, M, 0)], '#fffdf8');
+  g.shadowColor = 'transparent';
+  if (m >= 1) {
+    // flat: whole pixels, so it's crisp for the camera
+    g.globalAlpha = 1; g.fillStyle = ink;
+    for (const [u, v] of qr.dark) g.fillRect(x0 + u * cell, y0 + v * cell, cell, cell);
+  } else {
+    for (const [u, v, d] of qr.dark) {
+      const hz = easeInOut(clamp01(rise * 1.8 - d * 0.8));
+      if (hz <= 0) continue;
+      g.globalAlpha = plate * Math.min(1, hz * 2.5);
+      if (m < 0.98) {
+        poly([Q(u, v + 1, hz), Q(u + 1, v + 1, hz), Q(u + 1, v + 1, 0), Q(u, v + 1, 0)], rgbCss(c, 0.72));
+        poly([Q(u + 1, v, hz), Q(u + 1, v + 1, hz), Q(u + 1, v + 1, 0), Q(u + 1, v, 0)], rgbCss(c, 0.55));
+      }
+      poly([Q(u, v, hz), Q(u + 1, v, hz), Q(u + 1, v + 1, hz), Q(u, v + 1, hz)], rgbCss(c, 1));
+    }
+  }
+  g.restore();
+}
+// One frame of the tree: the season fading in, things falling, and (for the phone card) the code taking its place.
+function drawTreeFrame(L, g, cv, S, dt, calm, qrInk) {
+  const sc = L.scene, k = L.k || 0, ta = 1 - easeInOut(clamp01(k / 0.4));
+  g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, cv.width, cv.height);
+  if (L.prev) { L.fadeT += dt / 0.8; if (L.fadeT >= 1) L.prev = null; }
+  if (ta > 0) {
+    // the tree sinks back into the card as the code comes up
+    const mid = sc.P(sc.N / 2, sc.N / 2, 3), s = 1 - 0.06 * k, ex = (1 - s) * mid[0] * sc.dpr, ey = ((1 - s) * mid[1] + k * 16) * sc.dpr;
+    g.setTransform(s, 0, 0, s, ex, ey);
+    g.globalAlpha = ta;
+    if (L.prev) { g.drawImage(L.prev.canvas, 0, 0); g.globalAlpha = ta * L.fadeT; }
+    g.drawImage(sc.canvas, 0, 0);
+    g.setTransform(s * sc.dpr, 0, 0, s * sc.dpr, ex, ey);
+    if (!calm) { g.globalAlpha = ta; stepRain(L, sc, dt, g, S.rain); stepFallers(L, sc, S, dt, g, ta); }
+    g.globalAlpha = 1;
+  }
+  if (k > 0 && L.qr) drawQrMorph(g, sc, L.qr, qrInk, k);
 }
 // rain on the leaves (or wind in winter), made from soft noise; off until someone turns it on
 const Ambience = {
@@ -3644,39 +3712,35 @@ const Ambience = {
   },
   stop() { if (this.ctx) this.gain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.25); },
 };
+const calmMotion = () => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } };
 function PhoneModal({ onClose }) {
-  const { toast } = useApp();
-  const [season, setSeason] = useState(() => (SEASONS[lsGet(SEASON_KEY)] ? lsGet(SEASON_KEY) : seasonNow()));
+  const { toast, season, setSeason } = useApp();
   const [showQr, setShowQr] = useState(false);
   const [sound, setSound] = useState(false);
   const [link, setLink] = useState(phoneLink);
-  const [dims, setDims] = useState(null);
-  const stage = useRef(null), sceneCv = useRef(null), qrCv = useRef(null), live = useRef({ parts: [], drops: [] });
+  const stage = useRef(null), sceneCv = useRef(null), live = useRef({ parts: [], drops: [], k: 0, target: 0 });
   const S = SEASONS[season];
+  useEffect(() => { live.current.qr = qrMatrix(link.trim()); }, [link]);
+  useEffect(() => { live.current.target = showQr ? 1 : 0; if (calmMotion()) live.current.k = live.current.target; }, [showQr]);
   // the living tree: drawn once per season and size, with petals, leaves, snow and rain on top
   useEffect(() => {
     const cv = sceneCv.current, box = stage.current;
     if (!cv || !box) return;
-    const L = live.current, g = cv.getContext('2d');
-    const calm = (() => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } })();
+    const L = live.current, g = cv.getContext('2d'), calm = calmMotion();
     const build = () => {
       const W = Math.max(240, Math.min(560, Math.round(box.clientWidth)));
       const sc = renderTree(season, W);
-      if (L.scene && L.scene.W === W && L.scene.canvas !== sc.canvas) { L.prev = L.scene; L.fadeT = 0; } else { L.prev = null; L.parts = []; L.drops = []; }
+      if (L.scene && L.scene.W === W) { L.prev = L.scene; L.fadeT = 0; } else { L.prev = null; L.parts = []; L.drops = []; }
       L.scene = sc; cv.width = sc.canvas.width; cv.height = sc.canvas.height;
-      setDims({ W, H: sc.H });
     };
     build();
     let raf = 0, last = performance.now();
     const frame = (now) => {
-      const dt = Math.min(0.05, (now - last) / 1000), sc = L.scene;
+      const real = (now - last) / 1000, dt = Math.min(0.05, real);
       last = now;
-      g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, cv.width, cv.height);
-      if (L.prev) { L.fadeT += dt / 0.8; if (L.fadeT >= 1) L.prev = null; }
-      if (L.prev) { g.drawImage(L.prev.canvas, 0, 0); g.globalAlpha = L.fadeT; }
-      g.drawImage(sc.canvas, 0, 0); g.globalAlpha = 1;
-      g.setTransform(sc.dpr, 0, 0, sc.dpr, 0, 0);
-      if (!calm) { stepFallers(L, sc, S, dt, g); stepRain(L, sc, dt, g, S.rain); }
+      // the change to the code follows the clock, so it takes the same time on a slow phone
+      if (!calm) L.k = clamp01(L.k + (L.target ? 1 : -1) * (Math.min(0.25, real) / 1.4));
+      drawTreeFrame(L, g, cv, S, dt, calm, S.ink);
       raf = requestAnimationFrame(frame);
     };
     raf = requestAnimationFrame(frame);
@@ -3685,21 +3749,18 @@ function PhoneModal({ onClose }) {
     ro.observe(box);
     return () => { cancelAnimationFrame(raf); ro.disconnect(); };
   }, [season]);
-  useEffect(() => { if (qrCv.current && dims) drawQr(qrCv.current, link.trim(), S.ink, dims.W, dims.H); }, [link, season, dims]);
   useEffect(() => { if (sound) Ambience.start(S.rain ? 'rain' : season === 'winter' ? 'wind' : 'breeze'); else Ambience.stop(); }, [sound, season]);
   useEffect(() => () => Ambience.stop(), []);
-  const pickSeason = (k) => { setSeason(k); lsSet(SEASON_KEY, k); };
   const flip = () => setShowQr((v) => !v);
   const share = async () => {
     try { if (navigator.share) { await navigator.share({ title: 'Floorboard', text: 'Open Floorboard on your phone', url: link.trim() }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
     try { await navigator.clipboard.writeText(link.trim()); toast('Link copied. Send it to your phone.'); } catch (e) { toast('Copy the link from the box above.', 'warn'); }
   };
   const prefilled = CLOUD && /[?&]store=/.test(link);
-  return html`<${Modal} title="Get Floorboard on your phone" onClose=${onClose} cls=${'qr-modal season-' + season}>
-    <div ref=${stage} className=${'qr-stage' + (showQr ? ' on' : '')} role="button" tabIndex="0" aria-label=${showQr ? 'Show the tree again' : 'Show the QR code'}
+  return html`<${Modal} title="Get Floorboard on your phone" onClose=${onClose} cls=${'qr-modal season-' + season} bare>
+    <div ref=${stage} className="qr-stage" role="button" tabIndex="0" aria-label=${showQr ? 'Show the tree again' : 'Show the QR code'}
       onClick=${flip} onKeyDown=${(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); } }}>
-      <canvas ref=${sceneCv} className="qr-scene" aria-hidden="true"></canvas>
-      <canvas ref=${qrCv} className="qr-code" aria-hidden="true"></canvas>
+      <canvas ref=${sceneCv} aria-hidden="true"></canvas>
     </div>
     <p className="qr-hint">${showQr ? 'Point the phone’s camera at the code · tap it to see the tree again' : 'Tap the tree to see the QR code'}</p>
     <div className="qr-link">
@@ -3707,13 +3768,37 @@ function PhoneModal({ onClose }) {
       <button type="button" className="qr-share" onClick=${share} aria-label="Share or copy the link" title="Share or copy the link"><${Icon} n="share" s=${17}/></button>
     </div>
     <div className="qr-tabs" role="group" aria-label="Season">
-      ${SEASON_KEYS.map((k) => html`<button type="button" key=${k} className=${season === k ? 'on' : ''} aria-pressed=${season === k} onClick=${() => pickSeason(k)}><${Icon} n=${SEASONS[k].icon} s=${15}/>${SEASONS[k].label}</button>`)}
+      ${SEASON_KEYS.map((k) => html`<button type="button" key=${k} className=${season === k ? 'on' : ''} aria-pressed=${season === k} onClick=${() => setSeason(k)}><${Icon} n=${SEASONS[k].icon} s=${15}/>${SEASONS[k].label}</button>`)}
       <button type="button" className="snd" onClick=${() => setSound((v) => !v)} aria-pressed=${sound} aria-label=${sound ? 'Turn the sound off' : 'Turn the sound on'} title=${sound ? 'Sound on' : 'Sound off'}><${Icon} n=${sound ? 'sound' : 'mute'} s=${16}/></button>
     </div>
     <p className="qr-help">On Android, Floorboard offers to <b>Install</b>. On iPhone, open it in Safari, tap <b>Share</b>, then <b>Add to Home Screen</b>.${prefilled ? ' The store code is already filled in.' : ''}</p>
   <//>`;
 }
-
+// The little tree beside "Needs you": same season, a few petals, about 24 frames a second; tap it for the phone card.
+function MiniTree() {
+  const { season, openPhone } = useApp();
+  const cvRef = useRef(null), live = useRef({ parts: [], drops: [], k: 0 });
+  useEffect(() => {
+    const cv = cvRef.current;
+    if (!cv) return;
+    const L = live.current, g = cv.getContext('2d'), S = SEASONS[season], calm = calmMotion();
+    const sc = renderTree(season, 110);
+    sc.unit = Math.max(sc.unit, 0.55); // big enough petals and drops to see at this size
+    if (L.scene) { L.prev = L.scene; L.fadeT = 0; }
+    L.scene = sc; cv.width = sc.canvas.width; cv.height = sc.canvas.height;
+    let raf = 0, last = performance.now();
+    const frame = (now) => {
+      raf = requestAnimationFrame(frame);
+      const dt = (now - last) / 1000;
+      if (dt < 1 / 24) return;
+      last = now;
+      drawTreeFrame(L, g, cv, S, Math.min(0.08, dt), calm, S.ink);
+    };
+    raf = requestAnimationFrame(frame);
+    return () => cancelAnimationFrame(raf);
+  }, [season]);
+  return html`<button type="button" className="mini-tree" onClick=${openPhone} title="Get Floorboard on your phone" aria-label="Get Floorboard on your phone"><canvas ref=${cvRef} aria-hidden="true"></canvas></button>`;
+}
 /* ---------------- my shift, and the start-of-shift summary ---------------- */
 function ShiftChip({ small }) {
   const { db, user, openShift } = useApp();
@@ -4209,6 +4294,7 @@ function App() {
   const [localLook, setLocalLook] = useState(readLocalLook);
   const [lookOpen, setLookOpen] = useState(false);
   const [phoneOpen, setPhoneOpen] = useState(false);
+  const [season, setSeasonState] = useState(() => (SEASONS[lsGet(SEASON_KEY)] ? lsGet(SEASON_KEY) : seasonNow()));
   const [view, setView] = useState('chats');
   const [openChatId, setOpenChatId] = useState(null);
   const [openId, setOpenId] = useState(null);
@@ -4268,6 +4354,7 @@ function App() {
     const h = (e) => {
       if (e.key === LS_KEY && e.newValue) { try { setDb(JSON.parse(e.newValue)); } catch (x) { } }
       if (e.key === SESSION_KEY) setMe(e.newValue || null);
+      if (e.key === SEASON_KEY && SEASONS[e.newValue]) setSeasonState(e.newValue);
       if (e.key === LOOK_KEY && e.newValue) { try { setLocalLook({ ...DEFAULT_LOOK, ...JSON.parse(e.newValue) }); } catch (x) { } }
     };
     window.addEventListener('storage', h); return () => window.removeEventListener('storage', h);
@@ -4412,6 +4499,7 @@ function App() {
     openShift: () => { setShiftOpen(true); setDrawer(false); },
     openSummary: () => { setSummary(true); setDrawer(false); },
     openPhone: () => { setPhoneOpen(true); setDrawer(false); },
+    season, setSeason: (k) => { setSeasonState(k); lsSet(SEASON_KEY, k); },
     setSoundOn: (v) => { setSoundOnState(v); lsSet('floorboard.sound.v1', v ? 'on' : 'off'); if (v) chime(false); },
     enablePopups: () => {
       try { Notification.requestPermission().then((p) => toast(p === 'granted' ? 'Pop-up alerts are on for this device' : 'Pop-ups were blocked. Alerts still show inside the app.', p === 'granted' ? undefined : 'warn')); }
