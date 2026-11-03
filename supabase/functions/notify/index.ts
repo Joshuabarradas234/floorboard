@@ -53,10 +53,15 @@ async function encryptPayload(p256dh: string, authSecret: string, text: string):
   head.set(salt); new DataView(head.buffer).setUint32(16, 4096); head[20] = minePub.length;
   return concat(head, minePub, sealed);
 }
+const hex = (h: string): Bytes => Uint8Array.from(h.match(/../g)!, (b) => parseInt(b, 16));
+// The key goes in the standard PKCS#8 wrapper, so the runtime gets plain bytes and does no text decoding of its own.
 async function importVapidKey(privateKey: string, publicKey: string): Promise<CryptoKey> {
-  const pub = b64uDecode(publicKey);
-  return crypto.subtle.importKey('jwk', { kty: 'EC', crv: 'P-256', d: privateKey, x: b64uEncode(pub.slice(1, 33)), y: b64uEncode(pub.slice(33, 65)) },
-    { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']);
+  if (!/^[A-Za-z0-9_-]{43}$/.test(privateKey)) {
+    throw new Error('the saved VAPID_PRIVATE_KEY is ' + privateKey.length + ' characters' + (/[^A-Za-z0-9_-]/.test(privateKey) ? ' and has characters a key never has' : '')
+      + (privateKey === publicKey ? ' (it is the public key)' : '') + '; it should be 43 letters, numbers, - or _');
+  }
+  const der = concat(hex('308187020100301306072a8648ce3d020106082a8648ce3d030107046d306b0201010420'), b64uDecode(privateKey), hex('a144034200'), b64uDecode(publicKey));
+  return crypto.subtle.importKey('pkcs8', der, { name: 'ECDSA', namedCurve: 'P-256' }, false, ['sign']);
 }
 async function vapidAuth(endpoint: string, key: CryptoKey, publicKey: string, subject: string): Promise<string> {
   const part = (o: unknown) => b64uEncode(utf8.encode(JSON.stringify(o)));
@@ -103,7 +108,8 @@ Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
   let stage = 'reading the alert key';
   try {
-    const priv = (Deno.env.get('VAPID_PRIVATE_KEY') || '').trim().replace(/^["']|["']$/g, '');
+    // forgive the usual paste slips: spaces or line breaks, quotes, or the name pasted in front
+    const priv = (Deno.env.get('VAPID_PRIVATE_KEY') || '').replace(/^\s*VAPID_PRIVATE_KEY\s*=\s*/i, '').replace(/["'\s]/g, '');
     if (!priv) return json({ error: 'VAPID_PRIVATE_KEY secret is missing' }, 500);
     const vapidKey = await importVapidKey(priv, VAPID_PUBLIC_KEY);
 
