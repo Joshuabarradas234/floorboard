@@ -854,6 +854,37 @@ button.stat:hover{border-color:rgba(255,255,255,.4)}
 .sum-list{display:grid;grid-template-columns:minmax(0,1fr);gap:6px;margin:0;padding:0;list-style:none}
 .sum-list li{min-width:0}
 .modal-body{grid-template-columns:minmax(0,1fr)}
+/* get it on your phone: a light card with the season tree, like a page of its own */
+.modal.qr-modal{background:#f5eee3;color:#3b3128;border-color:rgba(60,40,20,.12);-webkit-backdrop-filter:none;backdrop-filter:none;transition:background-color .7s ease}
+.modal.qr-modal.season-spring{background:#f8efea}
+.modal.qr-modal.season-summer{background:#eef3e5}
+.modal.qr-modal.season-autumn{background:#f5eee3}
+.modal.qr-modal.season-winter{background:#edf2f7}
+.qr-modal .modal-head{border-color:rgba(60,40,20,.08)}
+.qr-modal .modal-head h2{color:#3b3128}
+.qr-modal .icon-btn{color:#5c5046}
+.qr-modal .icon-btn:hover{background:rgba(60,40,20,.08)}
+.qr-modal .modal-body{gap:12px}
+.qr-stage{position:relative;width:100%;cursor:pointer;touch-action:manipulation;border-radius:16px;outline:none}
+.qr-stage:focus-visible{box-shadow:0 0 0 3px rgba(200,105,44,.45)}
+.qr-stage canvas{display:block;width:100%;height:auto;transition:opacity .45s ease,transform .55s cubic-bezier(.2,.7,.2,1)}
+.qr-stage .qr-code{position:absolute;inset:0;height:100%;opacity:0;transform:scale(.9)}
+.qr-stage.on .qr-scene{opacity:0;transform:scale(.95)}
+.qr-stage.on .qr-code{opacity:1;transform:none}
+.qr-hint{text-align:center;font-size:12px;color:#8a7d70;margin:0}
+.qr-link{display:flex;gap:8px}
+.qr-link input{flex:1;min-width:0;border:1px solid rgba(60,40,20,.14);background:rgba(255,253,248,.85);border-radius:12px;padding:10px 12px;font:13px var(--f-mono);color:#3b3128}
+.qr-link input:focus{outline:2px solid rgba(200,105,44,.45);outline-offset:1px}
+.qr-share{width:44px;flex:none;border:0;border-radius:12px;background:#c8692c;color:#fff;display:grid;place-items:center;cursor:pointer}
+.qr-share:hover{background:#b35a22}
+.qr-tabs{display:flex;gap:4px;align-items:center}
+.qr-tabs button{flex:1;min-width:0;display:inline-flex;align-items:center;justify-content:center;gap:6px;border:0;background:transparent;border-radius:10px;padding:8px 4px;font:600 12.5px var(--f-body);color:#6d6155;cursor:pointer;white-space:nowrap}
+.qr-tabs button:hover{background:rgba(60,40,20,.06)}
+.qr-tabs button.on{background:rgba(120,85,50,.13);color:#3b3128}
+.qr-tabs .snd{flex:none;width:38px}
+.qr-help{font-size:12.5px;color:#7a6e62;margin:0;text-align:center;line-height:1.5}
+@media (max-width:420px){.qr-tabs button:not(.snd) .ic{display:none}}
+.phone-link{align-self:flex-start}
 .sum-list button{width:100%;display:flex;gap:10px;align-items:center;text-align:left;padding:9px 12px;border-radius:var(--r-sm);border:1px solid var(--glass-line);background:var(--glass);color:var(--ink);cursor:pointer;font:inherit}
 .sum-list .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sum-empty{margin:14px 0 0;color:var(--ink-2)}
@@ -868,6 +899,7 @@ button.stat:hover{border-color:rgba(255,255,255,.4)}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/htm@3.1.1/dist/htm.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
 <script>
 'use strict';
 const { useState, useEffect, useMemo, useRef, useCallback, createContext, useContext } = React;
@@ -896,6 +928,13 @@ const TILE_COLORS = ['#9A6B2F', '#D0622B', '#3F8A2E', '#2F7FB8', '#0F8A8A', '#8A
 const NO_FILTERS = { type: 'any', level: 'any', dept: 'any' };
 
 const ICONS = {
+  phone: '<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/>',
+  flower: '<circle cx="12" cy="12" r="2.2"/><path d="M12 9.8c-1.6-2.6-1-5.3 0-6.3 1 1 1.6 3.7 0 6.3zM14.2 12c2.6-1.6 5.3-1 6.3 0-1 1-3.7 1.6-6.3 0zM12 14.2c1.6 2.6 1 5.3 0 6.3-1-1-1.6-3.7 0-6.3zM9.8 12c-2.6 1.6-5.3 1-6.3 0 1-1 3.7-1.6 6.3 0z"/>',
+  leaf: '<path d="M5 19c0-8 5-14 15-14 0 10-6 15-14 15"/><path d="M5 19l8-8"/>',
+  snow: '<path d="M12 2.5v19M3.8 7.2l16.4 9.6M3.8 16.8l16.4-9.6"/><path d="M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>',
+  sound: '<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/>',
+  mute: '<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/>',
+  share: '<path d="M12 15V3.5M7.5 8 12 3.5 16.5 8"/><path d="M5 12.5V19a1.5 1.5 0 0 0 1.5 1.5h11A1.5 1.5 0 0 0 19 19v-6.5"/>',
   translate: '<path d="M3 5h10M8 3v2M5 5c.8 3.6 3.2 6.2 6.5 7.5M11 5c-.8 3.8-3.6 7-7.5 8.5"/><path d="M12.5 21l4.25-9 4.25 9M14 18h5.5"/>',
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6 6 6M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"/>',
   task: '<rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="m8 12 3 3 5-6"/>',
@@ -1515,7 +1554,7 @@ function DueTag({ p, uid: who }) {
   const past = !over && p.due < dkey();
   return html`<span className=${'due' + (over ? ' over' : '')}><${Icon} n="clock" s=${14}/>${past ? 'Was due ' + fmtKey(p.due, { day: 'numeric', month: 'short' }) : dueText(p.due)}</span>`;
 }
-function Modal({ title, onClose, children, wide, footer, light }) {
+function Modal({ title, onClose, children, wide, footer, light, cls }) {
   const ref = useRef(null);
   useEffect(() => {
     const h = (e) => { if (e.key !== 'Escape') return; const all = document.querySelectorAll('.modal-wrap'); if (all[all.length - 1] === ref.current) onClose(); };
@@ -1523,7 +1562,7 @@ function Modal({ title, onClose, children, wide, footer, light }) {
   }, [onClose]);
   // drawn on top of the whole page, so a glass panel it was opened from can't squeeze it
   return ReactDOM.createPortal(html`<div className=${'modal-wrap' + (light ? ' light' : '')} ref=${ref} onMouseDown=${(e) => { if (e.target === e.currentTarget) onClose(); }}>
-    <div className=${'modal' + (wide ? ' wide' : '')} role="dialog" aria-modal="true" aria-label=${title}>
+    <div className=${'modal' + (wide ? ' wide' : '') + (cls ? ' ' + cls : '')} role="dialog" aria-modal="true" aria-label=${title}>
       <div className="modal-head"><h2>${title}</h2><button className="icon-btn" onClick=${onClose} aria-label="Close"><${Icon} n="close"/></button></div>
       <div className="modal-body">${children}</div>
       ${footer && html`<div className="modal-foot">${footer}</div>`}
@@ -1670,7 +1709,7 @@ function Topbar() {
   </header>`;
 }
 function Rail() {
-  const { db, user, view, go, drawer, logout, ask, resetDemo, openLook, openShift, openSummary } = useApp();
+  const { db, user, view, go, drawer, logout, ask, resetDemo, openLook, openShift, openSummary, openPhone } = useApp();
   const myDepts = db.depts.filter((d) => user.depts.includes(d.id) || user.manages.includes(d.id));
   const item = (key, content, label, onClick) => html`<button key=${key} className=${'rail-i' + (view === key ? ' on' : '')} onClick=${onClick || (() => go(key))} aria-label=${label}>${content}<span className="lbl">${label}</span></button>`;
   return html`<nav className=${'rail glass' + (drawer ? ' open' : '')} aria-label="Departments and tools">
@@ -1687,6 +1726,7 @@ function Rail() {
     ${item('widget', html`<${Icon} n="sidebar"/>`, 'Sidebar view', () => { const desk = window.floorboardDesktop; if (desk && desk.showSidebar) desk.showSidebar(); else location.hash = 'widget'; })}
     ${item('shift', html`<${Icon} n="clock"/>`, 'My shift', openShift)}
     ${item('summary', html`<${Icon} n="sun"/>`, 'Shift summary', openSummary)}
+    ${item('phone', html`<${Icon} n="phone"/>`, 'Get it on your phone', openPhone)}
     ${item('scene', html`<${Icon} n="palette"/>`, 'Wallpaper & glass', openLook)}
     ${!CLOUD && item('reset', html`<${Icon} n="refresh"/>`, 'Reset demo', () => ask({ title: 'Reset the demo store?', body: 'All posts, files, pins and people go back to the example data. Anything you added is removed.', confirm: 'Reset demo', danger: true, onConfirm: resetDemo }))}
     ${item('logout', html`<${Icon} n="logout"/>`, 'Log out', logout)}
@@ -1725,7 +1765,7 @@ function WidgetItem({ p, tab }) {
   </article>`;
 }
 function Widget() {
-  const { db, user, openId, composer, closeComposer, compose, openLook } = useApp();
+  const { db, user, openId, composer, closeComposer, compose, openLook, openPhone } = useApp();
   const c = useCounts();
   const [tab, setTab] = useState('needs');
   const [f, setF] = useState(NO_FILTERS);
@@ -1739,6 +1779,7 @@ function Widget() {
     <header className="w-head glass">
       <div className="greet"><${Avatar} u=${user} s=${36}/><div className="greet-txt" style=${{ minWidth: 0 }}><b>${greeting()}, ${firstName(user)}</b><small>${db.store}</small></div></div>
       <${ShiftChip} small/>
+      <button className="icon-btn" onClick=${openPhone} title="Get it on your phone" aria-label="Get it on your phone"><${Icon} n="phone" s=${17}/></button>
       <button className="icon-btn" onClick=${openLook} title="Wallpaper & glass" aria-label="Wallpaper & glass"><${Icon} n="palette" s=${17}/></button>
       <button className="icon-btn" onClick=${openFull} title="Open the full app" aria-label="Open the full app"><${Icon} n="expand" s=${17}/></button>
       ${desk && desk.hide && html`<button className="icon-btn" onClick=${() => desk.hide()} title="Hide the sidebar" aria-label="Hide the sidebar"><${Icon} n="close" s=${17}/></button>`}
@@ -2545,7 +2586,7 @@ function AdminView() {
 
 /* ---------------- login ---------------- */
 function Login() {
-  const { db, login } = useApp();
+  const { db, login, openPhone } = useApp();
   const [sel, setSel] = useState(null); const [pin, setPin] = useState(''); const [err, setErr] = useState(''); const [q, setQ] = useState('');
   const groups = db.depts.map((d) => ({ d, users: db.users.filter((u) => u.active !== false && u.depts[0] === d.id && (!q || u.name.toLowerCase().includes(q.toLowerCase()))) })).filter((g) => g.users.length);
   const submit = (e) => { e.preventDefault(); if (pin === sel.pin) login(sel.id); else { setErr('That PIN doesn’t match. In this demo every PIN is 1234.'); setPin(''); } };
@@ -2554,6 +2595,7 @@ function Login() {
       <div className="brand"><span className="brand-mark"><${Icon} n="logo" s=${20}/></span><div><div className="brand-name">Floorboard</div><div className="brand-store">${db.store} · demo store</div></div></div>
       <h1>Only what involves you. Nothing else.</h1>
       <p>Tasks, feedback requests, heads-ups and votes, tagged to you or your team, sorted by how urgent they are. No scrolling through twenty WhatsApp groups to find your name.</p>
+      <button type="button" className="btn ghost phone-link" onClick=${openPhone}><${Icon} n="phone" s=${16}/>Get Floorboard on your phone</button>
       <div className="login-demo" aria-hidden="true">
         <div className="ldemo"><b>#1056</b>Bread shelf nearly empty<span className="lvl red">ASAP</span></div>
         <div className="ldemo"><b>#1048</b>Capture October invoices<span className="lvl amber">Important</span></div>
@@ -3392,6 +3434,268 @@ function TranslateLink({ text }) {
   </div>`;
 }
 
+/* ---------------- get it on your phone: a little season tree that turns into a QR code ---------------- */
+const APP_URL = 'https://joshuabarradas234.github.io/floorboard/';
+const SEASON_KEY = 'floorboard.season.v1';
+function storeFromLink() { try { const v = new URLSearchParams(location.search).get('store'); return v && /^[A-Za-z0-9]{4,12}$/.test(v) ? v.toUpperCase() : ''; } catch (e) { return ''; } }
+function phoneLink() {
+  if (!CLOUD) return APP_URL + '?demo';
+  const code = lsGet(STORE_CODE_KEY);
+  return APP_URL + (code ? '?store=' + encodeURIComponent(code) : '');
+}
+const SEASONS = {
+  spring: { label: 'Spring', icon: 'flower', ink: '#7a2d4c', leaves: ['#f8c9da', '#f4b4cc', '#fbdde8', '#ee9fbd', '#fde9f0', '#f6bfd3'], density: 0.8,
+    grass: ['#a6d47e', '#8cc566', '#bfe39a'], litter: ['#f6bfd3', '#fbdde8'], litterAmount: 0.14, fall: { kind: 'petal', colors: ['#f7c3d6', '#fbdde8', '#f1a9c4', '#ffffff'], rate: 3 }, rain: true },
+  summer: { label: 'Summer', icon: 'sun', ink: '#1f4d2b', leaves: ['#4e9a39', '#5fae45', '#3f8a32', '#78bf52', '#68a93e', '#86c95c'], density: 0.88,
+    grass: ['#6fb54a', '#5ea63e', '#8bcb60'], litter: ['#7cb84f'], litterAmount: 0.03, fall: { kind: 'pollen', colors: ['#ffd65a', '#fff0a8'], rate: 2 }, rain: false },
+  autumn: { label: 'Autumn', icon: 'leaf', ink: '#6a3312', leaves: ['#f2a93b', '#f7c04f', '#e8892c', '#f4b544', '#d9731f', '#fbd36a'], density: 0.8,
+    grass: ['#e8b84a', '#d9a23a', '#f0ca62'], litter: ['#f0a43a', '#e8892c', '#f7c04f'], litterAmount: 0.22, fall: { kind: 'leaf', colors: ['#f2a93b', '#e8892c', '#f7c04f', '#d9731f'], rate: 3.5 }, rain: true },
+  winter: { label: 'Winter', icon: 'snow', ink: '#22364b', leaves: ['#ffffff', '#f1f6fb', '#e3edf6'], density: 0.12,
+    grass: ['#eef3f8', '#f7fafc', '#e2ebf3'], litter: ['#f7fafc', '#ffffff'], litterAmount: 0.45, fall: { kind: 'snow', colors: ['#ffffff'], rate: 7 }, rain: false, snowy: true },
+};
+const SEASON_KEYS = ['spring', 'summer', 'autumn', 'winter'];
+// South African seasons, so it opens on the one outside
+const seasonNow = () => ['summer', 'summer', 'autumn', 'autumn', 'autumn', 'winter', 'winter', 'winter', 'spring', 'spring', 'spring', 'summer'][new Date().getMonth()];
+const STONES = ['#cfcbc5', '#c4c0ba', '#d8d5d0', '#bab6b0'], BARK = ['#6e4528', '#5d3a21', '#7b4e2e'];
+// positions come from a hash of the coordinates, so the tree keeps its shape when the season changes
+const vhash = (x, y, z, k) => { let t = (x * 374761393 + y * 668265263 + z * 1442695041 + k * 1274126177) | 0; t = Math.imul(t ^ (t >>> 13), 1274126177); t ^= t >>> 16; return (t >>> 0) / 4294967296; };
+const pickBy = (arr, r) => arr[Math.floor(r * arr.length) % arr.length];
+const hexRgb = (h) => { const n = parseInt(h.slice(1), 16); return [n >> 16, (n >> 8) & 255, n & 255]; };
+const rgbCss = (c, f) => 'rgb(' + c.map((v) => Math.max(0, Math.min(255, Math.round(v * f)))).join(',') + ')';
+const TREE_N = 22;
+function treeVoxels(season) {
+  const S = SEASONS[season], N = TREE_N, V = new Map();
+  const put = (x, y, z, hex, leaf, f) => { const c = hexRgb(hex); V.set(x + ',' + y + ',' + z, { x, y, z, c: f ? c.map((v) => v * f) : c, leaf }); };
+  const has = (x, y, z) => V.has(x + ',' + y + ',' + z);
+  // the ground: a two-layer slab, grass round the edge, paving in the middle with the season's litter on it
+  for (let x = 0; x < N; x++) for (let y = 0; y < N; y++) {
+    put(x, y, 0, '#b8b0a5');
+    const edge = Math.min(x, y, N - 1 - x, N - 1 - y), r = vhash(x, y, 1, 1);
+    if (edge < 3) {
+      put(x, y, 1, pickBy(S.grass, vhash(x, y, 1, 2)));
+      if (r < 0.55) put(x, y, 2, pickBy(S.grass, vhash(x, y, 2, 2)));
+      if (r < 0.18) put(x, y, 3, pickBy(S.grass, vhash(x, y, 3, 2)));
+    } else {
+      const slab = Math.floor((x + (Math.floor(y / 2) % 2)) / 2) * 3 + Math.floor(y / 2) * 5;
+      put(x, y, 1, vhash(x, y, 1, 3) < S.litterAmount ? pickBy(S.litter, vhash(x, y, 1, 4)) : STONES[Math.floor(vhash(slab, 0, 0, 5) * STONES.length)]);
+    }
+  }
+  // trunk, roots and branches
+  const c0 = N / 2 - 1;
+  for (let z = 2; z <= 13; z++) for (let dx = 0; dx < 2; dx++) for (let dy = 0; dy < 2; dy++) put(c0 + dx, c0 + dy, z, pickBy(BARK, vhash(dx, dy, z, 6)));
+  [[-1, 0], [-1, 1], [2, 0], [2, 1], [0, -1], [1, -1], [0, 2], [1, 2]].forEach(([dx, dy], i) => { if (i % 3 !== 2) put(c0 + dx, c0 + dy, 2, BARK[1]); });
+  const blobs = [[c0 + 0.5, c0 + 0.5, 18, 6.4], [c0 + 0.5, c0 + 0.5, 13.5, 5.2]];
+  for (let i = 0; i < 6; i++) {
+    const ang = (i / 6) * Math.PI * 2 + vhash(i, 0, 0, 7) * 0.7, len = 5 + vhash(i, 0, 0, 8) * 3;
+    let px = c0 + 0.5, py = c0 + 0.5, pz = 8 + vhash(i, 0, 0, 9) * 5;
+    for (let s = 0; s < len; s += 0.5) { px += Math.cos(ang) * 0.5; py += Math.sin(ang) * 0.5; pz += 0.4; put(Math.round(px), Math.round(py), Math.round(pz), BARK[0]); }
+    blobs.push([px, py, pz + 1.5, 4 + vhash(i, 0, 0, 10) * 1.8]);
+  }
+  // the crown: fluffy blobs of leaves (or blossom, or snow), lighter on top
+  for (const [bx, by, bz, r] of blobs) {
+    for (let x = Math.floor(bx - r); x <= Math.ceil(bx + r); x++) for (let y = Math.floor(by - r); y <= Math.ceil(by + r); y++) for (let z = Math.floor(bz - r); z <= Math.ceil(bz + r); z++) {
+      if (x < 0 || y < 0 || x >= N || y >= N || has(x, y, z)) continue;
+      if (Math.hypot(x - bx, y - by, (z - bz) * 1.25) > r * (0.66 + 0.44 * vhash(x, y, z, 11))) continue;
+      if (vhash(x, y, z, 12) > S.density) continue;
+      put(x, y, z, pickBy(S.leaves, vhash(x, y, z, 13)), true, 0.9 + 0.12 * ((z - bz) / r));
+    }
+  }
+  // winter: snow settles on top of everything
+  if (S.snowy) [...V.values()].forEach((v) => { if (v.z >= 2 && !v.leaf && !has(v.x, v.y, v.z + 1) && vhash(v.x, v.y, v.z, 14) < 0.8) put(v.x, v.y, v.z + 1, '#ffffff', true); });
+  return V;
+}
+// Draws the tree once into its own canvas; the animation then only adds what falls.
+function renderTree(season, W) {
+  const N = TREE_N, a = W / (2 * N + 4), b = a / 2, h = a * 1.08, V = treeVoxels(season);
+  // the tree's own height sets the top, using the tallest shape any season makes (so seasons line up)
+  let lift = 0;
+  for (const k of SEASON_KEYS) for (const v of treeVoxels(k).values()) lift = Math.max(lift, (v.z + 1) * h - (v.x + v.y) * b);
+  const top = Math.ceil(lift) + 10, H = Math.ceil(top + 2 * N * b + 22), ox = W / 2;
+  const P = (x, y, z) => [ox + (x - y) * a, top + (x + y) * b - z * h];
+  const list = [...V.values()].sort((p, q) => p.x + p.y + p.z - (q.x + q.y + q.z));
+  const dpr = Math.min(window.devicePixelRatio || 1, 2), cv = document.createElement('canvas');
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  const g = cv.getContext('2d');
+  g.scale(dpr, dpr); g.lineJoin = 'round'; g.lineWidth = 0.6;
+  const face = (pts, col) => { g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); g.fillStyle = col; g.strokeStyle = col; g.fill(); g.stroke(); };
+  // soft shadow under the slab
+  g.save(); g.filter = 'blur(10px)'; face([P(0, 0, -0.6), P(N, 0, -0.6), P(N, N, -0.6), P(0, N, -0.6)].map(([x, y]) => [x, y + 10]), 'rgba(90,65,40,.18)'); g.restore();
+  const leaves = [];
+  for (const v of list) {
+    const { x, y, z, c } = v;
+    if (!V.has(x + ',' + y + ',' + (z + 1))) face([P(x, y, z + 1), P(x + 1, y, z + 1), P(x + 1, y + 1, z + 1), P(x, y + 1, z + 1)], rgbCss(c, 1));
+    if (!V.has(x + ',' + (y + 1) + ',' + z)) face([P(x, y + 1, z + 1), P(x + 1, y + 1, z + 1), P(x + 1, y + 1, z), P(x, y + 1, z)], rgbCss(c, 0.86));
+    if (!V.has(x + 1 + ',' + y + ',' + z)) face([P(x + 1, y, z + 1), P(x + 1, y + 1, z + 1), P(x + 1, y + 1, z), P(x + 1, y, z)], rgbCss(c, 0.73));
+    if (v.leaf && z > 6) leaves.push(P(x + 0.5, y + 0.5, z));
+  }
+  return { canvas: cv, W, H, dpr, unit: a / 7, leaves, P, N };
+}
+// where something falling at screen x comes to rest on the paving (or nowhere, past its edge)
+function landY(sc, x) {
+  const t = sc.P(0, 0, 2), bot = sc.P(sc.N, sc.N, 2), half = sc.P(sc.N, 0, 2)[0] - t[0], dx = Math.abs(x - t[0]);
+  if (dx > half * 0.92) return Infinity;
+  const slope = (bot[1] - t[1]) / 2 / half, y0 = t[1] + dx * slope, y1 = bot[1] - dx * slope;
+  return y0 + (0.15 + Math.random() * 0.75) * (y1 - y0);
+}
+function newFaller(sc, S) {
+  const k = S.fall.kind, sky = k === 'snow' || !sc.leaves.length;
+  const s = sky ? [Math.random() * sc.W, -8] : sc.leaves[Math.floor(Math.random() * sc.leaves.length)];
+  const p = { k, x: s[0], y: s[1], c: pickBy(S.fall.colors, Math.random()), t: 0, ph: Math.random() * 6.3, fade: 1, landed: false,
+    vy: (k === 'snow' ? 16 + Math.random() * 14 : k === 'pollen' ? 5 + Math.random() * 6 : 20 + Math.random() * 16) * sc.unit,
+    vx: (k === 'pollen' ? (Math.random() - 0.3) * 10 : (Math.random() - 0.5) * 6 + 4) * sc.unit,
+    amp: (k === 'pollen' ? 6 : k === 'snow' ? 8 : 14) * sc.unit, sw: 1.2 + Math.random() * 1.6, rot: Math.random() * 6.3, vr: (Math.random() - 0.5) * 4,
+    sz: (k === 'snow' ? 1.2 + Math.random() * 1.4 : k === 'pollen' ? 1 + Math.random() : 2.2 + Math.random() * 1.6) * sc.unit };
+  p.land = k === 'pollen' ? Infinity : landY(sc, p.x);
+  return p;
+}
+function stepFallers(L, sc, S, dt, g) {
+  L.acc = (L.acc || 0) + dt * S.fall.rate * (sc.W / 320);
+  while (L.acc >= 1) { L.acc -= 1; if (L.parts.length < 70) L.parts.push(newFaller(sc, S)); }
+  for (const p of L.parts) {
+    p.t += dt;
+    if (!p.landed) {
+      p.x += (p.vx + Math.sin(p.t * p.sw + p.ph) * p.amp) * dt; p.y += p.vy * dt; p.rot += p.vr * dt;
+      if (p.y >= p.land) { p.landed = true; p.y = p.land; }
+    }
+    if (p.landed) p.fade -= dt * 0.3;
+    if (p.k === 'pollen') p.fade -= dt * 0.15;
+    g.save(); g.globalAlpha = Math.max(0, Math.min(1, p.fade)); g.translate(p.x, p.y); g.rotate(p.rot);
+    if (p.k === 'snow') { g.beginPath(); g.arc(0, 0, p.sz, 0, Math.PI * 2); g.fillStyle = '#fff'; g.fill(); g.strokeStyle = 'rgba(110,135,165,.35)'; g.lineWidth = 0.6; g.stroke(); }
+    else if (p.k === 'pollen') { g.globalAlpha *= 0.6 + 0.4 * Math.sin(p.t * 4 + p.ph); g.beginPath(); g.arc(0, 0, p.sz, 0, Math.PI * 2); g.fillStyle = p.c; g.shadowColor = p.c; g.shadowBlur = 6; g.fill(); }
+    else {
+      if (!p.landed) g.scale(1, 0.35 + 0.65 * Math.abs(Math.cos(p.t * 2.4 + p.ph))); // tumbling as it falls
+      g.beginPath();
+      if (p.k === 'petal') g.ellipse(0, 0, p.sz * 1.3, p.sz * 0.75, 0, 0, Math.PI * 2);
+      else { g.moveTo(-p.sz * 1.4, 0); g.lineTo(0, -p.sz * 0.8); g.lineTo(p.sz * 1.4, 0); g.lineTo(0, p.sz * 0.8); g.closePath(); }
+      g.fillStyle = p.c; g.fill();
+    }
+    g.restore();
+  }
+  L.parts = L.parts.filter((p) => p.fade > 0 && p.y < sc.H + 20 && p.x > -20 && p.x < sc.W + 20);
+}
+function stepRain(L, sc, dt, g, on) {
+  const want = on ? Math.round((sc.W * sc.H) / 2600) : 0;
+  while (L.drops.length < want) L.drops.push({ x: Math.random() * sc.W * 1.2 - sc.W * 0.1, y: Math.random() * sc.H, len: (9 + Math.random() * 10) * sc.unit, sp: (260 + Math.random() * 140) * sc.unit });
+  if (!L.drops.length) return;
+  g.strokeStyle = 'rgba(105,105,118,.26)'; g.lineWidth = 1; g.beginPath();
+  for (const d of L.drops) {
+    d.y += d.sp * dt; d.x += d.sp * 0.08 * dt;
+    if (d.y - d.len > sc.H) { if (on) { d.y = -d.len; d.x = Math.random() * sc.W * 1.2 - sc.W * 0.1; } else d.gone = true; }
+    g.moveTo(d.x, d.y); g.lineTo(d.x - d.len * 0.08, d.y - d.len);
+  }
+  g.stroke();
+  // when the rain stops, the drops already falling finish their fall
+  L.drops = L.drops.filter((d) => !d.gone);
+  if (L.drops.length > want && on) L.drops.length = want;
+}
+function drawQr(cv, text, ink, W, H) {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  const g = cv.getContext('2d');
+  g.clearRect(0, 0, cv.width, cv.height);
+  if (typeof qrcode !== 'function' || !text) return;
+  let q;
+  try { q = qrcode(0, 'M'); q.addData(text); q.make(); } catch (e) { return; }
+  const n = q.getModuleCount(), cell = Math.max(2, Math.floor((Math.min(cv.width, cv.height) * 0.74) / (n + 4)));
+  const size = cell * (n + 4), x0 = Math.round((cv.width - size) / 2), y0 = Math.round((cv.height - size) / 2);
+  g.save(); g.shadowColor = 'rgba(90,65,40,.18)'; g.shadowBlur = 24 * dpr; g.shadowOffsetY = 8 * dpr; g.fillStyle = '#fffdf8';
+  g.beginPath(); if (g.roundRect) g.roundRect(x0, y0, size, size, 18 * dpr); else g.rect(x0, y0, size, size); g.fill(); g.restore();
+  g.fillStyle = ink;
+  for (let r = 0; r < n; r++) for (let c = 0; c < n; c++) if (q.isDark(r, c)) g.fillRect(x0 + (c + 2) * cell, y0 + (r + 2) * cell, cell, cell);
+}
+// rain on the leaves (or wind in winter), made from soft noise; off until someone turns it on
+const Ambience = {
+  ctx: null, hp: null, lp: null, gain: null,
+  start(kind) {
+    try {
+      if (!this.ctx) {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)(), len = ctx.sampleRate * 3, buf = ctx.createBuffer(1, len, ctx.sampleRate), d = buf.getChannelData(0);
+        let br = 0;
+        for (let i = 0; i < len; i++) { const w = Math.random() * 2 - 1; br = 0.97 * br + 0.03 * w; d[i] = w * 0.5 + br * 2.4; }
+        const src = ctx.createBufferSource(), hp = ctx.createBiquadFilter(), lp = ctx.createBiquadFilter(), gain = ctx.createGain();
+        src.buffer = buf; src.loop = true; hp.type = 'highpass'; lp.type = 'lowpass'; gain.gain.value = 0;
+        src.connect(hp).connect(lp).connect(gain).connect(ctx.destination); src.start();
+        Object.assign(this, { ctx, hp, lp, gain });
+      }
+      const t = this.ctx.currentTime;
+      this.ctx.resume();
+      this.hp.frequency.setTargetAtTime(kind === 'rain' ? 700 : 60, t, 0.3);
+      this.lp.frequency.setTargetAtTime(kind === 'rain' ? 6500 : kind === 'wind' ? 520 : 1100, t, 0.3);
+      this.gain.gain.setTargetAtTime(kind === 'rain' ? 0.07 : kind === 'wind' ? 0.12 : 0.04, t, 0.4);
+    } catch (e) { /* sound is optional */ }
+  },
+  stop() { if (this.ctx) this.gain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.25); },
+};
+function PhoneModal({ onClose }) {
+  const { toast } = useApp();
+  const [season, setSeason] = useState(() => (SEASONS[lsGet(SEASON_KEY)] ? lsGet(SEASON_KEY) : seasonNow()));
+  const [showQr, setShowQr] = useState(false);
+  const [sound, setSound] = useState(false);
+  const [link, setLink] = useState(phoneLink);
+  const [dims, setDims] = useState(null);
+  const stage = useRef(null), sceneCv = useRef(null), qrCv = useRef(null), live = useRef({ parts: [], drops: [] });
+  const S = SEASONS[season];
+  // the living tree: drawn once per season and size, with petals, leaves, snow and rain on top
+  useEffect(() => {
+    const cv = sceneCv.current, box = stage.current;
+    if (!cv || !box) return;
+    const L = live.current, g = cv.getContext('2d');
+    const calm = (() => { try { return matchMedia('(prefers-reduced-motion: reduce)').matches; } catch (e) { return false; } })();
+    const build = () => {
+      const W = Math.max(240, Math.min(560, Math.round(box.clientWidth)));
+      const sc = renderTree(season, W);
+      if (L.scene && L.scene.W === W && L.scene.canvas !== sc.canvas) { L.prev = L.scene; L.fadeT = 0; } else { L.prev = null; L.parts = []; L.drops = []; }
+      L.scene = sc; cv.width = sc.canvas.width; cv.height = sc.canvas.height;
+      setDims({ W, H: sc.H });
+    };
+    build();
+    let raf = 0, last = performance.now();
+    const frame = (now) => {
+      const dt = Math.min(0.05, (now - last) / 1000), sc = L.scene;
+      last = now;
+      g.setTransform(1, 0, 0, 1, 0, 0); g.clearRect(0, 0, cv.width, cv.height);
+      if (L.prev) { L.fadeT += dt / 0.8; if (L.fadeT >= 1) L.prev = null; }
+      if (L.prev) { g.drawImage(L.prev.canvas, 0, 0); g.globalAlpha = L.fadeT; }
+      g.drawImage(sc.canvas, 0, 0); g.globalAlpha = 1;
+      g.setTransform(sc.dpr, 0, 0, sc.dpr, 0, 0);
+      if (!calm) { stepFallers(L, sc, S, dt, g); stepRain(L, sc, dt, g, S.rain); }
+      raf = requestAnimationFrame(frame);
+    };
+    raf = requestAnimationFrame(frame);
+    let lastW = box.clientWidth;
+    const ro = new ResizeObserver(() => { if (Math.abs(box.clientWidth - lastW) > 8) { lastW = box.clientWidth; L.scene = null; build(); } });
+    ro.observe(box);
+    return () => { cancelAnimationFrame(raf); ro.disconnect(); };
+  }, [season]);
+  useEffect(() => { if (qrCv.current && dims) drawQr(qrCv.current, link.trim(), S.ink, dims.W, dims.H); }, [link, season, dims]);
+  useEffect(() => { if (sound) Ambience.start(S.rain ? 'rain' : season === 'winter' ? 'wind' : 'breeze'); else Ambience.stop(); }, [sound, season]);
+  useEffect(() => () => Ambience.stop(), []);
+  const pickSeason = (k) => { setSeason(k); lsSet(SEASON_KEY, k); };
+  const flip = () => setShowQr((v) => !v);
+  const share = async () => {
+    try { if (navigator.share) { await navigator.share({ title: 'Floorboard', text: 'Open Floorboard on your phone', url: link.trim() }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
+    try { await navigator.clipboard.writeText(link.trim()); toast('Link copied. Send it to your phone.'); } catch (e) { toast('Copy the link from the box above.', 'warn'); }
+  };
+  const prefilled = CLOUD && /[?&]store=/.test(link);
+  return html`<${Modal} title="Get Floorboard on your phone" onClose=${onClose} cls=${'qr-modal season-' + season}>
+    <div ref=${stage} className=${'qr-stage' + (showQr ? ' on' : '')} role="button" tabIndex="0" aria-label=${showQr ? 'Show the tree again' : 'Show the QR code'}
+      onClick=${flip} onKeyDown=${(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); } }}>
+      <canvas ref=${sceneCv} className="qr-scene" aria-hidden="true"></canvas>
+      <canvas ref=${qrCv} className="qr-code" aria-hidden="true"></canvas>
+    </div>
+    <p className="qr-hint">${showQr ? 'Point the phone’s camera at the code · tap it to see the tree again' : 'Tap the tree to see the QR code'}</p>
+    <div className="qr-link">
+      <input id="qr-link" value=${link} onChange=${(e) => setLink(e.target.value)} aria-label="Link in the QR code" spellCheck="false"/>
+      <button type="button" className="qr-share" onClick=${share} aria-label="Share or copy the link" title="Share or copy the link"><${Icon} n="share" s=${17}/></button>
+    </div>
+    <div className="qr-tabs" role="group" aria-label="Season">
+      ${SEASON_KEYS.map((k) => html`<button type="button" key=${k} className=${season === k ? 'on' : ''} aria-pressed=${season === k} onClick=${() => pickSeason(k)}><${Icon} n=${SEASONS[k].icon} s=${15}/>${SEASONS[k].label}</button>`)}
+      <button type="button" className="snd" onClick=${() => setSound((v) => !v)} aria-pressed=${sound} aria-label=${sound ? 'Turn the sound off' : 'Turn the sound on'} title=${sound ? 'Sound on' : 'Sound off'}><${Icon} n=${sound ? 'sound' : 'mute'} s=${16}/></button>
+    </div>
+    <p className="qr-help">On Android, Floorboard offers to <b>Install</b>. On iPhone, open it in Safari, tap <b>Share</b>, then <b>Add to Home Screen</b>.${prefilled ? ' The store code is already filled in.' : ''}</p>
+  <//>`;
+}
+
 /* ---------------- my shift, and the start-of-shift summary ---------------- */
 function ShiftChip({ small }) {
   const { db, user, openShift } = useApp();
@@ -3466,8 +3770,9 @@ function ShiftSummary({ onClose }) {
 }
 
 function CloudLogin() {
-  const { cloudSignedIn } = useApp();
-  const [code, setCode] = useState(() => lsGet(STORE_CODE_KEY) || '');
+  const { cloudSignedIn, openPhone } = useApp();
+  // a QR code from "Get it on your phone" carries the store code, so it's already filled in
+  const [code, setCode] = useState(() => storeFromLink() || lsGet(STORE_CODE_KEY) || '');
   const [dir, setDir] = useState(null);
   const [sel, setSel] = useState(null);
   const [q, setQ] = useState('');
@@ -3521,6 +3826,7 @@ function CloudLogin() {
       <div className="brand"><span className="brand-mark"><${Icon} n="logo" s=${20}/></span><div><div className="brand-name">Floorboard</div><div className="brand-store">Your store, live</div></div></div>
       <h1>Only what involves you. Nothing else.</h1>
       <p>Tasks, feedback requests, heads-ups and votes, tagged to you or your team, sorted by how urgent they are. No scrolling through twenty WhatsApp groups to find your name.</p>
+      <button type="button" className="btn ghost phone-link" onClick=${openPhone}><${Icon} n="phone" s=${16}/>Get Floorboard on your phone</button>
     </div>
     <div className="login-r glass"><div className="login-card">
       ${!dir ? html`<form className="pinbox" onSubmit=${(e) => { e.preventDefault(); if (code.trim()) loadDir(code); }}>
@@ -3884,6 +4190,7 @@ function App() {
   const [mode, setMode] = useState(() => (location.hash === '#widget' ? 'widget' : 'full'));
   const [localLook, setLocalLook] = useState(readLocalLook);
   const [lookOpen, setLookOpen] = useState(false);
+  const [phoneOpen, setPhoneOpen] = useState(false);
   const [view, setView] = useState('chats');
   const [openChatId, setOpenChatId] = useState(null);
   const [openId, setOpenId] = useState(null);
@@ -4086,6 +4393,7 @@ function App() {
     },
     openShift: () => { setShiftOpen(true); setDrawer(false); },
     openSummary: () => { setSummary(true); setDrawer(false); },
+    openPhone: () => { setPhoneOpen(true); setDrawer(false); },
     setSoundOn: (v) => { setSoundOnState(v); lsSet('floorboard.sound.v1', v ? 'on' : 'off'); if (v) chime(false); },
     enablePopups: () => {
       try { Notification.requestPermission().then((p) => toast(p === 'granted' ? 'Pop-up alerts are on for this device' : 'Pop-ups were blocked. Alerts still show inside the app.', p === 'granted' ? undefined : 'warn')); }
@@ -4129,6 +4437,7 @@ function App() {
       : !user ? (CLOUD ? html`<${CloudLogin}/>` : html`<${Login}/>`) : mode === 'widget' ? html`<${Widget}/>` : html`<${Shell}/>`}
     <${AlertStack}/>
     ${lookOpen && html`<${LookModal} onClose=${() => setLookOpen(false)}/>`}
+    ${phoneOpen && html`<${PhoneModal} onClose=${() => setPhoneOpen(false)}/>`}
     ${user && shiftOpen && html`<${ShiftModal} onClose=${() => setShiftOpen(false)}/>`}
     ${user && summary && !shiftOpen && html`<${ShiftSummary} onClose=${() => setSummary(false)}/>`}
     <${Toasts}/>

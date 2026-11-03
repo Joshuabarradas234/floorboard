@@ -7,6 +7,7 @@ const VENDOR = {
   'react.production.min.js': 'https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js',
   'react-dom.production.min.js': 'https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js',
   'htm.umd.js': 'https://cdn.jsdelivr.net/npm/htm@3.1.1/dist/htm.umd.js',
+  'qrcode.min.js': 'https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js',
 };
 // Only the installed app talks to the store's server, so this one isn't in floorboard.html.
 const SUPABASE = { file: 'supabase.js', url: 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js' };
@@ -65,9 +66,9 @@ const MANIFEST = {
 
 const SW = `// Offline support for the app itself: network first so updates show, cached copy when there is no signal.
 // Calls to the store's server are never cached.
-const CACHE = 'floorboard-v3';
+const CACHE = 'floorboard-v4';
 const SHELL = ['./', 'index.html', 'config.js', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png',
-  'vendor/react.production.min.js', 'vendor/react-dom.production.min.js', 'vendor/htm.umd.js', 'vendor/supabase.js'];
+  'vendor/react.production.min.js', 'vendor/react-dom.production.min.js', 'vendor/htm.umd.js', 'vendor/qrcode.min.js', 'vendor/supabase.js'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {
