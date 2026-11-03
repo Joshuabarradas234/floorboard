@@ -572,6 +572,14 @@ td .fname .ic{color:var(--ink-3);margin-top:1px}
 .toasts{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(86px + env(safe-area-inset-bottom,0px));z-index:100;display:grid;gap:8px;width:max-content;max-width:calc(100% - 32px)}
 .toast{background:#fff;color:var(--accent-ink);padding:10px 18px;border-radius:999px;font-weight:700;font-size:14px;box-shadow:var(--shadow);animation:pop .2s ease-out}
 .toast.warn{background:var(--amber-dot);color:#2b1a00}
+.seeing-bar{position:fixed;top:calc(8px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);z-index:96;display:flex;align-items:center;gap:10px;padding:6px 6px 6px 14px;border-radius:999px;background:#fff;color:var(--accent-ink);box-shadow:var(--shadow);width:max-content;max-width:calc(100% - 20px);font-size:13.5px}
+.seeing-bar>span{display:grid;line-height:1.25;min-width:0}
+.seeing-bar small{font-size:12px;opacity:.75}
+.seeing-bar .btn{background:var(--accent-ink);color:#fff;border-color:transparent;flex:none}
+.seeing-bar.slim{padding:5px 5px 5px 11px;font-size:13px}
+html.seeing .shell{padding-top:calc(68px + env(safe-area-inset-top,0px))}
+html.seeing .widget{padding-top:54px}
+.cv-look{padding:14px 16px;text-align:center;font-size:13px;color:var(--ink-2);border-top:1px solid var(--glass-line)}
 @keyframes pop{from{transform:translateY(8px);opacity:0}to{transform:none;opacity:1}}
 @media (prefers-reduced-motion:reduce){.toast{animation:none}.bar > i,.card,.tile,.stage,.rail{transition:none!important}}
 .lightbox{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:90;display:grid;place-items:center;padding:20px 16px;padding-top:calc(20px + env(safe-area-inset-top,0px))}
@@ -1308,12 +1316,24 @@ const Blobs = (() => {
   async function clear() { mem.clear(); const d = await open(); if (!d) return; try { d.transaction('b', 'readwrite').objectStore('b').clear(); } catch (e) { } }
   return { put, get, clear };
 })();
+// An admin seeing the app as someone else (People & access › See what they see): look only, so nothing is uploaded or saved.
+const SEEAS_KEY = 'floorboard.seeas.v1';
+const LookOnly = { on: false };
+// What the admin sees of that person's app: their own pins (sticky notes, list, signature) and the chats the admin isn't in
+// stay private. Tasks sent in those chats still show, because they're on that person's board.
+function seeAsDb(db, me, them) {
+  const hidden = new Set(db.chats.filter((c) => !chatMembers(db, c).includes(me)).map((c) => c.id));
+  const pins = { ...db.pins }; delete pins[them];
+  return { ...db, pins,
+    chats: db.chats.map((c) => (hidden.has(c.id) ? { ...c, private: true } : c)),
+    messages: db.messages.filter((m) => !hidden.has(m.chat) || m.postId) };
+}
 async function storeFiles(files) {
   const out = [];
   for (const f of files) {
     const id = uid('a');
     await Blobs.put(id, f.file);
-    if (CLOUD) {
+    if (CLOUD && !LookOnly.on) {
       try { const { error } = await CLOUD.storage.from('files').upload('att/' + id, f.file, { contentType: f.mime, upsert: true }); if (error) console.warn('Upload failed: ' + error.message); }
       catch (e) { console.warn('Upload failed', e); }
     }
@@ -2021,7 +2041,7 @@ function Topbar() {
   </header>`;
 }
 function Rail() {
-  const { db, user, view, go, drawer, logout, ask, resetDemo, openLook, openShift, openSummary, openPhone } = useApp();
+  const { db, user, view, go, drawer, logout, ask, resetDemo, openLook, openShift, openSummary, openPhone, seeing, stopSeeing } = useApp();
   const myDepts = db.depts.filter((d) => user.depts.includes(d.id) || user.manages.includes(d.id));
   const item = (key, content, label, onClick) => html`<button key=${key} className=${'rail-i' + (view === key ? ' on' : '')} onClick=${onClick || (() => go(key))} aria-label=${label}>${content}<span className="lbl">${label}</span></button>`;
   return html`<nav className=${'rail glass' + (drawer ? ' open' : '')} aria-label="Departments and tools">
@@ -2044,7 +2064,7 @@ function Rail() {
     ${item('phone', html`<${Icon} n="phone"/>`, 'Get it on your phone', openPhone)}
     ${item('scene', html`<${Icon} n="palette"/>`, 'Wallpaper & glass', openLook)}
     ${!CLOUD && item('reset', html`<${Icon} n="refresh"/>`, 'Reset demo', () => ask({ title: 'Reset the demo store?', body: 'All posts, files, pins and people go back to the example data. Anything you added is removed.', confirm: 'Reset demo', danger: true, onConfirm: resetDemo }))}
-    ${item('logout', html`<${Icon} n="logout"/>`, 'Log out', logout)}
+    ${seeing ? item('logout', html`<${Icon} n="eyeoff"/>`, 'Back to my view', stopSeeing) : item('logout', html`<${Icon} n="logout"/>`, 'Log out', logout)}
   </nav>`;
 }
 function Dock() {
@@ -2390,7 +2410,7 @@ function PostDetail({ id }) {
   const { db, user, update, closePost, toast, ask, openChat } = useApp();
   const p = db.posts.find((x) => x.id === id);
   useEffect(() => {
-    if (p && p.recips[user.id] && !p.recips[user.id].seen) update((d) => { const q = d.posts.find((x) => x.id === id); if (q && q.recips[user.id]) q.recips[user.id].seen = Date.now(); });
+    if (p && p.recips[user.id] && !p.recips[user.id].seen) update((d) => { const q = d.posts.find((x) => x.id === id); if (q && q.recips[user.id]) q.recips[user.id].seen = Date.now(); }, true);
   }, [id]);
   if (!p) return html`<div className="detail-body"><p>This post no longer exists.</p><div><button className="btn" onClick=${closePost}>Close</button></div></div>`;
   const a = userById(db, p.author); const n = Object.keys(p.recips).length;
@@ -2898,7 +2918,7 @@ function PersonModal({ personId, onClose, onAdded }) {
   <//>`;
 }
 function AdminView() {
-  const { db, user, update, toast } = useApp();
+  const { db, user, update, toast, startSeeing } = useApp();
   const flipFeature = (deptId, key) => update((d) => { const x = d.depts.find((y) => y.id === deptId); x.features = { ...(x.features || {}), [key]: !featureOn(x, key) }; });
   const [tab, setTab] = useState('people');
   const [edit, setEdit] = useState(null);
@@ -2937,7 +2957,7 @@ function AdminView() {
   return html`<${Page} title="People & access" sub="Who can log in, which departments they’re in, and which drives each department can open." actions=${tab === 'people' && html`<button className="btn primary" onClick=${() => setEdit('new')}><${Icon} n="plus" s=${16}/>Add person</button>`}>
     <div className="tabs" role="tablist">${[['people', 'People', db.users.length], ['depts', 'Departments', db.depts.length], ['drives', 'Drive access', db.drives.filter((dr) => driveOn(db, dr)).length]].map(([k, l, n]) => html`<button key=${k} className=${tab === k ? 'on' : ''} onClick=${() => setTab(k)}>${l} <b>${n}</b></button>`)}</div>
     ${tab === 'people' && html`<div className="table-wrap"><table>
-      <thead><tr><th>Name</th><th>Access</th><th>Departments</th><th>Manages</th><th>${CLOUD ? 'Login' : 'PIN'}</th></tr></thead>
+      <thead><tr><th>Name</th><th>Access</th><th>Departments</th><th>Manages</th><th>${CLOUD ? 'Login' : 'PIN'}</th><th></th></tr></thead>
       <tbody>${db.users.map((u) => html`<tr key=${u.id} onClick=${() => setEdit(u.id)} tabIndex="0" onKeyDown=${(e) => { if (e.key === 'Enter') setEdit(u.id); }} style=${u.active === false ? { opacity: 0.5 } : null}>
         <td><div className="fname" style=${{ alignItems: 'center' }}><${Avatar} u=${u} s=${28}/><span>${u.name}<span className="muted sm" style=${{ display: 'block', fontWeight: 400 }}>${u.title}${u.active === false ? ' · deactivated' : ''}</span></span></div></td>
         <td><span className=${'rolebadge ' + u.role}>${u.role}</span></td>
@@ -2947,6 +2967,7 @@ function AdminView() {
             : html`${logins[u.id] && logins[u.id].claimed ? html`<span className="st ok">Logged in</span>` : logins[u.id] && logins[u.id].code_waiting ? html`<span className="st warn">Code given</span>` : html`<span className="st muted">Not set up</span>`}
               <button className="btn sm" onClick=${() => getCode(u)}>${logins[u.id] && logins[u.id].claimed ? 'Reset PIN' : logins[u.id] && logins[u.id].code_waiting ? 'New code' : 'Get setup code'}</button>`}</div></td>`
           : html`<td className="mono">••••</td>`}
+        <td onClick=${(e) => e.stopPropagation()}>${u.id !== user.id && u.active !== false && html`<button className="btn sm" onClick=${() => startSeeing(u)} title=${'See Floorboard the way ' + firstName(u) + ' sees it. Look only: nothing changes.'}><${Icon} n="eye" s=${15}/>See what they see</button>`}</td>
       </tr>`)}</tbody></table></div>`}
     ${tab === 'depts' && html`<div style=${{ display: 'grid', gap: 14 }}>
       <form className="dtool" onSubmit=${(e) => { e.preventDefault(); if (storeName.trim()) { update((d) => { d.store = storeName.trim(); }); toast('Store name saved'); } }}><label className="field" style=${{ flex: 1, maxWidth: 360 }}><span>Store name</span><input id="store-name" className="input" value=${storeName} onChange=${(e) => setStoreName(e.target.value)}/></label><button className="btn" style=${{ alignSelf: 'flex-end' }}>Save name</button></form>
@@ -3053,7 +3074,7 @@ function ChatItem({ r, on, onOpen }) {
   const { c, last, unread, ment } = r;
   usePresence();
   const typers = typersIn(c.id, user.id);
-  let preview = 'No messages yet', who = '';
+  let preview = c.private ? 'Private chat' : 'No messages yet', who = '';
   if (last) {
     if (last.kind === 'system') preview = last.text;
     else {
@@ -3379,7 +3400,7 @@ function ChatComposer({ c, members, reply, clearReply }) {
   </div>`;
 }
 function Conversation({ c }) {
-  const { db, user, update, closeChat } = useApp();
+  const { db, user, update, closeChat, seeing } = useApp();
   const [info, setInfo] = useState(false);
   const [reply, setReply] = useState(null);
   const [active, setActive] = useState(null);
@@ -3390,7 +3411,7 @@ function Conversation({ c }) {
   const lastAt = msgs.length ? msgs[msgs.length - 1].at : 0;
   const canPin = canPinIn(c, user);
   useEffect(() => {
-    if (((c.read || {})[user.id] || 0) < lastAt) update((d) => { const x = d.chats.find((y) => y.id === c.id); x.read = x.read || {}; x.read[user.id] = Date.now(); });
+    if (((c.read || {})[user.id] || 0) < lastAt) update((d) => { const x = d.chats.find((y) => y.id === c.id); x.read = x.read || {}; x.read[user.id] = Date.now(); }, true);
   }, [c.id, lastAt]);
   useEffect(() => { const el = scroller.current; if (el) el.scrollTop = el.scrollHeight; }, [c.id, msgs.length]);
   const react = (m, e) => {
@@ -3422,7 +3443,8 @@ function Conversation({ c }) {
     ${pinned && html`<div className="cv-pin" role="button" tabIndex="0" onClick=${() => { const el = document.getElementById('msg-' + pinned.id); if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' }); }}>
       <${Icon} n="pin" s=${15}/><span><b>Pinned · </b>${pinText}</span>${canPin && html`<button className="icon-btn sm" onClick=${(e) => { e.stopPropagation(); pin(pinned); }} aria-label="Unpin"><${Icon} n="close" s=${13}/></button>`}</div>`}
     <div className="cv-msgs" ref=${scroller} onClick=${() => { setPicking(null); }}>
-      ${msgs.length === 0 && html`<div className="cv-sys"><span>No messages yet. Say hello, or type @ to tag someone.</span></div>`}
+      ${c.private ? html`<div className="cv-sys"><span>🔒 Private chat: only the people in it see the messages. Tasks sent here still show.</span></div>`
+        : msgs.length === 0 && html`<div className="cv-sys"><span>No messages yet. Say hello, or type @ to tag someone.</span></div>`}
       ${msgs.map((m, i) => {
         const day = dkey(m.at), sep = day !== lastDay; lastDay = day;
         const prev = msgs[i - 1];
@@ -3433,7 +3455,8 @@ function Conversation({ c }) {
           onReact=${(e) => react(m, e)} onPick=${() => setPicking(m.id)} onPin=${() => { pin(m); setActive(null); }}/><//>`;
       })}
     </div>
-    <${ChatComposer} key=${'cc' + c.id} c=${c} members=${members} reply=${reply} clearReply=${() => setReply(null)}/>
+    ${seeing ? html`<div className="cv-look">Look only: you can’t send messages as ${firstName(user)}.</div>`
+      : html`<${ChatComposer} key=${'cc' + c.id} c=${c} members=${members} reply=${reply} clearReply=${() => setReply(null)}/>`}
     ${info && html`<${ChatInfo} c=${c} onClose=${() => setInfo(false)}/>`}
   </div>`;
 }
@@ -6559,6 +6582,14 @@ function cachedCloudDb() {
   try { const d = JSON.parse(localStorage.getItem(CACHE_KEY)); if (d && Array.isArray(d.posts) && Array.isArray(d.chats)) return d; } catch (e) { }
   return emptyDb();
 }
+function SeeingBar() {
+  const { seeing, stopSeeing, mode } = useApp();
+  if (!seeing) return null;
+  const slim = mode === 'widget';
+  return html`<div className=${'seeing-bar' + (slim ? ' slim' : '')} role="status"><${Icon} n="eye" s=${16}/>
+    <span><b>${slim ? 'Seeing ' + firstName(seeing) + '’s view' : 'Seeing Floorboard as ' + seeing.name}</b>${!slim && html`<small>Look only. Their sticky notes and chats you’re not in stay private.</small>`}</span>
+    <button className="btn sm" onClick=${stopSeeing}>Back to me</button></div>`;
+}
 function App() {
   const [db, setDb] = useState(() => (CLOUD ? cachedCloudDb() : loadDb()));
   const [me, setMe] = useState(() => (CLOUD ? null : lsGet(SESSION_KEY)));
@@ -6630,6 +6661,7 @@ function App() {
     const h = (e) => {
       if (e.key === LS_KEY && e.newValue) { try { setDb(JSON.parse(e.newValue)); } catch (x) { } }
       if (e.key === SESSION_KEY) setMe(e.newValue || null);
+      if (e.key === SEEAS_KEY) { setSeeAs(e.newValue || ''); setOpenId(null); setOpenChatId(null); setComposer(null); }
       if (e.key === SEASON_KEY && SEASONS[e.newValue]) setSeasonState(e.newValue);
       if (e.key === LOOK_KEY && e.newValue) { try { setLocalLook({ ...DEFAULT_LOOK, ...JSON.parse(e.newValue) }); } catch (x) { } }
     };
@@ -6661,7 +6693,16 @@ function App() {
     navigator.serviceWorker.addEventListener('message', h); return () => navigator.serviceWorker.removeEventListener('message', h);
   }, []);
   const update = useCallback((fn) => setDb((prev) => { const next = structuredClone(prev); fn(next); return next; }), []);
-  const user = me ? db.users.find((u) => u.id === me && u.active !== false) : null;
+  const self = me ? db.users.find((u) => u.id === me && u.active !== false) : null;
+  // An admin can see the app as someone else, look only (People & access). Kept on this device so the desktop sidebar
+  // follows; everything this device does by itself (alerts, reminders, filing, printing) stays the admin's own.
+  const [seeAs, setSeeAs] = useState(() => lsGet(SEEAS_KEY) || '');
+  const [seeBy, seeId] = seeAs.split('>');
+  const seeing = self && self.role === 'admin' && seeBy === self.id && seeId !== self.id ? db.users.find((u) => u.id === seeId && u.active !== false) || null : null;
+  const user = seeing || self;
+  LookOnly.on = !!seeing;
+  const vdb = useMemo(() => (seeing ? seeAsDb(db, self.id, seeing.id) : db), [db, seeing, self]);
+  useEffect(() => { document.documentElement.classList.toggle('seeing', !!seeing); }, [!!seeing]);
   // this person's wallpaper and glass: their saved look once logged in, otherwise this device's last one
   // Something shared into the app from another app on the phone (Android's share menu): open it as a new post.
   const shared = useRef(null);
@@ -6678,7 +6719,7 @@ function App() {
     shared.current = false;
     try { const q = new URLSearchParams(location.search); ['share_title', 'share_text', 'share_url'].forEach((k) => q.delete(k)); history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + location.hash); } catch (e) { /* the address just keeps it */ }
   }, [user && user.id]);
-  const savedLook = user && db.pins && db.pins[user.id] && db.pins[user.id].look;
+  const savedLook = self && db.pins && db.pins[self.id] && db.pins[self.id].look;
   const look = { ...DEFAULT_LOOK, ...(savedLook || localLook) };
   const savedSig = savedLook ? stable(savedLook) : '';
   useEffect(() => { if (savedLook) { setLocalLook(savedLook); lsSet(LOOK_KEY, JSON.stringify(savedLook)); } }, [savedSig]);
@@ -6686,10 +6727,25 @@ function App() {
   const setLook = (patch) => {
     const next = { ...look, ...patch };
     setLocalLook(next); lsSet(LOOK_KEY, JSON.stringify(next));
-    if (user) update((d) => { d.pins = d.pins || {}; d.pins[user.id] = d.pins[user.id] || { posts: [], notes: [] }; d.pins[user.id].look = next; });
+    if (self) update((d) => { d.pins = d.pins || {}; d.pins[self.id] = d.pins[self.id] || { posts: [], notes: [] }; d.pins[self.id].look = next; });
   };
   const toast = useCallback((msg, kind) => { const id = uid('t'); setToasts((t) => [...t, { id, msg, kind }]); setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), 3800); }, []);
   const go = useCallback((v) => { setView(v); setOpenId(null); setDrawer(false); }, []);
+  // Look only: changes go nowhere, and a click that tries one says so (opening and reading things doesn't)
+  const lastInput = useRef(0), warnedAt = useRef(0), blockedAt = useRef(0);
+  useEffect(() => {
+    const h = () => { lastInput.current = Date.now(); };
+    window.addEventListener('pointerdown', h, true); window.addEventListener('keydown', h, true);
+    return () => { window.removeEventListener('pointerdown', h, true); window.removeEventListener('keydown', h, true); };
+  }, []);
+  const lookOnlyUpdate = useCallback((fn, quiet) => {
+    const now = Date.now();
+    if (!quiet) blockedAt.current = now;
+    if (quiet || now - lastInput.current > 1500 || now - warnedAt.current < 4000) return;
+    warnedAt.current = now; toast('Look only: nothing changes while you’re seeing someone else’s view', 'warn');
+  }, [toast]);
+  const startSeeing = (u) => { const v = self.id + '>' + u.id; lsSet(SEEAS_KEY, v); setSeeAs(v); setView('chats'); setOpenId(null); setOpenChatId(null); setComposer(null); setFilters(NO_FILTERS); };
+  const stopSeeing = () => { lsSet(SEEAS_KEY, ''); setSeeAs(''); setView('admin'); setOpenId(null); setOpenChatId(null); setComposer(null); setFilters(NO_FILTERS); setDrawer(false); };
   // Pop-up alerts for anything new that needs this person; also keeps the desktop sidebar's count up to date
   // and wakes it for red items.
   const [alerts, setAlerts] = useState([]);
@@ -6707,14 +6763,14 @@ function App() {
   const openAlertRef = useRef(openAlert); openAlertRef.current = openAlert;
   useEffect(() => { known.current = null; setAlerts([]); }, [me]);
   useEffect(() => {
-    if (!user) return;
+    if (!self) return;
     const desk = window.floorboardDesktop;
-    const items = alertItems(db, user.id);
-    const count = db.posts.filter((p) => needsMe(p, user.id)).length;
+    const items = alertItems(db, self.id);
+    const count = db.posts.filter((p) => needsMe(p, self.id)).length;
     if (!known.current) { known.current = new Set(items.map((i) => i.key)); if (desk && desk.attention) desk.attention({ count, urgent: false }); return; }
     const fresh = items.filter((i) => !known.current.has(i.key));
     fresh.forEach((i) => known.current.add(i.key));
-    const quiet = !isOnShift(db, user.id);
+    const quiet = !isOnShift(db, self.id);
     if (desk && desk.attention) desk.attention({ count, urgent: !quiet && fresh.some((i) => i.level === 'red') });
     if (!fresh.length || quiet) return; // off shift: it all waits on the board, with no pop-ups or sound
     fresh.slice(-3).forEach((i) => {
@@ -6729,19 +6785,19 @@ function App() {
       } catch (e) { /* pop-ups are optional; the in-app alert still shows */ }
     });
     if (soundOn) chime(fresh.some((i) => i.level === 'red'));
-  }, [db, user && user.id]);
+  }, [db, self && self.id]);
   // sticky note reminders: pop up on time on any device with Floorboard open, then wait for the next one
-  const stickySig = user ? stickiesOf(db, user.id).map((n) => n.id + ':' + (n.remindAt || 0) + ':' + (n.firedAt || 0) + ':' + (n.done ? 1 : 0)).join('|') : '';
+  const stickySig = self ? stickiesOf(db, self.id).map((n) => n.id + ':' + (n.remindAt || 0) + ':' + (n.firedAt || 0) + ':' + (n.done ? 1 : 0)).join('|') : '';
   const [stickyWake, setStickyWake] = useState(0);
   useEffect(() => {
-    if (!user || (CLOUD && cloud !== 'ready')) return;
-    const now = Date.now(), waiting = stickiesOf(dbRef.current, user.id).filter((n) => !n.done && n.remindAt && !n.firedAt);
+    if (!self || (CLOUD && cloud !== 'ready')) return;
+    const now = Date.now(), waiting = stickiesOf(dbRef.current, self.id).filter((n) => !n.done && n.remindAt && !n.firedAt);
     const due = waiting.filter((n) => n.remindAt <= now + 1000);
     if (due.length) {
       const ids = new Set(due.map((n) => n.id));
-      update((d) => editStickies(d, user.id, (p) => p.stickies.forEach((x) => { if (ids.has(x.id)) x.firedAt = now; })));
+      update((d) => editStickies(d, self.id, (p) => p.stickies.forEach((x) => { if (ids.has(x.id)) x.firedAt = now; })));
       due.slice(-3).forEach((n) => {
-        const a = { id: uid('al'), key: 's:' + n.id, sticky: n.id, level: 'amber', from: user.id, title: 'Sticky note', body: n.text };
+        const a = { id: uid('al'), key: 's:' + n.id, sticky: n.id, level: 'amber', from: self.id, title: 'Sticky note', body: n.text };
         setAlerts((l) => [...l.slice(-3), a]);
         try {
           if (popupPermission() === 'granted' && (document.hidden || !document.hasFocus())) {
@@ -6756,19 +6812,19 @@ function App() {
     if (!isFinite(next)) return;
     const t = setTimeout(() => setStickyWake((x) => x + 1), Math.min(next - now + 250, 2e9));
     return () => clearTimeout(t);
-  }, [user && user.id, cloud, stickySig, stickyWake]);
+  }, [self && self.id, cloud, stickySig, stickyWake]);
   // Meeting reminders, before each one, for the diary's owner, its planner and the people in it. Each device remembers
   // which it has shown; on the desktop only the sidebar shows them.
   useEffect(() => {
-    if (!user || (CLOUD && cloud !== 'ready') || (DESKTOP_SHELL && mode !== 'widget')) return;
+    if (!self || (CLOUD && cloud !== 'ready') || (DESKTOP_SHELL && mode !== 'widget')) return;
     const now = Date.now(), today = dkey(now), d0 = dbRef.current;
     let fired = {};
     try { fired = JSON.parse(lsGet(FIRED_KEY)) || {}; } catch (e) { /* start again */ }
     const due = [];
     (d0.events || []).forEach((ev) => {
-      if (!meetSees(ev, user.id) || ev.remind == null || ev.remind < 0 || !ev.time) return;
+      if (!meetSees(ev, self.id) || ev.remind == null || ev.remind < 0 || !ev.time) return;
       occurrences(ev, today, addDays(today, 2)).forEach((k) => {
-        const start = meetStart(k, ev.time), key = user.id + '|' + ev.id + '|' + k;
+        const start = meetStart(k, ev.time), key = self.id + '|' + ev.id + '|' + k;
         if (((ev.occ || {})[k] || {}).status === 'cancelled' || fired[key]) return;
         if (now >= start - ev.remind * MIN && now < start + 5 * MIN) due.push({ ev, k, key, start });
       });
@@ -6780,7 +6836,7 @@ function App() {
     due.forEach(({ ev, k, start }) => {
       const mins = Math.round((start - now) / MIN);
       const when = mins <= 1 ? 'now' : mins < 60 ? 'in ' + mins + ' minutes' : 'at ' + ev.time + (k !== today ? (k === addDays(today, 1) ? ' tomorrow' : ' on ' + fmtKey(k)) : '');
-      const a = { id: uid('al'), key: 'm:' + ev.id + '|' + k, meet: ev.id, level: 'amber', from: ev.owner, title: 'Meeting ' + when + (ev.owner !== user.id ? ' · ' + firstName(userById(d0, ev.owner)) + '’s diary' : ''), body: ev.title + (ev.place ? '\n' + ev.place : '') };
+      const a = { id: uid('al'), key: 'm:' + ev.id + '|' + k, meet: ev.id, level: 'amber', from: ev.owner, title: 'Meeting ' + when + (ev.owner !== self.id ? ' · ' + firstName(userById(d0, ev.owner)) + '’s diary' : ''), body: ev.title + (ev.place ? '\n' + ev.place : '') };
       setAlerts((l) => [...l.slice(-3), a]);
       try {
         if (popupPermission() === 'granted' && (document.hidden || !document.hasFocus())) {
@@ -6790,7 +6846,7 @@ function App() {
       } catch (e) { /* the pop-up inside the app still shows */ }
     });
     if (soundOn) chime(false);
-  }, [user && user.id, cloud, mode, tick, db.events]);
+  }, [self && self.id, cloud, mode, tick, db.events]);
   // A file dropped anywhere but a drop box mustn't open in place of the app (the desktop window would go to it).
   useEffect(() => {
     const stop = (e) => { if (e.defaultPrevented || !e.dataTransfer || ![...(e.dataTransfer.types || [])].includes('Files')) return; e.preventDefault(); if (e.type === 'dragover') e.dataTransfer.dropEffect = 'none'; };
@@ -6801,59 +6857,60 @@ function App() {
   const filing = useRef({ busy: false, failedAt: 0 });
   useEffect(() => {
     const fl = filing.current;
-    if (!user || (CLOUD && cloud !== 'ready') || (DESKTOP_SHELL && mode !== 'widget') || fl.busy || Date.now() - fl.failedAt < 5 * MIN) return;
-    const due = db.posts.filter((p) => p.type === 'approval' && p.approval && p.approval.kind === 'Quote' && p.author === user.id && !p.approval.filedAt && p.attachments.some((x) => !x.demo)
+    if (!self || (CLOUD && cloud !== 'ready') || (DESKTOP_SHELL && mode !== 'widget') || fl.busy || Date.now() - fl.failedAt < 5 * MIN) return;
+    const due = db.posts.filter((p) => p.type === 'approval' && p.approval && p.approval.kind === 'Quote' && p.author === self.id && !p.approval.filedAt && p.attachments.some((x) => !x.demo)
       && ['approved', 'paid'].includes(apState(p)));
-    if (!due.length || !fileTarget(db, user)) return;
+    if (!due.length || !fileTarget(db, self)) return;
     fl.busy = true;
     (async () => {
       let n = 0;
-      for (const p of due) { if ((await fileSigned(dbRef.current, p, user, update)) === 'filed') n++; }
+      for (const p of due) { if ((await fileSigned(dbRef.current, p, self, update)) === 'filed') n++; }
       if (n) toast(n + (n === 1 ? ' signed quote' : ' signed quotes') + ' saved in Drive › Signed quotes');
     })().catch(() => { fl.failedAt = Date.now(); }).finally(() => { fl.busy = false; });
-  }, [db, user && user.id, cloud, mode]);
+  }, [db, self && self.id, cloud, mode]);
   // Printing quotes by themselves: only the desktop sidebar does it (it's always running), on the printer chosen on this computer.
   const printing = useRef({ busy: false, failedAt: 0 });
   useEffect(() => {
     const desk = window.floorboardDesktop, pr = printing.current;
-    if (!user || !desk || !desk.print || mode !== 'widget' || (CLOUD && cloud !== 'ready') || pr.busy || Date.now() - pr.failedAt < 5 * MIN) return;
+    if (!self || !desk || !desk.print || mode !== 'widget' || (CLOUD && cloud !== 'ready') || pr.busy || Date.now() - pr.failedAt < 5 * MIN) return;
     const cfg = printPrefs();
     if (cfg.when !== 'sent' && cfg.when !== 'approved') return;
-    const done = (db.pins[user.id] || {}).printed || {};
-    const due = db.posts.filter((p) => p.type === 'approval' && p.approval && p.approval.kind === 'Quote' && p.author === user.id && p.createdAt >= (cfg.since || 0) && !done[p.id]
+    const done = (db.pins[self.id] || {}).printed || {};
+    const due = db.posts.filter((p) => p.type === 'approval' && p.approval && p.approval.kind === 'Quote' && p.author === self.id && p.createdAt >= (cfg.since || 0) && !done[p.id]
       && (cfg.when === 'sent' || ['approved', 'paid'].includes(apState(p))));
     if (!due.length) return;
     pr.busy = true;
     printQuotes(db, due, cfg.printer).then((r) => {
       if (r !== 'printed') { pr.failedAt = Date.now(); toast('Couldn’t print the quotes. Check the printer chosen in the drop box.', 'warn'); return; }
-      update((d) => { d.pins[user.id] = d.pins[user.id] || { posts: [], notes: [] }; const m = (d.pins[user.id].printed = d.pins[user.id].printed || {}); due.forEach((p) => { m[p.id] = Date.now(); }); });
+      update((d) => { d.pins[self.id] = d.pins[self.id] || { posts: [], notes: [] }; const m = (d.pins[self.id].printed = d.pins[self.id].printed || {}); due.forEach((p) => { m[p.id] = Date.now(); }); });
       toast('Printed ' + due.length + (due.length === 1 ? ' quote' : ' quotes'));
     }).catch(() => { pr.failedAt = Date.now(); }).finally(() => { pr.busy = false; });
-  }, [db, user && user.id, cloud, mode]);
+  }, [db, self && self.id, cloud, mode]);
   // ASAP items nobody opened within 30 minutes go to the managers. Any open app can do it; two at once end up the same.
   useEffect(() => {
-    if (!user || (CLOUD && cloud !== 'ready')) return;
+    if (!self || (CLOUD && cloud !== 'ready')) return;
     const now = Date.now();
     const due = dbRef.current.posts.filter((p) => escalationDue(p, now)).map((p) => p.id);
     if (due.length) update((d) => due.forEach((id) => escalate(d, id, now)));
-  }, [user && user.id, cloud, tick]);
+  }, [self && self.id, cloud, tick]);
   // month-end reminders: any open app sends the day's ones and tells the manager about misses
   useEffect(() => {
-    if (!user || (CLOUD && cloud !== 'ready')) return;
+    if (!self || (CLOUD && cloud !== 'ready')) return;
     const now = Date.now();
     if (meReminders(dbRef.current, now, true)) update((d) => { meReminders(d, now); });
-  }, [user && user.id, cloud, tick, db.deadlines]);
+  }, [self && self.id, cloud, tick, db.deadlines]);
   // the start-of-shift summary: once a day, once this person is on shift
   useEffect(() => {
-    if (!user || (CLOUD && cloud !== 'ready')) return;
-    if (!summaryShownToday(user.id) && isOnShift(dbRef.current, user.id)) { markSummary(user.id); setSummary(true); }
-  }, [user && user.id, cloud, tick]);
+    if (!self || (CLOUD && cloud !== 'ready')) return;
+    if (!summaryShownToday(self.id) && isOnShift(dbRef.current, self.id)) { markSummary(self.id); setSummary(true); }
+  }, [self && self.id, cloud, tick]);
   useEffect(() => {
     const h = (e) => { if (e.key !== 'Escape' || document.querySelector('.modal-wrap,.lightbox')) return; if (openId) setOpenId(null); else if (drawer) setDrawer(false); };
     window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h);
   }, [openId, drawer]);
   const ctx = {
-    db, update, user, view, go, openId, toast, toasts, filters, setFilters, searchQ, setSearchQ, saved, drawer, setDrawer, lightbox, setLightbox, composer,
+    db: vdb, update: seeing ? lookOnlyUpdate : update, user, seeing, startSeeing, stopSeeing, view, go, openId,
+    toast: seeing ? (msg, kind) => { if (kind === 'warn' || Date.now() - blockedAt.current > 1000) toast(msg, kind); } : toast, toasts, filters, setFilters, searchQ, setSearchQ, saved, drawer, setDrawer, lightbox, setLightbox, composer,
     confirmState, ask: setConfirmState, mode, openChatId, look, setLook, openLook: () => { setLookOpen(true); setDrawer(false); },
     jump: (t) => {
       if (mode === 'widget') { const desk = window.floorboardDesktop; if (desk && desk.openFull) desk.openFull(t); else location.hash = 'go-' + t; return; }
@@ -6891,7 +6948,7 @@ function App() {
     },
     // Demo only: a colleague sends you something a few seconds from now, so you can see how it arrives.
     sendTestTask: () => {
-      if (!user) return;
+      if (!user || seeing) return;
       const others = db.users.filter((u) => u.id !== user.id && u.active !== false);
       const from = others.find((u) => u.role !== 'staff' && u.depts.some((d) => user.depts.includes(d))) || others.find((u) => u.role === 'admin') || others[0];
       const t = TEST_TASKS[testIdx++ % TEST_TASKS.length];
@@ -6910,9 +6967,9 @@ function App() {
     openPost: (id) => { setOpenId(id); setDrawer(false); }, closePost: () => setOpenId(null),
     compose: (preset) => setComposer(preset || {}), closeComposer: () => setComposer(null),
     recordAsk, clearRecordAsk: () => setRecordAsk(null),
-    login: (id) => { lsSet(SESSION_KEY, id); setMe(id); setView(recordAsk ? 'calendar' : 'chats'); setOpenChatId(null); setOpenId(null); setFilters(NO_FILTERS); },
+    login: (id) => { lsSet(SESSION_KEY, id); setMe(id); lsSet(SEEAS_KEY, ''); setSeeAs(''); setView(recordAsk ? 'calendar' : 'chats'); setOpenChatId(null); setOpenId(null); setFilters(NO_FILTERS); },
     logout: () => {
-      setOpenId(null); setDrawer(false); setComposer(null); setOpenChatId(null);
+      setOpenId(null); setDrawer(false); setComposer(null); setOpenChatId(null); lsSet(SEEAS_KEY, ''); setSeeAs('');
       if (!CLOUD) { lsSet(SESSION_KEY, ''); setMe(null); return; }
       // shared devices: don't leave the store's data behind
       lsSet(CACHE_KEY, ''); lsSet('floorboard.cloud.me', ''); Sync.stop(); Presence.stop(); setDb(emptyDb()); setMe(null); setCloud('signedout');
@@ -6927,6 +6984,7 @@ function App() {
     ${cloud === 'checking' || cloud === 'loading' ? html`<${CloudLoading} text=${cloud === 'loading' ? 'Loading your store…' : 'Connecting…'}/>`
       : !user ? (CLOUD ? html`<${CloudLogin}/>` : html`<${Login}/>`) : mode === 'widget' ? html`<${Widget}/>` : html`<${Shell}/>`}
     <${AlertStack}/>
+    ${user && html`<${SeeingBar}/>`}
     ${lookOpen && html`<${LookModal} onClose=${() => setLookOpen(false)}/>`}
     ${phoneOpen && html`<${PhoneModal} onClose=${() => setPhoneOpen(false)}/>`}
     ${user && shiftOpen && html`<${ShiftModal} onClose=${() => setShiftOpen(false)}/>`}

@@ -39,6 +39,8 @@ Without a server, the app runs the demo store and keeps everything on one device
 
 Add `?demo` to the link to open the demo store instead.
 
+**See what they see:** in People & access, an admin can click **See what they see** next to anyone to look at Floorboard the way that person sees it, desktop sidebar included, without their PIN. It's look only: nothing can be changed or sent, and their sticky notes and the chats the admin isn't in stay private. **Back to me** returns to your own view.
+
 ## Alerts when the app is closed, and on shift / off shift
 
 Once, after the steps above:
