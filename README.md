@@ -87,6 +87,18 @@ Everyone has a **Calendar** in the menu. Plan meetings in your own diary or in s
 - A reminder pops up before each meeting (15 minutes before unless you choose otherwise) on any device with Floorboard open. The sidebar shows the next meeting, and the start-of-shift summary lists the day's meetings.
 - **Upcoming** shows the next 30 days with tasks and month-end dates in between; **Month** is the month at a glance; **Past** keeps track of what happened. Open a meeting to write what was agreed and the follow-ups, mark it done, or cancel one.
 
+### Recording a meeting
+
+Open a meeting and tap **Record the meeting**. After ticking that everyone knows it's being recorded, Floorboard writes down what's said as it's said (Chrome, Edge, or Safari on an iPad or iPhone; the desktop app can't). **Paste a transcript instead** takes one from Teams, Zoom or a recording app. Then Claude writes the notes, what was decided, the tasks (with who and when) and anything that needs approving. Nothing is sent until it's been checked: tick the tasks and approvals to send, then **Save to the meeting**.
+
+Set it up once for the live store:
+
+1. At [console.anthropic.com](https://console.anthropic.com), sign in, add credit under **Billing**, then **API keys → Create key** and copy it.
+2. In Supabase, **Edge Functions → Secrets**: add `ANTHROPIC_API_KEY` with that key.
+3. **Edge Functions → Deploy a new function → Via editor**: name it `meeting-notes`, paste all of `supabase/functions/meeting-notes/index.ts`, deploy, and in its settings switch **Verify JWT** off (the function checks who is calling itself).
+
+It uses Claude Opus 5.5; an hour-long meeting costs roughly a few rand. The speech is written down by the browser's own speech service (Google for Chrome, Microsoft for Edge, Apple for Safari). Without the setup, the app makes simple notes on the device instead.
+
 Approvers and the people who asked can also answer with a **voice note** (Query, Don't approve, Approve, and answering a query), and the drop box takes **photos or videos** with each quote.
 
 ## Still to come

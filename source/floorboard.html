@@ -727,7 +727,22 @@ td.mono{white-space:nowrap}
 .cal-main b{font-size:14.5px;overflow-wrap:anywhere}
 .cal-main small{font-size:12.5px;color:var(--ink-2);overflow-wrap:anywhere}
 .cal-rep{color:var(--ink-3);font-weight:500}
-.cal-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.cal-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;align-items:center}
+.mr-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.rec-dot.still{animation:none;opacity:.5}
+.mr-live{max-height:280px;min-height:120px;overflow-y:auto;background:rgba(255,255,255,.07);border:1px solid var(--glass-line);border-radius:var(--r-sm);padding:10px 12px;line-height:1.5;white-space:pre-wrap}
+.mr-live i{color:var(--ink-3)}
+.mr-making{display:grid;justify-items:center;gap:8px;padding:30px 10px;text-align:center}
+.mr-spin{width:30px;height:30px;border-radius:50%;border:3px solid var(--glass-line-2);border-top-color:#fff;animation:mr-spin 1s linear infinite}
+@keyframes mr-spin{to{transform:rotate(360deg)}}
+.mr-list{margin:0;padding-left:18px;display:grid;gap:3px}
+.mr-item{display:grid;grid-template-columns:auto minmax(0,1fr) 170px 150px;gap:8px;align-items:center;margin-bottom:6px}
+.mr-item.ap{grid-template-columns:auto minmax(0,1fr) 150px 100px 170px}
+.mr-item.off > :not(input[type=checkbox]){opacity:.45}
+.mr-item input[type=checkbox]{width:18px;height:18px}
+.mr-item .input,.mr-item .select{padding:6px 9px;font-size:13px}
+@media (max-width:700px){.mr-item,.mr-item.ap{grid-template-columns:auto 1fr 1fr}.mr-item > .input:nth-child(2){grid-column:2 / -1}}
+@media (prefers-reduced-motion:reduce){.mr-spin{animation-duration:3s}}
 .mcal{display:grid;gap:10px;margin-top:6px}
 .mcal-h{display:flex;align-items:center;gap:8px}
 .mcal-h b{font-size:16px;min-width:150px;text-align:center}
@@ -5154,6 +5169,7 @@ function MeetingModal({ id, k, preset, onClose }) {
   const [tell, setTell] = useState(!ev);
   const [notes, setNotes] = useState(o.notes || '');
   const [err, setErr] = useState('');
+  const [recording, setRecording] = useState(false);
   const set = (f, x) => { setV((s) => ({ ...s, [f]: x })); setErr(''); };
   const people = db.users.filter((u) => u.active !== false);
   const editable = !ev || meetEdits(ev, user);
@@ -5190,6 +5206,7 @@ function MeetingModal({ id, k, preset, onClose }) {
   };
   const remove = () => ask({ title: 'Delete “' + ev.title + '”?', body: ev.repeat ? 'Every time it repeats comes off the calendar.' : 'It comes off the calendar for everyone.', confirm: 'Delete', danger: true,
     onConfirm: () => { update((d) => { d.events = d.events.filter((x) => x.id !== ev.id); }); onClose(); toast('Deleted'); } });
+  if (recording && ev) return html`<${MeetingRecorder} ev=${ev} k=${k} onClose=${() => { setRecording(false); onClose(); }}/>`;
   if (mode === 'view' && ev) {
     const who = [...(ev.attendees || []).map((x) => (userById(db, x) || {}).name).filter(Boolean), ev.guests].filter(Boolean);
     const past = meetStart(k, ev.time) < Date.now();
@@ -5202,6 +5219,7 @@ function MeetingModal({ id, k, preset, onClose }) {
         ${ev.notes && html`<dt>Agenda</dt><dd style=${{ whiteSpace: 'pre-wrap' }}>${ev.notes}</dd>`}
         ${o.status === 'cancelled' && html`<dt>This one</dt><dd className="st bad">Cancelled</dd>`}
       </dl>
+      ${o.status !== 'cancelled' && html`<div className="cal-acts"><button className="btn sm primary" onClick=${() => setRecording(true)}><${Icon} n="mic" s=${14}/>${o.recorded ? 'Record again' : 'Record the meeting'}</button>${o.recorded && html`<span className="sm sig-doc">Recorded, notes made${o.madeBy === 'Claude' ? ' by Claude' : ''}</span>`}</div>`}
       ${o.status !== 'cancelled' && html`<div className="field"><span>${past ? 'What was agreed, and the follow-ups' : 'Notes for this meeting'}</span>
         <textarea id="mt-notes" rows="3" value=${notes} onChange=${(e) => setNotes(e.target.value)} placeholder="e.g. SunPack drops prices 4% from December. Pieter to update the price list by Friday."></textarea>
         <div className="cal-acts">
@@ -5465,6 +5483,216 @@ function InkButtons({ p, noApprove }) {
   const marked = hasMarks(db, p.id);
   return html`<${React.Fragment}>${docs.map((a) => html`<button key=${a.id} className="btn sm" onClick=${() => setOpen(a)}><${Icon} n="edit" s=${15}/>${docs.length === 1 ? (marked ? 'Open, with the writing on it' : 'Open and write on it') : 'Write on ' + a.name}</button>`)}
     ${open && html`<${MarkupModal} p=${p} att=${open} noApprove=${noApprove} onClose=${() => setOpen(null)}/>`}<//>`;
+}
+
+/* ---------------- recording a meeting, then the notes, tasks and approvals made from it ---------------- */
+// The browser writes down what's said as it's said (Chrome, Edge and Safari on iPad or iPhone can; the desktop app can't).
+// Afterwards Claude turns the transcript into notes, decisions, tasks and things to approve; the live store asks it through
+// the store's "meeting-notes" function, the demo asks it straight from the page. Nothing is added until it's been checked.
+const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+const canListen = () => !!SpeechRec && !DESKTOP_SHELL;
+const RECDRAFT = 'floorboard.recording.v1';
+const WEEKDAY_RE = /\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday|tomorrow|next week)\b/i;
+function matchUser(db, who) {
+  const w = String(who || '').trim().toLowerCase();
+  if (!w) return '';
+  const act = db.users.filter((u) => u.active !== false);
+  const u = act.find((x) => x.name.toLowerCase() === w) || act.find((x) => x.name.split(' ')[0].toLowerCase() === w.split(' ')[0]);
+  return u ? u.id : '';
+}
+// the date a word like "Friday" or "tomorrow" means, from the meeting's day
+function dayFrom(word, k) {
+  const w = word.toLowerCase();
+  if (w === 'tomorrow') return addDays(k, 1);
+  if (w === 'next week') return addDays(k, 7);
+  const i = WEEKDAYS.findIndex((d) => d.toLowerCase() === w);
+  return i < 0 ? '' : addDays(k, ((i - dowOf(k) + 7) % 7) || 7);
+}
+// Simple notes made on this device, for when the AI isn't connected: whole sentences, sorted by a few clear words.
+function simpleNotes(db, transcript, k) {
+  const sents = transcript.replace(/\s+/g, ' ').split(/(?<=[.?!])\s+/).map((s) => s.trim()).filter((s) => s.length > 3);
+  const names = db.users.filter((u) => u.active !== false).map((u) => u.name.split(' ')[0]);
+  const named = (s) => names.find((n) => new RegExp('\\b' + reEsc(n) + '\\b', 'i').test(s)) || '';
+  const money = (s) => { const m = s.match(MONEY); return m ? toAmount(m[0]) || 0 : 0; };
+  const tasks = sents.filter((s) => /\b(will|to do|needs? to|has to|must|please|can you)\b/i.test(s) && !/\?$/.test(s))
+    .map((s) => { const d = s.match(WEEKDAY_RE); return { title: s.replace(/[.!]$/, ''), who: named(s), due: d ? dayFrom(d[1], k) : '' }; });
+  return {
+    summary: sents.slice(0, 3).join(' '),
+    decisions: sents.filter((s) => /\b(agreed|decided|we('ll| will) go with|going ahead|approved)\b/i.test(s)),
+    tasks,
+    approvals: sents.filter((s) => /\b(approv\w*|quote|sign (it )?off|buy|order)\b/i.test(s) && (money(s) > 0 || /quote/i.test(s))).map((s) => ({ what: s.replace(/[.!]$/, ''), supplier: '', amount: money(s), why: '' })),
+    followups: sents.filter((s) => /\?$/.test(s)),
+  };
+}
+const noteList = (x) => (Array.isArray(x) ? x.map((s) => String(s || '').trim()).filter(Boolean) : []);
+function cleanNotes(n) {
+  n = n || {};
+  return {
+    summary: String(n.summary || '').trim(),
+    decisions: noteList(n.decisions),
+    tasks: (Array.isArray(n.tasks) ? n.tasks : []).map((t) => ({ title: String(t.title || '').trim(), who: String(t.who || ''), due: /^\d{4}-\d{2}-\d{2}$/.test(t.due || '') ? t.due : '' })).filter((t) => t.title),
+    approvals: (Array.isArray(n.approvals) ? n.approvals : []).map((a) => ({ what: String(a.what || '').trim(), supplier: String(a.supplier || ''), amount: Number(a.amount) || 0, why: String(a.why || '') })).filter((a) => a.what),
+    followups: noteList(n.followups),
+  };
+}
+async function makeNotes(db, ev, k, transcript) {
+  const owner = userById(db, ev.owner);
+  const meeting = { title: ev.title, date: k, owner: owner ? owner.name : '', agenda: ev.notes || '',
+    attendees: [...(ev.attendees || []).map((id) => (userById(db, id) || {}).name).filter(Boolean), ev.guests].filter(Boolean) };
+  const people = db.users.filter((u) => u.active !== false).map((u) => u.name);
+  if (CLOUD) {
+    const { data, error } = await CLOUD.functions.invoke('meeting-notes', { body: { meeting, people, transcript } });
+    if (error) {
+      let why = '';
+      if (error.context && error.context.json) { try { why = ((await error.context.json()) || {}).error || ''; } catch (e) { /* no details */ } }
+      throw new Error(/ANTHROPIC_API_KEY/.test(why) ? 'The AI key isn’t set up on the store’s server yet (see the meeting notes setup).'
+        : error.name === 'FunctionsHttpError' ? 'The notes couldn’t be made: ' + (why || 'the server said no') + '.'
+        : 'Can’t reach the notes function. Check it’s deployed and named meeting-notes.');
+    }
+    return { notes: cleanNotes(data.notes), by: 'Claude' };
+  }
+  const sample = window.claude && window.claude.use ? await window.claude.use('sample').catch(() => null) : null;
+  if (sample) {
+    try {
+      const out = await sample.json('You write the notes for a meeting at a South African retail store, so the person who keeps the diary does not have to. '
+        + 'The transcript has no speaker names and may have mistakes; keep to what was actually said, in plain short sentences; amounts are in rand; turn "by Friday" and the like into YYYY-MM-DD dates from the meeting date.\n'
+        + 'Answer with JSON only: {"summary": string, "decisions": [string], "tasks": [{"title": string, "who": string (a name from the people list, or as said, or ""), "due": "YYYY-MM-DD" or ""}], '
+        + '"approvals": [{"what": string, "supplier": string, "amount": number (0 if none), "why": string}], "followups": [string]}\n\n'
+        + 'Meeting: ' + meeting.title + '\nDate: ' + k + '\nIn the diary of: ' + meeting.owner + '\nWho was in it: ' + meeting.attendees.join(', ') + (meeting.agenda ? '\nAgenda: ' + meeting.agenda : '')
+        + '\nPeople in the store: ' + people.join(', ') + '\n\nTranscript:\n' + transcript, { modelTier: 'default', cache: false });
+      return { notes: cleanNotes(out), by: 'Claude' };
+    } catch (e) { if (!e || e.code !== 'not_granted') throw new Error((e && e.message) || 'Claude couldn’t make the notes.'); }
+  }
+  return { notes: cleanNotes(simpleNotes(db, transcript, k)), by: 'device' };
+}
+function MeetingRecorder({ ev, k, onClose }) {
+  const { db, user, update, toast, ask } = useApp();
+  const draftKey = RECDRAFT + '|' + ev.id + '|' + k;
+  const [stage, setStage] = useState('ready');
+  const [agreed, setAgreed] = useState(false);
+  const [text, setText] = useState(() => lsGet(draftKey) || '');
+  const [interim, setInterim] = useState('');
+  const [secs, setSecs] = useState(0);
+  const [paste, setPaste] = useState(false);
+  const [err, setErr] = useState('');
+  const [made, setMade] = useState(null); // { notes, by, tasks: [...with on, uid], approvals: [...with on, approver] }
+  const rec = useRef(null), stageRef = useRef(stage), started = useRef(0), lock = useRef(null), live = useRef(null);
+  stageRef.current = stage;
+  useEffect(() => { lsSet(draftKey, text); }, [text]);
+  useEffect(() => { if (stage !== 'recording') return; const t = setInterval(() => setSecs((s) => s + 1), 1000); return () => clearInterval(t); }, [stage]);
+  useEffect(() => { if (live.current) live.current.scrollTop = live.current.scrollHeight; }, [text, interim]);
+  useEffect(() => () => { const r = rec.current; rec.current = null; if (r) { r.onend = null; try { r.stop(); } catch (e) { /* stopped */ } } if (lock.current) lock.current.release().catch(() => {}); }, []);
+  const listen = () => {
+    const r = new SpeechRec();
+    r.lang = 'en-ZA'; r.continuous = true; r.interimResults = true;
+    r.onresult = (e) => {
+      let mid = '';
+      for (let i = e.resultIndex; i < e.results.length; i++) {
+        const res = e.results[i], said = res[0].transcript.trim();
+        if (res.isFinal) { if (said) setText((t) => (t ? t + ' ' : '') + said.charAt(0).toUpperCase() + said.slice(1) + (/[.?!]$/.test(said) ? '' : '.')); } else mid += said + ' ';
+      }
+      setInterim(mid.trim());
+    };
+    r.onerror = (e) => {
+      if (e.error === 'not-allowed' || e.error === 'service-not-allowed') { setErr('The microphone is blocked for Floorboard here. Allow it in the browser settings, or paste a transcript instead.'); setStage('ready'); }
+      else if (e.error === 'network') setErr('The speech service can’t be reached, so nothing is being written down. Check the connection.');
+    };
+    // the browser stops listening after a pause; keep going until the meeting is stopped
+    r.onend = () => { setInterim(''); if (stageRef.current === 'recording' && rec.current === r) { try { r.start(); } catch (x) { /* starts on the next pause */ } } };
+    rec.current = r;
+    r.start();
+  };
+  const start = async () => {
+    setErr(''); started.current = Date.now(); setStage('recording');
+    try { listen(); } catch (e) { setErr('Recording couldn’t start here. Paste a transcript instead.'); setStage('ready'); return; }
+    try { if (navigator.wakeLock) lock.current = await navigator.wakeLock.request('screen'); } catch (e) { /* the screen may dim, recording carries on while it's open */ }
+  };
+  const halt = () => { const r = rec.current; rec.current = null; if (r) { r.onend = null; try { r.stop(); } catch (e) { /* stopped */ } } setInterim(''); if (lock.current) { lock.current.release().catch(() => {}); lock.current = null; } };
+  const pause = () => { halt(); setStage('paused'); };
+  const resume = () => { setStage('recording'); listen(); };
+  const finish = async () => {
+    halt();
+    const t = text.trim();
+    if (t.split(/\s+/).length < 8) { setStage('ready'); setErr('Not enough was written down to make notes from. Record a bit longer, or paste a transcript.'); return; }
+    setStage('making'); setErr('');
+    try {
+      const out = await makeNotes(db, ev, k, t);
+      // a task only starts ticked when it's clear who it's for
+      setMade({ ...out, summary: out.notes.summary, tasks: out.notes.tasks.map((x) => { const id = matchUser(db, x.who); return { ...x, on: !!id, uid: id }; }), approvals: out.notes.approvals.map((x) => ({ ...x, on: true, approver: ev.owner })) });
+      setStage('review');
+    } catch (e) { setErr(e.message || 'The notes couldn’t be made.'); setStage('ready'); }
+  };
+  const setTask = (i, patch) => setMade((m) => ({ ...m, tasks: m.tasks.map((x, j) => (j === i ? { ...x, ...patch } : x)) }));
+  const setAp = (i, patch) => setMade((m) => ({ ...m, approvals: m.approvals.map((x, j) => (j === i ? { ...x, ...patch } : x)) }));
+  const save = () => {
+    const n = made.notes, tasks = made.tasks.filter((x) => x.on && x.title.trim()), aps = made.approvals.filter((x) => x.on && x.what.trim());
+    if (tasks.some((x) => !x.uid)) return setErr('Choose who does each task you’re adding, or untick it.');
+    const body = [made.summary.trim(), n.decisions.length && 'Decided:\n' + n.decisions.map((s) => '• ' + s).join('\n'), n.followups.length && 'To follow up:\n' + n.followups.map((s) => '• ' + s).join('\n')].filter(Boolean).join('\n\n');
+    const where = '“' + ev.title + '” on ' + fmtKey(k, { day: 'numeric', month: 'long' });
+    update((d) => {
+      const x = d.events.find((y) => y.id === ev.id);
+      if (!x) return;
+      x.occ = x.occ || {};
+      x.occ[k] = { ...(x.occ[k] || {}), status: 'done', notes: body, recorded: true, transcript: text.trim().slice(0, 60000), madeBy: made.by, by: user.id, at: Date.now() };
+      tasks.forEach((t) => {
+        d.counter += 1;
+        d.posts.unshift({ id: uid('p'), chat: null, no: d.counter, type: 'task', title: t.title.trim(), body: 'From the meeting ' + where + '.', author: user.id, createdAt: Date.now(), toUsers: [t.uid], toDepts: [],
+          about: (userById(d, t.uid) || user).depts[0], level: 'amber', due: t.due || null, attachments: [], recips: { [t.uid]: { status: 'todo', pct: 0, seen: null, updatedAt: null } }, activity: [], poll: null, closed: false });
+      });
+      aps.forEach((a) => apCreate(d, { author: user.id, approvers: [a.approver], kind: /quot/i.test(a.what) ? 'Quote' : 'Other', party: a.supplier.trim() || a.what.trim().slice(0, 60), amount: Number(a.amount) || 0,
+        sticky: a.what.trim() + (a.why ? ' (' + a.why.trim() + ')' : '') + ' · from the meeting ' + where, about: user.depts[0], atts: [] }));
+    });
+    lsSet(draftKey, '');
+    onClose();
+    toast('Notes saved to the meeting' + (tasks.length ? ', ' + tasks.length + (tasks.length === 1 ? ' task' : ' tasks') + ' sent' : '') + (aps.length ? ', ' + aps.length + ' sent for approval' : ''));
+  };
+  const people = db.users.filter((u) => u.active !== false);
+  const clock = Math.floor(secs / 60) + ':' + pad(secs % 60);
+  const close = () => (text.trim() && stage !== 'review' ? ask({ title: 'Stop without making notes?', body: 'What was written down so far stays on this device, and comes back if you open the recorder for this meeting again.', confirm: 'Close', onConfirm: () => { halt(); onClose(); } }) : (halt(), onClose()));
+  if (stage === 'review') {
+    const n = made.notes;
+    return html`<${Modal} title=${'Notes: ' + ev.title} onClose=${close} wide footer=${html`<button className="btn ghost" style=${{ marginRight: 'auto' }} onClick=${() => setStage('ready')}>Back</button><button className="btn primary" onClick=${save}><${Icon} n="check" s=${16}/>Save to the meeting</button>`}>
+      <p className="muted sm" style=${{ margin: 0 }}>${made.by === 'Claude' ? 'Written by Claude from what was said. Check it, change anything, then save.' : 'Simple notes made on this device, because the AI isn’t connected here. Check them and fill in the gaps.'}</p>
+      <label className="field"><span>Notes</span><textarea id="mr-summary" rows="5" value=${made.summary} onChange=${(e) => setMade((m) => ({ ...m, summary: e.target.value }))}></textarea></label>
+      ${n.decisions.length > 0 && html`<div className="field"><span>Decided</span><ul className="mr-list">${n.decisions.map((s, i) => html`<li key=${i}>${s}</li>`)}</ul></div>`}
+      <div className="field"><span>Tasks to send · ${made.tasks.filter((x) => x.on).length} ticked</span>
+        ${made.tasks.length ? made.tasks.map((t, i) => html`<div key=${i} className=${'mr-item' + (t.on ? '' : ' off')}>
+          <input type="checkbox" checked=${t.on} onChange=${(e) => setTask(i, { on: e.target.checked })} aria-label="Send this task"/>
+          <input className="input" value=${t.title} onChange=${(e) => setTask(i, { title: e.target.value })} aria-label="Task"/>
+          <select className="select" value=${t.uid} onChange=${(e) => setTask(i, { uid: e.target.value })} aria-label="Who does it"><option value="">${t.who ? t.who + '? Choose…' : 'Who?'}</option>${people.map((u) => html`<option key=${u.id} value=${u.id}>${u.name}</option>`)}</select>
+          <input type="date" className="input" value=${t.due} onChange=${(e) => setTask(i, { due: e.target.value })} aria-label="Due"/>
+        </div>`) : html`<p className="muted sm">No tasks came out of it.</p>`}</div>
+      <div className="field"><span>To approve · ${made.approvals.filter((x) => x.on).length} ticked</span>
+        ${made.approvals.length ? made.approvals.map((a, i) => html`<div key=${i} className=${'mr-item ap' + (a.on ? '' : ' off')}>
+          <input type="checkbox" checked=${a.on} onChange=${(e) => setAp(i, { on: e.target.checked })} aria-label="Send for approval"/>
+          <input className="input" value=${a.what} onChange=${(e) => setAp(i, { what: e.target.value })} aria-label="What needs approving"/>
+          <input className="input" value=${a.supplier} onChange=${(e) => setAp(i, { supplier: e.target.value })} placeholder="Supplier" aria-label="Supplier"/>
+          <input className="input mono" inputMode="decimal" value=${a.amount || ''} onChange=${(e) => setAp(i, { amount: e.target.value })} placeholder="R" aria-label="Amount"/>
+          <select className="select" value=${a.approver} onChange=${(e) => setAp(i, { approver: e.target.value })} aria-label="Who approves it">${people.map((u) => html`<option key=${u.id} value=${u.id}>${u.name}</option>`)}</select>
+        </div>`) : html`<p className="muted sm">Nothing to approve came out of it.</p>`}</div>
+      ${n.followups.length > 0 && html`<div className="field"><span>To follow up</span><ul className="mr-list">${n.followups.map((s, i) => html`<li key=${i}>${s}</li>`)}</ul></div>`}
+      ${err && html`<p className="err" role="alert">${err}</p>`}
+    <//>`;
+  }
+  const listening = stage === 'recording' || stage === 'paused';
+  return html`<${Modal} title=${'Record: ' + ev.title} onClose=${close} wide footer=${html`
+    ${stage === 'ready' && !paste && html`<button className="btn ghost" style=${{ marginRight: 'auto' }} onClick=${() => setPaste(true)}>Paste a transcript instead</button>`}
+    ${stage === 'ready' && (paste || text.trim()) && html`<button className="btn primary" onClick=${finish}><${Icon} n="check" s=${16}/>Make the notes</button>`}
+    ${stage === 'ready' && !paste && !text.trim() && html`<button className="btn primary" disabled=${!agreed || !canListen()} onClick=${start}><${Icon} n="mic" s=${16}/>Start recording</button>`}
+    ${stage === 'recording' && html`<button className="btn" onClick=${pause}>Pause</button>`}
+    ${stage === 'paused' && html`<button className="btn" onClick=${resume}><${Icon} n="mic" s=${15}/>Carry on</button>`}
+    ${listening && html`<button className="btn primary" onClick=${finish}><${Icon} n="check" s=${16}/>Stop and make the notes</button>`}`}>
+    ${stage === 'making' ? html`<div className="mr-making"><span className="mr-spin"></span><b>Writing the notes…</b><span className="muted sm">This can take a minute for a long meeting.</span></div>`
+    : html`${stage === 'ready' && html`
+        <p style=${{ margin: 0 }}>Floorboard writes down what’s said, then makes the notes, the tasks and anything that needs approving. You check them before anything is sent.</p>
+        ${!canListen() && html`<div className="notice"><${Icon} n="info" s=${16}/>${DESKTOP_SHELL ? 'The desktop app can’t write down speech. Open Floorboard in Chrome or Edge, or on an iPad or phone, to record, or paste a transcript here.' : 'This browser can’t write down speech. Use Chrome, Edge, or Safari on an iPad or iPhone, or paste a transcript.'}</div>`}
+        ${canListen() && !paste && html`<label className="me-check"><input id="mr-agree" type="checkbox" checked=${agreed} onChange=${(e) => setAgreed(e.target.checked)}/>I’ve told everyone in the meeting it’s being recorded</label>`}`}
+      ${listening && html`<div className="mr-bar"><span className=${'rec-dot' + (stage === 'paused' ? ' still' : '')}></span><b>${stage === 'paused' ? 'Paused' : 'Recording'} ${clock}</b><span className="muted sm">Keep this open, and the device near the people talking.</span></div>`}
+      ${(listening || text.trim() || paste) && html`<label className="field"><span>${listening ? 'What’s been said' : 'Transcript'}</span>
+        <div ref=${live} className="mr-live" hidden=${!listening}>${text}${interim && html` <i>${interim}</i>`}${!text && !interim && html`<span className="muted">Listening…</span>`}</div>
+        ${!listening && html`<textarea id="mr-text" rows="9" value=${text} onChange=${(e) => setText(e.target.value)} placeholder="Paste the transcript from Teams, Zoom or a recording app, or type the main points."></textarea>`}</label>`}
+      ${err && html`<p className="err" role="alert">${err}</p>`}`}
+  <//>`;
 }
 
 /* ---------------- approvals: invoices, payments and expense claims that need an OK ---------------- */
