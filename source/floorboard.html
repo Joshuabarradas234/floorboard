@@ -700,6 +700,48 @@ td.mono{white-space:nowrap}
 .person.pick.on{border-color:#fff;background:var(--glass-2)}
 .tick-box{width:22px;height:22px;border-radius:50%;border:2px solid var(--glass-line-2);display:grid;place-items:center;flex:none}
 .tick-box.on{background:var(--green-dot);border-color:var(--green-dot);color:#0b2a17}
+.me-days{display:grid;gap:16px}
+.me-sec{display:grid;gap:6px}
+.me-sec h3{font-size:12.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);display:flex;gap:8px;align-items:baseline;margin:0 2px 2px}
+.me-sec h3 b{font-family:var(--f-mono);font-weight:500;opacity:.75}
+.me-sec.late h3{color:var(--red)}
+.me-sec.is-done{opacity:.8}
+.me-row{display:flex;align-items:center;gap:12px;background:var(--glass);border:1px solid var(--glass-line);border-radius:var(--r-sm);padding:10px 10px 10px 12px;box-shadow:var(--hi)}
+.me-row.late{border-color:rgba(255,120,100,.5)}
+.me-row.done .me-t{text-decoration:line-through;text-decoration-color:rgba(255,255,255,.35);color:var(--ink-3)}
+.me-tick{padding:0;background:transparent;color:inherit;cursor:pointer;transition:border-color .15s,background-color .15s}
+.me-tick:not(.on):not(:disabled):hover{border-color:var(--green-dot)}
+.me-tick:disabled{cursor:default;opacity:.55}
+.me-main{flex:1;min-width:0;display:grid;gap:4px}
+.me-t{font-weight:700;line-height:1.3;overflow-wrap:anywhere}
+.me-star{color:var(--amber);margin-right:6px}
+.me-m{display:flex;flex-wrap:wrap;gap:4px 10px;align-items:center;font-size:12.5px;color:var(--ink-2)}
+.me-who{display:inline-flex;align-items:center;gap:3px;font-weight:700}
+.me-who.ok{color:var(--green)}
+.me-bell{display:inline-flex;align-items:center;gap:4px;color:var(--ink-3)}
+.me-num{border:0;background:none;padding:0;color:var(--sky);font-family:var(--f-mono);font-size:12px}
+.me-num:hover{text-decoration:underline}
+.me-when{font-size:12.5px;font-weight:700;white-space:nowrap;color:var(--ink-2);text-align:right}
+.me-when.over{color:var(--red)}
+.me-lists{display:grid;gap:12px;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));align-items:start}
+.me-list{background:var(--glass);border:1px solid var(--glass-line);border-radius:var(--r);padding:12px;display:grid;gap:8px;box-shadow:var(--hi)}
+.me-list-h{display:flex;align-items:center;gap:10px}
+.me-list-h h3{font-size:16px;flex:1;min-width:0;overflow-wrap:anywhere}
+.me-list .me-row{background:rgba(255,255,255,.05);box-shadow:none}
+.me-prog{display:flex;align-items:center;gap:10px}
+.me-prog .bar{flex:1}
+.me-owners{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.me-owner{display:inline-flex;align-items:center;gap:6px;background:var(--glass-2);border:1px solid var(--glass-line);border-radius:999px;padding:2px 3px 2px 3px;font-size:13px;font-weight:700}
+.me-owner button{border:0;background:none;color:var(--ink-3);display:grid;place-items:center;width:20px;height:20px;border-radius:50%}
+.me-owner button:hover{background:var(--glass-3);color:var(--ink)}
+.me-add{width:auto;max-width:100%;min-width:170px;padding:5px 10px;font-size:13px;border-radius:999px}
+.me-paste{min-height:140px;font-family:var(--f-mono);font-size:12.5px;white-space:pre;overflow-x:auto}
+.me-plan{display:grid;gap:10px}
+.me-plan-i{border:1px solid var(--glass-line);border-radius:var(--r-sm);padding:10px 12px;display:grid;gap:8px;background:rgba(255,255,255,.05)}
+.me-plan-i ul{margin:0;padding-left:18px;font-size:13px;color:var(--ink-2);display:grid;gap:2px}
+.me-check{display:flex;gap:8px;align-items:center;font-size:14px;font-weight:700}
+.me-check input{width:17px;height:17px;accent-color:var(--amber)}
+@media (max-width:560px){.me-row{flex-wrap:wrap}.me-main{flex-basis:calc(100% - 80px)}.me-when{order:3;flex-basis:100%;padding-left:34px;text-align:left}.me-lists{grid-template-columns:1fr}}
 .msg-hit{display:flex;gap:12px;align-items:center;width:100%;text-align:left;border:1px solid var(--glass-line);background:var(--glass);border-radius:var(--r);padding:10px 12px;color:var(--ink)}
 .msg-hit:hover{background:var(--glass-2)}
 .msg-hit .pm{flex:1;min-width:0;display:grid;gap:2px}
@@ -939,6 +981,7 @@ const TILE_COLORS = ['#9A6B2F', '#D0622B', '#3F8A2E', '#2F7FB8', '#0F8A8A', '#8A
 const NO_FILTERS = { type: 'any', level: 'any', dept: 'any' };
 
 const ICONS = {
+  calendar: '<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="m9 15 2 2 4-4"/>',
   phone: '<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/>',
   flower: '<circle cx="12" cy="12" r="2.2"/><path d="M12 9.8c-1.6-2.6-1-5.3 0-6.3 1 1 1.6 3.7 0 6.3zM14.2 12c2.6-1.6 5.3-1 6.3 0-1 1-3.7 1.6-6.3 0zM12 14.2c1.6 2.6 1 5.3 0 6.3-1-1-1.6-3.7 0-6.3zM9.8 12c-2.6 1.6-5.3 1-6.3 0 1-1 3.7-1.6 6.3 0z"/>',
   leaf: '<path d="M5 19c0-8 5-14 15-14 0 10-6 15-14 15"/><path d="M5 19l8-8"/>',
@@ -1274,6 +1317,8 @@ function seed() {
   ];
   // Extra tools are switched on department by department as each one comes on board.
   db.depts.forEach((d) => { d.features = { tools: false, drive: false }; });
+  db.depts.find((d) => d.id === 'finance').features.monthend = true; // Finance came on board first, with month end
+  db.deadlines = demoDeadlines(T);
   const U = (id, name, title, role, depts, manages) => ({ id, name, title, role, depts, manages: manages || [], pin: '1234', active: true });
   db.users = [
     U('u1', 'Thandi Mokoena', 'Store Manager', 'admin', ['mgmt'], ['mgmt']),
@@ -1535,7 +1580,16 @@ function seed() {
 }
 function loadDb() {
   const raw = lsGet(LS_KEY);
-  if (raw) { try { const d = JSON.parse(raw); if (d && d.v === 2 && Array.isArray(d.posts) && Array.isArray(d.chats)) return d; } catch (e) { } }
+  if (raw) {
+    try {
+      const d = JSON.parse(raw);
+      if (d && d.v === 2 && Array.isArray(d.posts) && Array.isArray(d.chats)) {
+        // demo stores saved before month end existed get Finance's example sheet
+        if (!Array.isArray(d.deadlines)) { d.deadlines = demoDeadlines(); const f = (d.depts || []).find((x) => x.id === 'finance'); if (f) f.features = { ...(f.features || {}), monthend: true }; }
+        return d;
+      }
+    } catch (e) { }
+  }
   return seed();
 }
 function saveDb(db) { try { localStorage.setItem(LS_KEY, JSON.stringify(db)); return true; } catch (e) { return false; } }
@@ -1729,6 +1783,7 @@ function Rail() {
     <span className="rail-sep"></span>
     ${myDepts.map((d) => item('dept:' + d.id, html`<i className="sq" style=${{ '--c': d.color }}></i>`, d.name))}
     ${item('teams', html`<${Icon} n="store"/>`, 'All departments')}
+    ${canSeeME(db, user) && item('monthend', html`<${Icon} n="calendar"/>`, 'Month end')}
     <span className="rail-sep"></span>
     ${myGroups(db, user).filter((g) => !g.archived).slice(0, 5).map((g) => item('group:' + g.id, html`<span className="rail-emoji">${g.icon}</span>`, g.name))}
     ${item('groups', html`<${Icon} n="flag"/>`, 'Projects & issues')}
@@ -2072,7 +2127,7 @@ function Composer({ preset, onClose }) {
   const [q, setQ] = useState(''); const [open, setOpen] = useState(false); const [hi, setHi] = useState(0);
   const [about, setAbout] = useState(preset.about || '');
   const [level, setLevel] = useState(preset.level || 'amber');
-  const [title, setTitle] = useState(preset.title || ''); const [body, setBody] = useState(preset.body || ''); const [due, setDue] = useState('');
+  const [title, setTitle] = useState(preset.title || ''); const [body, setBody] = useState(preset.body || ''); const [due, setDue] = useState(preset.due || '');
   const [files, setFiles] = useState([]);
   const [opts, setOpts] = useState(['', '']); const [multi, setMulti] = useState(false); const [closes, setCloses] = useState(keyPlus(3));
   const [err, setErr] = useState(''); const [busy, setBusy] = useState(false);
@@ -2574,7 +2629,7 @@ function AdminView() {
       <form className="dtool" onSubmit=${addDept}><input id="nd-name" className="input" style=${{ maxWidth: 280 }} value=${nd.name} onChange=${(e) => setNd({ ...nd, name: e.target.value })} placeholder="New department, e.g. Butchery"/><div className="swatches">${TILE_COLORS.map((c) => html`<button type="button" key=${c} className=${nd.color === c ? 'on' : ''} style=${{ '--c': c }} onClick=${() => setNd({ ...nd, color: c })} aria-label=${'Colour ' + c}></button>`)}</div><button className="btn primary">Add department</button></form>
       <p className="feat-note">Every department starts with its group chat, tagging and the “Needs you” board. Switch on the extra tools as each department comes on board.</p>
       <div className="dgrid">${db.depts.map((d) => html`<div key=${d.id} className="dcard"><div className="dcard-h"><span className="dsw" style=${{ '--c': d.color }}></span><div><h3>${d.name}</h3><span className="muted sm">${deptMembers(db, d.id).length} people · ${db.users.filter((u) => u.manages.includes(d.id)).map((u) => firstName(u)).join(', ') || 'no manager'}</span></div></div>
-        <div className="toggles">${[['tools', 'Tools & manuals'], ['drive', 'Drive']].map(([k, l]) => html`<button key=${k} className=${'toggle' + (featureOn(d, k) ? ' on' : '')} style=${{ '--c': d.color }} onClick=${() => flipFeature(d.id, k)} aria-pressed=${featureOn(d, k)}><i></i>${l}${featureOn(d, k) ? ' · on' : ' · off'}</button>`)}</div></div>`)}</div>
+        <div className="toggles">${[['tools', 'Tools & manuals'], ['drive', 'Drive'], ['monthend', 'Month end']].map(([k, l]) => html`<button key=${k} className=${'toggle' + (featureOn(d, k) ? ' on' : '')} style=${{ '--c': d.color }} onClick=${() => flipFeature(d.id, k)} aria-pressed=${featureOn(d, k)}><i></i>${l}${featureOn(d, k) ? ' · on' : ' · off'}</button>`)}</div></div>`)}</div>
     </div>`}
     ${tab === 'drives' && html`<div className="table-wrap"><table>
       <thead><tr><th>Drive</th><th>Who can open it (tap to change)</th></tr></thead>
@@ -3146,7 +3201,7 @@ const STAFF_DOMAIN = '@staff.floorboard.app';
 const pinPassword = (pin) => 'fb-' + pin + '-FB';
 const PIN_LEN = CLOUD ? 6 : 4;
 const CACHE_KEY = 'floorboard.cloud.cache.v1', STORE_CODE_KEY = 'floorboard.storecode.v1';
-function emptyDb() { return { v: 2, store: 'Your store', counter: 1000, depts: [], users: [], groups: [], shortcuts: [], drives: [], folders: [], files: [], tiles: [], pins: {}, status: {}, chats: [], messages: [], posts: [] }; }
+function emptyDb() { return { v: 2, store: 'Your store', counter: 1000, depts: [], users: [], groups: [], shortcuts: [], drives: [], folders: [], files: [], tiles: [], pins: {}, status: {}, chats: [], messages: [], posts: [], deadlines: [] }; }
 
 // Same data, written with sorted keys, so a record that came back from the server compares equal to ours.
 function stable(v) {
@@ -3169,6 +3224,7 @@ function toRecs(db) {
   db.tiles.forEach((t) => put('tiles', t.id, t));
   Object.entries(db.pins || {}).forEach(([who, v]) => put('pins', who, v));
   Object.entries(db.status || {}).forEach(([who, s]) => put('status', who, s));
+  (db.deadlines || []).forEach((x) => { const { done, ...rest } = x; put('deadlines', x.id, rest); Object.entries(done || {}).forEach(([k, v]) => put('dltick', x.id + '|' + k, { ...v, dl: x.id, key: k })); });
   db.chats.forEach((c) => { const { read, ...rest } = c; put('chats', c.id, rest); Object.entries(read || {}).forEach(([who, at]) => put('read', c.id + '|' + who, { chat: c.id, user: who, at })); });
   db.messages.forEach((m) => { const { reactions, ...rest } = m; put('messages', m.id, rest); Object.entries(reactions || {}).forEach(([who, e]) => put('rx', m.id + '|' + who, { msg: m.id, user: who, e })); });
   db.posts.forEach((p) => {
@@ -3189,6 +3245,8 @@ function fromRecs(list) {
   db.depts = of('depts'); db.users = of('users'); db.groups = of('groups'); db.shortcuts = of('shortcuts'); db.drives = of('drives'); db.folders = of('folders'); db.files = of('files'); db.tiles = of('tiles');
   (by.pins || []).forEach((r) => { db.pins[r.id] = r.data; });
   (by.status || []).forEach((r) => { db.status[r.id] = r.data; });
+  const dls = {}; db.deadlines = of('deadlines').map((x) => (dls[x.id] = { ...x, done: {} }));
+  (by.dltick || []).forEach(({ data: x }) => { const t = dls[x.dl]; if (t) { const { dl, key, ...v } = x; t.done[key] = v; } });
   const chats = {}; db.chats = of('chats').map((c) => (chats[c.id] = { ...c, read: {} }));
   (by.read || []).forEach(({ data: x }) => { if (chats[x.chat]) chats[x.chat].read[x.user] = x.at; });
   const msgs = {}; db.messages = of('messages').map((m) => (msgs[m.id] = { ...m })).sort((a, b) => a.at - b.at);
@@ -3202,7 +3260,7 @@ function fromRecs(list) {
   db.counter = db.posts.reduce((a, p) => Math.max(a, p.no || 0), 1000);
   return db;
 }
-const PARENT = { rcp: ['posts', 'post'], act: ['posts', 'post'], vote: ['posts', 'post'], rx: ['messages', 'msg'], read: ['chats', 'chat'] };
+const PARENT = { rcp: ['posts', 'post'], act: ['posts', 'post'], vote: ['posts', 'post'], rx: ['messages', 'msg'], read: ['chats', 'chat'], dltick: ['deadlines', 'dl'] };
 const parentKey = (r) => (PARENT[r.coll] ? PARENT[r.coll][0] + '|' + r.data[PARENT[r.coll][1]] : null);
 
 const Sync = {
@@ -3894,6 +3952,9 @@ function ShiftSummary({ onClose }) {
   const waiting = c.vis.filter((p) => p.author === user.id && !p.closed && Object.values(p.recips).some((r) => r.status !== 'done')).length;
   const esc = db.posts.filter((p) => p.escalatedAt && Date.now() - p.escalatedAt < DAY && !p.closed && (p.author === user.id || (p.escalatedTo || []).includes(user.id)));
   const teamLate = user.role !== 'staff' ? c.vis.filter((p) => p.author !== user.id && !p.recips[user.id] && isOverdue(p)).length : 0;
+  const pm = reminderMap(db), today = dkey();
+  const meMine = canSeeME(db, user) ? (db.deadlines || []).filter((dl) => dl.owners.includes(user.id)).map((dl) => ({ dl, k: occKey(dl, today) }))
+    .filter(({ dl, k }) => k !== 'any' && k <= today && !meState(dl, k, pm.get(reminderId(dl, k))).done).sort((a, b) => a.k.localeCompare(b.k)) : [];
   const push = pushAvailability();
   const openNeeds = () => { onClose(); setFilters(NO_FILTERS); jump('view:needs'); };
   const row = (p, extra) => html`<li key=${p.id}><button onClick=${() => { onClose(); openPost(p.id); }}><${LevelTag} l=${p.level}/><span className="t">${p.title}</span>${extra}</button></li>`;
@@ -3909,7 +3970,8 @@ function ShiftSummary({ onClose }) {
     ${mine.length > 0 && html`<div className="sum-h">Start with these</div><ul className="sum-list">${mine.slice(0, 5).map((p) => row(p, isOverdue(p, user.id) && html`<span className="st bad">Overdue</span>`))}</ul>`}
     ${esc.length > 0 && html`<div className="sum-h">Escalated in the last day</div><ul className="sum-list">${esc.slice(0, 4).map((p) => row(p, html`<span className="st bad">Escalated</span>`))}</ul>`}
     ${chats.length > 0 && html`<div className="sum-h">Chats</div><ul className="sum-list">${chats.slice(0, 4).map(({ ch, n, at }) => html`<li key=${ch.id}><button onClick=${() => { onClose(); jump('chat:' + ch.id); }}><${ChatAvatar} c=${ch} s=${26}/><span className="t">${chatName(db, ch, user.id)}</span>${at && html`<span className="ci-at" title="You were tagged">@</span>`}<span className="ci-n">${n}</span></button></li>`)}</ul>`}
-    ${!mine.length && !msgs && html`<p className="sum-empty">Nothing is waiting on you. Have a good shift.</p>`}
+    ${meMine.length > 0 && html`<div className="sum-h">Month end</div><ul className="sum-list">${meMine.slice(0, 4).map(({ dl, k }) => html`<li key=${dl.id}><button onClick=${() => { onClose(); jump('view:monthend'); }}><span className=${'st ' + (k < today ? 'bad' : 'warn')}>${k < today ? 'Overdue' : 'Today'}</span><span className="t">${dl.title}</span></button></li>`)}</ul>`}
+    ${!mine.length && !msgs && !meMine.length && html`<p className="sum-empty">Nothing is waiting on you. Have a good shift.</p>`}
     ${push === 'ready' && pushState !== 'on' && html`<div className="push-card"><${Icon} n="bell"/><span>Get alerts on this device even when Floorboard is closed.</span><button className="btn sm primary" onClick=${enablePush}>Turn on</button></div>`}
     ${push === 'ios-install' && html`<div className="push-card"><${Icon} n="bell"/><span>To get alerts on iPhone when Floorboard is closed: open it in Safari, tap Share, then “Add to Home Screen”, and open it from there.</span></div>`}
   <//>`;
@@ -4108,6 +4170,384 @@ function GroupView({ id }) {
   <//>`;
 }
 
+/* ---------------- month end: Finance's deadline sheet, with reminders ---------------- */
+// One item per line of the sheet: { id, list, title, owners, due, repeat: '' | 'daily' | 'weekly', day, when, remind, star, dept, createdBy, createdAt }.
+// Ticks live in done as 'date|person', or 'date|*' when a manager closes the whole item; items with no fixed day use the date 'any'.
+// A reminder is an ordinary task sent remind days before, so it shows in Needs you and reaches phones. Ticking either one ticks both.
+const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+const MONTHS = ['january', 'february', 'march', 'april', 'may', 'june', 'july', 'august', 'september', 'october', 'november', 'december'];
+const REMIND_OPTS = [[-1, 'No reminder'], [0, 'On the day'], [1, 'The day before'], [2, '2 days before'], [3, '3 days before'], [7, 'A week before']];
+const REMIND_HOUR = 7; // the live store sends the day's reminders from 07:00
+const meDepts = (db) => db.depts.filter((d) => featureOn(d, 'monthend'));
+const canEditME = (db, u) => meDepts(db).length > 0 && (u.role === 'admin' || meDepts(db).some((d) => u.manages.includes(d.id)));
+function canSeeME(db, u) {
+  const ds = meDepts(db);
+  return ds.length > 0 && (u.role === 'admin' || ds.some((d) => u.depts.includes(d.id) || u.manages.includes(d.id)) || (db.deadlines || []).some((x) => x.owners.includes(u.id)));
+}
+const addDays = (k, n) => dkey(keyToDate(k).getTime() + n * DAY + 12 * HOUR);
+const dowOf = (k) => keyToDate(k).getDay();
+// the day that counts now: its date; today for weekday jobs (Monday at the weekend); this week's day for weekly ones
+function occKey(dl, today = dkey()) {
+  if (dl.repeat === 'daily') { let k = today; while (dowOf(k) === 0 || dowOf(k) === 6) k = addDays(k, 1); return k; }
+  if (dl.repeat === 'weekly') return addDays(today, (dl.day - dowOf(today) + 7) % 7);
+  return dl.due || 'any';
+}
+const reminderId = (dl, k) => 'p-dl-' + dl.id + '-' + k;
+const reminderMap = (db) => { const m = new Map(); db.posts.forEach((p) => { if (p.deadline) m.set(p.id, p); }); return m; };
+// someone's part is done on their reminder task when they have one, otherwise by the tick on the page
+function personDone(dl, k, who, p) {
+  const r = p && p.recips[who];
+  if (r) return r.status === 'done' ? { by: who, at: r.updatedAt } : null;
+  return (dl.done || {})[k + '|' + who] || null;
+}
+function meState(dl, k, p) {
+  const all = (dl.done || {})[k + '|*'] || null;
+  const parts = dl.owners.map((id) => ({ id, d: all || personDone(dl, k, id, p) }));
+  const n = parts.filter((x) => x.d).length;
+  return { parts, n, all, done: !!all || (parts.length > 0 && n === parts.length) };
+}
+function meTick(d, id, k, who, on, by) {
+  const dl = (d.deadlines || []).find((x) => x.id === id);
+  if (!dl) return;
+  dl.done = dl.done || {};
+  const now = Date.now(), p = d.posts.find((x) => x.id === reminderId(dl, k)), r = who !== '*' && p && p.recips[who];
+  if (r) {
+    r.status = on ? 'done' : 'todo'; r.pct = on ? 100 : 0; r.updatedAt = now; r.seen = r.seen || now;
+    p.activity.push({ id: uid('e'), kind: 'update', user: by, at: now, pct: r.pct, text: on ? 'Ticked off on the Month end page' : 'Unticked on the Month end page' });
+    return;
+  }
+  if (on) dl.done[k + '|' + who] = { by, at: now }; else delete dl.done[k + '|' + who];
+  if (who === '*' && p) { p.closed = on; p.activity.push({ id: uid('e'), kind: 'system', user: by, at: now, text: on ? 'marked it done on the Month end page' : 'opened it again on the Month end page' }); }
+}
+function meBody(dl) {
+  const often = dl.repeat === 'daily' ? 'Every weekday. ' : dl.repeat === 'weekly' ? 'Every ' + WEEKDAYS[dl.day] + '. ' : '';
+  return 'Month end · ' + dl.list + '. ' + often + (dl.when ? dl.when + '. ' : '') + 'Mark it done here when it’s finished and it ticks off on the Month end page too.';
+}
+// Any open app sends the day's reminders and tells the manager about misses. Fixed ids, so two devices doing it at once leave one.
+function meReminders(d, now, dry) {
+  if (!(d.deadlines || []).length || (CLOUD && new Date(now).getHours() < REMIND_HOUR)) return 0;
+  const today = dkey(now), pm = reminderMap(d);
+  let n = 0;
+  d.deadlines.forEach((dl) => {
+    const owners = dl.owners.filter((id) => { const u = userById(d, id); return u && u.active !== false; });
+    const k = occKey(dl, today);
+    if (!owners.length || k === 'any') return;
+    const p = pm.get(reminderId(dl, k)), st = meState(dl, k, p);
+    if (!p) {
+      if (dl.remind == null || dl.remind < 0 || k < today || addDays(k, -dl.remind) > today || st.done) return;
+      n++; if (dry) return;
+      const author = userById(d, dl.createdBy) ? dl.createdBy : owners[0], recips = {};
+      owners.forEach((id) => { const t = (dl.done || {})[k + '|' + id]; recips[id] = t ? { status: 'done', pct: 100, seen: t.at, updatedAt: t.at } : { status: 'todo', pct: 0, seen: null, updatedAt: null }; });
+      d.counter += 1;
+      d.posts.unshift({ id: reminderId(dl, k), chat: null, no: d.counter, type: 'task', title: dl.title, body: meBody(dl), author, createdAt: now, toUsers: owners, toDepts: [],
+        about: dl.dept || userById(d, author).depts[0], level: dl.repeat ? 'green' : 'amber', due: k, attachments: [], recips, activity: [], poll: null, closed: false, deadline: { id: dl.id, date: k } });
+    } else if (k < today && !p.lateAt && !p.closed && !st.done) {
+      n++; if (dry) return;
+      const boss = userById(d, dl.createdBy), tell = !!boss && boss.active !== false && !owners.includes(boss.id);
+      p.lateAt = now;
+      if (tell && !p.recips[boss.id]) p.recips[boss.id] = { status: 'todo', pct: 0, seen: null, updatedAt: null, late: now };
+      p.activity.push({ id: 'e-late-' + p.id, kind: 'system', esc: true, user: p.author, at: now, text: 'it missed its month-end date' + (tell ? ', so ' + firstName(boss) + ' was told' : '') });
+    } else if (p.lateAt && st.done && Object.values(p.recips).some((r) => r.late && r.status !== 'done')) {
+      n++; if (dry) return;
+      Object.values(p.recips).forEach((r) => { if (r.late) { r.status = 'done'; r.pct = 100; r.updatedAt = now; } });
+    }
+  });
+  return n;
+}
+// the demo store's Finance sheet, around today
+function demoDeadlines(T = Date.now()) {
+  const t = dkey(T), at = (n) => addDays(t, n);
+  const mk = (list, owners, title, o) => ({ list, title, owners, due: null, repeat: '', day: 0, when: '', remind: 1, star: false, dept: 'finance', createdBy: 'u3', createdAt: T - 5 * DAY, done: {}, ...o });
+  const tick = (n, who) => ({ [at(n) + '|' + who]: { by: who, at: Math.min(T + n * DAY, T - HOUR) } });
+  return [
+    mk('Debtors', ['u4'], 'Auto emails set up for the statements', { due: at(-4), done: tick(-4, 'u4') }),
+    mk('Debtors', ['u4'], 'Rental & readings invoices captured', { due: at(-1) }),
+    mk('Debtors', ['u4'], '7 & 14 days from invoices & cash flow', { due: t }),
+    mk('Debtors', ['u4'], '15 days from invoices part 1 & statement', { due: at(2), star: true }),
+    mk('Debtors', ['u4'], '21, 28 & 30 days from invoices: submit', { due: at(8) }),
+    mk('Debtors', ['u4'], '30 days from statement: full report on each query', { due: at(15) }),
+    mk('Debtors', ['u4'], 'Scanning & publishing (work control)', { repeat: 'daily', remind: -1 }),
+    mk('Debtors', ['u4'], 'Download airtime & reconcile', { repeat: 'weekly', day: 4, remind: 0 }),
+    mk('Month-end close', ['u3'], 'Check last month’s management queries are completed', { due: at(-2), done: tick(-2, 'u3') }),
+    mk('Month-end close', ['u3'], 'Expenses deadline: everything in before the P&L review', { due: at(1), star: true }),
+    mk('Month-end close', ['u3'], 'Cash & speedpoint / sales accounts', { due: at(3) }),
+    mk('Month-end close', ['u3'], 'Accruals (check the balance sheet)', { due: at(4) }),
+    mk('Month-end close', ['u3'], '1st review of the P&L', { due: at(7) }),
+    mk('Store managers', ['u5', 'u8', 'u10', 'u14'], 'Hand in all of last month’s invoices to Finance', { due: at(1), remind: 2, star: true, done: tick(1, 'u10') }),
+    mk('Store managers', ['u5', 'u8', 'u10', 'u14'], 'Sign off your department’s expenses', { due: at(3) }),
+    mk('Admin', ['u13'], 'Help with work control scanning', { when: 'When you have time', remind: -1 }),
+  ].map((x, i) => ({ id: 'dl-' + (i + 1), ...x }));
+}
+
+/* pasting the sheet from Excel: dates in the first column, the job in the next, a name on its own line starts a new list */
+function parseSheetDate(s) {
+  const mk = (y, m, d) => { if (y < 100) y += 2000; const t = new Date(y, m, d); return t.getFullYear() === y && t.getMonth() === m && t.getDate() === d ? dkey(t.getTime()) : null; };
+  const mon = (w) => MONTHS.findIndex((x) => x.slice(0, 3) === w.slice(0, 3).toLowerCase());
+  let m = s.match(/\b(\d{1,2})(?:st|nd|rd|th)?[\s\-./]+([A-Za-z]{3,9})\.?,?[\s\-./]+(\d{4}|\d{2})\b/);
+  if (m && mon(m[2]) >= 0) return mk(+m[3], mon(m[2]), +m[1]);
+  m = s.match(/\b([A-Za-z]{3,9})\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})\b/);
+  if (m && mon(m[1]) >= 0) return mk(+m[3], mon(m[1]), +m[2]);
+  m = s.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})$/);
+  if (m) return mk(+m[1], +m[2] - 1, +m[3]);
+  m = s.match(/^(\d{1,2})[/.\-](\d{1,2})[/.\-](\d{4}|\d{2})$/); // day first, the way South Africa writes it
+  if (m) return mk(+m[3], +m[2] - 1, +m[1]);
+  return null;
+}
+const isWhenWord = (c) => /^(every|daily|on avail|tbc|tba|start\b|as needed|when\b|ongoing|weekly)/i.test(c) || WEEKDAYS.some((w) => c.toLowerCase().startsWith(w.toLowerCase()));
+const reEsc = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+function guessOwners(db, name) {
+  const parts = name.split(/\s*(?:&|,|\+|\/|\band\b)\s*/i).map((x) => x.trim().toLowerCase()).filter(Boolean);
+  const act = db.users.filter((u) => u.active !== false);
+  return [...new Set(parts.flatMap((p) => act.filter((u) => u.name.toLowerCase() === p || u.name.split(' ')[0].toLowerCase() === p).map((u) => u.id)))];
+}
+// on a shared list, a job that names one of the people (“… - Zizile”) goes to just that person
+function ownersFor(db, owners, title) {
+  if (owners.length < 2) return owners;
+  const named = owners.filter((id) => { const u = userById(db, id); return u && new RegExp('\\b' + reEsc(u.name.split(' ')[0]) + '\\b', 'i').test(title); });
+  return named.length ? named : owners;
+}
+function parseSheet(text, db) {
+  const lists = [];
+  let cur = null;
+  const start = (name) => { cur = { name, owners: guessOwners(db, name), items: [] }; lists.push(cur); };
+  text.replace(/\r/g, '').split('\n').forEach((line) => {
+    const cells = line.split('\t').map((c) => c.replace(/\s+/g, ' ').trim()).filter(Boolean);
+    if (!cells.length) return;
+    if (cells.length === 1) {
+      const c = cells[0];
+      if (/^week\s*\d+\s*:?$/i.test(c) || parseSheetDate(c) || isWhenWord(c)) return; // a week heading, or a day with nothing on it
+      if (/deadlines?\s*$/i.test(c) && !lists.length) return; // the sheet's own title
+      if (c.length <= 40 && !/[.!?]$/.test(c)) { start(c); return; } // a heading: the next person or team
+    }
+    const first = cells.length > 1 ? cells[0] : '', title = (cells.length > 1 ? cells.slice(1) : cells).join(' · ');
+    if (!cur) start('Month end');
+    const it = { title, due: null, repeat: '', day: 0, when: '' };
+    const dt = first && parseSheetDate(first);
+    if (dt) it.due = dt;
+    else if (/every\s*day|daily/i.test(first)) it.repeat = 'daily';
+    else {
+      const days = WEEKDAYS.map((w, i) => [i, first.toLowerCase().lastIndexOf(w.toLowerCase())]).filter(([, at]) => at >= 0).sort((a, b) => b[1] - a[1]);
+      if (days.length) { it.repeat = 'weekly'; it.day = days[0][0]; if (!/^every\s/i.test(first)) it.when = first; } else it.when = first;
+    }
+    cur.items.push(it);
+  });
+  return lists.filter((l) => l.items.length);
+}
+function sheetWhen(it) {
+  if (it.due) return fmtKey(it.due);
+  if (it.repeat === 'daily') return 'Every weekday';
+  if (it.repeat === 'weekly') return 'Every ' + WEEKDAYS[it.day];
+  return it.when || 'Any time';
+}
+
+function OwnerPicker({ value, onChange, id }) {
+  const { db } = useApp();
+  return html`<div className="me-owners">
+    ${value.map((x) => { const u = userById(db, x); return u && html`<span key=${x} className="me-owner"><${Avatar} u=${u} s=${22}/>${labelFor(db, u)}<button type="button" onClick=${() => onChange(value.filter((y) => y !== x))} aria-label=${'Remove ' + u.name}><${Icon} n="close" s=${12}/></button></span>`; })}
+    <select id=${id} className="select me-add" value="" onChange=${(e) => { if (e.target.value) onChange([...value, e.target.value]); }} aria-label="Add a person">
+      <option value="">${value.length ? '+ Add someone' : 'Choose who does it'}</option>
+      ${db.users.filter((u) => u.active !== false && !value.includes(u.id)).map((u) => html`<option key=${u.id} value=${u.id}>${u.name} · ${u.title}</option>`)}
+    </select>
+  </div>`;
+}
+function MeRow({ x, showList, editable, onEdit }) {
+  const { db, user, update, openPost } = useApp();
+  const { dl, k, p, st } = x;
+  const today = dkey(), mine = dl.owners.includes(user.id);
+  // people tick their own part; a manager who isn't on it closes the whole item
+  const who = mine && !st.all ? user.id : editable ? '*' : null;
+  const on = who === '*' ? !st.all : !!who && !(st.parts.find((y) => y.id === who) || {}).d;
+  const canTick = !!who && !(who === '*' && st.done && !st.all);
+  const late = !st.done && k !== 'any' && k < today;
+  const when = dl.repeat === 'daily' ? 'Every weekday' : dl.repeat === 'weekly' ? 'Every ' + WEEKDAYS[dl.day].slice(0, 3) + (k === today ? ' · today' : '')
+    : k === 'any' ? (dl.when ? '' : 'Any time') : late ? 'Overdue · ' + fmtKey(k, { day: 'numeric', month: 'short' })
+    : k === today ? 'Today' : k === addDays(today, 1) ? 'Tomorrow' : fmtKey(k);
+  const remind = REMIND_OPTS.find(([n]) => n === dl.remind);
+  return html`<div className=${'me-row' + (st.done ? ' done' : '') + (late ? ' late' : '')}>
+    <button type="button" className=${'tick-box me-tick' + (st.done ? ' on' : '')} disabled=${!canTick} onClick=${() => update((d) => meTick(d, dl.id, k, who, on, user.id))}
+      aria-pressed=${st.done} aria-label=${(st.done ? 'Done: ' : 'Mark done: ') + dl.title}>${st.done && html`<${Icon} n="check" s=${14}/>`}</button>
+    <div className="me-main">
+      <div className="me-t">${dl.star && html`<span className="me-star" title="Important">★</span>`}${dl.title}</div>
+      <div className="me-m">
+        ${showList && html`<span className="chip">${dl.list}</span>`}
+        ${dl.owners.length === 0 ? html`<span className="muted">No one yet</span>` : dl.owners.map((id) => { const u = userById(db, id), part = st.parts.find((y) => y.id === id); return u && html`<span key=${id} className=${'me-who' + (dl.owners.length > 1 && part && part.d ? ' ok' : '')}>${labelFor(db, u)}${dl.owners.length > 1 && part && part.d && html`<${Icon} n="check" s=${12}/>`}</span>`; })}
+        ${dl.owners.length > 1 && !st.done && html`<span>${st.n} of ${dl.owners.length} done</span>`}
+        ${dl.when && html`<span>${dl.when}</span>`}
+        ${remind && remind[0] >= 0 && !st.done && html`<span className="me-bell" title=${'Reminder: ' + remind[1].toLowerCase()}><${Icon} n="bell" s=${12}/>${remind[1]}</span>`}
+        ${p && html`<button type="button" className="me-num" onClick=${() => openPost(p.id)} title="Open the reminder">#${p.no}</button>`}
+      </div>
+    </div>
+    ${when && html`<div className=${'me-when' + (late ? ' over' : '')}>${when}</div>`}
+    ${editable && html`<button type="button" className="icon-btn sm" onClick=${onEdit} aria-label=${'Edit ' + dl.title} title="Edit"><${Icon} n="edit" s=${15}/></button>`}
+  </div>`;
+}
+function DeadlineModal({ id, onClose }) {
+  const { db, user, update, toast, ask } = useApp();
+  const dl = (db.deadlines || []).find((x) => x.id === id);
+  const lists = [...new Set((db.deadlines || []).map((x) => x.list))];
+  const [v, setV] = useState(() => (dl ? { ...dl, kind: dl.repeat || (dl.due ? 'date' : 'any') } : { title: '', list: lists[0] || '', owners: [], kind: 'date', due: keyPlus(1), day: 4, when: '', remind: 1, star: false }));
+  const [err, setErr] = useState('');
+  const set = (k, x) => { setV((o) => ({ ...o, [k]: x })); setErr(''); };
+  const save = () => {
+    const title = v.title.trim();
+    if (!title) return setErr('Say what has to be done.');
+    if (v.kind === 'date' && !v.due) return setErr('Pick the date it’s due.');
+    const data = { title, list: v.list.trim() || 'Month end', owners: v.owners, due: v.kind === 'date' ? v.due : null, repeat: v.kind === 'daily' || v.kind === 'weekly' ? v.kind : '', day: Number(v.day) || 0, when: (v.when || '').trim(), remind: Number(v.remind), star: !!v.star };
+    update((d) => {
+      d.deadlines = d.deadlines || [];
+      if (dl) {
+        // a reminder that's still open goes out again with the new details
+        const changed = ['title', 'due', 'repeat', 'day', 'remind'].some((f) => String(dl[f]) !== String(data[f])) || dl.owners.join() !== data.owners.join();
+        Object.assign(d.deadlines.find((x) => x.id === dl.id), data);
+        if (changed) d.posts = d.posts.filter((p) => !(p.deadline && p.deadline.id === dl.id && !p.closed && Object.values(p.recips).some((r) => r.status !== 'done')));
+      } else {
+        const ds = meDepts(d);
+        d.deadlines.push({ id: uid('dl'), ...data, dept: (ds.find((x) => user.manages.includes(x.id)) || ds[0] || {}).id || null, createdBy: user.id, createdAt: Date.now(), done: {} });
+      }
+    });
+    onClose();
+    toast(dl ? 'Saved' : 'Added to ' + data.list);
+  };
+  const remove = () => ask({ title: 'Remove this deadline?', body: '“' + dl.title + '” comes off the Month end page, with its reminder if it’s still open.', confirm: 'Remove', danger: true, onConfirm: () => {
+    update((d) => { d.deadlines = d.deadlines.filter((x) => x.id !== dl.id); d.posts = d.posts.filter((p) => !(p.deadline && p.deadline.id === dl.id && !p.closed && Object.values(p.recips).some((r) => r.status !== 'done'))); });
+    onClose(); toast('Removed');
+  } });
+  return html`<${Modal} title=${dl ? 'Edit deadline' : 'Add a deadline'} onClose=${onClose} wide footer=${html`${dl && html`<button className="btn danger" style=${{ marginRight: 'auto' }} onClick=${remove}>Remove</button>`}<button className="btn" onClick=${onClose}>Cancel</button><button className="btn primary" onClick=${save}>${dl ? 'Save' : 'Add'}</button>`}>
+    <label className="field"><span>What has to be done</span><input id="dl-title" className="input" value=${v.title} onChange=${(e) => set('title', e.target.value)} placeholder="e.g. 15 days from invoices part 1 & statement" maxLength="200"/></label>
+    <div className="row2">
+      <label className="field"><span>List</span><input id="dl-list" className="input" list="dl-lists" value=${v.list} onChange=${(e) => set('list', e.target.value)} placeholder="e.g. Debtors, or the person’s name" maxLength="40"/><datalist id="dl-lists">${lists.map((l) => html`<option key=${l} value=${l}/>`)}</datalist><small>Lists split the page like the sections of your sheet.</small></label>
+      <label className="field"><span>Reminder</span><select id="dl-remind" className="select" value=${v.remind} onChange=${(e) => set('remind', Number(e.target.value))}>${REMIND_OPTS.map(([n, l]) => html`<option key=${n} value=${n}>${l}</option>`)}</select><small>Sent as a task to whoever does it.</small></label>
+    </div>
+    <div className="field"><span>When</span><div className="seg" role="group">${[['date', 'On a date'], ['daily', 'Every weekday'], ['weekly', 'Every week'], ['any', 'No fixed day']].map(([k, l]) => html`<button type="button" key=${k} className=${v.kind === k ? 'on' : ''} onClick=${() => set('kind', k)}>${l}</button>`)}</div></div>
+    ${v.kind === 'date' && html`<label className="field"><span>Due</span><input id="dl-due" type="date" className="input" value=${v.due || ''} onChange=${(e) => set('due', e.target.value)}/></label>`}
+    ${v.kind === 'weekly' && html`<label className="field"><span>Day</span><select id="dl-day" className="select" value=${v.day} onChange=${(e) => set('day', Number(e.target.value))}>${WEEKDAYS.map((w, i) => html`<option key=${i} value=${i}>${w}</option>`)}</select></label>`}
+    <label className="field"><span>Note (optional)</span><input id="dl-when" className="input" value=${v.when || ''} onChange=${(e) => set('when', e.target.value)} placeholder="e.g. Start Wednesday, submit Thursday" maxLength="80"/></label>
+    <div className="field"><span>Who does it</span><${OwnerPicker} id="dl-owner" value=${v.owners} onChange=${(x) => set('owners', x)}/>${v.owners.length > 1 && html`<small>Each person ticks their own part. It counts as done once everyone has.</small>`}</div>
+    <label className="me-check"><input id="dl-star" type="checkbox" checked=${!!v.star} onChange=${(e) => set('star', e.target.checked)}/>Important: show it with a star</label>
+    ${err && html`<p className="err" role="alert">${err}</p>`}
+  <//>`;
+}
+function PasteModal({ onClose }) {
+  const { db, user, update, toast } = useApp();
+  const [text, setText] = useState('');
+  const [plan, setPlan] = useState([]);
+  const [remind, setRemind] = useState(1);
+  const read = (t) => { setText(t); setPlan(parseSheet(t, db)); };
+  const setL = (i, patch) => setPlan((pl) => pl.map((l, j) => (j === i ? { ...l, ...patch } : l)));
+  const have = (l, it) => (db.deadlines || []).some((x) => x.list === (l.name.trim() || 'Month end') && x.title === it.title && (x.due || null) === it.due && (x.repeat || '') === it.repeat);
+  const adds = plan.map((l) => l.items.filter((it) => !have(l, it)));
+  const n = adds.reduce((a, x) => a + x.length, 0);
+  const sample = () => {
+    const at = (k) => fmtKey(addDays(dkey(), k), { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' });
+    read(['Month end deadlines', 'Lerato', at(1) + '\tSend all statements for the month', at(2) + '\t7 & 14 days from invoices & cash flow', at(5) + '\t15 days from invoices part 1 & statement (submit)',
+      'Every Thursday\tDownload airtime x 2 & reconcile', 'Everyday\tScanning & publishing (work control)', '', 'Ayesha & Lerato', at(3) + '\tCheck last month’s management queries are done - Ayesha',
+      at(6) + '\tAged receivables up to date - Lerato', 'On availability\tHelp with work control scanning'].join('\n'));
+  };
+  const save = () => {
+    if (!n) return;
+    const now = Date.now(), ds = meDepts(db), dept = (ds.find((d) => user.manages.includes(d.id)) || ds[0] || {}).id || null;
+    update((d) => {
+      d.deadlines = d.deadlines || [];
+      plan.forEach((l, i) => adds[i].forEach((it) => d.deadlines.push({ id: uid('dl'), list: l.name.trim() || 'Month end', title: it.title, owners: ownersFor(d, l.owners, it.title), due: it.due, repeat: it.repeat, day: it.day, when: it.when,
+        remind: it.repeat === 'daily' ? -1 : it.repeat === 'weekly' ? 0 : remind, star: false, dept, createdBy: user.id, createdAt: now, done: {} })));
+    });
+    toast('Added ' + n + (n === 1 ? ' deadline' : ' deadlines'));
+    onClose();
+  };
+  return html`<${Modal} title="Paste your month-end sheet" onClose=${onClose} wide footer=${html`${n > 0 && html`<span className="reach">${plan.length} ${plan.length === 1 ? 'list' : 'lists'}</span>`}<button className="btn" onClick=${onClose}>Cancel</button><button className="btn primary" disabled=${!n} onClick=${save}>${n ? 'Add ' + n + (n === 1 ? ' deadline' : ' deadlines') : 'Add'}</button>`}>
+    <p className="muted sm" style=${{ margin: 0 }}>In Excel, select the rows (the date in one column, the job in the next) and copy them. A name on its own line, like a person or team, starts a new list. <b>Every Thursday</b> and <b>Everyday</b> repeat.</p>
+    <textarea id="me-paste" className="me-paste" rows="7" value=${text} onChange=${(e) => read(e.target.value)} placeholder=${'Lerato\nThursday, 29 October 2026\tAuto emails set up for the statements\nFriday, 30 October 2026\tRental & readings invoices captured\nEvery Thursday\tDownload airtime x 2 & reconcile'} aria-label="Rows copied from Excel" spellCheck="false"></textarea>
+    ${!CLOUD && !text && html`<div><button type="button" className="btn sm" onClick=${sample}>Try it with an example</button></div>`}
+    ${plan.length > 0 && html`<label className="field"><span>Remind people about dated jobs</span><select id="me-remind" className="select" value=${remind} onChange=${(e) => setRemind(Number(e.target.value))}>${REMIND_OPTS.map(([r, l]) => html`<option key=${r} value=${r}>${l}</option>`)}</select><small>Weekly jobs remind on the day; everyday jobs don’t send reminders. You can change any of them later.</small></label>`}
+    <div className="me-plan">${plan.map((l, i) => {
+      const dated = l.items.filter((it) => it.due).map((it) => it.due).sort(), skip = l.items.length - adds[i].length;
+      return html`<div className="me-plan-i" key=${i}>
+        <div className="row2">
+          <label className="field"><span>List</span><input id=${'me-l-' + i} className="input" value=${l.name} onChange=${(e) => setL(i, { name: e.target.value })} maxLength="40"/></label>
+          <div className="field"><span>Who does these</span><${OwnerPicker} id=${'me-o-' + i} value=${l.owners} onChange=${(o) => setL(i, { owners: o })}/></div>
+        </div>
+        <small className="muted">${adds[i].length} to add${skip ? ' · ' + skip + ' already on the page' : ''}${dated.length ? ' · ' + fmtKey(dated[0], { day: 'numeric', month: 'short' }) + ' to ' + fmtKey(dated[dated.length - 1], { day: 'numeric', month: 'short' }) : ''}${l.owners.length > 1 ? ' · jobs that name one of them go to just that person' : ''}</small>
+        ${!l.owners.length && html`<small className="st warn">No one chosen yet, so these won’t send reminders.</small>`}
+        <ul>${l.items.slice(0, 3).map((it, j) => html`<li key=${j}><b>${sheetWhen(it)}</b>: ${it.title}</li>`)}${l.items.length > 3 && html`<li className="muted">and ${l.items.length - 3} more</li>`}</ul>
+      </div>`;
+    })}</div>
+    ${text.trim() && !plan.length && html`<p className="err">Couldn’t find any jobs in that. Copy the date and job columns from Excel and paste them again.</p>`}
+  <//>`;
+}
+function MonthEndView() {
+  const { db, user, update, toast, compose, ask } = useApp();
+  const editor = canEditME(db, user);
+  const [who, setWho] = useState(() => (editor ? 'all' : 'mine'));
+  const [by, setBy] = useState('day');
+  const [modal, setModal] = useState(null);
+  const [showDone, setShowDone] = useState(false);
+  const today = dkey(), tomorrow = addDays(today, 1), pm = reminderMap(db);
+  const weekEnd = addDays(today, (7 - dowOf(today)) % 7), nextEnd = addDays(weekEnd, 7), recent = addDays(today, -14);
+  const all = (db.deadlines || []).map((dl) => { const k = occKey(dl, today), p = pm.get(reminderId(dl, k)); return { dl, k, p, st: meState(dl, k, p) }; });
+  const rows = all.filter((x) => who === 'all' || x.dl.owners.includes(user.id));
+  const open = rows.filter((x) => !x.st.done), dated = (f) => open.filter((x) => x.k !== 'any' && f(x.k));
+  const late = dated((k) => k < today), done = rows.filter((x) => x.st.done && (showDone || x.k === 'any' || x.k >= recent));
+  const mineOpen = all.filter((x) => x.dl.owners.includes(user.id) && !x.st.done).length;
+  const byDate = (a, b) => (a.k === 'any') - (b.k === 'any') || a.k.localeCompare(b.k) || a.dl.list.localeCompare(b.dl.list) || a.dl.title.localeCompare(b.dl.title);
+  const row = (x, showList) => html`<${MeRow} key=${x.dl.id} x=${x} showList=${showList} editable=${editor} onEdit=${() => setModal(x.dl.id)}/>`;
+  const sec = (key, title, list, cls) => list.length > 0 && html`<section key=${key} className=${'me-sec' + (cls ? ' ' + cls : '')}><h3>${title} <b>${list.length}</b></h3>${list.sort(byDate).map((x) => row(x, true))}</section>`;
+  // the month being closed: last month until the 20th, then this one
+  const month = (() => { const d = new Date(); if (d.getDate() <= 20) d.setMonth(d.getMonth() - 1, 1); return d.toLocaleDateString('en-ZA', { month: 'long' }); })();
+  const askInvoices = () => compose({ type: 'task', level: 'amber', to: [{ k: 'd', id: 'managers' }], about: (meDepts(db)[0] || {}).id, due: addDays(today, 2),
+    title: 'Hand in all your ' + month + ' invoices to Finance', body: 'Month end: please get every ' + month + ' invoice and signed expense slip to Finance. Mark this done once all of yours are in, so Finance can see who is still outstanding.' });
+  const removeList = (name) => ask({ title: 'Remove the ' + name + ' list?', body: 'All of its deadlines come off the page, with any reminders still open. Do this to clear last month before pasting the new sheet.', confirm: 'Remove list', danger: true, onConfirm: () => {
+    update((d) => {
+      const ids = new Set((d.deadlines || []).filter((x) => x.list === name).map((x) => x.id));
+      d.deadlines = d.deadlines.filter((x) => !ids.has(x.id));
+      d.posts = d.posts.filter((p) => !(p.deadline && ids.has(p.deadline.id) && !p.closed && Object.values(p.recips).some((r) => r.status !== 'done')));
+    });
+    toast('Removed the ' + name + ' list');
+  } });
+  const lists = [...new Set(rows.map((x) => x.dl.list))];
+  return html`<${Page} title="Month end" sub="Finance’s month-end sheet. Everyone gets a reminder before their dates, and whoever set a deadline is told if it’s missed."
+    actions=${editor && html`<button className="btn" onClick=${askInvoices}><${Icon} n="send" s=${15}/>Ask managers for invoices</button><button className="btn" onClick=${() => setModal('paste')}><${Icon} n="copy" s=${15}/>Paste from Excel</button><button className="btn primary" onClick=${() => setModal('new')}><${Icon} n="plus" s=${16}/>Add a deadline</button>`}>
+    <div className="stats">
+      <div className=${'stat' + (late.length ? ' bad' : '')}><b>${late.length}</b><span>Overdue</span></div>
+      <div className=${'stat' + (dated((k) => k === today).length ? ' warn' : '')}><b>${dated((k) => k === today).length}</b><span>Due today</span></div>
+      <div className="stat"><b>${dated((k) => k > today && k <= weekEnd).length}</b><span>Rest of this week</span></div>
+      <div className="stat ok"><b>${rows.filter((x) => x.st.done && (x.k === 'any' || x.k >= recent)).length}</b><span>Done in the last 2 weeks</span></div>
+    </div>
+    <div className="filters">
+      <div className="seg" role="group" aria-label="Whose deadlines"><button className=${who === 'all' ? 'on' : ''} onClick=${() => setWho('all')}>Everyone <b>${all.filter((x) => !x.st.done).length}</b></button><button className=${who === 'mine' ? 'on' : ''} onClick=${() => setWho('mine')}>Mine <b>${mineOpen}</b></button></div>
+      <div className="seg" role="group" aria-label="Arrange by"><button className=${by === 'day' ? 'on' : ''} onClick=${() => setBy('day')}>By day</button><button className=${by === 'list' ? 'on' : ''} onClick=${() => setBy('list')}>By list</button></div>
+      <button className="btn sm ghost" onClick=${() => setShowDone((s) => !s)}>${showDone ? 'Hide older done' : 'Show older done'}</button>
+    </div>
+    ${!rows.length ? html`<div className="empty"><${Icon} n="calendar" s=${24}/>
+        <h3>${who === 'mine' && all.length ? 'Nothing on your list' : 'No deadlines yet'}</h3>
+        <p>${who === 'mine' && all.length ? 'Switch to Everyone to see the whole team’s month end.' : editor ? 'Paste your month-end sheet from Excel, or add deadlines one at a time. Each person gets a reminder before their dates.' : 'When Finance adds the month-end deadlines, yours show up here.'}</p>
+        ${editor && !all.length && html`<button className="btn primary" onClick=${() => setModal('paste')}>Paste from Excel</button>`}</div>`
+    : by === 'day' ? html`<div className="me-days">
+        ${sec('late', 'Overdue', late, 'late')}
+        ${sec('today', 'Today · ' + fmtKey(today, { weekday: 'long', day: 'numeric', month: 'long' }), dated((k) => k === today))}
+        ${sec('tomorrow', 'Tomorrow', dated((k) => k === tomorrow))}
+        ${sec('week', 'Later this week', dated((k) => k > tomorrow && k <= weekEnd))}
+        ${sec('next', 'Next week', dated((k) => k > weekEnd && k <= nextEnd && k > tomorrow))}
+        ${sec('later', 'Later', dated((k) => k > nextEnd && k > tomorrow))}
+        ${sec('any', 'No fixed day', open.filter((x) => x.k === 'any'))}
+        ${!open.length && html`<div className="notice"><${Icon} n="check" s=${16}/>Everything here is done.</div>`}
+        ${sec('done', 'Done', done.sort((a, b) => b.k.localeCompare(a.k)), 'is-done')}
+      </div>`
+    : html`<div className="me-lists">${lists.map((name) => {
+        const its = rows.filter((x) => x.dl.list === name), owners = [...new Set(its.flatMap((x) => x.dl.owners))];
+        const fixed = its.filter((x) => !x.dl.repeat && x.k !== 'any'), nd = fixed.filter((x) => x.st.done).length;
+        const vis = its.filter((x) => !x.st.done || showDone || x.k === 'any' || x.k >= recent).sort((a, b) => a.st.done - b.st.done || byDate(a, b));
+        return html`<section className="me-list" key=${name}>
+          <div className="me-list-h"><h3>${name}</h3><div className="stack">${owners.slice(0, 6).map((id) => userById(db, id) && html`<${Avatar} key=${id} u=${userById(db, id)} s=${24}/>`)}</div>
+            ${editor && html`<button className="icon-btn sm" onClick=${() => removeList(name)} title="Remove this list" aria-label=${'Remove the ' + name + ' list'}><${Icon} n="trash" s=${15}/></button>`}</div>
+          ${fixed.length > 0 && html`<div className="me-prog"><span className="bar sm"><i style=${{ width: Math.round((nd / fixed.length) * 100) + '%' }}></i></span><span className="muted sm">${nd} of ${fixed.length} done</span></div>`}
+          ${vis.map((x) => row(x, false))}
+        </section>`;
+      })}</div>`}
+    ${modal === 'paste' && html`<${PasteModal} onClose=${() => setModal(null)}/>`}
+    ${modal && modal !== 'paste' && html`<${DeadlineModal} id=${modal === 'new' ? null : modal} onClose=${() => setModal(null)}/>`}
+  <//>`;
+}
+
 /* ---------------- wallpaper & glass: each person's own look ---------------- */
 // Saved privately with the person's pins, so it follows them to their other devices,
 // and on this device too, so the login screen already looks like theirs.
@@ -4198,7 +4638,7 @@ function myShortcuts(db, u) {
 }
 function pageOptions(db, u) {
   return [['needs', 'Needs you'], ['chats', 'Chats'], ['all', 'Everything for you'], ['sent', 'Sent & tracking'], u.role !== 'staff' && ['team', 'Team progress'],
-    ['pins', 'My pins'], ['groups', 'Projects & issues'], ['search', 'Search'],
+    ['pins', 'My pins'], ['groups', 'Projects & issues'], ['search', 'Search'], canSeeME(db, u) && ['monthend', 'Month end'],
     ...db.depts.map((d) => ['dept:' + d.id, d.name + ' page']), ...myGroups(db, u).filter((g) => !g.archived).map((g) => ['group:' + g.id, g.name])].filter(Boolean);
 }
 function ShortcutModal({ sc, onClose }) {
@@ -4306,6 +4746,7 @@ function Shell() {
   else if (view === 'pins') content = html`<${PinsView}/>`;
   else if (view === 'search') content = html`<${SearchView}/>`;
   else if (view === 'admin') content = html`<${AdminView}/>`;
+  else if (view === 'monthend') content = html`<${MonthEndView}/>`;
   const note = CLOUD ? html`<p className="board-note">Live: everyone in the store sees changes as they happen.</p>` : html`<p className="board-note">Demo store with example staff. Changes stay on this device. <button onClick=${() => ask({ title: 'Reset the demo store?', body: 'All posts, files, pins and people go back to the example data. Anything you added is removed.', confirm: 'Reset demo', danger: true, onConfirm: resetDemo })}>Reset demo</button></p>`;
   return html`<div className=${'shell' + (openId ? ' has-detail' : '') + (chatsMode && openChatId ? ' chat-open' : '')}>
     <${Topbar}/>
@@ -4502,6 +4943,12 @@ function App() {
     const due = dbRef.current.posts.filter((p) => escalationDue(p, now)).map((p) => p.id);
     if (due.length) update((d) => due.forEach((id) => escalate(d, id, now)));
   }, [user && user.id, cloud, tick]);
+  // month-end reminders: any open app sends the day's ones and tells the manager about misses
+  useEffect(() => {
+    if (!user || (CLOUD && cloud !== 'ready')) return;
+    const now = Date.now();
+    if (meReminders(dbRef.current, now, true)) update((d) => { meReminders(d, now); });
+  }, [user && user.id, cloud, tick, db.deadlines]);
   // the start-of-shift summary: once a day, once this person is on shift
   useEffect(() => {
     if (!user || (CLOUD && cloud !== 'ready')) return;
