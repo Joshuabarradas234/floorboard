@@ -902,6 +902,15 @@ td.mono{white-space:nowrap}
 .wk-st{display:grid;gap:6px;padding:10px 0;border-bottom:1px solid var(--glass-line)}
 .wk-st-top{display:flex;gap:8px;align-items:center}
 .w-day{flex:none;padding:10px 12px;border-radius:22px}
+.wk-pay{display:grid;gap:4px;padding:8px 10px;margin:0 0 4px;border-radius:12px;background:rgba(255,255,255,.07);border:1px solid var(--glass-line)}
+.wk-payrow{display:flex;gap:7px;align-items:center;background:none;border:0;color:var(--ink);font:inherit;font-size:13px;padding:3px 0;text-align:left;cursor:pointer}
+.wk-payrow span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wk-payrow em{font-style:normal;font-family:var(--f-mono);font-size:12px;color:var(--ink-2)}
+.wk-spot{display:flex;gap:6px;align-items:center;background:none;border:0;color:var(--amber-dot,#f5b942);font:inherit;font-size:12.5px;font-weight:700;padding:3px 0;text-align:left;cursor:pointer}
+.b-pay{display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:6px;font-size:12.5px}
+.b-pay.ask span{font-weight:700}
+.b-pay.sent{background:rgba(255,255,255,.12);border:0;border-radius:99px;color:inherit;padding:3px 10px;font:inherit;font-size:12px;font-weight:700;cursor:pointer}
+.me-row.spot{flex-wrap:wrap}
 .w-day .wk-day,.board-col .wk-day.tdc,.inline-board .wk-day.tdc{background:none;border:0;box-shadow:none;padding:0}
 .board-col .tdc-wrap,.inline-board .tdc-wrap{margin-top:14px;padding:14px;border-radius:var(--r-lg);background:var(--glass);border:1px solid var(--glass-line);border-top-color:rgba(255,255,255,.3)}
 .board-col .stk,.inline-board .stk{margin-top:14px;padding:14px;border-radius:var(--r-lg);background:var(--glass);border:1px solid var(--glass-line);border-top-color:rgba(255,255,255,.3)}
@@ -1863,6 +1872,7 @@ function seed() {
   // on shift / off shift examples: Nomsa is off today, Tumi works the late shift
   db.status = { u7: { mode: 'off', at: T }, u14: { mode: 'auto', start: '14:00', end: '22:00', days: [1, 2, 3, 4, 5, 6], tz: new Date().getTimezoneOffset(), at: T } };
   demoApprovals(db, T);
+  demoSpotted(db, T);
   demoStickies(db, T);
   db.events = demoEvents(T);
   return db;
@@ -1877,6 +1887,7 @@ function loadDb() {
         if (!Array.isArray(d.deadlines)) { d.deadlines = demoDeadlines(); const f = (d.depts || []).find((x) => x.id === 'finance'); if (f) f.features = { ...(f.features || {}), monthend: true }; }
         if (!(d.depts || []).some((x) => x.features && 'approvals' in x.features)) demoApprovals(d);
         if (!Array.isArray(d.events)) d.events = demoEvents();
+        if (!(d.messages || []).some((m) => m.id === 'm-spot1')) demoSpotted(d);
         if (!d.plans) { const f = (d.depts || []).find((x) => x.id === 'finance'); if (f) f.features = { ...(f.features || {}), planner: true }; demoPlanner(d); }
         if (!(d.depts || []).some((x) => x.features && 'quotes' in x.features)) {
           const ad = (d.depts || []).find((x) => x.id === 'admin');
@@ -2517,7 +2528,7 @@ function Composer({ preset, onClose }) {
   const [level, setLevel] = useState(preset.level || 'amber');
   const [title, setTitle] = useState(preset.title || ''); const [body, setBody] = useState(preset.body || ''); const [due, setDue] = useState(preset.due || '');
   const [files, setFiles] = useState([]);
-  const [ap, setAp] = useState({ kind: 'Invoice', party: '', amount: '', ref: '', rule: 'any' });
+  const [ap, setAp] = useState(() => ({ kind: 'Invoice', party: '', amount: '', ref: '', rule: 'any', ...(preset.ap || {}) }));
   const setA = (k, v) => { setAp((o) => ({ ...o, [k]: v })); setErr(''); };
   const amount = Number(String(ap.amount).replace(/[\sR]/g, '').replace(',', '.')) || 0;
   const [opts, setOpts] = useState(['', '']); const [multi, setMulti] = useState(false); const [closes, setCloses] = useState(keyPlus(3));
@@ -2550,7 +2561,7 @@ function Composer({ preset, onClose }) {
     const options = opts.map((o) => o.trim()).filter(Boolean);
     if (type === 'vote' && options.length < 2) return setErr('A vote needs at least two options.');
     setBusy(true);
-    const atts = await storeFiles(files);
+    const atts = [...(preset.atts || []), ...(await storeFiles(files))];
     const no = db.counter + 1;
     update((d) => {
       d.counter = Math.max(d.counter + 1, no);
@@ -2562,9 +2573,12 @@ function Composer({ preset, onClose }) {
         about: about || user.depts[0], level, due: (type === 'task' || type === 'approval') && due ? due : null, attachments: atts, recips, activity: [],
         poll: type === 'vote' ? { multi, closes, options: options.map((t, i) => ({ id: 'o' + (i + 1), text: t })), votes: {} } : null, closed: false,
         ...(type === 'approval' ? { approval: { kind: ap.kind, party: ap.party.trim(), amount, ref: ap.ref.trim(), rule: Object.keys(recips).length > 1 ? ap.rule : 'any', approvers: Object.keys(recips), paidAt: null, paidBy: null, payNote: '' } } : {}) });
+      // sent for payment from a document in a chat: the chat shows it went, so nobody sends it twice
+      const fm = preset.fromMsg && d.messages.find((x) => x.id === preset.fromMsg);
+      if (fm) { fm.payPost = pid; d.messages.push({ id: uid('m'), chat: fm.chat, user: user.id, at: now + 1, kind: 'system', text: firstName(user) + ' sent it for payment as #' + d.counter, attachments: [], mentions: [], replyTo: null, postId: null }); }
     });
     toast('#' + no + ' sent to ' + reach.length + (reach.length === 1 ? ' person' : ' people'));
-    onClose(); go(type === 'approval' ? 'approvals' : 'sent');
+    onClose(); if (!preset.fromMsg) go(type === 'approval' ? 'approvals' : 'sent');
   }
   const footer = html`<span className="reach">${reach.length ? 'Reaches ' + reach.length + (reach.length === 1 ? ' person' : ' people') : 'Tag someone to send'}</span>
     <button className="btn" onClick=${onClose}>Cancel</button>
@@ -2607,7 +2621,8 @@ function Composer({ preset, onClose }) {
       <div style=${{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}><button type="button" className="btn sm" onClick=${() => setOpts((arr) => [...arr, ''])}><${Icon} n="plus" s=${14}/>Add option</button>
       <label className="sm" style=${{ display: 'flex', gap: 6, alignItems: 'center' }}><input type="checkbox" checked=${multi} onChange=${(e) => setMulti(e.target.checked)}/>People can pick more than one</label></div>
     </div></div>`}
-    <div className="field"><span>${type === 'approval' ? 'Photo or PDF of the invoice or slip' : 'Photos, videos or documents'}</span><${AttachPicker} files=${files} setFiles=${setFiles}/></div>
+    <div className="field"><span>${type === 'approval' ? 'Photo or PDF of the invoice or slip' : 'Photos, videos or documents'}</span>
+      ${(preset.atts || []).length > 0 && html`<small className="muted"><${Icon} n="clip" s=${12}/> From the chat: ${preset.atts.map((a) => a.name).join(', ')}</small>`}<${AttachPicker} files=${files} setFiles=${setFiles}/></div>
     ${err && html`<p className="err" role="alert">${err}</p>`}
   <//>`;
 }
@@ -3308,7 +3323,7 @@ function AlertControls({ onDone }) {
 const REACTIONS = ['👍', '✅', '❤️', '😂', '🙏', '👀'];
 function canPinIn(c, u) { if (c.kind === 'dm') return true; if (c.dept) return u.role === 'admin' || u.manages.includes(c.dept); return c.createdBy === u.id || u.role === 'admin'; }
 function Bubble({ m, c, grouped, members, active, picking, canPin, onSelect, onReply, onReact, onPick, onPin }) {
-  const { db, user } = useApp();
+  const { db, user, compose } = useApp();
   const [tr, translate] = useTranslate(m.text || '');
   if (m.kind === 'system') return html`<div className="cv-sys"><span>${m.text}</span></div>`;
   const mine = m.user === user.id, u = userById(db, m.user), group = c.kind !== 'dm';
@@ -3326,6 +3341,7 @@ function Bubble({ m, c, grouped, members, active, picking, canPin, onSelect, onR
       ${m.postId && (p ? html`<${CardInChat} p=${p}/>` : html`<div className="muted sm">This post was deleted.</div>`)}
       ${!m.postId && m.attachments && m.attachments.length > 0 && html`<${Attachments} items=${m.attachments}/>`}
       ${!m.postId && m.text && html`<div className="b-text"><${MsgText} text=${m.text} mentions=${m.mentions}/></div>`}
+      ${c.kind !== 'dm' && html`<${PayLine} m=${m} mine=${mine}/>`}
       ${tr && html`<div className="b-tr">${tr === 'busy' ? html`<small>Translating…</small>` : html`<small>Translated from ${langName(tr.from)} · <button onClick=${translate}>hide</button></small>${tr.text}`}</div>`}
       ${Object.keys(counts).length > 0 && html`<div className="b-reacts">${Object.entries(counts).map(([e, n]) => html`<button key=${e} className=${myReact === e ? 'mine' : ''} onClick=${(ev) => { ev.stopPropagation(); onReact(e); }} title=${myReact === e ? 'Remove your reaction' : 'React ' + e}>${e}${n > 1 ? ' ' + n : ''}</button>`)}</div>`}
       <div className="b-meta">${c.pinned === m.id && html`<${Icon} n="pin" s=${11}/>`}<span>${hm(m.at)}</span>${mine && html`<span className=${'ticks' + (readAll ? ' read' : '')} title=${readAll ? 'Read by everyone' : 'Delivered'}>✓✓</span>`}</div>
@@ -3335,6 +3351,7 @@ function Bubble({ m, c, grouped, members, active, picking, canPin, onSelect, onR
         <button className="icon-btn sm" onClick=${onPick} aria-label="React" title="React"><${Icon} n="smile" s=${15}/></button>
         <button className="icon-btn sm" onClick=${onReply} aria-label="Reply" title="Reply"><${Icon} n="reply" s=${15}/></button>
         ${!m.postId && m.text && html`<button className="icon-btn sm" onClick=${translate} aria-label="Translate" title="Translate"><${Icon} n="translate" s=${15}/></button>`}
+        ${payDoc(m) && !m.payPost && approvalsOn(db) && (mine || canPay(db, user)) && html`<button className="icon-btn sm" onClick=${() => compose(payPreset(db, m))} aria-label="Send for payment" title="Send for payment"><${Icon} n="stamp" s=${15}/></button>`}
         ${canPin && html`<button className="icon-btn sm" onClick=${onPin} aria-label=${c.pinned === m.id ? 'Unpin' : 'Pin to the top'} title=${c.pinned === m.id ? 'Unpin' : 'Pin to the top'}><${Icon} n="pin" s=${15}/></button>`}
       </div>`}
   </div>`;
@@ -6016,9 +6033,62 @@ function ApprovalRow({ p, s, payer }) {
     </div>
   </div>`;
 }
+// Payments posted in the group chats: a document with words like quote, invoice or please pay. Floorboard asks whoever posted it,
+// and Finance sees the ones nobody sent, so nothing posted for payment gets lost in a group. Direct messages are left alone.
+const PAY_WORDS = /\b(quotes?|quotation|qte|invoices?|inv|pay|payment|statement|bill|eft)\b/i;
+const payDoc = (m) => !m.postId && m.kind !== 'system' && (m.attachments || []).some((a) => a.kind === 'doc' || a.kind === 'image');
+const payLike = (m) => payDoc(m) && (PAY_WORDS.test(m.text || '') || m.attachments.some((a) => PAY_WORDS.test((a.name || '').replace(/[_.-]+/g, ' '))));
+function spotted(db) {
+  const cut = Date.now() - 14 * DAY, groupChats = new Set(db.chats.filter((c) => c.kind !== 'dm').map((c) => c.id));
+  return db.messages.filter((m) => groupChats.has(m.chat) && m.at >= cut && payLike(m) && !m.payPost && !m.notPay).sort((a, b) => b.at - a.at);
+}
+// a new approval filled in from the chat document: the files, a guess at the supplier, number and amount, and Finance as approvers
+function payPreset(db, m) {
+  const a = m.attachments.find((x) => x.kind === 'doc') || m.attachments[0], g = guessFromFile(a.name || '');
+  const all = (a.name || '') + ' ' + (m.text || ''), amt = ((m.text || '').match(/R\s?(\d[\d\s]*(?:[.,]\d{1,2})?)/i) || [])[1];
+  return { type: 'approval', ap: { kind: /quot|qte/i.test(all) ? 'Quote' : /invoice|\binv\b/i.test(all) ? 'Invoice' : 'Payment', party: g.party, amount: amt ? amt.replace(/\s/g, '') : '', ref: g.ref },
+    atts: m.attachments, fromMsg: m.id, body: m.text || '', to: db.depts.filter((d) => featureOn(d, 'approvals')).map((d) => ({ k: 'd', id: d.id })) };
+}
+function PayLine({ m, mine }) {
+  const { db, user, update, compose, openPost } = useApp();
+  if (!payDoc(m) || !approvalsOn(db)) return null;
+  const p = m.payPost && db.posts.find((x) => x.id === m.payPost);
+  if (p) return html`<button className="b-pay sent" onClick=${(e) => { e.stopPropagation(); openPost(p.id); }}><${Icon} n="stamp" s=${13}/>Sent for payment · #${p.no} · ${AP_STATES[apState(p)][0]}</button>`;
+  if (m.notPay || !payLike(m) || !(mine || canPay(db, user))) return null;
+  const no = () => update((d) => { const x = d.messages.find((y) => y.id === m.id); if (x) x.notPay = true; });
+  return html`<div className="b-pay ask" onClick=${(e) => e.stopPropagation()}>${mine && html`<span>Is this for payment?</span>`}
+    <button className="btn sm" onClick=${() => compose(payPreset(db, m))}><${Icon} n="stamp" s=${13}/>Send for payment</button>
+    <button className="btn sm ghost" onClick=${no}>${mine ? 'No' : 'Not for payment'}</button></div>`;
+}
+function SpotRow({ m }) {
+  const { db, update, compose, openChat } = useApp();
+  const u = userById(db, m.user), c = db.chats.find((x) => x.id === m.chat);
+  return html`<div className="me-row spot">
+    <${Avatar} u=${u} s=${30}/>
+    <div style=${{ flex: 1, minWidth: 0 }}><b>${m.attachments.map((a) => a.name).join(', ')}</b>
+      <div className="muted sm">${(u ? firstName(u) : 'Someone') + ' in ' + (c ? chatName(db, c, '') : 'a chat') + ' · ' + whenAt(m.at)}${m.text ? ' · “' + m.text.slice(0, 120) + '”' : ''}</div></div>
+    <button className="btn sm" onClick=${() => openChat(m.chat)}>Open chat</button>
+    <button className="btn sm ghost" onClick=${() => update((d) => { const x = d.messages.find((y) => y.id === m.id); if (x) x.notPay = true; })}>Not for payment</button>
+    <button className="btn sm primary" onClick=${() => compose(payPreset(db, m))}><${Icon} n="stamp" s=${13}/>Send for payment</button>
+  </div>`;
+}
+// Finance's own day: what's approved and waiting to be paid, and anything posted for payment in the groups that wasn't sent
+function ToPay({ compact }) {
+  const { db, user, openPost, jump } = useApp();
+  if (!canPay(db, user)) return null;
+  const pay = db.posts.filter((p) => p.type === 'approval' && p.approval && apState(p) === 'approved').sort((a, b) => a.createdAt - b.createdAt), spot = spotted(db);
+  if (!pay.length && !spot.length) return null;
+  return html`<div className="wk-pay">
+    ${pay.length > 0 && html`<div className="eyebrow">To pay · ${rand(pay.reduce((t, p) => t + (Number(p.approval.amount) || 0), 0)) || pay.length}</div>
+      ${pay.slice(0, compact ? 3 : 6).map((p) => html`<button key=${p.id} className="wk-payrow" onClick=${() => openPost(p.id)}><${Icon} n="stamp" s=${13}/><span>${p.approval.party || p.title}</span><em>${rand(p.approval.amount)}</em></button>`)}
+      ${pay.length > (compact ? 3 : 6) && html`<button className="linkish sm" onClick=${() => jump('view:approvals')}>${pay.length - (compact ? 3 : 6)} more to pay</button>`}`}
+    ${spot.length > 0 && html`<button className="wk-spot" onClick=${() => jump('view:approvals')}><${Icon} n="alert" s=${13}/>${spot.length} posted for payment in the groups, not sent yet</button>`}
+  </div>`;
+}
 function ApprovalsView() {
   const { db, user, compose } = useApp();
   const payer = canPay(db, user);
+  const spots = payer ? spotted(db) : [];
   const all = db.posts.filter((p) => p.type === 'approval' && p.approval && canSee(db, p, user)).map((p) => ({ p, s: apState(p) }));
   const groups = {
     me: all.filter((x) => needsMe(x.p, user.id)),
@@ -6026,14 +6096,15 @@ function ApprovalsView() {
     pay: all.filter((x) => x.s === 'approved'),
     paid: all.filter((x) => x.s === 'paid'),
     rejected: all.filter((x) => x.s === 'rejected'),
+    spotted: spots.map((m) => ({ m })),
   };
   // open on the first tab with something in it, so nobody lands on an empty list
   const [tab, setTab] = useState(() => (groups.me.length ? 'me' : payer && groups.pay.length ? 'pay' : ['waiting', 'pay', 'paid', 'rejected'].find((k) => groups[k].length) || 'waiting'));
   const sum = (l) => l.reduce((t, x) => t + (Number(x.p.approval.amount) || 0), 0);
   const month = dkey().slice(0, 7), paidMonth = groups.paid.filter((x) => dkey(x.p.approval.paidAt).slice(0, 7) === month);
   const oldest = (a, b) => (a.p.due || '9999').localeCompare(b.p.due || '9999') || a.p.createdAt - b.p.createdAt;
-  const list = groups[tab].slice().sort(tab === 'paid' ? (a, b) => b.p.approval.paidAt - a.p.approval.paidAt : tab === 'rejected' ? (a, b) => b.p.createdAt - a.p.createdAt : oldest);
-  const tabs = [['me', 'For you'], ['waiting', 'Waiting'], ['pay', 'Approved, to pay'], ['paid', 'Paid'], ['rejected', 'Not approved']];
+  const list = tab === 'spotted' ? [] : groups[tab].slice().sort(tab === 'paid' ? (a, b) => b.p.approval.paidAt - a.p.approval.paidAt : tab === 'rejected' ? (a, b) => b.p.createdAt - a.p.createdAt : oldest);
+  const tabs = [['me', 'For you'], ['waiting', 'Waiting'], ['pay', 'Approved, to pay'], ...(payer ? [['spotted', 'Posted in chats']] : []), ['paid', 'Paid'], ['rejected', 'Not approved']];
   const empty = { me: 'Nothing is waiting for your OK.', waiting: 'Nothing is waiting for approval.', pay: 'Nothing approved is waiting to be paid.', paid: 'Nothing has been marked paid yet.', rejected: 'Nothing has been turned down.' }[tab];
   return html`<${Page} title="Approvals" sub="Invoices, payments and expense claims that need an OK. Approve in one tap, Finance marks them paid, and there’s always a record of who approved what, and when."
     actions=${html`<button className="btn primary" onClick=${() => compose({ type: 'approval' })}><${Icon} n="stamp" s=${16}/>Ask for approval</button>`}>
@@ -6044,7 +6115,9 @@ function ApprovalsView() {
       <div className="stat ok"><b>${paidMonth.length}</b><span>paid this month<em className="ap-sum">${rand(sum(paidMonth)) || 'R 0'}</em></span></div>
     </div>
     <div className="tabs" role="tablist">${tabs.map(([k, l]) => html`<button key=${k} role="tab" aria-selected=${tab === k} className=${tab === k ? 'on' : ''} onClick=${() => setTab(k)}>${l} <b>${groups[k].length}</b></button>`)}</div>
-    ${list.length ? html`<div className="ap-list">${list.map((x) => html`<${ApprovalRow} key=${x.p.id} p=${x.p} s=${x.s} payer=${payer}/>`)}</div>`
+    ${tab === 'spotted' ? (spots.length ? html`<p className="muted sm" style=${{ margin: 0 }}>Documents posted in the group chats in the last 2 weeks that look like quotes, invoices or payment requests, and weren’t sent for payment.</p><div className="ap-list">${spots.map((m) => html`<${SpotRow} key=${m.id} m=${m}/>`)}</div>`
+        : html`<div className="empty"><${Icon} n="check" s=${24}/><p>Nothing posted in the groups is waiting to be sent for payment.</p></div>`)
+    : list.length ? html`<div className="ap-list">${list.map((x) => html`<${ApprovalRow} key=${x.p.id} p=${x.p} s=${x.s} payer=${payer}/>`)}</div>`
       : html`<div className="empty"><${Icon} n="stamp" s=${24}/><p>${empty}</p>${!all.length && html`<button className="btn primary" onClick=${() => compose({ type: 'approval' })}>Ask for approval</button>`}</div>`}
   <//>`;
 }
@@ -6411,6 +6484,10 @@ function dayList(db, who, k) {
 }
 function setDone(d, who, k, id, patch) { d.pdone = d.pdone || {}; const key = pkey(who, k, id); d.pdone[key] = { ...(d.pdone[key] || {}), user: who, date: k, task: id, ...patch }; }
 const splitLines = (raw) => String(raw || '').split(/\r?\n/).map((s) => s.split('\t')[0].trim()).filter(Boolean).map((s) => s.slice(0, 200));
+function demoSpotted(db, T = Date.now()) {
+  if (!(db.chats || []).some((c) => c.id === 'c-bakery')) return;
+  db.messages.push({ id: 'm-spot1', chat: 'c-bakery', user: 'u5', at: T - 2 * HOUR, text: 'Coldline fixed the walk-in fridge. Please pay their invoice this week, R 3 450', attachments: [{ id: 'a-spot1', name: 'Coldline_Invoice_INV-2231.pdf', mime: 'application/pdf', kind: 'doc', demo: 'doc', size: 84000 }], mentions: [], replyTo: null, postId: null, kind: 'msg' });
+}
 function demoPlanner(db, T = Date.now()) {
   const today = dkey(T), mon = weekStart(today), from = addDays(mon, -7), at = (k) => keyToDate(k).getTime() + 8 * HOUR;
   db.plans = { u4: { staples: ['Read email', 'Update the cashflow projection', 'Bank recon: store account', 'Bank recon: card payments'].map((title, i) => ({ id: 'st-d' + i, title, days: [1, 2, 3, 4, 5], from })) } };
@@ -6469,6 +6546,7 @@ function DayColumn({ who, k, mine, canAdd, compact }) {
   return html`<section className=${'wk-day' + (k === today ? ' today' : '') + (compact ? ' tdc' : '')} aria-label=${fmtKey(k, { weekday: 'long', day: 'numeric', month: 'long' })}>
     <div className="wk-h">${compact ? html`<span className="eyebrow" style=${{ flex: 1 }}>Today · ${fmtKey(k)}</span>` : html`<b>${fmtKey(k, { weekday: 'long' })}</b><span>${fmtKey(k, { day: 'numeric', month: 'short' })}</span>`}
       <em>${nd}/${list.length}</em>${compact && html`<button className="linkish" onClick=${() => jump('view:week')}>My week</button>`}</div>
+    ${k === today && who === user.id && html`<${ToPay} compact=${compact}/>`}
     ${!list.length && html`<p className="muted sm" style=${{ margin: '2px 4px' }}>${compact ? 'Nothing planned for today yet.' : 'Nothing planned.'}</p>`}
     ${shown.map((t) => html`<${React.Fragment} key=${t.id}><${WkRow} who=${who} k=${k} t=${t} mine=${mine} open=${open === t.id} onOpen=${() => setOpen(open === t.id ? null : t.id)}/>
       ${open === t.id && html`<${WkMore} who=${who} k=${k} t=${t} mine=${mine} onClose=${() => setOpen(null)}/>`}<//>`)}

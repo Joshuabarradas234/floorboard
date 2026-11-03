@@ -79,6 +79,7 @@ Switch it on in **People & access**: under Finance, turn on **Approvals**. Anyon
 - Approvers get it in Needs you and on their phones, and choose **Approve** (they sign on screen, and can keep their signature for next time), **Don't approve** (with a reason) or **Query**. A query goes back to whoever asked for approval until they answer it.
 - The **Approvals** page shows what's waiting, what's approved, what's paid and what wasn't approved, with rand totals. Finance and the admins see everything there and **Mark paid**, with the payment reference if they like. The person who asked hears when it's paid or not approved.
 - Every decision keeps who made it, when, and the signature, so "who approved this?" is answered on the post itself.
+- **Posted in a group chat:** when someone posts a document with words like quote, invoice or please pay, Floorboard asks them "Is this for payment?". **Send for payment** turns it into an approval with the file, supplier, number and amount filled in, addressed to Finance, and the chat shows it was sent. Finance sees anything nobody sent under **Posted in chats** on the Approvals page, and on their My week, next to what's approved and still **to pay**. Direct messages are left alone.
 - Redeploy the `notify` function (step 2 of the alerts setup) to get phone alerts that say "Paid · your invoice" instead of a general heading. Everything works without it.
 
 ## Quote drop box (Admin)
