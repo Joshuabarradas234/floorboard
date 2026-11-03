@@ -2959,7 +2959,8 @@ function AdminView() {
     if (error) { toast(error.message, 'warn'); return; }
     setCode({ name: u.name, code: data }); loadLogins();
   };
-  const appLink = location.origin + location.pathname;
+  // the website, even from the desktop app (which runs from files on this computer)
+  const appLink = /^https?:$/.test(location.protocol) ? location.origin + location.pathname : APP_URL;
   const codeText = code && 'Floorboard login for ' + code.name + ': open ' + appLink + ' , store code ' + (lsGet(STORE_CODE_KEY) || '') + ', setup code ' + code.code + '. Then choose your own 6-digit PIN.';
   const addDept = (e) => {
     e.preventDefault(); const name = nd.name.trim(); if (!name) return;
