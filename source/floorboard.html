@@ -886,10 +886,15 @@ button.stat:hover{border-color:rgba(255,255,255,.4)}
 .phone-link{align-self:flex-start}
 /* the little live tree beside Needs you */
 .board{position:relative}
-.board-top{padding-right:100px}
-.mini-tree{position:absolute;top:1px;right:8px;width:96px;padding:0;border:0;background:none;cursor:pointer;border-radius:14px;z-index:2;transform-origin:top right;transition:transform .55s cubic-bezier(.2,.7,.2,1)}
+.board-top{padding-right:112px;min-height:56px}
+.mini-tree{position:absolute;top:-2px;right:6px;width:108px;padding:0;border:0;background-color:transparent;cursor:pointer;border-radius:16px;z-index:2;transform-origin:center;
+  transition:transform .8s cubic-bezier(.34,1.3,.5,1),background-color .5s ease,box-shadow .5s ease}
 .mini-tree:hover{transform:translateY(-2px) scale(1.04)}
-.mini-tree.qr,.mini-tree.qr:hover{transform:scale(1.6)}
+.mini-tree.qr{z-index:6;box-shadow:0 24px 60px rgba(0,0,0,.42),0 0 0 1px rgba(255,255,255,.4)}
+.mini-tree.qr.season-spring{background-color:#f8efea}
+.mini-tree.qr.season-summer{background-color:#eef3e5}
+.mini-tree.qr.season-autumn{background-color:#f5eee3}
+.mini-tree.qr.season-winter{background-color:#edf2f7}
 .mini-tree canvas{display:block;width:100%;height:auto}
 .sum-list button{width:100%;display:flex;gap:10px;align-items:center;text-align:left;padding:9px 12px;border-radius:var(--r-sm);border:1px solid var(--glass-line);background:var(--glass);color:var(--ink);cursor:pointer;font:inherit}
 .sum-list .t{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -3493,17 +3498,17 @@ function treeVoxels(season) {
   for (let z = 3; z <= 19; z++) for (let dx = 0; dx < 2; dx++) for (let dy = 0; dy < 2; dy++) put(c0 + dx, c0 + dy, z, pickBy(BARK, vhash(dx, dy, z, 6)));
   [[-1, 0], [-1, 1], [2, 0], [2, 1], [0, -1], [1, -1], [0, 2], [1, 2]].forEach(([dx, dy], i) => { if (i % 3 !== 2) put(c0 + dx, c0 + dy, 3, BARK[1]); });
   // branches, most with a side branch, each ending in a clump of leaves (or blossom, or snow), with gaps between
-  const clumps = [[c0 + 0.5, c0 + 0.5, 25, 5.4]];
+  const clumps = [[c0 + 0.5, c0 + 0.5, 25, 6.1]];
   const limb = (px, py, pz, ang, len, rise, k) => {
     for (let s = 0; s < len; s += 0.5) {
       px += Math.cos(ang) * 0.5; py += Math.sin(ang) * 0.5; pz += rise * 0.5;
       put(Math.round(px), Math.round(py), Math.round(pz), BARK[s < len / 2 ? 0 : 2]);
       if (k && Math.abs(s - len * 0.55) < 0.26) {
         limb(px, py, pz, ang + (vhash(k, 1, 0, 20) < 0.5 ? -0.75 : 0.75), 3 + vhash(k, 1, 0, 21) * 2, 0.7, 0);
-        clumps.push([px, py, pz + 1, 2.6 + vhash(k, 1, 0, 22) * 1.2]);
+        clumps.push([px, py, pz + 1, 3 + vhash(k, 1, 0, 22) * 1.3]);
       }
     }
-    clumps.push([px, py, pz + 1.2, 3.4 + vhash(Math.round(px), Math.round(py), Math.round(pz), 23) * 1.4]);
+    clumps.push([px, py, pz + 1.2, 3.9 + vhash(Math.round(px), Math.round(py), Math.round(pz), 23) * 1.6]);
   };
   for (let i = 0; i < 8; i++) limb(c0 + 0.5, c0 + 0.5, 13 + vhash(i, 0, 0, 9) * 6, (i / 8) * Math.PI * 2 + vhash(i, 0, 0, 7) * 0.6, 6 + vhash(i, 0, 0, 8) * 3.5, 0.55, i + 1);
   for (const [bx, by, bz, r] of clumps) {
@@ -3543,7 +3548,7 @@ function renderTree(season, W, tight) {
     if (!V.has(x + 1 + ',' + y + ',' + z)) face([P(x + 1, y, z + 1), P(x + 1, y + 1, z + 1), P(x + 1, y + 1, z), P(x + 1, y, z)], rgbCss(c, 0.73));
     if (v.leaf && z > 9) leaves.push(P(x + 0.5, y + 0.5, z));
   }
-  return { canvas: cv, W, H, dpr, unit: a / 7, leaves, P, N };
+  return { canvas: cv, W, H, dpr, unit: a / 7, leaves, P, N, tight: !!tight };
 }
 // where something falling at screen x comes to rest on the paving (or nowhere, past its edge)
 function landY(sc, x) {
@@ -3563,6 +3568,20 @@ function newFaller(sc, S) {
   p.land = k === 'pollen' ? Infinity : landY(sc, p.x);
   return p;
 }
+// one petal, leaf, snowflake or speck of pollen
+function drawBit(g, p, alpha) {
+  g.save(); g.globalAlpha = alpha; g.translate(p.x, p.y); g.rotate(p.rot);
+  if (p.k === 'snow') { g.beginPath(); g.arc(0, 0, p.sz, 0, Math.PI * 2); g.fillStyle = '#fff'; g.fill(); g.strokeStyle = 'rgba(110,135,165,.35)'; g.lineWidth = 0.6; g.stroke(); }
+  else if (p.k === 'pollen') { g.globalAlpha *= 0.6 + 0.4 * Math.sin(p.t * 4 + p.ph); g.beginPath(); g.arc(0, 0, p.sz, 0, Math.PI * 2); g.fillStyle = p.c; g.shadowColor = p.c; g.shadowBlur = 6; g.fill(); }
+  else {
+    if (!p.landed) g.scale(1, 0.35 + 0.65 * Math.abs(Math.cos(p.t * 2.4 + p.ph))); // tumbling as it falls
+    g.beginPath();
+    if (p.k === 'petal') g.ellipse(0, 0, p.sz * 1.3, p.sz * 0.75, 0, 0, Math.PI * 2);
+    else { g.moveTo(-p.sz * 1.4, 0); g.lineTo(0, -p.sz * 0.8); g.lineTo(p.sz * 1.4, 0); g.lineTo(0, p.sz * 0.8); g.closePath(); }
+    g.fillStyle = p.c; g.fill();
+  }
+  g.restore();
+}
 function stepFallers(L, sc, S, dt, g, alpha = 1) {
   L.acc = (L.acc || 0) + dt * S.fall.rate * (sc.W / 320);
   while (L.acc >= 1) { L.acc -= 1; if (L.parts.length < 70) L.parts.push(newFaller(sc, S)); }
@@ -3574,17 +3593,7 @@ function stepFallers(L, sc, S, dt, g, alpha = 1) {
     }
     if (p.landed) p.fade -= dt * 0.3;
     if (p.k === 'pollen') p.fade -= dt * 0.15;
-    g.save(); g.globalAlpha = alpha * Math.max(0, Math.min(1, p.fade)); g.translate(p.x, p.y); g.rotate(p.rot);
-    if (p.k === 'snow') { g.beginPath(); g.arc(0, 0, p.sz, 0, Math.PI * 2); g.fillStyle = '#fff'; g.fill(); g.strokeStyle = 'rgba(110,135,165,.35)'; g.lineWidth = 0.6; g.stroke(); }
-    else if (p.k === 'pollen') { g.globalAlpha *= 0.6 + 0.4 * Math.sin(p.t * 4 + p.ph); g.beginPath(); g.arc(0, 0, p.sz, 0, Math.PI * 2); g.fillStyle = p.c; g.shadowColor = p.c; g.shadowBlur = 6; g.fill(); }
-    else {
-      if (!p.landed) g.scale(1, 0.35 + 0.65 * Math.abs(Math.cos(p.t * 2.4 + p.ph))); // tumbling as it falls
-      g.beginPath();
-      if (p.k === 'petal') g.ellipse(0, 0, p.sz * 1.3, p.sz * 0.75, 0, 0, Math.PI * 2);
-      else { g.moveTo(-p.sz * 1.4, 0); g.lineTo(0, -p.sz * 0.8); g.lineTo(p.sz * 1.4, 0); g.lineTo(0, p.sz * 0.8); g.closePath(); }
-      g.fillStyle = p.c; g.fill();
-    }
-    g.restore();
+    drawBit(g, p, alpha * Math.max(0, Math.min(1, p.fade)));
   }
   L.parts = L.parts.filter((p) => p.fade > 0 && p.y < sc.H + 20 && p.x > -20 && p.x < sc.W + 20);
 }
@@ -3617,15 +3626,18 @@ function qrMatrix(text) {
 }
 const clamp01 = (t) => Math.max(0, Math.min(1, t));
 const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+const easeOutBack = (t) => 1 + 2.70158 * Math.pow(t - 1, 3) + 1.70158 * Math.pow(t - 1, 2); // overshoots a little, then settles
 // k runs 0 to 1: the code rises out of the paving as blocks, then the view tilts flat so a camera can read it.
 function drawQrMorph(g, sc, qr, ink, k) {
   const dpr = sc.dpr, Wd = sc.canvas.width, Hd = sc.canvas.height, M = qr.M;
-  const cell = Math.max(2, Math.floor((Math.min(Wd, Hd) * 0.74) / M)), size = cell * M;
+  const cell = Math.max(2, Math.floor((Math.min(Wd, Hd) * (sc.tight ? 0.9 : 0.74)) / M)), size = cell * M;
   const x0 = Math.round((Wd - size) / 2), y0 = Math.round((Hd - size) / 2);
   const rise = clamp01((k - 0.18) / 0.42), m = easeInOut(clamp01((k - 0.55) / 0.45));
   const mid = sc.P(sc.N / 2, sc.N / 2, 3), cx = mid[0] * dpr, cy = mid[1] * dpr;
   const ai = (0.8 * sc.N * (sc.P(1, 0, 0)[0] - sc.P(0, 0, 0)[0]) * dpr) / M, bi = ai / 2, hi = ai * 0.95;
+  const pop = 0.8 + 0.2 * easeOutBack(clamp01(rise * 1.6)); // the plate swells into place
   const Q = (u, v, z) => {
+    u = M / 2 + (u - M / 2) * pop; v = M / 2 + (v - M / 2) * pop;
     const ix = cx + (u - v) * ai, iy = cy + (u + v - M) * bi - z * hi * (1 - m);
     return [ix + (x0 + u * cell - ix) * m, iy + (y0 + v * cell - iy) * m];
   };
@@ -3643,7 +3655,7 @@ function drawQrMorph(g, sc, qr, ink, k) {
     for (const [u, v] of qr.dark) g.fillRect(x0 + u * cell, y0 + v * cell, cell, cell);
   } else {
     for (const [u, v, d] of qr.dark) {
-      const hz = easeInOut(clamp01(rise * 1.8 - d * 0.8));
+      const hz = easeOutBack(clamp01(rise * 1.8 - d * 0.8)); // each block springs up, a touch too far, then settles
       if (hz <= 0) continue;
       g.globalAlpha = plate * Math.min(1, hz * 2.5);
       if (m < 0.98) {
@@ -3652,6 +3664,14 @@ function drawQrMorph(g, sc, qr, ink, k) {
       }
       poly([Q(u, v, hz), Q(u + 1, v, hz), Q(u + 1, v + 1, hz), Q(u, v + 1, hz)], rgbCss(c, 1));
     }
+  }
+  // as it lands flat, a shine sweeps across it once (gone by the end, so it never gets in the camera's way)
+  const gl = clamp01((k - 0.84) / 0.16);
+  if (gl > 0 && gl < 1) {
+    const a0 = Q(0, 0, 0), a1 = Q(M, M, 0), at = (f) => [a0[0] + (a1[0] - a0[0]) * f, a0[1] + (a1[1] - a0[1]) * f];
+    const pos = -0.3 + gl * 1.6, p0 = at(pos - 0.16), p1 = at(pos + 0.16), grad = g.createLinearGradient(p0[0], p0[1], p1[0], p1[1]);
+    grad.addColorStop(0, 'rgba(255,255,255,0)'); grad.addColorStop(0.5, 'rgba(255,255,255,0.6)'); grad.addColorStop(1, 'rgba(255,255,255,0)');
+    g.globalAlpha = 1; g.globalCompositeOperation = 'source-atop'; g.fillStyle = grad; g.fillRect(0, 0, Wd, Hd); g.globalCompositeOperation = 'source-over';
   }
   g.restore();
 }
@@ -3672,6 +3692,21 @@ function drawTreeFrame(L, g, cv, S, dt, calm, qrInk) {
     g.globalAlpha = 1;
   }
   if (k > 0 && L.qr) drawQrMorph(g, sc, L.qr, qrInk, k);
+  // a gust: when the tree goes, a handful of petals (or leaves, or snow) blow off it
+  if (L.burst) {
+    L.burst = false; L.fly = L.fly || [];
+    const kind = S.fall.kind === 'pollen' ? 'leaf' : S.fall.kind, cols = S.fall.kind === 'pollen' ? S.leaves : S.fall.colors, mid = sc.P(sc.N / 2, sc.N / 2, 18);
+    if (!calm && sc.leaves.length) for (let i = 0; i < 24; i++) {
+      const s0 = sc.leaves[Math.floor(Math.random() * sc.leaves.length)], ang = Math.atan2(s0[1] - mid[1], s0[0] - mid[0]) + (Math.random() - 0.5) * 0.9, sp = (45 + Math.random() * 65) * sc.unit;
+      L.fly.push({ k: kind, x: s0[0], y: s0[1], vx: Math.cos(ang) * sp, vy: Math.sin(ang) * sp - 40 * sc.unit, c: pickBy(cols, Math.random()), rot: Math.random() * 6.3, vr: (Math.random() - 0.5) * 9, sz: (2.4 + Math.random() * 1.8) * sc.unit, t: 0, ph: Math.random() * 6.3, life: 1.2 + Math.random() * 0.5 });
+    }
+  }
+  if (L.fly && L.fly.length) {
+    g.setTransform(sc.dpr, 0, 0, sc.dpr, 0, 0);
+    for (const p of L.fly) { p.t += dt; p.life -= dt; p.vy += 130 * sc.unit * dt; p.vx *= 1 - 0.9 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vr * dt; drawBit(g, p, clamp01(p.life / 0.6)); }
+    L.fly = L.fly.filter((p) => p.life > 0);
+    g.setTransform(1, 0, 0, 1, 0, 0);
+  }
 }
 // rain on the leaves (or wind in winter), made from soft noise; off until someone turns it on
 const Ambience = {
@@ -3705,7 +3740,7 @@ function PhoneModal({ onClose }) {
   const stage = useRef(null), sceneCv = useRef(null), live = useRef({ parts: [], drops: [], k: 0, target: 0 });
   const S = SEASONS[season];
   useEffect(() => { live.current.qr = qrMatrix(link.trim()); }, [link]);
-  useEffect(() => { live.current.target = showQr ? 1 : 0; if (calmMotion()) live.current.k = live.current.target; }, [showQr]);
+  useEffect(() => { live.current.target = showQr ? 1 : 0; if (showQr) live.current.burst = true; if (calmMotion()) live.current.k = live.current.target; }, [showQr]);
   // the living tree: drawn once per season and size, with petals, leaves, snow and rain on top
   useEffect(() => {
     const cv = sceneCv.current, box = stage.current;
@@ -3763,13 +3798,31 @@ function PhoneModal({ onClose }) {
 function MiniTree() {
   const { season } = useApp();
   const [qrOn, setQrOn] = useState(false);
-  const cvRef = useRef(null), live = useRef({ parts: [], drops: [], k: 0, target: 0 });
-  useEffect(() => { live.current.target = qrOn ? 1 : 0; if (qrOn) live.current.qr = qrMatrix(phoneLink()); if (calmMotion()) live.current.k = live.current.target; }, [qrOn]);
+  const [lift, setLift] = useState(null);
+  const btnRef = useRef(null), cvRef = useRef(null), live = useRef({ parts: [], drops: [], k: 0, target: 0 });
+  // showing the code, it lifts into a little card centred over the Needs you panel, big enough to scan
+  const place = () => {
+    const b = btnRef.current, board = b && b.offsetParent;
+    if (!b || !board) return null;
+    const s = 1.5, dx = board.clientWidth / 2 - (b.offsetLeft + b.offsetWidth / 2), dy = 10 + (b.offsetHeight * (s - 1)) / 2 - b.offsetTop;
+    return 'translate(' + Math.round(dx) + 'px,' + Math.round(dy) + 'px) scale(' + s + ')';
+  };
+  useEffect(() => {
+    const L = live.current;
+    L.target = qrOn ? 1 : 0;
+    if (qrOn) { L.qr = qrMatrix(phoneLink()); L.burst = true; }
+    if (calmMotion()) L.k = L.target;
+    setLift(qrOn ? place() : null);
+    if (!qrOn) return undefined;
+    const re = () => setLift(place()), esc = (e) => { if (e.key === 'Escape') setQrOn(false); };
+    window.addEventListener('resize', re); window.addEventListener('keydown', esc);
+    return () => { window.removeEventListener('resize', re); window.removeEventListener('keydown', esc); };
+  }, [qrOn]);
   useEffect(() => {
     const cv = cvRef.current;
     if (!cv) return;
     const L = live.current, g = cv.getContext('2d'), S = SEASONS[season], calm = calmMotion();
-    const sc = renderTree(season, 150, true); // drawn bigger than it shows, so the code stays sharp when it grows
+    const sc = renderTree(season, 170, true); // drawn bigger than it shows, so the code stays sharp when it grows
     sc.unit = Math.max(sc.unit, 0.8); // big enough petals and drops to see at this size
     if (L.scene) { L.prev = L.scene; L.fadeT = 0; }
     L.scene = sc; cv.width = sc.canvas.width; cv.height = sc.canvas.height;
@@ -3785,7 +3838,7 @@ function MiniTree() {
     raf = requestAnimationFrame(frame);
     return () => cancelAnimationFrame(raf);
   }, [season]);
-  return html`<button type="button" className=${'mini-tree' + (qrOn ? ' qr' : '')} onClick=${() => setQrOn((v) => !v)} aria-pressed=${qrOn}
+  return html`<button ref=${btnRef} type="button" className=${'mini-tree season-' + season + (qrOn ? ' qr' : '')} style=${lift ? { transform: lift } : null} onClick=${() => setQrOn((v) => !v)} aria-pressed=${qrOn}
     title=${qrOn ? 'Tap to see the tree again' : 'Tap for a QR code that opens Floorboard on a phone'} aria-label=${qrOn ? 'Show the tree again' : 'Show a QR code that opens Floorboard on a phone'}><canvas ref=${cvRef} aria-hidden="true"></canvas></button>`;
 }
 /* ---------------- my shift, and the start-of-shift summary ---------------- */
