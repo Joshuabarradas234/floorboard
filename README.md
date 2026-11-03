@@ -58,6 +58,15 @@ Switch it on in **People & access**: under Finance, turn on **Month end**. A **M
 - **Ask managers for invoices** sends every manager a task to hand in the month's invoices, so Finance can see who is still outstanding.
 - Before pasting a new month, remove last month's lists with the bin on each list (**By list** view).
 
+## Approvals (Finance)
+
+Switch it on in **People & access**: under Finance, turn on **Approvals**. Anyone can then pick **Approval** as the kind of post: what it is (invoice, payment, expense claim), the supplier, the amount, the invoice number, a photo or PDF of it, and who approves it (any one of them, or all of them).
+
+- Approvers get it in Needs you and on their phones, and can **Approve** in one tap, **Reject** with a reason, or **Ask a question**. A question goes back to whoever asked for approval until they answer it.
+- The **Approvals** page shows what's waiting, what's approved and still to pay, what's paid and what was rejected, with rand totals. Finance and the admins see everything there and **Mark paid**, with the payment reference if they like. The person who asked hears when it's paid or rejected.
+- Every decision keeps who made it and when, so "who approved this?" is answered on the post itself.
+- Redeploy the `notify` function (step 2 of the alerts setup) to get phone alerts that say "Paid · your invoice" instead of a general heading. Everything works without it.
+
 ## Still to come
 
 - Real home-screen widgets (the live tiles on an iPhone or Android home screen) need a native app built on top of the server.

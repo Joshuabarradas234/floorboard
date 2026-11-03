@@ -88,7 +88,7 @@ const q = encodeURIComponent;
 const inList = (xs: string[]) => q('(' + xs.map((x) => '"' + x.replace(/"/g, '') + '"').join(',') + ')');
 
 type Rec = Record<string, any>;
-const TYPES: Rec = { task: 'Task', feedback: 'Feedback', look: 'Look at this', vote: 'Vote' };
+const TYPES: Rec = { task: 'Task', feedback: 'Feedback', look: 'Look at this', vote: 'Vote', approval: 'Approval' };
 const LEVELS: Rec = { red: 'ASAP', amber: 'Important', green: 'General' };
 
 // Same rule as the app: no status means always reachable; "auto" follows the person's usual hours.
@@ -153,7 +153,9 @@ Deno.serve(async (req) => {
         if (!p || !r || r.status === 'done' || p.closed) continue;
         sends.push({
           to: who, tag: 'p:' + p.id + (it.nudge ? ':n' : ''), url: '#go-post:' + p.id, urgent: p.level === 'red',
-          title: (it.nudge ? 'Reminder · ' : r.escalated ? 'Escalated · ' : '') + (TYPES[p.type] || 'Post') + ' from ' + first(p.author) + ' · ' + (LEVELS[p.level] || ''),
+          // a requester only hears back about their own approval with a question, a rejection, or once it's paid
+          title: who === p.author && (r.paid || r.rejected || r.answer) ? (r.paid ? 'Paid · your ' : r.rejected ? 'Rejected · your ' : 'A question about your ') + String((p.approval || {}).kind || 'request').toLowerCase()
+            : (it.nudge ? 'Reminder · ' : r.escalated ? 'Escalated · ' : '') + (TYPES[p.type] || 'Post') + ' from ' + first(p.author) + ' · ' + (LEVELS[p.level] || ''),
           body: String(p.title || '').slice(0, 180),
         });
       } else if (it.message) {

@@ -365,7 +365,7 @@ input[type=checkbox],input[type=radio]{accent-color:#fff}
 .modal-foot .reach{margin-right:auto;font-size:13px;color:var(--ink-2)}
 
 /* composer */
-.typepick{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.typepick{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
 .typepick button,.lvlpick button{border:1px solid var(--glass-line);background:var(--glass);border-radius:var(--r);padding:10px;text-align:left;display:grid;gap:4px}
 .typepick button b,.lvlpick button b{display:flex;align-items:center;gap:6px;font-size:14px}
 .typepick button small,.lvlpick button small{color:var(--ink-3);font-size:12px;line-height:1.3}
@@ -716,6 +716,32 @@ td.mono{white-space:nowrap}
 .person.pick.on{border-color:#fff;background:var(--glass-2)}
 .tick-box{width:22px;height:22px;border-radius:50%;border:2px solid var(--glass-line-2);display:grid;place-items:center;flex:none}
 .tick-box.on{background:var(--green-dot);border-color:var(--green-dot);color:#0b2a17}
+.ap-list{display:grid;gap:8px}
+.ap-sum{display:block;font-style:normal;font-family:var(--f-mono);font-size:13px;color:var(--ink);white-space:nowrap}
+.ap-top .meta-i{display:inline-flex;align-items:center;gap:3px;font-size:12px;color:var(--ink-3)}
+.ap-row{display:flex;align-items:center;gap:14px;background:var(--glass);border:1px solid var(--glass-line);border-radius:var(--r-sm);padding:12px 14px;box-shadow:var(--hi);cursor:pointer}
+.ap-row:hover{background:var(--glass-2)}
+.ap-row.late{border-color:rgba(255,120,100,.5)}
+.ap-main{flex:1;min-width:0;display:grid;gap:5px}
+.ap-top{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ap-party{font-size:15px;overflow-wrap:anywhere}
+.ap-meta{display:flex;flex-wrap:wrap;gap:4px 12px;align-items:center;font-size:12.5px;color:var(--ink-2)}
+.ap-who{display:inline-flex;gap:8px;flex-wrap:wrap}
+.ap-ap{font-weight:700}
+.ap-ap.approve{color:var(--green)}
+.ap-ap.reject{color:var(--red)}
+.ap-amt{font-size:17px;font-weight:600;white-space:nowrap;text-align:right}
+.ap-act{flex:none;display:flex;justify-content:flex-end;min-width:122px}
+.ap-facts{background:var(--glass);border:1px solid var(--glass-line);border-radius:var(--r);padding:14px;display:grid;gap:12px}
+.ap-facts-h{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.ap-big{font-size:26px;font-weight:600;font-variant-numeric:tabular-nums}
+.ap-pay{display:flex;gap:8px;flex-wrap:wrap}
+.ap-pay .input{flex:1;min-width:180px}
+.ap-q{background:rgba(255,255,255,.08);border-left:3px solid var(--amber);border-radius:6px;padding:8px 12px;font-size:14px}
+.ap-q.no{border-left-color:var(--red)}
+.ap-foot{justify-content:flex-end}
+.action.done.no{background:rgba(255,120,100,.14);color:var(--red)}
+@media (max-width:560px){.ap-row{flex-wrap:wrap}.ap-main{flex-basis:100%}.ap-amt{flex:1;text-align:left}.ap-act{min-width:0}}
 .me-days{display:grid;gap:16px}
 .me-sec{display:grid;gap:6px}
 .me-sec h3{font-size:12.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);display:flex;gap:8px;align-items:baseline;margin:0 2px 2px}
@@ -984,6 +1010,7 @@ const TYPES = {
   feedback: { label: 'Feedback', plural: 'Feedback', icon: 'feedback', hint: 'Ask for an answer or opinion' },
   look: { label: 'Look at this', plural: 'Look at', icon: 'look', hint: 'Heads-up, no action needed' },
   vote: { label: 'Vote', plural: 'Votes', icon: 'vote', hint: 'Let people choose' },
+  approval: { label: 'Approval', plural: 'Approvals', icon: 'stamp', hint: 'An invoice or payment to OK' },
 };
 const TYPE_KEYS = ['task', 'feedback', 'look', 'vote'];
 const LEVELS = {
@@ -999,6 +1026,7 @@ const TILE_COLORS = ['#9A6B2F', '#D0622B', '#3F8A2E', '#2F7FB8', '#0F8A8A', '#8A
 const NO_FILTERS = { type: 'any', level: 'any', dept: 'any' };
 
 const ICONS = {
+  stamp: '<path d="M10 3.5h4A1.5 1.5 0 0 1 15.5 5c0 2-1.5 3-1.5 5.5V12h3.5a2 2 0 0 1 2 2v2.5h-15V14a2 2 0 0 1 2-2H10v-1.5C10 8 8.5 7 8.5 5A1.5 1.5 0 0 1 10 3.5z"/><path d="M5 20.5h14"/>',
   calendar: '<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="m9 15 2 2 4-4"/>',
   phone: '<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/>',
   flower: '<circle cx="12" cy="12" r="2.2"/><path d="M12 9.8c-1.6-2.6-1-5.3 0-6.3 1 1 1.6 3.7 0 6.3zM14.2 12c2.6-1.6 5.3-1 6.3 0-1 1-3.7 1.6-6.3 0zM12 14.2c1.6 2.6 1 5.3 0 6.3-1-1-1.6-3.7 0-6.3zM9.8 12c-2.6 1.6-5.3 1-6.3 0 1-1 3.7-1.6 6.3 0z"/>',
@@ -1223,14 +1251,20 @@ function expand(db, toUsers, toDepts, author) {
 const isManagerOf = (u, deptId) => u.role === 'admin' || u.manages.includes(deptId);
 function canSee(db, p, u) {
   if (u.role === 'admin' || p.author === u.id || p.recips[u.id]) return true;
+  if (p.type === 'approval' && canPay(db, u)) return true;
   if (!u.manages.length) return false;
   if (u.manages.includes(p.about) || p.toDepts.some((d) => u.manages.includes(d))) return true;
   return Object.keys(p.recips).some((id) => { const m = userById(db, id); return m && m.depts.some((d) => u.manages.includes(d)); });
 }
 const pollClosed = (p) => !!(p.poll && p.poll.closes && p.poll.closes < dkey());
-function needsMe(p, id) { const r = p.recips[id]; if (!r || p.closed) return false; if (p.type === 'vote' && pollClosed(p)) return false; return r.status !== 'done'; }
+function needsMe(p, id) {
+  const r = p.recips[id]; if (!r || p.closed) return false; if (p.type === 'vote' && pollClosed(p)) return false;
+  if (p.type === 'approval' && !r.answer && !r.paid && !r.rejected && !apOpen(p)) return false; // someone else already decided
+  return r.status !== 'done';
+}
 function isOverdue(p, id) {
   if (!p.due || p.closed || p.due >= dkey()) return false;
+  if (p.type === 'approval' && !apOpen(p)) return false;
   if (id) { const r = p.recips[id]; return !!r && r.status !== 'done'; }
   return Object.values(p.recips).some((r) => r.status !== 'done');
 }
@@ -1594,6 +1628,7 @@ function seed() {
   db.chats.find((c) => c.id === 'c-fv').read.u11 = T - 2 * HOUR;
   // on shift / off shift examples: Nomsa is off today, Tumi works the late shift
   db.status = { u7: { mode: 'off', at: T }, u14: { mode: 'auto', start: '14:00', end: '22:00', days: [1, 2, 3, 4, 5, 6], tz: new Date().getTimezoneOffset(), at: T } };
+  demoApprovals(db, T);
   return db;
 }
 function loadDb() {
@@ -1604,6 +1639,7 @@ function loadDb() {
       if (d && d.v === 2 && Array.isArray(d.posts) && Array.isArray(d.chats)) {
         // demo stores saved before month end existed get Finance's example sheet
         if (!Array.isArray(d.deadlines)) { d.deadlines = demoDeadlines(); const f = (d.depts || []).find((x) => x.id === 'finance'); if (f) f.features = { ...(f.features || {}), monthend: true }; }
+        if (!(d.depts || []).some((x) => x.features && 'approvals' in x.features)) demoApprovals(d);
         return d;
       }
     } catch (e) { }
@@ -1754,7 +1790,7 @@ function useCounts() {
   };
 }
 function Board({ onPick, note }) {
-  const { setFilters, go } = useApp();
+  const { db, setFilters, go } = useApp();
   const c = useCounts();
   const pick = onPick || ((f) => { setFilters({ ...NO_FILTERS, ...f }); go('needs'); });
   return html`<section className="board" aria-label="Needs you">
@@ -1762,7 +1798,7 @@ function Board({ onPick, note }) {
     <div className="board-top"><${MiniTree}/><span className="board-num">${c.mine.length}</span><span className="board-cap">${c.mine.length === 1 ? 'thing is' : 'things are'} waiting on you${c.overdue > 0 && html`<br/><em>${c.overdue} overdue</em>`}</span></div>
     <div className="lvlbar" aria-hidden="true">${LEVEL_KEYS.map((l) => c.nL(l) > 0 && html`<i key=${l} className=${l} style=${{ flex: c.nL(l) }}></i>`)}</div>
     <div className="lvl-legend">${LEVEL_KEYS.map((l) => html`<button key=${l} onClick=${() => pick({ level: l })}><i className=${l}></i>${c.nL(l)} ${LEVELS[l].label}</button>`)}</div>
-    <div className="board-rows">${TYPE_KEYS.map((t) => html`<button key=${t} className="board-row" onClick=${() => pick({ type: t })}><${Icon} n=${TYPES[t].icon} s=${16}/><span>${TYPES[t].plural}</span><b>${c.nT(t)}</b></button>`)}</div>
+    <div className="board-rows">${shownTypes(db).map((t) => html`<button key=${t} className="board-row" onClick=${() => pick({ type: t })}><${Icon} n=${TYPES[t].icon} s=${16}/><span>${TYPES[t].plural}</span><b>${c.nT(t)}</b></button>`)}</div>
     ${note}
   </section>`;
 }
@@ -1802,6 +1838,7 @@ function Rail() {
     ${myDepts.map((d) => item('dept:' + d.id, html`<i className="sq" style=${{ '--c': d.color }}></i>`, d.name))}
     ${item('teams', html`<${Icon} n="store"/>`, 'All departments')}
     ${canSeeME(db, user) && item('monthend', html`<${Icon} n="calendar"/>`, 'Month end')}
+    ${canSeeAP(db, user) && item('approvals', html`<${Icon} n="stamp"/>`, 'Approvals')}
     <span className="rail-sep"></span>
     ${myGroups(db, user).filter((g) => !g.archived).slice(0, 5).map((g) => item('group:' + g.id, html`<span className="rail-emoji">${g.icon}</span>`, g.name))}
     ${item('groups', html`<${Icon} n="flag"/>`, 'Projects & issues')}
@@ -1893,6 +1930,14 @@ function Widget() {
 function MyState({ p, who }) {
   const r = p.recips[who];
   if (p.closed) return html`<span className="st muted">Closed</span>`;
+  if (p.type === 'approval') {
+    if (r.rejected) return r.status === 'done' ? html`<span className="st bad">Rejected</span>` : html`<span className="st bad">Rejected · tap Got it</span>`;
+    if (r.paid) return r.status === 'done' ? html`<span className="st ok"><${Icon} n="check" s=${14}/>Paid</span>` : html`<span className="st todo">Paid · tap Got it</span>`;
+    if (r.answer && r.status !== 'done') return html`<span className="st warn">Answer the question</span>`;
+    if (r.decision) return html`<span className=${'st ' + (r.decision === 'approve' ? 'ok' : 'bad')}>${r.decision === 'approve' ? 'You approved' : 'You rejected'}</span>`;
+    if (apOpen(p) && p.approval.approvers.includes(who)) return html`<span className="st todo">Waiting for your OK</span>`;
+    return html`<${ApPill} p=${p}/>`;
+  }
   if (p.type === 'task') {
     if (r.status === 'done') return html`<span className="st ok"><${Icon} n="check" s=${14}/>Done</span>`;
     return html`<span className="st">${isStale(p, who) && html`<span className="st warn">Update due</span>`}${r.nudgedAt && html`<span className="st warn">Nudged</span>`}<span className="bar sm"><i style=${{ width: (r.pct || 0) + '%' }}></i></span><span className="mono">${r.pct || 0}%</span></span>`;
@@ -1902,6 +1947,7 @@ function MyState({ p, who }) {
   return r.status === 'done' ? html`<span className="st ok"><${Icon} n="check" s=${14}/>${y}</span>` : html`<span className="st todo">${n}</span>`;
 }
 function Overall({ p }) {
+  if (p.type === 'approval') return html`<${ApPill} p=${p}/>`;
   const g = progressOf(p);
   const stale = Object.keys(p.recips).filter((id) => isStale(p, id)).length;
   const word = { task: 'done', feedback: 'replied', look: 'seen', vote: 'voted' }[p.type];
@@ -1932,7 +1978,7 @@ function FilterBar({ base, status, setStatus }) {
   return html`<div className="filters">
     <div className="seg" role="group" aria-label="Type">
       <button className=${filters.type === 'any' ? 'on' : ''} onClick=${() => set('type', 'any')}>All <b>${forType.length}</b></button>
-      ${TYPE_KEYS.map((t) => html`<button key=${t} className=${filters.type === t ? 'on' : ''} onClick=${() => set('type', t)}><${Icon} n=${TYPES[t].icon} s=${14}/>${TYPES[t].plural} <b>${forType.filter((p) => p.type === t).length}</b></button>`)}
+      ${shownTypes(db).map((t) => html`<button key=${t} className=${filters.type === t ? 'on' : ''} onClick=${() => set('type', t)}><${Icon} n=${TYPES[t].icon} s=${14}/>${TYPES[t].plural} <b>${forType.filter((p) => p.type === t).length}</b></button>`)}
     </div>
     <div className="seg" role="group" aria-label="Attention level">
       <button className=${filters.level === 'any' ? 'on' : ''} onClick=${() => set('level', 'any')}>Any level</button>
@@ -1948,7 +1994,8 @@ function FeedView({ kind }) {
   const vis = db.posts.filter((p) => canSee(db, p, user));
   let base = kind === 'needs' ? vis.filter((p) => needsMe(p, user.id)) : kind === 'all' ? vis.filter((p) => p.recips[user.id]) : vis.filter((p) => p.author === user.id);
   if (kind !== 'needs' && status !== 'all') {
-    const isDone = (p) => p.closed || (kind === 'sent' ? Object.values(p.recips).every((r) => r.status === 'done') : p.recips[user.id].status === 'done');
+    const isDone = (p) => p.closed || (p.type === 'approval' ? (kind === 'sent' ? ['paid', 'rejected'].includes(apState(p)) : !needsMe(p, user.id))
+      : kind === 'sent' ? Object.values(p.recips).every((r) => r.status === 'done') : p.recips[user.id].status === 'done');
     base = base.filter((p) => (status === 'done') === isDone(p));
   }
   const shown = applyFilters(base, filters).sort(kind === 'needs' ? sortNeeds(user.id) : (a, b) => b.createdAt - a.createdAt);
@@ -1996,6 +2043,7 @@ function ActionBox({ p }) {
     change((q, rr) => { rr.status = 'done'; q.activity.push({ id: uid('e'), kind: 'reply', user: user.id, at: Date.now(), text: note.trim(), attachments: atts }); });
     setNote(''); setFiles([]); setBusy(false); toast('Feedback sent to ' + firstName(author));
   }
+  if (p.type === 'approval') return p.approval ? html`<${ApprovalAction} p=${p} r=${r}/>` : null;
   if (p.type === 'task') {
     return html`<form className="action" onSubmit=${postUpdate}>
       <div className="action-h"><span className="eyebrow">Your progress</span>${isStale(p, user.id) ? html`<span className="st warn"><${Icon} n="alert" s=${14}/>No update in ${since(r.updatedAt || p.createdAt)}. Please post one.</span>` : r.updatedAt && html`<span className="muted sm">Last update ${ago(r.updatedAt)}</span>`}</div>
@@ -2042,6 +2090,14 @@ function PollResults({ p }) {
   </section>`;
 }
 function stateLine(p, r) {
+  if (p.type === 'approval') {
+    if (r.rejected) return r.status === 'done' ? 'Saw it was rejected' : 'Told it was rejected';
+    if (r.paid) return r.status === 'done' ? 'Saw it was paid' : 'Told it’s been paid';
+    if (r.answer) return r.status === 'done' ? 'Answered ' + ago(r.updatedAt) : 'Asked a question, not answered yet';
+    if (r.decision) return (r.decision === 'approve' ? 'Approved ' : 'Rejected ') + ago(r.updatedAt);
+    if (!apOpen(p)) return 'Not needed any more';
+    return r.seen ? 'Opened, not decided yet' : 'Not opened yet';
+  }
   if (p.type === 'task') { if (r.status === 'done') return 'Done ' + ago(r.updatedAt); if (r.updatedAt) return 'Last update ' + ago(r.updatedAt); return r.seen ? 'Opened, no update yet' : 'Not opened yet'; }
   if (r.status === 'done') return { feedback: 'Replied ', look: 'Seen ', vote: 'Voted ' }[p.type] + ago(r.updatedAt || r.seen);
   return r.seen ? 'Opened, no response yet' : 'Not opened yet';
@@ -2051,21 +2107,22 @@ function People({ p, canManage }) {
   const order = { todo: 0, doing: 1, done: 2 };
   const ids = Object.keys(p.recips).sort((a, b) => order[p.recips[a].status] - order[p.recips[b].status] || (p.recips[a].pct || 0) - (p.recips[b].pct || 0));
   const g = progressOf(p);
-  const heading = { task: 'Progress', feedback: 'Replies', look: 'Seen by', vote: 'Votes in' }[p.type];
-  const word = { task: 'done', feedback: 'replied', look: 'seen', vote: 'voted' }[p.type];
+  const heading = { task: 'Progress', feedback: 'Replies', look: 'Seen by', vote: 'Votes in', approval: 'Approvers' }[p.type];
+  const word = { task: 'done', feedback: 'replied', look: 'seen', vote: 'voted', approval: 'decided' }[p.type];
+  const ap = p.type === 'approval' && p.approval;
   const nudge = (id) => {
     update((d) => { const q = d.posts.find((x) => x.id === p.id); q.recips[id].nudgedAt = Date.now(); q.recips[id].seen = null; q.activity.push({ id: uid('e'), kind: 'system', user: user.id, at: Date.now(), text: 'nudged ' + userById(d, id).name + (p.type === 'task' ? ' for a progress update' : ' to respond') }); });
     toast('Nudged ' + firstName(userById(db, id)) + '. It’s back at the top of their list.');
   };
   return html`<section className="sect">
-    <div className="sect-h"><h3>${heading}</h3><span className="muted sm">${g.done} of ${g.total} ${word}${p.type === 'task' ? ' · ' + g.pct + '% overall' : ''}</span></div>
+    <div className="sect-h"><h3>${heading}</h3><span className="muted sm">${ap ? ap.approvers.filter((id) => (p.recips[id] || {}).decision).length + ' of ' + ap.approvers.length : g.done + ' of ' + g.total} ${word}${p.type === 'task' ? ' · ' + g.pct + '% overall' : ''}</span></div>
     ${p.type === 'task' && html`<div className=${'bar big' + (g.pct === 100 ? ' full' : '')}><i style=${{ width: g.pct + '%' }}></i></div>`}
     <ul className="plist">${ids.map((id) => { const u = userById(db, id); const r = p.recips[id]; const v = r.status === 'done' ? 100 : r.pct || 0; return html`<li key=${id}>
       <${Avatar} u=${u} s=${30}/>
       <div className="pl-main"><div className="pl-name">${u ? u.name : 'Former staff'}${id === user.id && html`<span className="you">you</span>`}${shiftNote(db, id) && html`<span className="offtag">${shiftNote(db, id)}</span>`}${r.escalated && html`<span className="offtag esc">Escalated to</span>`}</div><div className="muted sm">${stateLine(p, r)}</div></div>
       ${p.type === 'task' && html`<div className="pl-bar"><div className=${'bar' + (v === 100 ? ' full' : '')}><i style=${{ width: v + '%' }}></i></div><span className="mono sm">${v}%</span></div>`}
       <div className="pl-flags">${isOverdue(p, id) && html`<span className="st bad">Overdue</span>`}${isStale(p, id) && html`<span className="st warn">No update ${since(r.updatedAt || p.createdAt)}</span>`}${r.nudgedAt && r.status !== 'done' && html`<span className="st muted">Nudged ${ago(r.nudgedAt)}</span>`}</div>
-      ${canManage && r.status !== 'done' && !p.closed && id !== user.id && html`<button className="btn sm" onClick=${() => nudge(id)}><${Icon} n="bell" s=${14}/>Nudge</button>`}
+      ${canManage && r.status !== 'done' && !p.closed && id !== user.id && !(ap && (!apOpen(p) || r.answer || r.paid || r.rejected)) && html`<button className="btn sm" onClick=${() => nudge(id)}><${Icon} n="bell" s=${14}/>Nudge</button>`}
     </li>`; })}</ul>
   </section>`;
 }
@@ -2079,7 +2136,7 @@ function Thread({ p }) {
     update((d) => { d.posts.find((x) => x.id === p.id).activity.push({ id: uid('e'), kind: 'comment', user: user.id, at: Date.now(), text: text.trim(), attachments: atts }); });
     setText(''); setFiles([]); setBusy(false);
   }
-  const verb = { update: 'posted an update', reply: 'replied', comment: 'commented' };
+  const verb = { update: 'posted an update', reply: 'replied', comment: 'commented', approve: 'approved it', reject: 'rejected it', query: 'asked a question', answer: 'answered', paid: 'marked it paid' };
   return html`<section className="sect">
     <div className="sect-h"><h3>Updates & comments</h3><span className="muted sm">${items.length}</span></div>
     ${items.length === 0 && html`<p className="muted sm">No updates yet.</p>`}
@@ -2126,6 +2183,7 @@ function PostDetail({ id }) {
         ${(() => { const ch = p.chat && db.chats.find((x) => x.id === p.chat); return ch && chatMembers(db, ch).includes(user.id) && html`<button className="linkish sm" onClick=${() => openChat(ch.id)}>Open in chat: ${chatName(db, ch, user.id)}</button>`; })()}</div></div>
       ${p.closed && html`<div className="notice"><${Icon} n="archive" s=${16}/>Closed. No more updates are needed.</div>`}
       ${p.escalatedAt && html`<div className="notice esc"><${Icon} n="flag" s=${16}/><span>Escalated ${ago(p.escalatedAt)}${(p.escalatedTo || []).length ? ' to ' + p.escalatedTo.map((x) => firstName(userById(db, x))).join(', ') : ''}: nobody opened this ASAP item within 30 minutes.</span></div>`}
+      ${p.type === 'approval' && p.approval && html`<${ApprovalFacts} p=${p}/>`}
       ${p.body && html`<div className="d-text">${p.body}</div>`}
       <${TranslateLink} text=${[p.title, p.body].filter(Boolean).join('\n\n')}/>
       ${p.attachments.length > 0 && html`<${Attachments} items=${p.attachments}/>`}
@@ -2147,6 +2205,9 @@ function Composer({ preset, onClose }) {
   const [level, setLevel] = useState(preset.level || 'amber');
   const [title, setTitle] = useState(preset.title || ''); const [body, setBody] = useState(preset.body || ''); const [due, setDue] = useState(preset.due || '');
   const [files, setFiles] = useState([]);
+  const [ap, setAp] = useState({ kind: 'Invoice', party: '', amount: '', ref: '', rule: 'any' });
+  const setA = (k, v) => { setAp((o) => ({ ...o, [k]: v })); setErr(''); };
+  const amount = Number(String(ap.amount).replace(/[\sR]/g, '').replace(',', '.')) || 0;
   const [opts, setOpts] = useState(['', '']); const [multi, setMulti] = useState(false); const [closes, setCloses] = useState(keyPlus(3));
   const [err, setErr] = useState(''); const [busy, setBusy] = useState(false);
   const inputRef = useRef(null);
@@ -2159,7 +2220,7 @@ function Composer({ preset, onClose }) {
       .map((u) => ({ k: 'u', id: u.id, label: u.name, sub: u.title + ' · ' + u.depts.map((d) => deptById(db, d).name).join(', '), u }));
     return [...teams, ...people].slice(0, 10);
   }, [qq, to, db]);
-  const add = (s) => { setTo((prev) => [...prev, { k: s.k, id: s.id }]); setQ(''); setHi(0); setOpen(false); if (!about && s.k === 'd' && !PSEUDO[s.id] && !isGroupId(s.id)) setAbout(s.id); if (!about && s.k === 'u') setAbout(userById(db, s.id).depts[0]); setErr(''); inputRef.current && inputRef.current.focus(); };
+  const add = (s) => { setTo((prev) => [...prev, { k: s.k, id: s.id }]); setQ(''); setHi(0); setOpen(false); if (!about && s.k === 'd' && !PSEUDO[s.id] && !isGroupId(s.id)) setAbout(s.id); if (!about && s.k === 'u') setAbout(type === 'approval' ? user.depts[0] : userById(db, s.id).depts[0]); setErr(''); inputRef.current && inputRef.current.focus(); };
   const toUsers = to.filter((x) => x.k === 'u').map((x) => x.id); const toDepts = to.filter((x) => x.k === 'd').map((x) => x.id);
   const reach = expand(db, toUsers, toDepts, user.id);
   const onKey = (e) => {
@@ -2171,7 +2232,9 @@ function Composer({ preset, onClose }) {
   };
   async function submit() {
     if (!reach.length) return setErr('Tag at least one person or team with @.');
-    if (!title.trim()) return setErr('Give it a short title so people know what it’s about.');
+    if (type === 'approval' && ap.kind !== 'Other' && !(amount > 0)) return setErr('Put in the amount, so the approver knows what they’re OK-ing.');
+    if (type === 'approval' && !ap.party.trim() && !title.trim()) return setErr('Say who gets paid, like the supplier’s name.');
+    if (!title.trim() && type !== 'approval') return setErr('Give it a short title so people know what it’s about.');
     const options = opts.map((o) => o.trim()).filter(Boolean);
     if (type === 'vote' && options.length < 2) return setErr('A vote needs at least two options.');
     setBusy(true);
@@ -2183,21 +2246,22 @@ function Composer({ preset, onClose }) {
       const pid = uid('p'), now = Date.now();
       const chats = toDepts.map((td) => d.chats.find((c) => c.dept === td)).filter(Boolean);
       chats.forEach((c) => d.messages.push({ id: uid('m'), chat: c.id, user: user.id, at: now, text: '', attachments: [], mentions: [], replyTo: null, postId: pid, kind: 'msg' }));
-      d.posts.unshift({ id: pid, chat: chats[0] ? chats[0].id : null, no: d.counter, type, title: title.trim(), body: body.trim(), author: user.id, createdAt: now, toUsers, toDepts,
-        about: about || user.depts[0], level, due: type === 'task' && due ? due : null, attachments: atts, recips, activity: [],
-        poll: type === 'vote' ? { multi, closes, options: options.map((t, i) => ({ id: 'o' + (i + 1), text: t })), votes: {} } : null, closed: false });
+      d.posts.unshift({ id: pid, chat: chats[0] ? chats[0].id : null, no: d.counter, type, title: type === 'approval' && !title.trim() ? apTitle(ap.kind, ap.party.trim(), amount) : title.trim(), body: body.trim(), author: user.id, createdAt: now, toUsers, toDepts,
+        about: about || user.depts[0], level, due: (type === 'task' || type === 'approval') && due ? due : null, attachments: atts, recips, activity: [],
+        poll: type === 'vote' ? { multi, closes, options: options.map((t, i) => ({ id: 'o' + (i + 1), text: t })), votes: {} } : null, closed: false,
+        ...(type === 'approval' ? { approval: { kind: ap.kind, party: ap.party.trim(), amount, ref: ap.ref.trim(), rule: Object.keys(recips).length > 1 ? ap.rule : 'any', approvers: Object.keys(recips), paidAt: null, paidBy: null, payNote: '' } } : {}) });
     });
     toast('#' + no + ' sent to ' + reach.length + (reach.length === 1 ? ' person' : ' people'));
-    onClose(); go('sent');
+    onClose(); go(type === 'approval' ? 'approvals' : 'sent');
   }
   const footer = html`<span className="reach">${reach.length ? 'Reaches ' + reach.length + (reach.length === 1 ? ' person' : ' people') : 'Tag someone to send'}</span>
     <button className="btn" onClick=${onClose}>Cancel</button>
     <button className="btn primary" onClick=${submit} disabled=${busy}><${Icon} n="send" s=${16}/>${busy ? 'Sending…' : 'Send'}</button>`;
   return html`<${Modal} title="New post" onClose=${onClose} wide footer=${footer}>
     <div className="field"><span>What is it?</span>
-      <div className="typepick">${TYPE_KEYS.map((t) => html`<button type="button" key=${t} className=${type === t ? 'on' : ''} onClick=${() => setType(t)} aria-pressed=${type === t}><b><${Icon} n=${TYPES[t].icon} s=${16}/>${TYPES[t].label}</b><small>${TYPES[t].hint}</small></button>`)}</div>
+      <div className="typepick">${shownTypes(db).map((t) => html`<button type="button" key=${t} className=${type === t ? 'on' : ''} onClick=${() => setType(t)} aria-pressed=${type === t}><b><${Icon} n=${TYPES[t].icon} s=${16}/>${TYPES[t].label}</b><small>${TYPES[t].hint}</small></button>`)}</div>
     </div>
-    <div className="field tofield"><span>Tag people or teams</span>
+    <div className="field tofield"><span>${type === 'approval' ? 'Who approves it' : 'Tag people or teams'}</span>
       <div className="tobox" onClick=${() => inputRef.current && inputRef.current.focus()}>
         ${to.map((x) => { const isD = x.k === 'd'; const d = isD ? deptById(db, x.id) : null; return html`<span key=${x.k + x.id} className=${'tag' + (isD ? ' team' : '')} style=${isD ? { '--c': d.color } : null}>@${isD ? d.name : userById(db, x.id).name}<button type="button" aria-label="Remove" onClick=${(e) => { e.stopPropagation(); setTo((prev) => prev.filter((y) => !(y.k === x.k && y.id === x.id))); }}><${Icon} n="close" s=${12}/></button></span>`; })}
         <input id="to-input" ref=${inputRef} value=${q} onChange=${(e) => { setQ(e.target.value); setOpen(true); setHi(0); }} onFocus=${() => setOpen(!to.length)} onBlur=${() => setTimeout(() => setOpen(false), 150)} onKeyDown=${onKey} placeholder=${to.length ? 'Add more…' : 'Type @ and a name or team, e.g. @Bakery'} aria-label="Tag people or teams" autoComplete="off"/>
@@ -2207,22 +2271,31 @@ function Composer({ preset, onClose }) {
         <span><b>${s.label}</b><div className="sug-sub">${s.sub}</div></span></button>`)}</div>`}
       ${reach.length > 0 && html`<small className="reach-line">Goes to ${reach.slice(0, 6).map((id) => firstName(userById(db, id))).join(', ')}${reach.length > 6 ? ' and ' + (reach.length - 6) + ' more' : ''}. It shows on their board until they act on it.</small>`}
     </div>
+    ${type === 'approval' && html`<div className="field"><span>What needs approving</span><div className="seg" role="group">${AP_KINDS.map((k) => html`<button type="button" key=${k} className=${ap.kind === k ? 'on' : ''} onClick=${() => setA('kind', k)} aria-pressed=${ap.kind === k}>${k}</button>`)}</div></div>
+      <div className="row2">
+        <label className="field"><span>Supplier or payee</span><input id="c-party" className="input" value=${ap.party} onChange=${(e) => setA('party', e.target.value)} placeholder="e.g. SunPack Produce" maxLength="80"/></label>
+        <label className="field"><span>Amount</span><input id="c-amount" className="input mono" inputMode="decimal" value=${ap.amount} onChange=${(e) => setA('amount', e.target.value)} placeholder="R 0.00" maxLength="16"/>${amount > 0 && html`<small>${rand(amount)}</small>`}</label>
+      </div>
+      <div className="row2">
+        <label className="field"><span>Invoice or reference number (optional)</span><input id="c-ref" className="input mono" value=${ap.ref} onChange=${(e) => setA('ref', e.target.value)} placeholder="e.g. INV-20931" maxLength="40"/></label>
+        ${reach.length > 1 ? html`<div className="field"><span>Who has to approve</span><div className="seg" role="group"><button type="button" className=${ap.rule === 'any' ? 'on' : ''} onClick=${() => setA('rule', 'any')}>Any one of them</button><button type="button" className=${ap.rule === 'all' ? 'on' : ''} onClick=${() => setA('rule', 'all')}>All of them</button></div></div>` : html`<div></div>`}
+      </div>`}
     <div className="row2">
       <label className="field"><span>Related to</span><select id="c-about" className="select" value=${about} onChange=${(e) => setAbout(e.target.value)}><option value="">Choose a department</option>${db.depts.map((d) => html`<option key=${d.id} value=${d.id}>${d.name}</option>`)}</select></label>
-      ${type === 'task' ? html`<label className="field"><span>Due date (optional)</span><input id="c-due" className="input" type="date" min=${dkey()} value=${due} onChange=${(e) => setDue(e.target.value)}/></label>`
+      ${type === 'task' || type === 'approval' ? html`<label className="field"><span>${type === 'approval' ? 'Pay by (optional)' : 'Due date (optional)'}</span><input id="c-due" className="input" type="date" min=${dkey()} value=${due} onChange=${(e) => setDue(e.target.value)}/></label>`
         : type === 'vote' ? html`<label className="field"><span>Voting closes</span><input id="c-closes" className="input" type="date" min=${dkey()} value=${closes} onChange=${(e) => setCloses(e.target.value)}/></label>` : html`<div></div>`}
     </div>
     <div className="field"><span>Attention level</span>
       <div className="lvlpick">${LEVEL_KEYS.map((l) => html`<button type="button" key=${l} className=${l + (level === l ? ' on' : '')} onClick=${() => setLevel(l)} aria-pressed=${level === l}><b><span className=${'ldot ' + l} style=${{ width: 10, height: 10, borderRadius: '50%', display: 'inline-block' }}></span>${{ red: 'Red', amber: 'Amber', green: 'Green' }[l]} · ${LEVELS[l].label}</b><small>${{ red: 'Needs attention now', amber: 'Important, not urgent', green: 'General, when you can' }[l]}</small></button>`)}</div>
     </div>
-    <label className="field"><span>Title</span><input id="c-title" className="input" value=${title} onChange=${(e) => { setTitle(e.target.value); setErr(''); }} placeholder=${{ task: 'e.g. Restock the bread shelf on aisle 1', feedback: 'e.g. Should we move the banana stand?', look: 'e.g. New prices from Monday', vote: 'e.g. Pick a date for the year-end function' }[type]} maxLength="140"/></label>
-    <label className="field"><span>Details</span><textarea id="c-body" rows="3" value=${body} onChange=${(e) => setBody(e.target.value)} placeholder="Anything people need to know to act on it."></textarea></label>
+    <label className="field"><span>${type === 'approval' ? 'Title (optional)' : 'Title'}</span><input id="c-title" className="input" value=${title} onChange=${(e) => { setTitle(e.target.value); setErr(''); }} placeholder=${type === 'approval' ? apTitle(ap.kind, ap.party.trim() || 'Supplier', amount) : { task: 'e.g. Restock the bread shelf on aisle 1', feedback: 'e.g. Should we move the banana stand?', look: 'e.g. New prices from Monday', vote: 'e.g. Pick a date for the year-end function' }[type]} maxLength="140"/></label>
+    <label className="field"><span>Details</span><textarea id="c-body" rows="3" value=${body} onChange=${(e) => setBody(e.target.value)} placeholder=${type === 'approval' ? 'What it’s for, e.g. tomatoes and peppers delivered Monday, checked against the delivery note.' : 'Anything people need to know to act on it.'}></textarea></label>
     ${type === 'vote' && html`<div className="field"><span>Options</span><div className="poll-edit">
       ${opts.map((o, i) => html`<div className="poll-row" key=${i}><input id=${'opt-' + i} className="input" value=${o} onChange=${(e) => setOpts((arr) => arr.map((x, j) => (j === i ? e.target.value : x)))} placeholder=${'Option ' + (i + 1)}/>${opts.length > 2 && html`<button type="button" className="icon-btn" aria-label="Remove option" onClick=${() => setOpts((arr) => arr.filter((_, j) => j !== i))}><${Icon} n="close" s=${15}/></button>`}</div>`)}
       <div style=${{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}><button type="button" className="btn sm" onClick=${() => setOpts((arr) => [...arr, ''])}><${Icon} n="plus" s=${14}/>Add option</button>
       <label className="sm" style=${{ display: 'flex', gap: 6, alignItems: 'center' }}><input type="checkbox" checked=${multi} onChange=${(e) => setMulti(e.target.checked)}/>People can pick more than one</label></div>
     </div></div>`}
-    <div className="field"><span>Photos, videos or documents</span><${AttachPicker} files=${files} setFiles=${setFiles}/></div>
+    <div className="field"><span>${type === 'approval' ? 'Photo or PDF of the invoice or slip' : 'Photos, videos or documents'}</span><${AttachPicker} files=${files} setFiles=${setFiles}/></div>
     ${err && html`<p className="err" role="alert">${err}</p>`}
   <//>`;
 }
@@ -2647,7 +2720,7 @@ function AdminView() {
       <form className="dtool" onSubmit=${addDept}><input id="nd-name" className="input" style=${{ maxWidth: 280 }} value=${nd.name} onChange=${(e) => setNd({ ...nd, name: e.target.value })} placeholder="New department, e.g. Butchery"/><div className="swatches">${TILE_COLORS.map((c) => html`<button type="button" key=${c} className=${nd.color === c ? 'on' : ''} style=${{ '--c': c }} onClick=${() => setNd({ ...nd, color: c })} aria-label=${'Colour ' + c}></button>`)}</div><button className="btn primary">Add department</button></form>
       <p className="feat-note">Every department starts with its group chat, tagging and the “Needs you” board. Switch on the extra tools as each department comes on board.</p>
       <div className="dgrid">${db.depts.map((d) => html`<div key=${d.id} className="dcard"><div className="dcard-h"><span className="dsw" style=${{ '--c': d.color }}></span><div><h3>${d.name}</h3><span className="muted sm">${deptMembers(db, d.id).length} people · ${db.users.filter((u) => u.manages.includes(d.id)).map((u) => firstName(u)).join(', ') || 'no manager'}</span></div></div>
-        <div className="toggles">${[['tools', 'Tools & manuals'], ['drive', 'Drive'], ['monthend', 'Month end']].map(([k, l]) => html`<button key=${k} className=${'toggle' + (featureOn(d, k) ? ' on' : '')} style=${{ '--c': d.color }} onClick=${() => flipFeature(d.id, k)} aria-pressed=${featureOn(d, k)}><i></i>${l}${featureOn(d, k) ? ' · on' : ' · off'}</button>`)}</div></div>`)}</div>
+        <div className="toggles">${[['tools', 'Tools & manuals'], ['drive', 'Drive'], ['monthend', 'Month end'], ['approvals', 'Approvals']].map(([k, l]) => html`<button key=${k} className=${'toggle' + (featureOn(d, k) ? ' on' : '')} style=${{ '--c': d.color }} onClick=${() => flipFeature(d.id, k)} aria-pressed=${featureOn(d, k)}><i></i>${l}${featureOn(d, k) ? ' · on' : ' · off'}</button>`)}</div></div>`)}</div>
     </div>`}
     ${tab === 'drives' && html`<div className="table-wrap"><table>
       <thead><tr><th>Drive</th><th>Who can open it (tap to change)</th></tr></thead>
@@ -2781,6 +2854,8 @@ function CardInChat({ p }) {
 }
 /* ---------------- one-tap answers, alerts and the demo task ---------------- */
 function quickAct(update, p, who, action) {
+  if (action === 'approve') { update((d) => apDecide(d, p.id, who, 'approve', '', [])); return; }
+  if (action === 'gotpaid') { update((d) => { const q = d.posts.find((x) => x.id === p.id), r = q && q.recips[who]; if (r) { r.status = 'done'; r.seen = r.seen || Date.now(); r.updatedAt = Date.now(); r.nudgedAt = null; } }); return; }
   update((d) => {
     const q = d.posts.find((x) => x.id === p.id); const r = q && q.recips[who];
     if (!r) return;
@@ -2796,7 +2871,9 @@ function QuickActions({ p }) {
   const r = p.recips[user.id];
   if (!r || !needsMe(p, user.id)) return null;
   const act = (a, msg) => { quickAct(update, p, user.id, a); toast(msg); };
-  const btns = p.type === 'look' ? [['Got it', 'check', true, () => act('seen', 'Marked as seen')]]
+  const btns = p.type === 'approval' ? (r.paid || r.rejected ? [['Got it', 'check', true, () => act('gotpaid', 'Thanks')]] : r.answer ? [['Answer', 'reply', false, () => openPost(p.id)]]
+      : [['Approve', 'check', true, () => act('approve', 'Approved')], ['Review', 'look', false, () => openPost(p.id)]])
+    : p.type === 'look' ? [['Got it', 'check', true, () => act('seen', 'Marked as seen')]]
     : p.type === 'task' ? [r.status === 'todo' && ['On it', 'clock', false, () => act('start', 'Marked as started')], ['Done', 'check', true, () => act('done', 'Marked done')]].filter(Boolean)
     : [[p.type === 'vote' ? 'Vote' : 'Reply', p.type === 'vote' ? 'vote' : 'reply', false, () => openPost(p.id)]];
   return html`<div className="qa" onClick=${(e) => e.stopPropagation()} onKeyDown=${(e) => e.stopPropagation()}>${btns.map(([l, ic, go, fn]) => html`<button key=${l} className=${'qa-b' + (go ? ' go' : '')} onClick=${fn}><${Icon} n=${ic} s=${14}/>${l}</button>`)}</div>`;
@@ -2805,10 +2882,14 @@ function QuickActions({ p }) {
 function alertItems(db, me) {
   const out = [];
   db.posts.forEach((p) => {
-    if (p.author === me || !needsMe(p, me)) return;
-    const r = p.recips[me];
-    out.push({ key: 'p:' + p.id + ':' + (r.nudgedAt || 0), level: p.level, from: p.author, postId: p.id, chatId: p.chat || null,
-      title: (r.nudgedAt ? 'Reminder · ' : r.escalated ? 'Escalated · ' : '') + TYPES[p.type].label + ' from ' + firstName(userById(db, p.author)) + ' · ' + LEVELS[p.level].label, body: p.title });
+    const r = p.recips[me], own = p.author === me;
+    // your own post only comes back to you with a question about it, or to say it's paid
+    if ((own && !(r && (r.answer || r.paid || r.rejected))) || !needsMe(p, me)) return;
+    const why = r && r.paid ? 'paid' : r && r.rejected ? 'reject' : 'query';
+    const by = own ? ([...p.activity].reverse().find((e) => e.kind === why) || {}).user : null;
+    out.push({ key: 'p:' + p.id + ':' + (r.nudgedAt || 0) + (own ? ':' + why : ''), level: p.level, from: by || p.author, postId: p.id, chatId: p.chat || null,
+      title: own ? ({ paid: 'Paid · your ', reject: 'Rejected · your ', query: 'A question about your ' }[why]) + (p.approval ? p.approval.kind.toLowerCase() : 'request') + (by ? ' from ' + firstName(userById(db, by)) : '')
+        : (r.nudgedAt ? 'Reminder · ' : r.escalated ? 'Escalated · ' : '') + TYPES[p.type].label + ' from ' + firstName(userById(db, p.author)) + ' · ' + LEVELS[p.level].label, body: p.title });
   });
   myChats(db, me).forEach((c) => {
     const read = (c.read || {})[me] || 0;
@@ -2844,6 +2925,7 @@ function AlertStack() {
   const quickFor = (a) => {
     const p = a.postId && db.posts.find((x) => x.id === a.postId);
     if (!p || !user || !needsMe(p, user.id)) return [];
+    if (p.type === 'approval') { const r = p.recips[user.id]; return r.paid || r.rejected ? [['Got it', 'gotpaid', 'Thanks']] : r.answer ? [] : [['Approve', 'approve', 'Approved']]; }
     if (p.type === 'look') return [['Got it', 'seen', 'Marked as seen']];
     if (p.type === 'task') return [p.recips[user.id].status === 'todo' && ['On it', 'start', 'Marked as started'], ['Done', 'done', 'Marked done']].filter(Boolean);
     return [];
@@ -4188,6 +4270,232 @@ function GroupView({ id }) {
   <//>`;
 }
 
+/* ---------------- approvals: invoices, payments and expense claims that need an OK ---------------- */
+// An approval is a post (type 'approval') sent to its approvers, with p.approval = { kind, party, amount, ref, rule: 'any' | 'all',
+// approvers, paidAt, paidBy, payNote }. Each approver's decision sits on their own recipient record, so two people deciding at
+// once can't overwrite each other; the state is worked out from those. A question puts the requester on the post until they answer,
+// and so does "paid", so they hear about it.
+const AP_KINDS = ['Invoice', 'Payment', 'Expense claim', 'Other'];
+const AP_STATES = { waiting: ['Waiting for approval', 'todo'], query: ['Question asked', 'warn'], approved: ['Approved, to pay', 'ok'], paid: ['Paid', 'ok'], rejected: ['Rejected', 'bad'] };
+const approvalsOn = (db) => db.depts.some((d) => featureOn(d, 'approvals'));
+// Finance, and the admins, see every approval and mark them paid
+function canPay(db, u) {
+  const ds = db.depts.filter((d) => featureOn(d, 'approvals'));
+  return ds.length > 0 && (u.role === 'admin' || ds.some((d) => u.depts.includes(d.id) || u.manages.includes(d.id)));
+}
+const canSeeAP = (db, u) => approvalsOn(db) && (canPay(db, u) || u.role !== 'staff' || db.posts.some((p) => p.type === 'approval' && (p.author === u.id || p.recips[u.id])));
+const shownTypes = (db) => (approvalsOn(db) ? [...TYPE_KEYS, 'approval'] : TYPE_KEYS);
+const apTitle = (kind, party, amount) => kind + ': ' + (party || 'no name') + (amount ? ' · ' + rand(amount) : '');
+function apState(p) {
+  const a = p.approval;
+  if (!a) return 'waiting';
+  const rs = a.approvers.map((id) => p.recips[id]).filter(Boolean);
+  if (rs.some((r) => r.decision === 'reject')) return 'rejected';
+  const yes = rs.filter((r) => r.decision === 'approve').length;
+  if (a.rule === 'all' ? rs.length > 0 && yes === rs.length : yes > 0) return a.paidAt ? 'paid' : 'approved';
+  const req = p.recips[p.author];
+  return req && req.answer && req.status !== 'done' ? 'query' : 'waiting';
+}
+const apOpen = (p) => { const s = apState(p); return s === 'waiting' || s === 'query'; };
+const apWho = (db, p, d) => p.approval.approvers.filter((id) => (p.recips[id] || {}).decision === d).map((id) => firstName(userById(db, id))).join(', ');
+const whenAt = (t) => fmtDay(t, { day: 'numeric', month: 'short' }) + ', ' + hm(t);
+// approve, reject or ask the requester a question
+function apDecide(d, pid, who, decision, note, atts) {
+  const q = d.posts.find((x) => x.id === pid), r = q && q.recips[who];
+  if (!r || !q.approval) return;
+  const now = Date.now();
+  r.seen = r.seen || now; r.updatedAt = now; r.nudgedAt = null;
+  if (decision !== 'query') { r.status = 'done'; r.decision = decision; r.pct = 100; }
+  q.activity.push({ id: uid('e'), kind: decision, user: who, at: now, text: (note || '').trim(), attachments: atts || [] });
+  if (decision === 'reject' && q.author !== who) {
+    const a = q.recips[q.author];
+    q.recips[q.author] = { pct: 0, ...(a || {}), status: 'todo', rejected: true, seen: null, updatedAt: null, nudgedAt: a ? now : null };
+  }
+  if (decision === 'query' && q.author !== who) {
+    const a = q.recips[q.author];
+    q.recips[q.author] = { pct: 0, ...(a || {}), status: 'todo', answer: true, paid: false, seen: null, updatedAt: null, nudgedAt: a ? now : null };
+  }
+}
+// the requester answers: the approvers still deciding get a reminder
+function apAnswer(d, pid, who, note, atts) {
+  const q = d.posts.find((x) => x.id === pid), r = q && q.recips[who];
+  if (!r) return;
+  const now = Date.now();
+  r.status = 'done'; r.updatedAt = now; r.seen = r.seen || now; r.nudgedAt = null;
+  q.activity.push({ id: uid('e'), kind: 'answer', user: who, at: now, text: (note || '').trim(), attachments: atts || [] });
+  q.approval.approvers.forEach((id) => { const x = q.recips[id]; if (x && !x.decision) { x.nudgedAt = now; x.seen = null; } });
+}
+function apPaid(d, pid, by, note, undo) {
+  const q = d.posts.find((x) => x.id === pid);
+  if (!q || !q.approval) return;
+  const now = Date.now();
+  if (undo) {
+    q.approval.paidAt = null; q.approval.paidBy = null; q.approval.payNote = '';
+    const a = q.recips[q.author]; if (a && a.paid && a.status !== 'done') delete q.recips[q.author];
+    q.activity.push({ id: uid('e'), kind: 'system', user: by, at: now, text: 'took off the paid mark' });
+    return;
+  }
+  q.approval.paidAt = now; q.approval.paidBy = by; q.approval.payNote = (note || '').trim();
+  q.activity.push({ id: uid('e'), kind: 'paid', user: by, at: now, text: q.approval.payNote, attachments: [] });
+  if (q.author !== by) { const a = q.recips[q.author]; q.recips[q.author] = { pct: 0, ...(a || {}), status: 'todo', paid: true, answer: !!(a && a.answer), seen: null, updatedAt: null, nudgedAt: a ? now : null }; }
+}
+function ApPill({ p }) {
+  const s = apState(p), [l, c] = AP_STATES[s];
+  return html`<span className=${'st ' + c}>${(s === 'approved' || s === 'paid') && html`<${Icon} n="check" s=${14}/>`}${l}</span>`;
+}
+// what the person looking at it has to do: decide, answer a question, or see that it's paid
+function ApprovalAction({ p, r }) {
+  const { db, user, update, toast } = useApp();
+  const [note, setNote] = useState(''); const [files, setFiles] = useState([]); const [busy, setBusy] = useState(false);
+  const s = apState(p), author = userById(db, p.author), approver = p.approval.approvers.includes(user.id);
+  const run = async (kind) => {
+    if (kind !== 'approve' && !note.trim() && !files.length) { toast({ reject: 'Say why it’s rejected first.', query: 'Write your question first.', answer: 'Write your answer first.' }[kind], 'warn'); return; }
+    setBusy(true); const atts = await storeFiles(files);
+    update((d) => (kind === 'answer' ? apAnswer(d, p.id, user.id, note, atts) : apDecide(d, p.id, user.id, kind, note, atts)));
+    setNote(''); setFiles([]); setBusy(false);
+    toast({ approve: 'Approved. ' + firstName(author) + ' and Finance can see it.', reject: 'Rejected. ' + firstName(author) + ' can see why.', query: 'Question sent to ' + firstName(author) + '.', answer: 'Answer sent. The approvers have been reminded.' }[kind]);
+  };
+  if (r.paid && r.status !== 'done') return html`<div className="action look"><div><b>It’s been paid</b><div className="muted sm">${firstName(userById(db, p.approval.paidBy))} marked it paid ${ago(p.approval.paidAt)}${p.approval.payNote ? ' · ' + p.approval.payNote : ''}.</div></div>
+    <button className="btn primary" onClick=${() => { quickAct(update, p, user.id, 'gotpaid'); toast('Thanks'); }}><${Icon} n="check" s=${16}/>Got it</button></div>`;
+  if (r.rejected && r.status !== 'done') {
+    const why = [...p.activity].reverse().find((e) => e.kind === 'reject');
+    return html`<div className="action"><div className="action-h"><span className="eyebrow">It was rejected</span>${why && html`<span className="muted sm">${firstName(userById(db, why.user))} · ${ago(why.at)}</span>`}</div>
+      ${why && why.text && html`<div className="ap-q no">${why.text}</div>`}
+      <div className="action-foot"><span className="muted sm">Sort it out, then ask for approval again if it’s still needed.</span><button className="btn primary" onClick=${() => { quickAct(update, p, user.id, 'gotpaid'); toast('Thanks'); }}><${Icon} n="check" s=${16}/>Got it</button></div></div>`;
+  }
+  if (r.answer && r.status !== 'done') {
+    const asked = [...p.activity].reverse().find((e) => e.kind === 'query');
+    return html`<form className="action" onSubmit=${(e) => { e.preventDefault(); run('answer'); }}>
+      <div className="action-h"><span className="eyebrow">A question for you</span>${asked && html`<span className="muted sm">${firstName(userById(db, asked.user))} asked ${ago(asked.at)}</span>`}</div>
+      ${asked && asked.text && html`<div className="ap-q">${asked.text}</div>`}
+      <textarea id=${'ans-' + p.id} rows="2" value=${note} onChange=${(e) => setNote(e.target.value)} placeholder="Your answer…"></textarea>
+      <${AttachPicker} files=${files} setFiles=${setFiles} label="Add a photo of the slip or invoice"/>
+      <div className="action-foot"><span className="muted sm">The approvers get a reminder when you answer.</span><button className="btn primary" disabled=${busy}>Send answer</button></div>
+    </form>`;
+  }
+  if (!approver) return null;
+  if (r.decision) return html`<div className=${'action done' + (r.decision === 'reject' ? ' no' : '')}><${Icon} n=${r.decision === 'approve' ? 'check' : 'close'}/>You ${r.decision === 'approve' ? 'approved' : 'rejected'} this ${ago(r.updatedAt)}.</div>`;
+  if (!apOpen(p)) return html`<div className="action done"><${Icon} n="check"/>${s === 'rejected' ? 'Rejected by ' + apWho(db, p, 'reject') : 'Approved by ' + apWho(db, p, 'approve')}. Nothing more is needed from you.</div>`;
+  return html`<form className="action" onSubmit=${(e) => { e.preventDefault(); run('approve'); }}>
+    <div className="action-h"><span className="eyebrow">Your decision</span><span className="muted sm">${rand(p.approval.amount)}${p.approval.rule === 'all' && p.approval.approvers.length > 1 ? ' · everyone tagged has to approve' : ''}</span></div>
+    ${s === 'query' && html`<div className="notice"><${Icon} n="clock" s=${16}/>Waiting for ${firstName(author)} to answer a question. You can still decide now.</div>`}
+    <textarea id=${'dec-' + p.id} rows="2" value=${note} onChange=${(e) => setNote(e.target.value)} placeholder="A note (needed to reject it or ask a question)"></textarea>
+    <${AttachPicker} files=${files} setFiles=${setFiles}/>
+    <div className="action-foot ap-foot"><button type="button" className="btn" disabled=${busy} onClick=${() => run('query')}><${Icon} n="feedback" s=${15}/>Ask a question</button><button type="button" className="btn danger" disabled=${busy} onClick=${() => run('reject')}><${Icon} n="close" s=${15}/>Reject</button><button className="btn primary" disabled=${busy}><${Icon} n="check" s=${16}/>Approve</button></div>
+  </form>`;
+}
+// the facts at the top of an approval, and where Finance marks it paid
+function ApprovalFacts({ p }) {
+  const { db, user, update, toast } = useApp();
+  const [ref, setRef] = useState('');
+  const a = p.approval, s = apState(p), payer = canPay(db, user);
+  const decided = a.approvers.map((id) => ({ id, r: p.recips[id] || {} })).filter((x) => x.r.decision);
+  return html`<section className="ap-facts">
+    <div className="ap-facts-h"><span className="ap-big mono">${rand(a.amount) || 'No amount'}</span><${ApPill} p=${p}/></div>
+    <dl className="dl">
+      <dt>What</dt><dd>${a.kind}</dd>
+      <dt>Supplier or payee</dt><dd>${a.party || '–'}</dd>
+      ${a.ref && html`<dt>Invoice or ref</dt><dd className="mono">${a.ref}</dd>`}
+      ${p.due && html`<dt>Pay by</dt><dd>${fmtKey(p.due, { weekday: 'long', day: 'numeric', month: 'long' })}</dd>`}
+      <dt>Needs</dt><dd>${a.approvers.length < 2 ? 'One approval' : a.rule === 'all' ? 'All ' + a.approvers.length + ' approvers' : 'Any one of ' + a.approvers.length + ' approvers'}</dd>
+      ${decided.map((x) => html`<dt key=${'t' + x.id}>${x.r.decision === 'approve' ? 'Approved by' : 'Rejected by'}</dt><dd key=${'d' + x.id}>${(userById(db, x.id) || {}).name || 'Former staff'} · ${whenAt(x.r.updatedAt)}</dd>`)}
+      ${a.paidAt && html`<dt>Paid</dt><dd>${(userById(db, a.paidBy) || {}).name || 'Someone'} · ${whenAt(a.paidAt)}${a.payNote ? ' · ' + a.payNote : ''}</dd>`}
+    </dl>
+    ${payer && s === 'approved' && html`<form className="ap-pay" onSubmit=${(e) => { e.preventDefault(); update((d) => apPaid(d, p.id, user.id, ref)); setRef(''); toast('Marked paid. ' + firstName(userById(db, p.author)) + ' has been told.'); }}>
+      <input id=${'pay-' + p.id} className="input" value=${ref} onChange=${(e) => setRef(e.target.value)} placeholder="Payment reference (optional), e.g. EFT 77812" maxLength="80"/><button className="btn primary"><${Icon} n="check" s=${16}/>Mark paid</button></form>`}
+    ${payer && s === 'paid' && html`<button className="linkish sm" onClick=${() => { update((d) => apPaid(d, p.id, user.id, '', true)); toast('Paid mark taken off'); }}>Not paid after all? Take the paid mark off</button>`}
+  </section>`;
+}
+function ApprovalRow({ p, s, payer }) {
+  const { db, user, update, toast, openPost } = useApp();
+  const a = p.approval, author = userById(db, p.author), r = p.recips[user.id];
+  const toDecide = a.approvers.includes(user.id) && r && !r.decision && apOpen(p);
+  const open = s === 'waiting' || s === 'query';
+  const slow = open && Date.now() - p.createdAt > 2 * DAY;
+  const late = !!p.due && p.due < dkey() && (open || s === 'approved');
+  return html`<div className=${'ap-row' + (late ? ' late' : '')} role="button" tabIndex="0" aria-label=${p.title} onClick=${() => openPost(p.id)} onKeyDown=${(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPost(p.id); } }}>
+    <div className="ap-main">
+      <div className="ap-top"><span className="chip">${a.kind}</span><b className="ap-party">${a.party || p.title}</b>${a.ref && html`<span className="mono sm muted">${a.ref}</span>`}${p.attachments.length > 0 && html`<span className="meta-i" title="Attachments"><${Icon} n="clip" s=${13}/>${p.attachments.length}</span>`}</div>
+      <div className="ap-meta">
+        <span>From ${firstName(author)}</span>
+        <span className=${slow ? 'st warn' : ''}>${s === 'paid' ? 'Paid ' + ago(a.paidAt) : open ? 'Waiting ' + since(p.createdAt) : ago(p.createdAt)}</span>
+        ${p.due && s !== 'paid' && s !== 'rejected' && html`<span className=${late ? 'st bad' : ''}>Pay by ${fmtKey(p.due, { day: 'numeric', month: 'short' })}</span>`}
+        <span className="ap-who">${a.approvers.map((id) => { const u = userById(db, id), d = (p.recips[id] || {}).decision; return u && html`<span key=${id} className=${'ap-ap' + (d ? ' ' + d : '')}>${labelFor(db, u)}${d === 'approve' ? ' ✓' : d === 'reject' ? ' ✗' : ''}</span>`; })}</span>
+      </div>
+    </div>
+    <div className="ap-amt mono">${rand(a.amount)}</div>
+    <div className="ap-act" onClick=${(e) => e.stopPropagation()} onKeyDown=${(e) => e.stopPropagation()}>
+      ${toDecide ? html`<button className="btn sm primary" onClick=${() => { update((d) => apDecide(d, p.id, user.id, 'approve', '', [])); toast('Approved ' + rand(a.amount) + (a.party ? ' for ' + a.party : '')); }}><${Icon} n="check" s=${14}/>Approve</button>`
+        : payer && s === 'approved' ? html`<button className="btn sm primary" onClick=${() => { update((d) => apPaid(d, p.id, user.id, '')); toast('Marked paid. ' + firstName(author) + ' has been told.'); }}>Mark paid</button>`
+        : html`<${ApPill} p=${p}/>`}
+    </div>
+  </div>`;
+}
+function ApprovalsView() {
+  const { db, user, compose } = useApp();
+  const payer = canPay(db, user);
+  const all = db.posts.filter((p) => p.type === 'approval' && p.approval && canSee(db, p, user)).map((p) => ({ p, s: apState(p) }));
+  const groups = {
+    me: all.filter((x) => needsMe(x.p, user.id)),
+    waiting: all.filter((x) => x.s === 'waiting' || x.s === 'query'),
+    pay: all.filter((x) => x.s === 'approved'),
+    paid: all.filter((x) => x.s === 'paid'),
+    rejected: all.filter((x) => x.s === 'rejected'),
+  };
+  const [tab, setTab] = useState(() => (groups.me.length ? 'me' : payer && groups.pay.length ? 'pay' : 'waiting'));
+  const sum = (l) => l.reduce((t, x) => t + (Number(x.p.approval.amount) || 0), 0);
+  const month = dkey().slice(0, 7), paidMonth = groups.paid.filter((x) => dkey(x.p.approval.paidAt).slice(0, 7) === month);
+  const oldest = (a, b) => (a.p.due || '9999').localeCompare(b.p.due || '9999') || a.p.createdAt - b.p.createdAt;
+  const list = groups[tab].slice().sort(tab === 'paid' ? (a, b) => b.p.approval.paidAt - a.p.approval.paidAt : tab === 'rejected' ? (a, b) => b.p.createdAt - a.p.createdAt : oldest);
+  const tabs = [['me', 'For you'], ['waiting', 'Waiting'], ['pay', 'Approved, to pay'], ['paid', 'Paid'], ['rejected', 'Rejected']];
+  const empty = { me: 'Nothing is waiting for your OK.', waiting: 'Nothing is waiting for approval.', pay: 'Nothing approved is waiting to be paid.', paid: 'Nothing has been marked paid yet.', rejected: 'Nothing has been rejected.' }[tab];
+  return html`<${Page} title="Approvals" sub="Invoices, payments and expense claims that need an OK. Approve in one tap, Finance marks them paid, and there’s always a record of who approved what, and when."
+    actions=${html`<button className="btn primary" onClick=${() => compose({ type: 'approval' })}><${Icon} n="stamp" s=${16}/>Ask for approval</button>`}>
+    <div className="stats">
+      <div className=${'stat' + (groups.me.length ? ' warn' : '')}><b>${groups.me.length}</b><span>waiting for you</span></div>
+      <div className="stat"><b>${groups.waiting.length}</b><span>waiting for approval<em className="ap-sum">${rand(sum(groups.waiting)) || 'R 0'}</em></span></div>
+      <div className="stat"><b>${groups.pay.length}</b><span>approved, to pay<em className="ap-sum">${rand(sum(groups.pay)) || 'R 0'}</em></span></div>
+      <div className="stat ok"><b>${paidMonth.length}</b><span>paid this month<em className="ap-sum">${rand(sum(paidMonth)) || 'R 0'}</em></span></div>
+    </div>
+    <div className="tabs" role="tablist">${tabs.map(([k, l]) => html`<button key=${k} role="tab" aria-selected=${tab === k} className=${tab === k ? 'on' : ''} onClick=${() => setTab(k)}>${l} <b>${groups[k].length}</b></button>`)}</div>
+    ${list.length ? html`<div className="ap-list">${list.map((x) => html`<${ApprovalRow} key=${x.p.id} p=${x.p} s=${x.s} payer=${payer}/>`)}</div>`
+      : html`<div className="empty"><${Icon} n="stamp" s=${24}/><p>${empty}</p>${!all.length && html`<button className="btn primary" onClick=${() => compose({ type: 'approval' })}>Ask for approval</button>`}</div>`}
+  <//>`;
+}
+// the demo store's approvals, around now
+function demoApprovals(db, T = Date.now()) {
+  const f = db.depts.find((x) => x.id === 'finance');
+  if (f) f.features = { ...(f.features || {}), approvals: true };
+  if (!['u1', 'u3', 'u4', 'u5', 'u8', 'u10', 'u14'].every((id) => db.users.some((u) => u.id === id))) return;
+  const doc = (name, size) => ({ id: uid('a'), name, mime: 'application/pdf', kind: 'doc', demo: 'doc', size });
+  const mk = (o) => {
+    db.counter += 1;
+    const recips = {};
+    o.approvers.forEach((id) => { const x = (o.r || {})[id]; recips[id] = x ? { status: 'done', pct: 100, seen: x.at, updatedAt: x.at, decision: x.d } : { status: 'todo', pct: 0, seen: null, updatedAt: null }; });
+    Object.assign(recips, o.extra || {});
+    db.posts.push({ id: 'p' + db.counter, no: db.counter, chat: null, type: 'approval', title: apTitle(o.kind, o.party, o.amount), body: o.body || '', author: o.author, createdAt: o.at, toUsers: o.approvers, toDepts: [],
+      about: o.about, level: o.level || 'amber', due: o.due || null, attachments: o.att || [], recips, poll: null, closed: false,
+      activity: (o.log || []).map((e) => ({ id: uid('e'), attachments: [], text: '', ...e })),
+      approval: { kind: o.kind, party: o.party, amount: o.amount, ref: o.ref || '', rule: o.rule || 'any', approvers: o.approvers, paidAt: null, paidBy: null, payNote: '', ...(o.paid || {}) } });
+  };
+  mk({ kind: 'Invoice', party: 'SunPack Produce', amount: 18450, ref: 'INV-20931', author: 'u10', approvers: ['u3'], about: 'fv', at: T - 3 * HOUR, due: keyPlus(2),
+    body: 'Tomatoes, peppers and butternut delivered Monday. Checked against the delivery note, all there.', att: [doc('INV-20931 SunPack.pdf', 182000)] });
+  mk({ kind: 'Payment', party: 'Coldline Services', amount: 6200, ref: 'Q-1182', author: 'u8', approvers: ['u3', 'u1'], rule: 'all', about: 'deli', at: T - 26 * HOUR, due: keyPlus(1), level: 'red',
+    body: 'Fryer 2 repair: new thermostat and call-out. They want payment before they release the part.', att: [doc('Coldline quote Q-1182.pdf', 96000)],
+    r: { u3: { d: 'approve', at: T - 20 * HOUR } }, log: [{ kind: 'approve', user: 'u3', at: T - 20 * HOUR, text: 'Fine from Finance’s side. Thandi to OK it as well.' }] });
+  mk({ kind: 'Expense claim', party: 'Petty cash top-up', amount: 1500, author: 'u4', approvers: ['u3'], about: 'finance', at: T - 5 * HOUR,
+    body: 'Float is down to R120. Slips for this week are in the petty cash book.',
+    extra: { u4: { status: 'todo', pct: 0, seen: null, updatedAt: null, answer: true } }, log: [{ kind: 'query', user: 'u3', at: T - 4 * HOUR, text: 'Where are the slips for last week’s R380? I can only find two.' }] });
+  mk({ kind: 'Invoice', party: 'Sasko Flour', amount: 9870, ref: 'SF-55120', author: 'u5', approvers: ['u3'], about: 'bakery', at: T - 2 * DAY, due: keyPlus(3),
+    r: { u3: { d: 'approve', at: T - 30 * HOUR } }, log: [{ kind: 'approve', user: 'u3', at: T - 30 * HOUR }], att: [doc('SF-55120.pdf', 120000)] });
+  mk({ kind: 'Invoice', party: 'Coca-Cola Beverages', amount: 12300, ref: 'CCB-88410', author: 'u14', approvers: ['u3'], about: 'tills', at: T - 4 * DAY,
+    r: { u3: { d: 'approve', at: T - 3 * DAY } }, paid: { paidAt: T - 2 * DAY, paidBy: 'u4', payNote: 'EFT 77812' },
+    extra: { u14: { status: 'done', pct: 0, seen: T - 2 * DAY, updatedAt: T - 2 * DAY + HOUR, paid: true } },
+    log: [{ kind: 'approve', user: 'u3', at: T - 3 * DAY }, { kind: 'paid', user: 'u4', at: T - 2 * DAY, text: 'EFT 77812' }] });
+  mk({ kind: 'Payment', party: 'Deli uniforms', amount: 3450, author: 'u8', approvers: ['u3'], about: 'deli', at: T - 3 * DAY,
+    r: { u3: { d: 'reject', at: T - 3 * DAY + 2 * HOUR } }, log: [{ kind: 'reject', user: 'u3', at: T - 3 * DAY + 2 * HOUR, text: 'Head office orders uniforms for us. Please send the request to them.' }] });
+}
+
 /* ---------------- month end: Finance's deadline sheet, with reminders ---------------- */
 // One item per line of the sheet: { id, list, title, owners, due, repeat: '' | 'daily' | 'weekly', day, when, remind, star, dept, createdBy, createdAt }.
 // Ticks live in done as 'date|person', or 'date|*' when a manager closes the whole item; items with no fixed day use the date 'any'.
@@ -4656,7 +4964,7 @@ function myShortcuts(db, u) {
 }
 function pageOptions(db, u) {
   return [['needs', 'Needs you'], ['chats', 'Chats'], ['all', 'Everything for you'], ['sent', 'Sent & tracking'], u.role !== 'staff' && ['team', 'Team progress'],
-    ['pins', 'My pins'], ['groups', 'Projects & issues'], ['search', 'Search'], canSeeME(db, u) && ['monthend', 'Month end'],
+    ['pins', 'My pins'], ['groups', 'Projects & issues'], ['search', 'Search'], canSeeME(db, u) && ['monthend', 'Month end'], canSeeAP(db, u) && ['approvals', 'Approvals'],
     ...db.depts.map((d) => ['dept:' + d.id, d.name + ' page']), ...myGroups(db, u).filter((g) => !g.archived).map((g) => ['group:' + g.id, g.name])].filter(Boolean);
 }
 function ShortcutModal({ sc, onClose }) {
@@ -4707,7 +5015,7 @@ function ShortcutModal({ sc, onClose }) {
     ${v.kind === 'page' && html`<label className="field"><span>Page</span><select id="sc-page" className="select" value=${v.page} onChange=${(e) => set('page', e.target.value)}>${pageOptions(db, user).map(([k, l]) => html`<option key=${k} value=${k}>${l}</option>`)}</select></label>`}
     ${v.kind === 'chat' && html`<label className="field"><span>Chat</span><select id="sc-chat" className="select" value=${v.chat} onChange=${(e) => set('chat', e.target.value)}><option value="">Pick a chat</option>${chats.map((c) => html`<option key=${c.id} value=${c.id}>${chatName(db, c, user.id)}</option>`)}</select></label>`}
     ${v.kind === 'post' && html`<div className="field"><span>The post it starts</span>
-      <div className="seg" role="group">${['task', 'feedback', 'look'].map((t) => html`<button type="button" key=${t} className=${v.post.type === t ? 'on' : ''} onClick=${() => setPost('type', t)}>${TYPES[t].label}</button>`)}</div>
+      <div className="seg" role="group">${['task', 'feedback', 'look', ...(approvalsOn(db) ? ['approval'] : [])].map((t) => html`<button type="button" key=${t} className=${v.post.type === t ? 'on' : ''} onClick=${() => setPost('type', t)}>${TYPES[t].label}</button>`)}</div>
       <div className="seg" role="group">${LEVEL_KEYS.map((l) => html`<button type="button" key=${l} className=${v.post.level === l ? 'on' : ''} onClick=${() => setPost('level', l)}><span className=${'ldot ' + l}></span>${LEVELS[l].label}</button>`)}</div>
       <div className="row2">
         <label className="field"><span>Sent to</span><select id="sc-to" className="select" value=${v.post.to} onChange=${(e) => setPost('to', e.target.value)}><option value="">Choose when posting</option>${targets.map(([k, l]) => html`<option key=${k} value=${k}>${l}</option>`)}</select></label>
@@ -4765,6 +5073,7 @@ function Shell() {
   else if (view === 'search') content = html`<${SearchView}/>`;
   else if (view === 'admin') content = html`<${AdminView}/>`;
   else if (view === 'monthend') content = html`<${MonthEndView}/>`;
+  else if (view === 'approvals') content = html`<${ApprovalsView}/>`;
   const note = CLOUD ? html`<p className="board-note">Live: everyone in the store sees changes as they happen.</p>` : html`<p className="board-note">Demo store with example staff. Changes stay on this device. <button onClick=${() => ask({ title: 'Reset the demo store?', body: 'All posts, files, pins and people go back to the example data. Anything you added is removed.', confirm: 'Reset demo', danger: true, onConfirm: resetDemo })}>Reset demo</button></p>`;
   return html`<div className=${'shell' + (openId ? ' has-detail' : '') + (chatsMode && openChatId ? ' chat-open' : '')}>
     <${Topbar}/>
