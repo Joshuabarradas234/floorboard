@@ -766,6 +766,21 @@ td.mono{white-space:nowrap}
 .rec-inline{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--ink)}
 .attach-name audio{display:block;width:100%;max-width:260px;height:30px;margin-top:4px}
 .qd-item .attach .btn{padding:4px 10px;font-size:12px}
+.modal-wrap.ink-wrap ~ .modal-wrap:not(.ink-wrap){z-index:140}
+.modal-wrap.ink-wrap{z-index:130;background:rgba(14,10,8,.94);display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;padding:0}
+.ink-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px 14px;padding-top:max(10px,env(safe-area-inset-top,0px));background:rgba(40,29,22,.96);border-bottom:1px solid var(--glass-line)}
+.ink-title{flex:1;min-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ink-tools{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.ink-colours{display:flex;gap:6px}
+.ink-colours button{width:24px;height:24px;border-radius:50%;border:2px solid rgba(255,255,255,.35);background:var(--c);padding:0}
+.ink-colours button.on{border-color:#fff;box-shadow:0 0 0 2px var(--c)}
+.ink-pages{flex:1;overflow-y:auto;padding:18px 12px 40px;display:grid;gap:16px;justify-items:center;align-content:start;-webkit-overflow-scrolling:touch}
+.ink-page{position:relative;width:min(100%,900px);background:#fff;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.ink-page img{display:block;width:100%;height:100%;user-select:none;-webkit-user-select:none;-webkit-user-drag:none;pointer-events:none}
+.ink-layer{position:absolute;inset:0;width:100%;height:100%;touch-action:pan-y}
+.ink-layer.draw{touch-action:none;cursor:crosshair}
+.ink-msg{color:var(--ink-2);text-align:center;max-width:620px;margin:0}
+.sig-doc{color:var(--green);font-weight:700}
 .ql{background:rgba(255,255,255,.08);border:1px solid var(--glass-line);border-radius:14px;padding:10px 12px;display:grid;gap:6px;font-size:13.5px}
 .ql-h{display:flex;align-items:baseline;gap:6px;font-weight:800;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-2)}
 .ql-h small{font-weight:500;letter-spacing:0;text-transform:none;color:var(--ink-3)}
@@ -2360,6 +2375,7 @@ function Thread({ p }) {
         <div className="t-head"><b>${u ? u.name : 'Someone'}</b><span className="muted">${verb[it.kind]} · ${ago(it.at)}</span>${it.kind === 'update' && it.pct != null && html`<span className=${'pct-pill' + (it.pct >= 100 ? ' full' : '')}>${it.pct}%</span>`}</div>
         ${it.text && html`<div className="t-text">${it.text}</div>`}
         ${it.sig && html`<div className="sig-slip"><img src=${it.sig} alt=${'Signature of ' + (u ? u.name : 'the approver')}/></div>`}
+        ${it.onDoc && html`<div className="sm sig-doc">Signed on the document</div>`}
         ${it.attachments && it.attachments.length > 0 && html`<${Attachments} items=${it.attachments}/>`}
       </div></li>`; })}</ol>
     <form className="comment" onSubmit=${send}>
@@ -3517,7 +3533,7 @@ const STAFF_DOMAIN = '@staff.floorboard.app';
 const pinPassword = (pin) => 'fb-' + pin + '-FB';
 const PIN_LEN = CLOUD ? 6 : 4;
 const CACHE_KEY = 'floorboard.cloud.cache.v1', STORE_CODE_KEY = 'floorboard.storecode.v1';
-function emptyDb() { return { v: 2, store: 'Your store', counter: 1000, depts: [], users: [], groups: [], shortcuts: [], drives: [], folders: [], files: [], tiles: [], pins: {}, status: {}, chats: [], messages: [], posts: [], deadlines: [], events: [] }; }
+function emptyDb() { return { v: 2, store: 'Your store', counter: 1000, depts: [], users: [], groups: [], shortcuts: [], drives: [], folders: [], files: [], tiles: [], pins: {}, status: {}, chats: [], messages: [], posts: [], deadlines: [], events: [], marks: {} }; }
 
 // Same data, written with sorted keys, so a record that came back from the server compares equal to ours.
 function stable(v) {
@@ -3541,6 +3557,7 @@ function toRecs(db) {
   Object.entries(db.pins || {}).forEach(([who, v]) => put('pins', who, v));
   Object.entries(db.status || {}).forEach(([who, s]) => put('status', who, s));
   (db.events || []).forEach((ev) => put('events', ev.id, ev));
+  Object.entries(db.marks || {}).forEach(([k, v]) => put('marks', k, v));
   (db.deadlines || []).forEach((x) => { const { done, ...rest } = x; put('deadlines', x.id, rest); Object.entries(done || {}).forEach(([k, v]) => put('dltick', x.id + '|' + k, { ...v, dl: x.id, key: k })); });
   db.chats.forEach((c) => { const { read, ...rest } = c; put('chats', c.id, rest); Object.entries(read || {}).forEach(([who, at]) => put('read', c.id + '|' + who, { chat: c.id, user: who, at })); });
   db.messages.forEach((m) => { const { reactions, ...rest } = m; put('messages', m.id, rest); Object.entries(reactions || {}).forEach(([who, e]) => put('rx', m.id + '|' + who, { msg: m.id, user: who, e })); });
@@ -3563,6 +3580,7 @@ function fromRecs(list) {
   (by.pins || []).forEach((r) => { db.pins[r.id] = r.data; });
   (by.status || []).forEach((r) => { db.status[r.id] = r.data; });
   db.events = of('events');
+  (by.marks || []).forEach((r) => { db.marks[r.id] = r.data; });
   const dls = {}; db.deadlines = of('deadlines').map((x) => (dls[x.id] = { ...x, done: {} }));
   (by.dltick || []).forEach(({ data: x }) => { const t = dls[x.dl]; if (t) { const { dl, key, ...v } = x; t.done[key] = v; } });
   const chats = {}; db.chats = of('chats').map((c) => (chats[c.id] = { ...c, read: {} }));
@@ -3578,7 +3596,7 @@ function fromRecs(list) {
   db.counter = db.posts.reduce((a, p) => Math.max(a, p.no || 0), 1000);
   return db;
 }
-const PARENT = { rcp: ['posts', 'post'], act: ['posts', 'post'], vote: ['posts', 'post'], rx: ['messages', 'msg'], read: ['chats', 'chat'], dltick: ['deadlines', 'dl'] };
+const PARENT = { rcp: ['posts', 'post'], act: ['posts', 'post'], vote: ['posts', 'post'], rx: ['messages', 'msg'], read: ['chats', 'chat'], dltick: ['deadlines', 'dl'], marks: ['posts', 'post'] };
 const parentKey = (r) => (PARENT[r.coll] ? PARENT[r.coll][0] + '|' + r.data[PARENT[r.coll][1]] : null);
 
 const Sync = {
@@ -4639,29 +4657,33 @@ function SignModal({ p, note: note0, files, onDone, onClose }) {
   const saved = (db.pins[user.id] || {}).signature || null;
   const [sig, setSig] = useState(saved);
   const [redraw, setRedraw] = useState(!saved);
+  const marked = hasMarks(db, p.id), [onDoc, setOnDoc] = useState(false);
   const [remember, setRemember] = useState(true);
   const [note, setNote] = useState(note0 || '');
   const a = p.approval, author = userById(db, p.author);
   const [busy, setBusy] = useState(false);
   const approve = async () => {
-    if (!sig || busy) return;
+    if ((!sig && !onDoc) || busy) return;
     setBusy(true);
     const atts = files && files.length ? await storeFiles(files) : [];
     update((d) => {
-      apDecide(d, p.id, user.id, 'approve', note, atts, sig);
+      apDecide(d, p.id, user.id, 'approve', note, atts, onDoc ? 'doc' : sig);
       d.pins[user.id] = d.pins[user.id] || { posts: [], notes: [] };
-      if (redraw) { if (remember) d.pins[user.id].signature = sig; else delete d.pins[user.id].signature; }
+      if (redraw && !onDoc) { if (remember) d.pins[user.id].signature = sig; else delete d.pins[user.id].signature; }
     });
     onClose(); if (onDone) onDone();
     toast('Approved and signed. ' + firstName(author) + ' can see it.');
   };
-  return html`<${Modal} title="Sign to approve" onClose=${onClose} footer=${html`<button className="btn" onClick=${onClose}>Cancel</button><button className="btn primary" disabled=${!sig} onClick=${approve}><${Icon} n="check" s=${16}/>Approve and sign</button>`}>
+  return html`<${Modal} title="Sign to approve" onClose=${onClose} footer=${html`<button className="btn" onClick=${onClose}>Cancel</button><button className="btn primary" disabled=${!sig && !onDoc} onClick=${approve}><${Icon} n="check" s=${16}/>Approve and sign</button>`}>
     <div className="sig-what"><b>${a.kind}${a.party ? ': ' + a.party : ''}</b>${a.amount > 0 && html`<span className="mono">${rand(a.amount)}</span>`}${a.ref && html`<span className="mono muted sm">${a.ref}</span>`}<span className="muted sm">from ${firstName(author)}</span></div>
     ${a.sticky && html`<div className="ap-sticky sm"><span>${a.sticky}</span></div>`}
     <${QuickLook} s=${a.summary}/>
-    ${redraw ? html`<${SignPad} onChange=${setSig}/>`
+    <div className="ap-actions"><${InkButtons} p=${p} noApprove/></div>
+    ${marked && html`<label className="me-check"><input id="sig-ondoc" type="checkbox" checked=${onDoc} onChange=${(e) => setOnDoc(e.target.checked)}/>I signed on the document itself</label>`}
+    ${onDoc ? html`<p className="sm sig-doc" style=${{ margin: 0 }}>Your signature on the document’s pages is what’s kept, with your name and the date and time.</p>`
+      : redraw ? html`<${SignPad} onChange=${setSig}/>`
       : html`<div className="sig-saved"><img src=${saved} alt="Your saved signature"/><button type="button" className="linkish sm" onClick=${() => { setRedraw(true); setSig(null); }}>Sign again instead</button></div>`}
-    ${redraw && html`<label className="me-check sm"><input id="sig-remember" type="checkbox" checked=${remember} onChange=${(e) => setRemember(e.target.checked)}/>Remember my signature for next time</label>`}
+    ${redraw && !onDoc && html`<label className="me-check sm"><input id="sig-remember" type="checkbox" checked=${remember} onChange=${(e) => setRemember(e.target.checked)}/>Remember my signature for next time</label>`}
     <label className="field"><span>Note (optional)</span><input id="sig-note" className="input" value=${note} onChange=${(e) => setNote(e.target.value)} placeholder="e.g. Go ahead, but ask for delivery by the 20th" maxLength="200"/></label>
     ${files && files.length > 0 && html`<p className="sm" style=${{ margin: 0 }}><${Icon} n="clip" s=${13}/> ${files.length === 1 ? files[0].name : files.length + ' files'} go with it.</p>`}
     <p className="muted sm" style=${{ margin: 0 }}>Your signature is kept with this approval, with your name and the date and time.</p>
@@ -4827,7 +4849,7 @@ async function quotePrintHtml(db, posts) {
       const why = x.r.decision === 'reject' ? ([...p.activity].reverse().find((e) => e.kind === 'reject' && e.user === x.id) || {}).text : '';
       const sig = x.r.decision === 'approve' ? sigOf(p, x.id) : null;
       return '<div class="sign">' + (x.r.decision === 'approve' ? 'Approved' : 'Not approved') + ' by <b>' + escHtml(x.u ? x.u.name : 'Former staff') + '</b> · ' + escHtml(whenAt(x.r.updatedAt))
-        + (sig ? '<img src="' + sig + '" alt="Signature">' : '') + (why ? '<div class="why">Reason: ' + escHtml(why) + '</div>' : '') + '</div>';
+        + (sig ? '<img src="' + sig + '" alt="Signature">' : x.r.decision === 'approve' && signedOnDoc(p, x.id) ? '<div>Signed on the document (on the pages that follow)</div>' : '') + (why ? '<div class="why">Reason: ' + escHtml(why) + '</div>' : '') + '</div>';
     }).join('');
     parts.push('<section><div class="top"><b>' + escHtml(db.store) + '</b><span>#' + p.no + '</span></div>'
       + '<h1>' + escHtml(a.kind + (a.party ? ': ' + a.party : '')) + '</h1><table>'
@@ -4840,11 +4862,11 @@ async function quotePrintHtml(db, posts) {
       const blob = att.demo ? null : await Blobs.get(att.id);
       const mime = att.mime || '';
       if (!blob) { parts.push('<section class="doc"><p class="miss">' + escHtml(att.name) + ' isn’t on this computer yet, so it isn’t in this print-out.</p></section>'); continue; }
-      if (mime.startsWith('image/')) { parts.push('<section class="doc"><img src="' + (await blobToDataUrl(blob)) + '" alt=""></section>'); continue; }
+      if (mime.startsWith('image/')) { parts.push('<section class="doc"><img src="' + (await inkOnto(await blobToDataUrl(blob), marksOf(db, p.id, att.id, 0))) + '" alt=""></section>'); continue; }
       if (mime === 'application/pdf' || /\.pdf$/i.test(att.name)) {
         try {
           const { pages, more } = await pdfPages(blob);
-          pages.forEach((src) => parts.push('<section class="doc"><img src="' + src + '" alt=""></section>'));
+          for (let i = 0; i < pages.length; i++) parts.push('<section class="doc"><img src="' + (await inkOnto(pages[i], marksOf(db, p.id, att.id, i))) + '" alt=""></section>');
           if (more > 0) parts.push('<section class="doc"><p class="miss">' + more + ' more pages of ' + escHtml(att.name) + ' weren’t printed. Open it to print the rest.</p></section>');
         } catch (e) { parts.push('<section class="doc"><p class="miss">' + escHtml(att.name) + ' couldn’t be read for printing. Open it and print it separately.</p></section>'); }
         continue;
@@ -5010,13 +5032,15 @@ async function signedPdf(db, p) {
     y += 3;
     const sig = x.r.decision === 'approve' && sigOf(p, x.id);
     if (sig) { const pr = doc.getImageProperties(sig), h = 22, w = Math.min(80, (pr.width / pr.height) * h); doc.addImage(sig, 'PNG', 14, y, w, h); y += h + 3; }
+    else if (x.r.decision === 'approve' && signedOnDoc(p, x.id)) { y += 5; doc.text('Signed on the document (on the pages that follow)', 14, y); y += 4; }
   });
   doc.setFontSize(8); doc.setTextColor(140); doc.text('Signed in Floorboard. This copy was saved ' + whenAt(Date.now()) + '.', 14, 285);
   for (const att of p.attachments) {
     const blob = att.demo ? null : await Blobs.get(att.id);
     if (!blob) continue;
     const mime = att.mime || '';
-    const pages = mime.startsWith('image/') ? [await blobToDataUrl(blob)] : mime === 'application/pdf' || /\.pdf$/i.test(att.name) ? (await pdfPages(blob, 30)).pages : [];
+    const raw = mime.startsWith('image/') ? [await blobToDataUrl(blob)] : mime === 'application/pdf' || /\.pdf$/i.test(att.name) ? (await pdfPages(blob, 30)).pages : [], pages = [];
+    for (let i = 0; i < raw.length; i++) pages.push(await inkOnto(raw[i], marksOf(db, p.id, att.id, i)));
     for (const src of pages) {
       const pr = doc.getImageProperties(src), k = Math.min(182 / pr.width, 269 / pr.height), w = pr.width * k, h = pr.height * k;
       doc.addPage(); doc.addImage(src, /^data:image\/png/.test(src) ? 'PNG' : 'JPEG', 14 + (182 - w) / 2, 14, w, h);
@@ -5309,6 +5333,151 @@ function demoEvents(T = Date.now()) {
   ].map((x, i) => ({ id: 'ev-' + (i + 1), ...x }));
 }
 
+/* ---------------- writing on the document: an iPad pen, a finger or a mouse, straight onto the quote's pages ---------------- */
+// Marks are kept per page as strokes in page-relative numbers (0 to 1), so they line up at any size, and they're drawn into
+// the signed copy and the print-out. Once a pen is used, fingers only scroll, so a resting hand doesn't leave marks.
+const INK = { blue: '#1f3fae', red: '#c62828', black: '#111111', green: '#1b7a3a' };
+const markKey = (pid, aid, page) => pid + '|' + aid + '|' + page;
+const marksOf = (db, pid, aid, page) => ((db.marks || {})[markKey(pid, aid, page)] || {}).strokes || [];
+const hasMarks = (db, pid) => Object.keys(db.marks || {}).some((k) => k.startsWith(pid + '|') && (db.marks[k].strokes || []).length > 0);
+const inkable = (a) => !a.demo && ((a.mime || '').startsWith('image/') || a.mime === 'application/pdf' || /\.pdf$/i.test(a.name || ''));
+const signedOnDoc = (p, who) => p.activity.some((e) => e.kind === 'approve' && e.user === who && e.onDoc);
+const r4 = (n) => Math.round(n * 10000) / 10000;
+const loadImg = (src) => new Promise((ok, no) => { const im = new Image(); im.onload = () => ok(im); im.onerror = no; im.src = src; });
+function drawStrokes(g, strokes, w, h) {
+  g.lineCap = 'round'; g.lineJoin = 'round';
+  strokes.forEach((s) => {
+    const p = s.p;
+    if (!p || p.length < 2) return;
+    g.strokeStyle = INK[s.c] || s.c; g.lineWidth = Math.max(1, s.w * w);
+    g.beginPath(); g.moveTo(p[0] * w, p[1] * h);
+    if (p.length === 2) g.lineTo(p[0] * w + 0.5, p[1] * h);
+    for (let i = 2; i < p.length; i += 2) g.lineTo(p[i] * w, p[i + 1] * h);
+    g.stroke();
+  });
+}
+// a page picture with its marks drawn in, for the signed copy and the print-out
+async function inkOnto(src, strokes) {
+  if (!strokes || !strokes.length) return src;
+  try {
+    const im = await loadImg(src), cv = document.createElement('canvas');
+    cv.width = im.naturalWidth; cv.height = im.naturalHeight;
+    const g = cv.getContext('2d'); g.drawImage(im, 0, 0); drawStrokes(g, strokes, cv.width, cv.height);
+    return cv.toDataURL('image/jpeg', 0.88);
+  } catch (e) { return src; }
+}
+function InkPage({ pg, strokes, onChange, tool, colour, thick, editable, scrollRef, penSeen }) {
+  const cv = useRef(null), cur = useRef(null), pan = useRef(null);
+  const paint = () => {
+    const c = cv.current; if (!c) return;
+    const r = c.getBoundingClientRect(), dpr = window.devicePixelRatio || 1, W = Math.max(1, Math.round(r.width * dpr)), H = Math.max(1, Math.round(r.height * dpr));
+    if (c.width !== W || c.height !== H) { c.width = W; c.height = H; }
+    const g = c.getContext('2d'); g.clearRect(0, 0, W, H);
+    drawStrokes(g, cur.current ? [...strokes, cur.current] : strokes, W, H);
+  };
+  useEffect(paint);
+  useEffect(() => { const ro = new ResizeObserver(paint); ro.observe(cv.current); return () => ro.disconnect(); }, []);
+  const at = (e) => { const r = cv.current.getBoundingClientRect(); return [(e.clientX - r.left) / r.width, (e.clientY - r.top) / r.height]; };
+  // the eraser takes off any stroke whose line passes near it (heights are scaled to match widths)
+  const rub = (x, y) => {
+    const k = pg.h / pg.w, near = (s) => {
+      for (let i = 0; i < s.p.length; i += 2) {
+        const ax = s.p[i], ay = s.p[i + 1] * k, bx = i + 2 < s.p.length ? s.p[i + 2] : ax, by = i + 2 < s.p.length ? s.p[i + 3] * k : ay;
+        const dx = bx - ax, dy = by - ay, l = dx * dx + dy * dy, t = l ? Math.max(0, Math.min(1, ((x - ax) * dx + (y * k - ay) * dy) / l)) : 0;
+        if (Math.hypot(x - (ax + t * dx), y * k - (ay + t * dy)) < 0.018) return true;
+      }
+      return false;
+    };
+    const keep = strokes.filter((s) => !near(s));
+    if (keep.length !== strokes.length) onChange(keep);
+  };
+  const down = (e) => {
+    if (e.pointerType === 'pen') penSeen.current = true;
+    try { cv.current.setPointerCapture(e.pointerId); } catch (x) { /* still works */ }
+    if (!editable || tool === 'hand' || (e.pointerType === 'touch' && penSeen.current)) { pan.current = { y: e.clientY, top: scrollRef.current.scrollTop }; return; }
+    e.preventDefault();
+    const [x, y] = at(e);
+    if (tool === 'erase') { cur.current = null; rub(x, y); return; }
+    const w = (thick ? 0.0062 : 0.0032) * (e.pointerType === 'pen' && e.pressure > 0 ? 0.55 + e.pressure : 1);
+    cur.current = { c: colour, w: r4(w), p: [r4(x), r4(y)] };
+    paint();
+  };
+  const move = (e) => {
+    if (pan.current) { scrollRef.current.scrollTop = pan.current.top - (e.clientY - pan.current.y); return; }
+    if (tool === 'erase' && e.buttons) { const [x, y] = at(e); rub(x, y); return; }
+    const s = cur.current; if (!s) return;
+    const evs = e.getCoalescedEvents ? e.getCoalescedEvents() : [];
+    (evs.length ? evs : [e]).forEach((ev) => { const [x, y] = at(ev), n = s.p.length; if (Math.hypot(x - s.p[n - 2], y - s.p[n - 1]) > 0.0012) s.p.push(r4(x), r4(y)); });
+    paint();
+  };
+  const up = () => { pan.current = null; const s = cur.current; cur.current = null; if (s) onChange([...strokes, s]); };
+  return html`<div className="ink-page" style=${{ aspectRatio: pg.w + ' / ' + pg.h }}>
+    <img src=${pg.src} alt="" draggable="false"/>
+    <canvas ref=${cv} className=${'ink-layer' + (editable && tool !== 'hand' ? ' draw' : '')} onPointerDown=${down} onPointerMove=${move} onPointerUp=${up} onPointerCancel=${up}></canvas>
+  </div>`;
+}
+function MarkupModal({ p, att, noApprove, onClose }) {
+  const { db, user, update, toast, ask } = useApp();
+  const [pages, setPages] = useState(null), [err, setErr] = useState('');
+  const [tool, setTool] = useState('pen'), [colour, setColour] = useState('blue'), [thick, setThick] = useState(false);
+  const [marks, setMarks] = useState(() => { const m = {}; Object.keys(db.marks || {}).forEach((k) => { const [pid, aid, pg] = k.split('|'); if (pid === p.id && aid === att.id) m[Number(pg)] = db.marks[k].strokes || []; }); return m; });
+  const history = useRef([]), scrollRef = useRef(null), penSeen = useRef(false), wrap = useRef(null);
+  const a = p.approval, editable = p.author === user.id || a.approvers.includes(user.id) || canPay(db, user);
+  const r = p.recips[user.id], canDecide = !noApprove && a.approvers.includes(user.id) && r && !r.decision && apOpen(p);
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      const blob = await Blobs.get(att.id);
+      if (!blob) { if (alive) setErr('This file isn’t on this device yet. Check the connection and open it again.'); return; }
+      try {
+        const srcs = (att.mime || '').startsWith('image/') ? [await blobToDataUrl(blob)] : (await pdfPages(blob, 30)).pages, out = [];
+        for (const s of srcs) { const im = await loadImg(s); out.push({ src: s, w: im.naturalWidth, h: im.naturalHeight }); }
+        if (alive) setPages(out);
+      } catch (e) { if (alive) setErr('This file couldn’t be opened here.'); }
+    })();
+    // Escape closes the viewer only when nothing (like the signing box) is open on top of it
+    const h = (e) => { if (e.key !== 'Escape') return; const all = document.querySelectorAll('.modal-wrap'); if (all[all.length - 1] === wrap.current) onClose(); };
+    window.addEventListener('keydown', h); return () => { alive = false; window.removeEventListener('keydown', h); };
+  }, []);
+  const save = (i, strokes) => update((d) => { d.marks = d.marks || {}; const k = markKey(p.id, att.id, i); if (strokes.length) d.marks[k] = { post: p.id, att: att.id, page: i, strokes, by: user.id, at: Date.now() }; else delete d.marks[k]; });
+  const change = (i, next) => { setMarks((m) => { history.current.push({ i, before: m[i] || [] }); return { ...m, [i]: next }; }); save(i, next); };
+  const undo = () => { const h = history.current.pop(); if (!h) return; setMarks((m) => ({ ...m, [h.i]: h.before })); save(h.i, h.before); };
+  const clearAll = () => ask({ title: 'Clear every mark on this document?', body: 'All the writing on every page comes off.', confirm: 'Clear', danger: true, onConfirm: () => { Object.keys(marks).forEach((i) => { if ((marks[i] || []).length) { history.current.push({ i: Number(i), before: marks[i] }); save(Number(i), []); } }); setMarks({}); toast('Cleared'); } });
+  const any = Object.values(marks).some((s) => s.length);
+  return ReactDOM.createPortal(html`<div className="modal-wrap ink-wrap" ref=${wrap} role="dialog" aria-modal="true" aria-label=${'Write on ' + att.name}>
+    <div className="ink-bar">
+      <button className="icon-btn" onClick=${onClose} aria-label="Close" title="Close"><${Icon} n="close"/></button>
+      <b className="ink-title">${att.name}</b>
+      ${editable && html`<div className="ink-tools">
+        <div className="seg" role="group" aria-label="Tool">
+          <button className=${tool === 'pen' ? 'on' : ''} onClick=${() => setTool('pen')} aria-pressed=${tool === 'pen'}><${Icon} n="edit" s=${14}/>Pen</button>
+          <button className=${tool === 'erase' ? 'on' : ''} onClick=${() => setTool('erase')} aria-pressed=${tool === 'erase'}>Eraser</button>
+          <button className=${tool === 'hand' ? 'on' : ''} onClick=${() => setTool('hand')} aria-pressed=${tool === 'hand'}>Scroll</button>
+        </div>
+        <div className="ink-colours" role="group" aria-label="Colour">${Object.keys(INK).map((c) => html`<button key=${c} className=${colour === c && tool === 'pen' ? 'on' : ''} style=${{ '--c': INK[c] }} onClick=${() => { setColour(c); setTool('pen'); }} aria-label=${c} aria-pressed=${colour === c}></button>`)}</div>
+        <button className=${'btn sm' + (thick ? ' pinned' : '')} onClick=${() => setThick((t) => !t)} aria-pressed=${thick}>${thick ? 'Thick' : 'Fine'}</button>
+        <button className="btn sm" onClick=${undo} disabled=${!history.current.length}>Undo</button>
+        ${any && html`<button className="btn sm ghost" onClick=${clearAll}>Clear all</button>`}
+      </div>`}
+      ${canDecide && html`<${ApproveButton} p=${p} cls="btn primary sm"/>`}
+    </div>
+    <div className="ink-pages" ref=${scrollRef}>
+      ${err ? html`<p className="ink-msg">${err}</p>` : !pages ? html`<p className="ink-msg">Opening the document…</p>`
+        : pages.map((pg, i) => html`<${InkPage} key=${i} pg=${pg} strokes=${marks[i] || []} onChange=${(next) => change(i, next)} tool=${tool} colour=${colour} thick=${thick} editable=${editable} scrollRef=${scrollRef} penSeen=${penSeen}/>`)}
+      ${pages && html`<p className="ink-msg sm">${editable ? 'Write anywhere: your marks save as you go and go into the signed copy. With an iPad pen, your finger scrolls and only the pen writes.' : 'Marks on this document are shown as they were written.'}</p>`}
+    </div>
+  </div>`, document.body);
+}
+function InkButtons({ p, noApprove }) {
+  const { db } = useApp();
+  const [open, setOpen] = useState(null);
+  const docs = p.attachments.filter(inkable);
+  if (!docs.length) return null;
+  const marked = hasMarks(db, p.id);
+  return html`<${React.Fragment}>${docs.map((a) => html`<button key=${a.id} className="btn sm" onClick=${() => setOpen(a)}><${Icon} n="edit" s=${15}/>${docs.length === 1 ? (marked ? 'Open, with the writing on it' : 'Open and write on it') : 'Write on ' + a.name}</button>`)}
+    ${open && html`<${MarkupModal} p=${p} att=${open} noApprove=${noApprove} onClose=${() => setOpen(null)}/>`}<//>`;
+}
+
 /* ---------------- approvals: invoices, payments and expense claims that need an OK ---------------- */
 // An approval is a post (type 'approval') sent to its approvers, with p.approval = { kind, party, amount, ref, rule: 'any' | 'all',
 // approvers, paidAt, paidBy, payNote }. Each approver's decision sits on their own recipient record, so two people deciding at
@@ -5345,7 +5514,7 @@ function apDecide(d, pid, who, decision, note, atts, sig) {
   const now = Date.now();
   r.seen = r.seen || now; r.updatedAt = now; r.nudgedAt = null;
   if (decision !== 'query') { r.status = 'done'; r.decision = decision; r.pct = 100; }
-  q.activity.push({ id: uid('e'), kind: decision, user: who, at: now, text: (note || '').trim(), attachments: atts || [], ...(sig ? { sig } : {}) });
+  q.activity.push({ id: uid('e'), kind: decision, user: who, at: now, text: (note || '').trim(), attachments: atts || [], ...(sig === 'doc' ? { onDoc: true } : sig ? { sig } : {}) });
   if (decision === 'approve' && sig) r.signed = now;
   if (decision === 'reject' && q.author !== who) {
     const a = q.recips[q.author];
@@ -5445,7 +5614,7 @@ function ApprovalFacts({ p }) {
       ${a.ref && html`<dt>Invoice or ref</dt><dd className="mono">${a.ref}</dd>`}
       ${p.due && html`<dt>Pay by</dt><dd>${fmtKey(p.due, { weekday: 'long', day: 'numeric', month: 'long' })}</dd>`}
       <dt>Needs</dt><dd>${a.approvers.length < 2 ? 'One approval' : a.rule === 'all' ? 'All ' + a.approvers.length + ' approvers' : 'Any one of ' + a.approvers.length + ' approvers'}</dd>
-      ${decided.map((x) => { const sig = x.r.decision === 'approve' && sigOf(p, x.id); return html`<dt key=${'t' + x.id}>${x.r.decision === 'approve' ? 'Approved by' : 'Not approved by'}</dt><dd key=${'d' + x.id}>${(userById(db, x.id) || {}).name || 'Former staff'} · ${whenAt(x.r.updatedAt)}${sig && html`<div className="sig-slip sm"><img src=${sig} alt=${'Signature of ' + ((userById(db, x.id) || {}).name || 'the approver')}/></div>`}</dd>`; })}
+      ${decided.map((x) => { const sig = x.r.decision === 'approve' && sigOf(p, x.id); return html`<dt key=${'t' + x.id}>${x.r.decision === 'approve' ? 'Approved by' : 'Not approved by'}</dt><dd key=${'d' + x.id}>${(userById(db, x.id) || {}).name || 'Former staff'} · ${whenAt(x.r.updatedAt)}${sig && html`<div className="sig-slip sm"><img src=${sig} alt=${'Signature of ' + ((userById(db, x.id) || {}).name || 'the approver')}/></div>`}${x.r.decision === 'approve' && !sig && signedOnDoc(p, x.id) && html`<div className="sm sig-doc">Signed on the document</div>`}</dd>`; })}
       ${a.paidAt && html`<dt>Paid</dt><dd>${(userById(db, a.paidBy) || {}).name || 'Someone'} · ${whenAt(a.paidAt)}${a.payNote ? ' · ' + a.payNote : ''}</dd>`}
     </dl>
     ${payer && s === 'approved' && html`<form className="ap-pay" onSubmit=${(e) => { e.preventDefault(); update((d) => apPaid(d, p.id, user.id, ref)); setRef(''); toast('Marked paid. ' + firstName(userById(db, p.author)) + ' has been told.'); }}>
@@ -5455,7 +5624,7 @@ function ApprovalFacts({ p }) {
       const filed = a.filedDoc && db.files.find((f) => f.id === a.filedDoc), drive = filed && db.drives.find((dr) => dr.id === filed.drive);
       const canFile = !filed && (s === 'approved' || s === 'paid') && (p.author === user.id || payer) && p.attachments.length > 0;
       return html`${filed && html`<div className="ap-filed"><${Icon} n="folder" s=${15}/><span>Signed copy saved in Drive › ${drive ? drive.name : 'Drive'} › Signed quotes</span></div>${filed.att && html`<${Attachments} items=${[filed.att]}/>`}`}
-        <div className="ap-actions"><${PrintButton} p=${p}/>${canFile && html`<${FileSignedButton} p=${p}/>`}</div>`;
+        <div className="ap-actions"><${InkButtons} p=${p}/><${PrintButton} p=${p}/>${canFile && html`<${FileSignedButton} p=${p}/>`}</div>`;
     })()}
   </section>`;
 }

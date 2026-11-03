@@ -77,6 +77,7 @@ Switch it on in **People & access**: under Admin (or whichever department handle
 - Once it's approved and signed, a signed PDF (a cover page with the signature and the note, then the quote) is saved in the department's Drive under **Signed quotes**. No printing, signing on paper or scanning back in.
 - **Printing**, if paper is still wanted: every approval has **Print with slip**. In the desktop app the drop box can also print each quote by itself, as it's sent or once it's approved, on the printer chosen on that computer.
 - In the desktop sidebar, the **pin** at the top keeps Floorboard in front of Outlook while dragging.
+- **Writing on the document**: on the approval, **Open and write on it** shows the quote's pages full screen. Write, sign or circle things with an iPad pen (or a finger or mouse), in four colours, fine or thick, with an eraser and undo. Once a pen is used, fingers only scroll. Marks save as you go, and appear on the signed copy and print-outs. When approving, **I signed on the document itself** uses that signature instead of a separate one.
 
 ## Calendar
 
