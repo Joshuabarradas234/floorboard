@@ -4300,7 +4300,7 @@ function guessOwners(db, name) {
   const act = db.users.filter((u) => u.active !== false);
   return [...new Set(parts.flatMap((p) => act.filter((u) => u.name.toLowerCase() === p || u.name.split(' ')[0].toLowerCase() === p).map((u) => u.id)))];
 }
-// on a shared list, a job that names one of the people (“… - Zizile”) goes to just that person
+// on a shared list, a job that names one of the people (“… - Lerato”) goes to just that person
 function ownersFor(db, owners, title) {
   if (owners.length < 2) return owners;
   const named = owners.filter((id) => { const u = userById(db, id); return u && new RegExp('\\b' + reEsc(u.name.split(' ')[0]) + '\\b', 'i').test(title); });
