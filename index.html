@@ -729,6 +729,43 @@ td.mono{white-space:nowrap}
 .sdock-new:hover{background:var(--glass-2)}
 .sdock-new .plus{width:42px;height:42px;border-radius:50%;background:#fff;color:var(--accent-ink);display:grid;place-items:center;box-shadow:0 6px 20px rgba(0,0,0,.3);flex:none}
 @media (prefers-reduced-motion:reduce){.sdock{animation:none}}
+.row3{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:14px}
+@media (max-width:560px){.row3{grid-template-columns:1fr 1fr}.row3 > :first-child{grid-column:1/-1}}
+.cal-day{display:grid;gap:6px;margin-top:14px}
+.cal-day h3{font-size:12.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2);margin:0 2px}
+.cal-row{display:flex;align-items:center;gap:14px;width:100%;text-align:left;background:var(--glass);border:1px solid var(--glass-line);border-radius:var(--r-sm);padding:10px 14px;color:var(--ink);box-shadow:var(--hi)}
+.cal-row:hover{background:var(--glass-2)}
+.cal-row.light{background:transparent;box-shadow:none;border-style:dashed}
+.cal-row.off .cal-main b{text-decoration:line-through;color:var(--ink-3)}
+.cal-time{flex:none;width:96px;font-family:var(--f-mono);font-size:12.5px;color:var(--ink-2)}
+.cal-row.light .cal-time{font-family:var(--f-body);font-weight:700;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-3)}
+.cal-main{flex:1;min-width:0;display:grid;gap:2px}
+.cal-main b{font-size:14.5px;overflow-wrap:anywhere}
+.cal-main small{font-size:12.5px;color:var(--ink-2);overflow-wrap:anywhere}
+.cal-rep{color:var(--ink-3);font-weight:500}
+.cal-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.mcal{display:grid;gap:10px;margin-top:6px}
+.mcal-h{display:flex;align-items:center;gap:8px}
+.mcal-h b{font-size:16px;min-width:150px;text-align:center}
+.mcal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px}
+.mcal-wd{font-size:11.5px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3);padding:0 4px}
+.mcal-d{min-height:86px;display:flex;flex-direction:column;align-items:stretch;gap:2px;text-align:left;background:var(--glass);border:1px solid var(--glass-line);border-radius:10px;padding:5px;color:var(--ink);overflow:hidden}
+.mcal-d:hover{background:var(--glass-2)}
+.mcal-d.out{opacity:.45}
+.mcal-d.today .mcal-n{background:#fff;color:var(--accent-ink);border-radius:99px;padding:0 6px}
+.mcal-d.on{outline:2px solid #fff;outline-offset:-1px}
+.mcal-n{font-family:var(--f-mono);font-size:12px;align-self:flex-start}
+.mcal-chip{font-size:11px;font-weight:700;background:var(--sky-soft);color:var(--sky);border-radius:5px;padding:1px 4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mcal-chip.off{text-decoration:line-through;opacity:.6}
+.mcal-more{font-size:10.5px;color:var(--ink-3)}
+@media (max-width:620px){.mcal-d{min-height:52px}.mcal-chip{font-size:0;height:6px;padding:0}}
+.w-next{flex:none;display:flex;align-items:center;gap:10px;border:0;border-radius:999px;padding:9px 14px;color:var(--ink);text-align:left;font-size:13px;min-width:0}
+.w-next span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.w-next small{flex:none;color:var(--ink-3);font-size:12px}
+.attach-btns{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.rec-inline{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--ink)}
+.attach-name audio{display:block;width:100%;max-width:260px;height:30px;margin-top:4px}
+.qd-item .attach .btn{padding:4px 10px;font-size:12px}
 .ql{background:rgba(255,255,255,.08);border:1px solid var(--glass-line);border-radius:14px;padding:10px 12px;display:grid;gap:6px;font-size:13.5px}
 .ql-h{display:flex;align-items:baseline;gap:6px;font-weight:800;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-2)}
 .ql-h small{font-weight:500;letter-spacing:0;text-transform:none;color:var(--ink-3)}
@@ -1127,6 +1164,7 @@ const TILE_COLORS = ['#9A6B2F', '#D0622B', '#3F8A2E', '#2F7FB8', '#0F8A8A', '#8A
 const NO_FILTERS = { type: 'any', level: 'any', dept: 'any' };
 
 const ICONS = {
+  diary: '<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="M7.5 14h2M11.5 14h2M15.5 14h1M7.5 17.5h2M11.5 17.5h2"/>',
   print: '<path d="M7 9V3.5h10V9"/><rect x="3.5" y="9" width="17" height="8" rx="2"/><path d="M7 14h10v6.5H7z"/>',
   stamp: '<path d="M10 3.5h4A1.5 1.5 0 0 1 15.5 5c0 2-1.5 3-1.5 5.5V12h3.5a2 2 0 0 1 2 2v2.5h-15V14a2 2 0 0 1 2-2H10v-1.5C10 8 8.5 7 8.5 5A1.5 1.5 0 0 1 10 3.5z"/><path d="M5 20.5h14"/>',
   calendar: '<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="m9 15 2 2 4-4"/>',
@@ -1733,6 +1771,7 @@ function seed() {
   db.status = { u7: { mode: 'off', at: T }, u14: { mode: 'auto', start: '14:00', end: '22:00', days: [1, 2, 3, 4, 5, 6], tz: new Date().getTimezoneOffset(), at: T } };
   demoApprovals(db, T);
   demoStickies(db, T);
+  db.events = demoEvents(T);
   return db;
 }
 function loadDb() {
@@ -1744,6 +1783,7 @@ function loadDb() {
         // demo stores saved before month end existed get Finance's example sheet
         if (!Array.isArray(d.deadlines)) { d.deadlines = demoDeadlines(); const f = (d.depts || []).find((x) => x.id === 'finance'); if (f) f.features = { ...(f.features || {}), monthend: true }; }
         if (!(d.depts || []).some((x) => x.features && 'approvals' in x.features)) demoApprovals(d);
+        if (!Array.isArray(d.events)) d.events = demoEvents();
         if (!(d.depts || []).some((x) => x.features && 'quotes' in x.features)) {
           const ad = (d.depts || []).find((x) => x.id === 'admin');
           if (ad) ad.features = { ...(ad.features || {}), quotes: true, drive: true };
@@ -1847,8 +1887,33 @@ function Attachments({ items }) {
     ${docs.map((a) => html`<${DocRow} key=${a.id} a=${a}/>`)}
   </div>`;
 }
-function AttachPicker({ files, setFiles, label }) {
+// voice: also offer a voice note, recorded right there and attached like any other file
+function AttachPicker({ files, setFiles, label, voice }) {
   const ref = useRef(null); const { toast } = useApp();
+  const [rec, setRec] = useState(null), [secs, setSecs] = useState(0), recRef = useRef(null);
+  recRef.current = rec;
+  useEffect(() => { if (!rec) return; const t = setInterval(() => setSecs(Math.round((Date.now() - rec.started) / 1000)), 500); return () => clearInterval(t); }, [rec]);
+  useEffect(() => () => { const r = recRef.current; if (r) { r.mr.onstop = null; try { r.mr.stop(); } catch (e) { /* already stopped */ } r.stream.getTracks().forEach((t) => t.stop()); } }, []);
+  const record = async () => {
+    if (!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia && window.MediaRecorder)) { toast('Voice notes aren’t available here. They work in the installed app.', 'warn'); return; }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream), chunks = [];
+      mr.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+      mr.start(); setSecs(0); setRec({ started: Date.now(), mr, chunks, stream });
+    } catch (e) { toast('The microphone is blocked here, so voice notes can’t record.', 'warn'); }
+  };
+  const stopRec = (keep) => {
+    const r = rec; if (!r) return;
+    setRec(null);
+    r.mr.onstop = () => {
+      r.stream.getTracks().forEach((t) => t.stop());
+      if (!keep || !r.chunks.length) return;
+      const type = r.mr.mimeType || 'audio/webm', blob = new Blob(r.chunks, { type }), s = Math.max(1, Math.round((Date.now() - r.started) / 1000));
+      setFiles((prev) => [...prev, { tmp: uid('t'), file: blob, name: 'Voice note ' + Math.floor(s / 60) + ':' + pad(s % 60) + (type.includes('mp4') ? '.m4a' : '.webm'), mime: type, size: blob.size, kind: 'audio', url: URL.createObjectURL(blob) }]);
+    };
+    r.mr.stop();
+  };
   const onPick = (e) => {
     const ok = [];
     for (const f of [...e.target.files]) {
@@ -1860,10 +1925,12 @@ function AttachPicker({ files, setFiles, label }) {
   };
   return html`<div className="attach">
     <input type="file" ref=${ref} multiple hidden onChange=${onPick} accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.csv,.txt,.ppt,.pptx"/>
-    <div><button type="button" className="btn sm" onClick=${() => ref.current && ref.current.click()}><${Icon} n="clip" s=${15}/>${label || 'Attach photo, video or file'}</button></div>
+    <div className="attach-btns"><button type="button" className="btn sm" onClick=${() => ref.current && ref.current.click()}><${Icon} n="clip" s=${15}/>${label || 'Attach photo, video or file'}</button>
+      ${voice && (rec ? html`<span className="rec-inline"><span className="rec-dot"></span>Recording ${Math.floor(secs / 60)}:${pad(secs % 60)}<button type="button" className="btn sm primary" onClick=${() => stopRec(true)}><${Icon} n="check" s=${14}/>Keep it</button><button type="button" className="btn sm ghost" onClick=${() => stopRec(false)}>Cancel</button></span>`
+        : html`<button type="button" className="btn sm" onClick=${record}><${Icon} n="mic" s=${15}/>Voice note</button>`)}</div>
     ${files.length > 0 && html`<div className="attach-list">${files.map((f) => html`<div className="attach-item" key=${f.tmp}>
-      ${f.kind === 'image' ? html`<img src=${f.url} alt=""/>` : f.kind === 'video' ? html`<video src=${f.url} muted></video>` : html`<span className="attach-doc"><${Icon} n="doc"/></span>`}
-      <span className="attach-name">${f.name} <span className="muted">· ${fmtSize(f.size)}</span></span>
+      ${f.kind === 'image' ? html`<img src=${f.url} alt=""/>` : f.kind === 'video' ? html`<video src=${f.url} muted></video>` : html`<span className="attach-doc"><${Icon} n=${f.kind === 'audio' ? 'mic' : 'doc'}/></span>`}
+      <span className="attach-name">${f.name} <span className="muted">· ${fmtSize(f.size)}</span>${f.kind === 'audio' && f.url && html`<audio src=${f.url} controls preload="metadata"></audio>`}</span>
       <button type="button" className="icon-btn sm" aria-label=${'Remove ' + f.name} onClick=${() => setFiles((prev) => prev.filter((x) => x.tmp !== f.tmp))}><${Icon} n="close" s=${14}/></button>
     </div>`)}</div>`}
   </div>`;
@@ -1946,6 +2013,7 @@ function Rail() {
     <span className="rail-sep"></span>
     ${myDepts.map((d) => item('dept:' + d.id, html`<i className="sq" style=${{ '--c': d.color }}></i>`, d.name))}
     ${item('teams', html`<${Icon} n="store"/>`, 'All departments')}
+    ${item('calendar', html`<${Icon} n="diary"/>`, 'Calendar')}
     ${canSeeME(db, user) && item('monthend', html`<${Icon} n="calendar"/>`, 'Month end')}
     ${canSeeAP(db, user) && item('approvals', html`<${Icon} n="stamp"/>`, 'Approvals')}
     <span className="rail-sep"></span>
@@ -2006,7 +2074,7 @@ function SideDock({ onClose, onNeeds }) {
   const unreadChats = myChats(db, user.id).filter((ch) => unreadIn(db, ch, user.id) > 0).length;
   const toApprove = db.posts.filter((p) => p.type === 'approval' && needsMe(p, user.id)).length;
   const main = [['chats', 'chat', 'Chats', unreadChats], ['needs', 'inbox', 'Needs you', c.mine.length], ['all', 'list', 'Everything'], ['sent', 'send', 'Sent'],
-    user.role !== 'staff' && ['team', 'team', 'Team'], db.drives.some((d) => driveOn(db, d)) && ['drive', 'folder', 'Drive'], ['pins', 'pin', 'Pins']].filter(Boolean);
+    user.role !== 'staff' && ['team', 'team', 'Team'], db.drives.some((d) => driveOn(db, d)) && ['drive', 'folder', 'Drive'], ['pins', 'pin', 'Pins'], ['calendar', 'diary', 'Calendar']].filter(Boolean);
   const finance = [canSeeME(db, user) && ['monthend', 'calendar', 'Month end'], canSeeAP(db, user) && ['approvals', 'stamp', 'Approvals', toApprove]].filter(Boolean);
   const go = (id) => { onClose(); if (id === 'needs') onNeeds(); else jump('view:' + id); };
   const row = ([id, icon, label, n]) => html`<button key=${id} className="sdock-i" onClick=${() => go(id)} title=${id === 'needs' ? 'Show Needs you here' : 'Open ' + label + ' in the full app'}><${Icon} n=${icon} s=${18}/><span>${label}</span>${n > 0 && html`<b className=${id === 'chats' ? 'g' : ''}>${n}</b>`}</button>`;
@@ -2047,6 +2115,7 @@ function Widget() {
       ${desk && desk.hide && html`<button className="icon-btn" onClick=${() => desk.hide()} title="Hide the sidebar" aria-label="Hide the sidebar"><${Icon} n="close" s=${17}/></button>`}
     </header>
     <${Board} onPick=${pick}/>
+    <${NextMeeting}/>
     ${canQuoteDrop(db, user) && html`<div className="w-qd glass"><${QuoteDrop} compact/></div>`}
     <div className="w-stk glass"><${StickyNotes} compact/></div>
     <div className="filters" style=${{ justifyContent: 'space-between' }}>
@@ -3448,7 +3517,7 @@ const STAFF_DOMAIN = '@staff.floorboard.app';
 const pinPassword = (pin) => 'fb-' + pin + '-FB';
 const PIN_LEN = CLOUD ? 6 : 4;
 const CACHE_KEY = 'floorboard.cloud.cache.v1', STORE_CODE_KEY = 'floorboard.storecode.v1';
-function emptyDb() { return { v: 2, store: 'Your store', counter: 1000, depts: [], users: [], groups: [], shortcuts: [], drives: [], folders: [], files: [], tiles: [], pins: {}, status: {}, chats: [], messages: [], posts: [], deadlines: [] }; }
+function emptyDb() { return { v: 2, store: 'Your store', counter: 1000, depts: [], users: [], groups: [], shortcuts: [], drives: [], folders: [], files: [], tiles: [], pins: {}, status: {}, chats: [], messages: [], posts: [], deadlines: [], events: [] }; }
 
 // Same data, written with sorted keys, so a record that came back from the server compares equal to ours.
 function stable(v) {
@@ -3471,6 +3540,7 @@ function toRecs(db) {
   db.tiles.forEach((t) => put('tiles', t.id, t));
   Object.entries(db.pins || {}).forEach(([who, v]) => put('pins', who, v));
   Object.entries(db.status || {}).forEach(([who, s]) => put('status', who, s));
+  (db.events || []).forEach((ev) => put('events', ev.id, ev));
   (db.deadlines || []).forEach((x) => { const { done, ...rest } = x; put('deadlines', x.id, rest); Object.entries(done || {}).forEach(([k, v]) => put('dltick', x.id + '|' + k, { ...v, dl: x.id, key: k })); });
   db.chats.forEach((c) => { const { read, ...rest } = c; put('chats', c.id, rest); Object.entries(read || {}).forEach(([who, at]) => put('read', c.id + '|' + who, { chat: c.id, user: who, at })); });
   db.messages.forEach((m) => { const { reactions, ...rest } = m; put('messages', m.id, rest); Object.entries(reactions || {}).forEach(([who, e]) => put('rx', m.id + '|' + who, { msg: m.id, user: who, e })); });
@@ -3492,6 +3562,7 @@ function fromRecs(list) {
   db.depts = of('depts'); db.users = of('users'); db.groups = of('groups'); db.shortcuts = of('shortcuts'); db.drives = of('drives'); db.folders = of('folders'); db.files = of('files'); db.tiles = of('tiles');
   (by.pins || []).forEach((r) => { db.pins[r.id] = r.data; });
   (by.status || []).forEach((r) => { db.status[r.id] = r.data; });
+  db.events = of('events');
   const dls = {}; db.deadlines = of('deadlines').map((x) => (dls[x.id] = { ...x, done: {} }));
   (by.dltick || []).forEach(({ data: x }) => { const t = dls[x.dl]; if (t) { const { dl, key, ...v } = x; t.done[key] = v; } });
   const chats = {}; db.chats = of('chats').map((c) => (chats[c.id] = { ...c, read: {} }));
@@ -4216,6 +4287,11 @@ function ShiftSummary({ onClose }) {
     </div>
     ${mine.length > 0 && html`<div className="sum-h">Start with these</div><ul className="sum-list">${mine.slice(0, 5).map((p) => row(p, isOverdue(p, user.id) && html`<span className="st bad">Overdue</span>`))}</ul>`}
     ${esc.length > 0 && html`<div className="sum-h">Escalated in the last day</div><ul className="sum-list">${esc.slice(0, 4).map((p) => row(p, html`<span className="st bad">Escalated</span>`))}</ul>`}
+    ${(() => {
+      const mine = (db.events || []).filter((ev) => meetSees(ev, user.id)), today = dkey();
+      const meets = mine.length ? agenda(db, new Set(mine.map((ev) => ev.owner)), today, today, false).filter((it) => meetSees(it.ev, user.id) && it.o.status !== 'cancelled') : [];
+      return meets.length > 0 && html`<div className="sum-h">Meetings today</div><ul className="sum-list">${meets.slice(0, 4).map((it) => html`<li key=${it.key}><button onClick=${() => { onClose(); jump('view:calendar'); }}><span className="st todo">${it.ev.time || 'All day'}</span><span className="t">${it.ev.title}${it.ev.owner !== user.id ? ' · ' + firstName(userById(db, it.ev.owner)) : ''}</span></button></li>`)}</ul>`;
+    })()}
     ${chats.length > 0 && html`<div className="sum-h">Chats</div><ul className="sum-list">${chats.slice(0, 4).map(({ ch, n, at }) => html`<li key=${ch.id}><button onClick=${() => { onClose(); jump('chat:' + ch.id); }}><${ChatAvatar} c=${ch} s=${26}/><span className="t">${chatName(db, ch, user.id)}</span>${at && html`<span className="ci-at" title="You were tagged">@</span>`}<span className="ci-n">${n}</span></button></li>`)}</ul>`}
     ${meMine.length > 0 && html`<div className="sum-h">Month end</div><ul className="sum-list">${meMine.slice(0, 4).map(({ dl, k }) => html`<li key=${dl.id}><button onClick=${() => { onClose(); jump('view:monthend'); }}><span className=${'st ' + (k < today ? 'bad' : 'warn')}>${k < today ? 'Overdue' : 'Today'}</span><span className="t">${dl.title}</span></button></li>`)}</ul>`}
     ${!mine.length && !msgs && !meMine.length && html`<p className="sum-empty">Nothing is waiting on you. Have a good shift.</p>`}
@@ -4558,7 +4634,7 @@ function SignPad({ onChange }) {
     <button type="button" className="linkish sm sig-clear" onClick=${clear}>Clear</button>
   </div>`;
 }
-function SignModal({ p, note: note0, onClose }) {
+function SignModal({ p, note: note0, files, onDone, onClose }) {
   const { db, user, update, toast } = useApp();
   const saved = (db.pins[user.id] || {}).signature || null;
   const [sig, setSig] = useState(saved);
@@ -4566,14 +4642,17 @@ function SignModal({ p, note: note0, onClose }) {
   const [remember, setRemember] = useState(true);
   const [note, setNote] = useState(note0 || '');
   const a = p.approval, author = userById(db, p.author);
-  const approve = () => {
-    if (!sig) return;
+  const [busy, setBusy] = useState(false);
+  const approve = async () => {
+    if (!sig || busy) return;
+    setBusy(true);
+    const atts = files && files.length ? await storeFiles(files) : [];
     update((d) => {
-      apDecide(d, p.id, user.id, 'approve', note, [], sig);
+      apDecide(d, p.id, user.id, 'approve', note, atts, sig);
       d.pins[user.id] = d.pins[user.id] || { posts: [], notes: [] };
       if (redraw) { if (remember) d.pins[user.id].signature = sig; else delete d.pins[user.id].signature; }
     });
-    onClose();
+    onClose(); if (onDone) onDone();
     toast('Approved and signed. ' + firstName(author) + ' can see it.');
   };
   return html`<${Modal} title="Sign to approve" onClose=${onClose} footer=${html`<button className="btn" onClick=${onClose}>Cancel</button><button className="btn primary" disabled=${!sig} onClick=${approve}><${Icon} n="check" s=${16}/>Approve and sign</button>`}>
@@ -4584,12 +4663,13 @@ function SignModal({ p, note: note0, onClose }) {
       : html`<div className="sig-saved"><img src=${saved} alt="Your saved signature"/><button type="button" className="linkish sm" onClick=${() => { setRedraw(true); setSig(null); }}>Sign again instead</button></div>`}
     ${redraw && html`<label className="me-check sm"><input id="sig-remember" type="checkbox" checked=${remember} onChange=${(e) => setRemember(e.target.checked)}/>Remember my signature for next time</label>`}
     <label className="field"><span>Note (optional)</span><input id="sig-note" className="input" value=${note} onChange=${(e) => setNote(e.target.value)} placeholder="e.g. Go ahead, but ask for delivery by the 20th" maxLength="200"/></label>
+    ${files && files.length > 0 && html`<p className="sm" style=${{ margin: 0 }}><${Icon} n="clip" s=${13}/> ${files.length === 1 ? files[0].name : files.length + ' files'} go with it.</p>`}
     <p className="muted sm" style=${{ margin: 0 }}>Your signature is kept with this approval, with your name and the date and time.</p>
   <//>`;
 }
-function ApproveButton({ p, note, cls, s }) {
+function ApproveButton({ p, note, files, onDone, cls, s }) {
   const [open, setOpen] = useState(false);
-  return html`<${React.Fragment}><button type="button" className=${cls || 'btn primary'} onClick=${(e) => { e.stopPropagation(); setOpen(true); }}><${Icon} n="check" s=${s || 16}/>Approve</button>${open && html`<${SignModal} p=${p} note=${note} onClose=${() => setOpen(false)}/>`}<//>`;
+  return html`<${React.Fragment}><button type="button" className=${cls || 'btn primary'} onClick=${(e) => { e.stopPropagation(); setOpen(true); }}><${Icon} n="check" s=${s || 16}/>Approve</button>${open && html`<${SignModal} p=${p} note=${note} files=${files} onDone=${onDone} onClose=${() => setOpen(false)}/>`}<//>`;
 }
 const sigOf = (p, who) => (p.activity.slice().reverse().find((e) => e.kind === 'approve' && e.user === who && e.sig) || {}).sig;
 
@@ -4642,7 +4722,7 @@ function QuoteDrop({ compact }) {
       for (const it of items) {
         const mime = it.file.type || 'application/octet-stream';
         const summary = it.summary !== undefined ? it.summary : await summarizeFile(it.file);
-        const atts = await storeFiles([{ file: it.file, name: it.file.name, mime, size: it.file.size, kind: kindOf(mime) }]);
+        const atts = await storeFiles([{ file: it.file, name: it.file.name, mime, size: it.file.size, kind: kindOf(mime) }, ...(it.extra || [])]);
         const amount = Number(String(it.amount || '').replace(/[\sR]/g, '').replace(',', '.')) || (summary && summary.total) || 0;
         const party = it.party.trim() || (summary && summary.company) || it.file.name.replace(/\.[a-z0-9]{2,5}$/i, '');
         update((d) => apCreate(d, { author: user.id, approvers: [to], kind: 'Quote', party, amount, ref: (it.ref || '').trim() || (summary && summary.number) || '', sticky: (it.sticky || '').trim(), summary, atts, about }));
@@ -4682,6 +4762,7 @@ function QuoteDrop({ compact }) {
         <div className="qd-file"><${Icon} n="doc" s=${14}/><span title=${it.file.name}>${it.file.name}</span><button type="button" className="icon-btn sm" onClick=${() => setTray((t) => t.filter((x) => x.key !== it.key))} aria-label=${'Take out ' + it.file.name}><${Icon} n="close" s=${13}/></button></div>
         <div className="qd-fields"><input className="input" value=${it.party} onChange=${(e) => setItem(it.key, { party: e.target.value, partyEdited: true })} placeholder="Supplier" aria-label="Supplier" maxLength="80"/><input className="input mono" inputMode="decimal" value=${it.amount} onChange=${(e) => setItem(it.key, { amount: e.target.value })} placeholder="R amount" aria-label="Amount, if you know it" maxLength="16"/></div>
         ${it.reading ? html`<small className="qd-read">Reading the PDF…</small>` : it.summary && html`<small className="qd-read"><${Icon} n="look" s=${12}/> ${[it.summary.company, it.summary.total != null && 'total ' + rand(it.summary.total), it.summary.items.length > 0 && it.summary.items.length + (it.summary.items.length === 1 ? ' line' : ' lines')].filter(Boolean).join(' · ')}</small>`}
+        <${AttachPicker} files=${it.extra || []} setFiles=${(fn) => setTray((t) => t.map((x) => (x.key === it.key ? { ...x, extra: typeof fn === 'function' ? fn(x.extra || []) : fn } : x)))} label="Photos or videos"/>
         <textarea className=${'qd-sticky' + (it.needNote && !it.sticky.trim() ? ' need' : '')} rows="2" maxLength="200" value=${it.sticky} onChange=${(e) => setItem(it.key, { sticky: e.target.value })}
           placeholder=${'What is it? A note for ' + (to ? firstName(approver) : 'the approver') + ', e.g. shelving for the second entrance, needed by Friday'} aria-label="Note on this quote: what it is" aria-required="true"></textarea>
       </div>`)}
@@ -4768,6 +4849,7 @@ async function quotePrintHtml(db, posts) {
         } catch (e) { parts.push('<section class="doc"><p class="miss">' + escHtml(att.name) + ' couldn’t be read for printing. Open it and print it separately.</p></section>'); }
         continue;
       }
+      if (mime.startsWith('video/') || mime.startsWith('audio/')) continue; // videos and voice notes stay on screen
       parts.push('<section class="doc"><p class="miss">' + escHtml(att.name) + ' can’t be printed from Floorboard. Open it and print it separately.</p></section>');
     }
   }
@@ -4979,6 +5061,254 @@ function FileSignedButton({ p }) {
   return html`<button className="btn sm" onClick=${go} disabled=${busy}><${Icon} n="folder" s=${15}/>${busy ? 'Saving…' : 'Save signed copy to Drive'}</button>`;
 }
 
+/* ---------------- calendar: meetings, in your own diary or one you keep for someone else ---------------- */
+// A meeting: { id, title, owner (whose diary it's in), date, time ('' for all day), mins, place, guests (people from outside),
+// attendees, repeat: '' | 'weekly' | 'monthly', until, remind (minutes before, -1 for none), notes, createdBy, createdAt,
+// occ: { date: { status: 'done' | 'cancelled', notes, by, at } } }. The diary's owner, whoever planned it and the people in it see it.
+const MEET_LENGTHS = [[15, '15 minutes'], [30, '30 minutes'], [45, '45 minutes'], [60, '1 hour'], [90, '1½ hours'], [120, '2 hours'], [180, '3 hours'], [240, 'Half a day']];
+const MEET_REMIND = [[-1, 'No reminder'], [10, '10 minutes before'], [15, '15 minutes before'], [30, '30 minutes before'], [60, '1 hour before'], [1440, 'The day before']];
+const FIRED_KEY = 'floorboard.meetfired.v1';
+const meetSees = (ev, id) => ev.owner === id || ev.createdBy === id || (ev.attendees || []).includes(id);
+const meetEdits = (ev, u) => u.role === 'admin' || ev.owner === u.id || ev.createdBy === u.id;
+function meetStart(k, time) { const d = keyToDate(k); if (time) { const [h, m] = time.split(':').map(Number); d.setHours(h || 0, m || 0, 0, 0); } return d.getTime(); }
+const meetEnd = (time, mins) => { if (!time) return ''; const t = toMins(time) + (mins || 60); return pad(Math.floor(t / 60) % 24) + ':' + pad(t % 60); };
+const meetWhen = (ev) => (ev.time ? ev.time + '–' + meetEnd(ev.time, ev.mins) : 'All day');
+// the dates a meeting falls on between two days
+function occurrences(ev, from, to) {
+  const out = [], inRange = (k) => k >= from && k <= to && k >= ev.date && (!ev.until || k <= ev.until);
+  if (ev.repeat === 'weekly') {
+    let k = ev.date;
+    if (k < from) k = addDays(k, Math.floor((keyToDate(from) - keyToDate(k)) / (7 * DAY)) * 7);
+    for (let i = 0; k <= to && i < 400; i++, k = addDays(k, 7)) if (inRange(k)) out.push(k);
+  } else if (ev.repeat === 'monthly') {
+    const d0 = keyToDate(ev.date);
+    for (let i = 0; i < 240; i++) {
+      const d = new Date(d0.getFullYear(), d0.getMonth() + i, d0.getDate());
+      if (d.getDate() !== d0.getDate()) continue; // no 31st this month
+      const k = dkey(d.getTime() + 12 * HOUR);
+      if (k > to) break;
+      if (inRange(k)) out.push(k);
+    }
+  } else if (inRange(ev.date)) out.push(ev.date);
+  return out;
+}
+// everything in these diaries between two days, in order: meetings, and if asked, tasks due and month-end dates
+function agenda(db, owners, from, to, extras) {
+  const items = [];
+  (db.events || []).forEach((ev) => {
+    if (!owners.has(ev.owner)) return;
+    occurrences(ev, from, to).forEach((k) => items.push({ kind: 'meet', key: ev.id + '|' + k, ev, k, o: (ev.occ || {})[k] || {}, at: meetStart(k, ev.time) }));
+  });
+  if (extras) {
+    db.posts.forEach((p) => {
+      if (!p.due || p.closed || p.due < from || p.due > to) return;
+      owners.forEach((id) => { if (needsMe(p, id)) items.push({ kind: 'task', key: 'p|' + p.id + '|' + id, p, who: id, k: p.due, at: meetStart(p.due, '') + 1 }); });
+    });
+    const pm = reminderMap(db);
+    (db.deadlines || []).forEach((dl) => {
+      const k = occKey(dl);
+      if (k === 'any' || k < from || k > to || meState(dl, k, pm.get(reminderId(dl, k))).done) return;
+      dl.owners.filter((id) => owners.has(id)).forEach((id) => items.push({ kind: 'deadline', key: 'd|' + dl.id + '|' + id, dl, who: id, k, at: meetStart(k, '') + 2 }));
+    });
+  }
+  return items.sort((a, b) => a.at - b.at || a.key.localeCompare(b.key));
+}
+const dayTitle = (k) => (k === dkey() ? 'Today' : k === addDays(dkey(), 1) ? 'Tomorrow' : k === addDays(dkey(), -1) ? 'Yesterday' : '') ;
+const dayHead = (k) => { const t = dayTitle(k), d = fmtKey(k, { weekday: 'long', day: 'numeric', month: 'long' }); return t ? t + ' · ' + d : d; };
+// "Thandi's diary" or "your diary"
+const diaryName = (db, id, me) => (id === me ? 'your diary' : firstName(userById(db, id)) + '’s diary');
+
+function MeetRow({ it, showWho, onOpen }) {
+  const { db, user, openPost, jump } = useApp();
+  if (it.kind === 'task') return html`<button className="cal-row light" onClick=${() => openPost(it.p.id)}><span className="cal-time">${TYPES[it.p.type].label}</span><span className="cal-main"><b>${it.p.title}</b><small>${isOverdue(it.p, it.who) ? 'Overdue · ' : 'Due · '}${showWho ? firstName(userById(db, it.who)) + ' · ' : ''}from ${firstName(userById(db, it.p.author))}</small></span></button>`;
+  if (it.kind === 'deadline') return html`<button className="cal-row light" onClick=${() => jump('view:monthend')}><span className="cal-time">Month end</span><span className="cal-main"><b>${it.dl.title}</b><small>${showWho ? firstName(userById(db, it.who)) + ' · ' : ''}${it.dl.list}</small></span></button>`;
+  const { ev, o } = it, past = it.at + (ev.mins || 60) * MIN < Date.now();
+  const state = o.status === 'cancelled' ? ['Cancelled', 'muted'] : o.status === 'done' ? [o.notes ? 'Done · notes' : 'Done', 'ok'] : past && ev.time ? ['Add notes', 'warn'] : null;
+  const people = (ev.attendees || []).map((id) => userById(db, id)).filter(Boolean);
+  return html`<button className=${'cal-row' + (o.status === 'cancelled' ? ' off' : '')} onClick=${() => onOpen(it)}>
+    <span className="cal-time">${meetWhen(ev)}</span>
+    <span className="cal-main"><b>${ev.title}${ev.repeat && html`<span className="cal-rep" title=${ev.repeat === 'weekly' ? 'Every week' : 'Every month'}> ↻</span>`}</b>
+      <small>${[showWho && ev.owner !== user.id && diaryName(db, ev.owner, user.id), ev.place, [...people.map((u) => firstName(u)), ev.guests].filter(Boolean).join(', ')].filter(Boolean).join(' · ')}</small></span>
+    ${state && html`<span className=${'st ' + state[1]}>${state[0]}</span>`}
+  </button>`;
+}
+function MeetingModal({ id, k, preset, onClose }) {
+  const { db, user, update, toast, ask } = useApp();
+  const ev = id && (db.events || []).find((x) => x.id === id);
+  const o = ev && k ? (ev.occ || {})[k] || {} : {};
+  const [mode, setMode] = useState(ev ? 'view' : 'edit');
+  const [v, setV] = useState(() => (ev ? { ...ev, attendees: ev.attendees || [] } : { title: '', owner: (preset && preset.owner) || user.id, date: (preset && preset.date) || dkey(), time: '09:00', mins: 60, place: '', guests: '', attendees: [], repeat: '', until: '', remind: 15, notes: '' }));
+  const [tell, setTell] = useState(!ev);
+  const [notes, setNotes] = useState(o.notes || '');
+  const [err, setErr] = useState('');
+  const set = (f, x) => { setV((s) => ({ ...s, [f]: x })); setErr(''); };
+  const people = db.users.filter((u) => u.active !== false);
+  const editable = !ev || meetEdits(ev, user);
+  const letKnow = (d, data, moved) => {
+    const to = [...new Set([data.owner, ...data.attendees])].filter((x) => x !== user.id && userById(d, x));
+    if (!to.length) return;
+    d.counter += 1;
+    const recips = {}; to.forEach((x) => { recips[x] = { status: 'todo', pct: 0, seen: null, updatedAt: null }; });
+    const when = fmtKey(data.date, { weekday: 'long', day: 'numeric', month: 'long' }) + ', ' + meetWhen(data) + (data.repeat ? (data.repeat === 'weekly' ? ', every week' : ', every month') : '');
+    d.posts.unshift({ id: uid('p'), chat: null, no: d.counter, type: 'look', title: (moved ? 'Meeting changed: ' : 'New meeting: ') + data.title, author: user.id, createdAt: Date.now(), toUsers: to, toDepts: [],
+      body: [when, data.place && 'Where: ' + data.place, (data.attendees.length || data.guests) && 'With: ' + [...data.attendees.map((x) => (userById(d, x) || {}).name).filter(Boolean), data.guests].filter(Boolean).join(', '), data.notes].filter(Boolean).join('\n'),
+      about: user.depts[0], level: 'green', due: null, attachments: [], recips, activity: [], poll: null, closed: false });
+  };
+  const save = () => {
+    const title = v.title.trim();
+    if (!title) return setErr('What’s the meeting? Give it a title.');
+    if (!v.date) return setErr('Pick the day.');
+    if (v.until && v.until < v.date) return setErr('The last day can’t be before the first.');
+    const data = { title, owner: v.owner, date: v.date, time: v.time || '', mins: Number(v.mins) || 60, place: v.place.trim(), guests: v.guests.trim(), attendees: v.attendees.filter((x) => x !== v.owner),
+      repeat: v.repeat || '', until: v.repeat ? v.until || '' : '', remind: Number(v.remind), notes: (v.notes || '').trim() };
+    const moved = ev && (ev.date !== data.date || ev.time !== data.time || ev.place !== data.place);
+    update((d) => {
+      d.events = d.events || [];
+      if (ev) Object.assign(d.events.find((x) => x.id === ev.id), data);
+      else d.events.push({ id: uid('ev'), ...data, createdBy: user.id, createdAt: Date.now(), occ: {} });
+      if (tell) letKnow(d, data, moved);
+    });
+    onClose();
+    toast((ev ? 'Saved' : 'Added to ' + diaryName(db, data.owner, user.id)) + (tell && [data.owner, ...data.attendees].some((x) => x !== user.id) ? '. They’ve been told.' : ''));
+  };
+  const setOcc = (patch, msg) => {
+    update((d) => { const x = d.events.find((y) => y.id === ev.id); x.occ = x.occ || {}; x.occ[k] = { ...(x.occ[k] || {}), ...patch, by: user.id, at: Date.now() }; });
+    onClose(); toast(msg);
+  };
+  const remove = () => ask({ title: 'Delete “' + ev.title + '”?', body: ev.repeat ? 'Every time it repeats comes off the calendar.' : 'It comes off the calendar for everyone.', confirm: 'Delete', danger: true,
+    onConfirm: () => { update((d) => { d.events = d.events.filter((x) => x.id !== ev.id); }); onClose(); toast('Deleted'); } });
+  if (mode === 'view' && ev) {
+    const who = [...(ev.attendees || []).map((x) => (userById(db, x) || {}).name).filter(Boolean), ev.guests].filter(Boolean);
+    const past = meetStart(k, ev.time) < Date.now();
+    return html`<${Modal} title=${ev.title} onClose=${onClose} footer=${html`${editable && html`<button className="btn ghost" style=${{ marginRight: 'auto' }} onClick=${() => setMode('edit')}><${Icon} n="edit" s=${15}/>Edit</button>`}<button className="btn" onClick=${onClose}>Close</button>`}>
+      <dl className="dl">
+        <dt>When</dt><dd>${fmtKey(k, { weekday: 'long', day: 'numeric', month: 'long' })}, ${meetWhen(ev)}${ev.repeat ? (ev.repeat === 'weekly' ? ' · every week' : ' · every month') : ''}</dd>
+        <dt>Diary</dt><dd>${(userById(db, ev.owner) || {}).name || 'Former staff'}${ev.createdBy !== ev.owner ? ' · planned by ' + firstName(userById(db, ev.createdBy)) : ''}</dd>
+        ${ev.place && html`<dt>Where</dt><dd>${ev.place}</dd>`}
+        ${who.length > 0 && html`<dt>With</dt><dd>${who.join(', ')}</dd>`}
+        ${ev.notes && html`<dt>Agenda</dt><dd style=${{ whiteSpace: 'pre-wrap' }}>${ev.notes}</dd>`}
+        ${o.status === 'cancelled' && html`<dt>This one</dt><dd className="st bad">Cancelled</dd>`}
+      </dl>
+      ${o.status !== 'cancelled' && html`<div className="field"><span>${past ? 'What was agreed, and the follow-ups' : 'Notes for this meeting'}</span>
+        <textarea id="mt-notes" rows="3" value=${notes} onChange=${(e) => setNotes(e.target.value)} placeholder="e.g. SunPack drops prices 4% from December. Pieter to update the price list by Friday."></textarea>
+        <div className="cal-acts">
+          <button className="btn primary sm" onClick=${() => setOcc({ status: 'done', notes: notes.trim() }, 'Marked done' + (notes.trim() ? ', with the notes' : ''))}><${Icon} n="check" s=${14}/>${o.status === 'done' ? 'Save notes' : 'Mark done'}</button>
+          ${o.status !== 'done' && notes.trim() !== (o.notes || '') && html`<button className="btn sm" onClick=${() => setOcc({ notes: notes.trim() }, 'Notes saved')}>Save notes only</button>`}
+          ${editable && o.status !== 'done' && html`<button className="btn sm ghost" onClick=${() => setOcc({ status: 'cancelled' }, 'Cancelled' + (ev.repeat ? ' this one' : ''))}>Cancel ${ev.repeat ? 'this one' : 'it'}</button>`}
+        </div></div>`}
+      ${o.status === 'cancelled' && editable && html`<button className="btn sm" onClick=${() => setOcc({ status: '' }, 'Back on')}>It’s back on</button>`}
+    <//>`;
+  }
+  return html`<${Modal} title=${ev ? 'Edit meeting' : 'New meeting'} onClose=${onClose} wide footer=${html`${ev && editable && html`<button className="btn danger" style=${{ marginRight: 'auto' }} onClick=${remove}>Delete</button>`}<button className="btn" onClick=${onClose}>Cancel</button><button className="btn primary" onClick=${save}>${ev ? 'Save' : 'Add meeting'}</button>`}>
+    <label className="field"><span>What is it?</span><input id="mt-title" className="input" value=${v.title} onChange=${(e) => set('title', e.target.value)} placeholder="e.g. SunPack rep: new prices" maxLength="120" autoFocus/></label>
+    <div className="row2">
+      <label className="field"><span>Whose diary</span><select id="mt-owner" className="select" value=${v.owner} onChange=${(e) => set('owner', e.target.value)}>${people.map((u) => html`<option key=${u.id} value=${u.id}>${u.id === user.id ? u.name + ' (you)' : u.name}</option>`)}</select></label>
+      <label className="field"><span>Where</span><input id="mt-place" className="input" value=${v.place} onChange=${(e) => set('place', e.target.value)} placeholder="e.g. Boardroom, or a Teams link" maxLength="120"/></label>
+    </div>
+    <div className="row3">
+      <label className="field"><span>Day</span><input id="mt-date" type="date" className="input" value=${v.date} onChange=${(e) => set('date', e.target.value)}/></label>
+      <label className="field"><span>Time</span><input id="mt-time" type="time" className="input" value=${v.time} onChange=${(e) => set('time', e.target.value)}/></label>
+      <label className="field"><span>How long</span><select id="mt-mins" className="select" value=${v.time ? v.mins : 0} onChange=${(e) => { const n = Number(e.target.value); setV((s) => ({ ...s, mins: n || 60, time: n ? s.time || '09:00' : '' })); }}><option value="0">All day</option>${MEET_LENGTHS.map(([n, l]) => html`<option key=${n} value=${n}>${l}</option>`)}</select></label>
+    </div>
+    <div className="field"><span>Who’s in it from the store</span><${OwnerPicker} id="mt-people" value=${v.attendees.filter((x) => x !== v.owner)} onChange=${(x) => set('attendees', x)}/></div>
+    <label className="field"><span>People from outside (optional)</span><input id="mt-guests" className="input" value=${v.guests} onChange=${(e) => set('guests', e.target.value)} placeholder="e.g. Mike from SunPack" maxLength="120"/></label>
+    <div className="row2">
+      <label className="field"><span>Repeats</span><select id="mt-repeat" className="select" value=${v.repeat} onChange=${(e) => set('repeat', e.target.value)}><option value="">Doesn’t repeat</option><option value="weekly">Every week</option><option value="monthly">Every month, same date</option></select></label>
+      ${v.repeat ? html`<label className="field"><span>Until (optional)</span><input id="mt-until" type="date" className="input" value=${v.until} onChange=${(e) => set('until', e.target.value)}/></label>`
+        : html`<label className="field"><span>Reminder</span><select id="mt-remind" className="select" value=${v.remind} onChange=${(e) => set('remind', Number(e.target.value))}>${MEET_REMIND.map(([n, l]) => html`<option key=${n} value=${n}>${l}</option>`)}</select></label>`}
+    </div>
+    ${v.repeat && html`<label className="field"><span>Reminder</span><select id="mt-remind2" className="select" value=${v.remind} onChange=${(e) => set('remind', Number(e.target.value))}>${MEET_REMIND.map(([n, l]) => html`<option key=${n} value=${n}>${l}</option>`)}</select></label>`}
+    <label className="field"><span>Agenda or notes (optional)</span><textarea id="mt-notes2" rows="2" value=${v.notes} onChange=${(e) => set('notes', e.target.value)} placeholder="What it’s about, what to bring"></textarea></label>
+    <label className="me-check sm"><input id="mt-tell" type="checkbox" checked=${tell} onChange=${(e) => setTell(e.target.checked)}/>${ev ? 'Let them know about the change' : 'Let them know (it shows on their board and phone)'}</label>
+    ${err && html`<p className="err" role="alert">${err}</p>`}
+  <//>`;
+}
+function CalendarView() {
+  const { db, user } = useApp();
+  const mine = (db.events || []).filter((ev) => meetSees(ev, user.id));
+  const keeps = [...new Set(mine.filter((ev) => ev.createdBy === user.id && ev.owner !== user.id).map((ev) => ev.owner))].filter((id) => userById(db, id));
+  const diaries = [...new Set([user.id, ...keeps, ...mine.map((ev) => ev.owner)])].filter((id) => userById(db, id));
+  const [whose, setWhose] = useState(() => (keeps.length === 1 ? keeps[0] : keeps.length > 1 ? 'all' : user.id));
+  const [tab, setTab] = useState('up');
+  const [extras, setExtras] = useState(true);
+  const [month, setMonth] = useState(() => dkey().slice(0, 7));
+  const [day, setDay] = useState(dkey());
+  const [open, setOpen] = useState(null);
+  const owners = new Set(whose === 'all' ? diaries : [whose]);
+  const today = dkey(), showWho = owners.size > 1;
+  // meetings anyone can see here: the diary's owner, its planner and the people in it
+  const visible = (it) => it.kind !== 'meet' || meetSees(it.ev, user.id) || user.role === 'admin';
+  const group = (items) => { const g = []; items.forEach((it) => { const last = g[g.length - 1]; if (last && last.k === it.k) last.items.push(it); else g.push({ k: it.k, items: [it] }); }); return g; };
+  const openIt = (it) => setOpen({ id: it.ev.id, k: it.k });
+  const list = (items, empty) => (items.length ? group(items).map((g) => html`<section className="cal-day" key=${g.k}><h3>${dayHead(g.k)}</h3>${g.items.map((it) => html`<${MeetRow} key=${it.key} it=${it} showWho=${showWho} onOpen=${openIt}/>`)}</section>`)
+    : html`<div className="empty"><p>${empty}</p></div>`);
+  let body;
+  if (tab === 'up') body = list(agenda(db, owners, today, addDays(today, 30), extras).filter(visible).filter((it) => it.kind !== 'meet' || it.at + (it.ev.mins || 60) * MIN > Date.now() || !it.ev.time), 'Nothing in the next 30 days. Add a meeting with the button above.');
+  else if (tab === 'past') body = list(agenda(db, owners, addDays(today, -60), today, false).filter(visible).filter((it) => it.at < Date.now()).reverse(), 'No meetings in the last 60 days.');
+  else {
+    const first = keyToDate(month + '-01'), startK = addDays(dkey(first.getTime() + 12 * HOUR), -((first.getDay() + 6) % 7));
+    const days = Array.from({ length: 42 }, (_, i) => addDays(startK, i));
+    const all = agenda(db, owners, days[0], days[41], extras).filter(visible);
+    const byDay = {}; all.forEach((it) => { (byDay[it.k] = byDay[it.k] || []).push(it); });
+    const shift = (n) => { const d = new Date(first); d.setMonth(d.getMonth() + n); setMonth(dkey(d.getTime() + 12 * HOUR).slice(0, 7)); };
+    body = html`<div className="mcal">
+      <div className="mcal-h"><button className="icon-btn sm" onClick=${() => shift(-1)} aria-label="Last month"><${Icon} n="back" s=${16}/></button><b>${first.toLocaleDateString('en-ZA', { month: 'long', year: 'numeric' })}</b><button className="icon-btn sm" onClick=${() => shift(1)} aria-label="Next month"><${Icon} n="chev" s=${16}/></button><button className="btn sm ghost" onClick=${() => { setMonth(today.slice(0, 7)); setDay(today); }}>Today</button></div>
+      <div className="mcal-grid">${['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d) => html`<span key=${d} className="mcal-wd">${d}</span>`)}
+        ${days.map((k) => { const its = byDay[k] || [], meets = its.filter((x) => x.kind === 'meet'); return html`<button key=${k} className=${'mcal-d' + (k.slice(0, 7) !== month ? ' out' : '') + (k === today ? ' today' : '') + (k === day ? ' on' : '')} onClick=${() => setDay(k)} aria-label=${fmtKey(k, { weekday: 'long', day: 'numeric', month: 'long' }) + ': ' + its.length + ' things'}>
+          <span className="mcal-n">${Number(k.slice(8))}</span>
+          ${meets.slice(0, 3).map((x) => html`<span key=${x.key} className=${'mcal-chip' + (x.o.status === 'cancelled' ? ' off' : '')}>${x.ev.time ? x.ev.time + ' ' : ''}${x.ev.title}</span>`)}
+          ${(meets.length > 3 || its.length > meets.length) && html`<span className="mcal-more">${meets.length > 3 ? '+' + (meets.length - 3) + ' more' : ''}${its.length > meets.length ? (meets.length > 3 ? ' · ' : '') + (its.length - meets.length) + ' due' : ''}</span>`}
+        </button>`; })}</div>
+      <section className="cal-day"><h3>${dayHead(day)}</h3>${(byDay[day] || []).length ? byDay[day].map((it) => html`<${MeetRow} key=${it.key} it=${it} showWho=${showWho} onOpen=${openIt}/>`) : html`<p className="muted sm">Nothing on this day.</p>`}</section>
+    </div>`;
+  }
+  const todays = agenda(db, owners, today, today, false).filter(visible).filter((it) => it.o.status !== 'cancelled');
+  const nextUp = todays.find((it) => it.ev.time && it.at + (it.ev.mins || 60) * MIN > Date.now());
+  const needNotes = agenda(db, owners, addDays(today, -14), today, false).filter(visible).filter((it) => it.ev.time && it.at + (it.ev.mins || 60) * MIN < Date.now() && !it.o.status).length;
+  return html`<${Page} title="Calendar" sub="Meetings and everything coming up. Plan someone else’s diary and they see it too, with a reminder before each meeting."
+    actions=${html`<button className="btn primary" onClick=${() => setOpen({ id: null, preset: { owner: whose === 'all' ? keeps[0] || user.id : whose, date: tab === 'month' ? day : today } })}><${Icon} n="plus" s=${16}/>New meeting</button>`}>
+    <div className="stats">
+      <div className="stat"><b>${todays.length}</b><span>${todays.length === 1 ? 'meeting' : 'meetings'} today</span></div>
+      <div className="stat"><b>${nextUp ? nextUp.ev.time : '–'}</b><span>${nextUp ? 'next: ' + nextUp.ev.title : 'nothing else today'}</span></div>
+      <div className="stat"><b>${agenda(db, owners, addDays(today, 1), addDays(today, 7), false).filter(visible).filter((x) => x.o.status !== 'cancelled').length}</b><span>in the next 7 days</span></div>
+      <div className=${'stat' + (needNotes ? ' warn' : '')}><b>${needNotes}</b><span>${needNotes === 1 ? 'meeting needs' : 'meetings need'} notes</span></div>
+    </div>
+    <div className="filters">
+      ${diaries.length > 1 && html`<select id="cal-whose" className="select sm" value=${whose} onChange=${(e) => setWhose(e.target.value)} aria-label="Whose diary">${diaries.length > 1 && html`<option value="all">All the diaries I see</option>`}${diaries.map((id) => html`<option key=${id} value=${id}>${id === user.id ? 'My diary' : (userById(db, id) || {}).name + '’s diary'}</option>`)}</select>`}
+      <div className="seg" role="group" aria-label="View"><button className=${tab === 'up' ? 'on' : ''} onClick=${() => setTab('up')}>Upcoming</button><button className=${tab === 'month' ? 'on' : ''} onClick=${() => setTab('month')}>Month</button><button className=${tab === 'past' ? 'on' : ''} onClick=${() => setTab('past')}>Past</button></div>
+      ${tab !== 'past' && html`<label className="me-check sm"><input id="cal-extras" type="checkbox" checked=${extras} onChange=${(e) => setExtras(e.target.checked)}/>Show tasks and month-end dates</label>`}
+    </div>
+    ${body}
+    ${open && html`<${MeetingModal} key=${(open.id || 'new') + (open.k || '')} id=${open.id} k=${open.k} preset=${open.preset} onClose=${() => setOpen(null)}/>`}
+  <//>`;
+}
+// The sidebar's one line about meetings: what's next today, or nothing at all for people who don't use the calendar
+function NextMeeting() {
+  const { db, user, jump } = useApp();
+  const mine = (db.events || []).filter((ev) => meetSees(ev, user.id));
+  if (!mine.length) return null;
+  const today = dkey(), owners = new Set(mine.map((ev) => ev.owner));
+  const left = agenda(db, owners, today, addDays(today, 1), false).filter((it) => meetSees(it.ev, user.id) && it.o.status !== 'cancelled' && it.at + (it.ev.mins || 60) * MIN > Date.now());
+  const next = left[0], n = left.filter((it) => it.k === today).length;
+  return html`<button className="w-next glass" onClick=${() => jump('view:calendar')} title="Open the calendar">
+    <${Icon} n="diary" s=${16}/>
+    <span>${next ? html`<b>${next.k === today ? '' : 'Tomorrow '}${next.ev.time || 'All day'}</b> ${next.ev.title}${next.ev.owner !== user.id ? ' · ' + firstName(userById(db, next.ev.owner)) : ''}${next.ev.place ? ' · ' + next.ev.place : ''}` : 'No more meetings today'}</span>
+    ${n > 1 && html`<small>${n} today</small>`}
+  </button>`;
+}
+function demoEvents(T = Date.now()) {
+  const t = dkey(T), at = (n) => addDays(t, n);
+  const mk = (o) => ({ owner: 'u1', createdBy: 'u13', createdAt: T - 3 * DAY, time: '09:00', mins: 60, place: '', guests: '', attendees: [], repeat: '', until: '', remind: 15, notes: '', occ: {}, ...o });
+  return [
+    mk({ title: 'SunPack rep: new prices for December', date: t, time: '14:00', place: 'Boardroom', guests: 'Mike from SunPack', attendees: ['u3', 'u10'], notes: 'Bring last month’s SunPack invoices. Ask about the short deliveries.' }),
+    mk({ title: 'Weekly managers’ meeting', date: at(1), time: '08:30', mins: 45, place: 'Staff room', attendees: ['u2', 'u3', 'u5', 'u8', 'u10', 'u14'], repeat: 'weekly' }),
+    mk({ title: 'BrightSign: shelving walk-through', date: at(3), time: '11:30', mins: 90, place: 'Second entrance', guests: 'BrightSign Shopfitters', attendees: ['u2'] }),
+    mk({ title: 'Insurance renewal call', date: at(-1), time: '10:00', mins: 30, place: 'Phone', occ: { [at(-1)]: { status: 'done', notes: 'Renewal is 6% up. Pieter to get two other quotes by Friday.', by: 'u13', at: T - 20 * HOUR } } }),
+    mk({ title: 'Bank: speedpoint fees', date: at(-2), time: '15:00', mins: 30, place: 'Bank, Main Road', attendees: ['u3'] }),
+    mk({ title: 'Month-end review with Finance', date: at(6), time: '10:00', mins: 60, place: 'Boardroom', attendees: ['u3', 'u4'] }),
+  ].map((x, i) => ({ id: 'ev-' + (i + 1), ...x }));
+}
+
 /* ---------------- approvals: invoices, payments and expense claims that need an OK ---------------- */
 // An approval is a post (type 'approval') sent to its approvers, with p.approval = { kind, party, amount, ref, rule: 'any' | 'all',
 // approvers, paidAt, paidBy, payNote }. Each approver's decision sits on their own recipient record, so two people deciding at
@@ -5079,7 +5409,7 @@ function ApprovalAction({ p, r }) {
       <div className="action-h"><span className="eyebrow">A query for you</span>${asked && html`<span className="muted sm">${firstName(userById(db, asked.user))} asked ${ago(asked.at)}</span>`}</div>
       ${asked && asked.text && html`<div className="ap-q">${asked.text}</div>`}
       <textarea id=${'ans-' + p.id} rows="2" value=${note} onChange=${(e) => setNote(e.target.value)} placeholder="Your answer…"></textarea>
-      <${AttachPicker} files=${files} setFiles=${setFiles} label="Add a photo of the slip or invoice"/>
+      <${AttachPicker} files=${files} setFiles=${setFiles} label="Add a photo of the slip or invoice" voice/>
       <div className="action-foot"><span className="muted sm">The approvers get a reminder when you answer.</span><button className="btn primary" disabled=${busy}>Send answer</button></div>
     </form>`;
   }
@@ -5089,9 +5419,9 @@ function ApprovalAction({ p, r }) {
   return html`<form className="action" onSubmit=${(e) => e.preventDefault()}>
     <div className="action-h"><span className="eyebrow">Your decision</span><span className="muted sm">${rand(p.approval.amount)}${p.approval.rule === 'all' && p.approval.approvers.length > 1 ? ' · everyone tagged has to approve' : ''}</span></div>
     ${s === 'query' && html`<div className="notice"><${Icon} n="clock" s=${16}/>Waiting for ${firstName(author)} to answer your query. You can still decide now.</div>`}
-    <textarea id=${'dec-' + p.id} rows="2" value=${note} onChange=${(e) => setNote(e.target.value)} placeholder="A note (needed for a query, or if you don’t approve it)"></textarea>
-    <${AttachPicker} files=${files} setFiles=${setFiles}/>
-    <div className="action-foot ap-foot"><button type="button" className="btn" disabled=${busy} onClick=${() => run('query')}><${Icon} n="feedback" s=${15}/>Query</button><button type="button" className="btn danger" disabled=${busy} onClick=${() => run('reject')}><${Icon} n="close" s=${15}/>Don’t approve</button><${ApproveButton} p=${p} note=${note}/></div>
+    <textarea id=${'dec-' + p.id} rows="2" value=${note} onChange=${(e) => setNote(e.target.value)} placeholder="A note or a voice note (needed for a query, or if you don’t approve it)"></textarea>
+    <${AttachPicker} files=${files} setFiles=${setFiles} voice/>
+    <div className="action-foot ap-foot"><button type="button" className="btn" disabled=${busy} onClick=${() => run('query')}><${Icon} n="feedback" s=${15}/>Query</button><button type="button" className="btn danger" disabled=${busy} onClick=${() => run('reject')}><${Icon} n="close" s=${15}/>Don’t approve</button><${ApproveButton} p=${p} note=${note} files=${files} onDone=${() => { setNote(''); setFiles([]); }}/></div>
   </form>`;
 }
 // the facts at the top of an approval, and where Finance marks it paid
@@ -5694,7 +6024,7 @@ function myShortcuts(db, u) {
 }
 function pageOptions(db, u) {
   return [['needs', 'Needs you'], ['chats', 'Chats'], ['all', 'Everything for you'], ['sent', 'Sent & tracking'], u.role !== 'staff' && ['team', 'Team progress'],
-    ['pins', 'My pins'], ['groups', 'Projects & issues'], ['search', 'Search'], canSeeME(db, u) && ['monthend', 'Month end'], canSeeAP(db, u) && ['approvals', 'Approvals'],
+    ['pins', 'My pins'], ['groups', 'Projects & issues'], ['search', 'Search'], canSeeME(db, u) && ['monthend', 'Month end'], canSeeAP(db, u) && ['approvals', 'Approvals'], ['calendar', 'Calendar'],
     ...db.depts.map((d) => ['dept:' + d.id, d.name + ' page']), ...myGroups(db, u).filter((g) => !g.archived).map((g) => ['group:' + g.id, g.name])].filter(Boolean);
 }
 function ShortcutModal({ sc, onClose }) {
@@ -5804,6 +6134,7 @@ function Shell() {
   else if (view === 'admin') content = html`<${AdminView}/>`;
   else if (view === 'monthend') content = html`<${MonthEndView}/>`;
   else if (view === 'approvals') content = html`<${ApprovalsView}/>`;
+  else if (view === 'calendar') content = html`<${CalendarView}/>`;
   const note = CLOUD ? html`<p className="board-note">Live: everyone in the store sees changes as they happen.</p>` : html`<p className="board-note">Demo store with example staff. Changes stay on this device. <button onClick=${() => ask({ title: 'Reset the demo store?', body: 'All posts, files, pins and people go back to the example data. Anything you added is removed.', confirm: 'Reset demo', danger: true, onConfirm: resetDemo })}>Reset demo</button></p>`;
   return html`<div className=${'shell' + (openId ? ' has-detail' : '') + (chatsMode && openChatId ? ' chat-open' : '')}>
     <${Topbar}/>
@@ -5964,6 +6295,7 @@ function App() {
     dismissAlert(a.id);
     const desk = window.floorboardDesktop;
     if (a.postId) { setOpenId(a.postId); return; }
+    if (a.meet) { if (mode === 'widget') { if (desk && desk.openFull) desk.openFull('view:calendar'); else location.hash = 'go-view:calendar'; } else { setView('calendar'); setOpenId(null); } return; }
     if (mode === 'widget') { if (desk && desk.openFull) desk.openFull(); else location.hash = ''; }
     setOpenChatId(a.chatId); setView('chats'); setOpenId(null);
   };
@@ -6020,6 +6352,40 @@ function App() {
     const t = setTimeout(() => setStickyWake((x) => x + 1), Math.min(next - now + 250, 2e9));
     return () => clearTimeout(t);
   }, [user && user.id, cloud, stickySig, stickyWake]);
+  // Meeting reminders, before each one, for the diary's owner, its planner and the people in it. Each device remembers
+  // which it has shown; on the desktop only the sidebar shows them.
+  useEffect(() => {
+    if (!user || (CLOUD && cloud !== 'ready') || (DESKTOP_SHELL && mode !== 'widget')) return;
+    const now = Date.now(), today = dkey(now), d0 = dbRef.current;
+    let fired = {};
+    try { fired = JSON.parse(lsGet(FIRED_KEY)) || {}; } catch (e) { /* start again */ }
+    const due = [];
+    (d0.events || []).forEach((ev) => {
+      if (!meetSees(ev, user.id) || ev.remind == null || ev.remind < 0 || !ev.time) return;
+      occurrences(ev, today, addDays(today, 2)).forEach((k) => {
+        const start = meetStart(k, ev.time), key = user.id + '|' + ev.id + '|' + k;
+        if (((ev.occ || {})[k] || {}).status === 'cancelled' || fired[key]) return;
+        if (now >= start - ev.remind * MIN && now < start + 5 * MIN) due.push({ ev, k, key, start });
+      });
+    });
+    if (!due.length) return;
+    due.forEach((x) => { fired[x.key] = now; });
+    Object.keys(fired).forEach((x) => { if (now - fired[x] > 7 * DAY) delete fired[x]; });
+    lsSet(FIRED_KEY, JSON.stringify(fired));
+    due.forEach(({ ev, k, start }) => {
+      const mins = Math.round((start - now) / MIN);
+      const when = mins <= 1 ? 'now' : mins < 60 ? 'in ' + mins + ' minutes' : 'at ' + ev.time + (k !== today ? (k === addDays(today, 1) ? ' tomorrow' : ' on ' + fmtKey(k)) : '');
+      const a = { id: uid('al'), key: 'm:' + ev.id + '|' + k, meet: ev.id, level: 'amber', from: ev.owner, title: 'Meeting ' + when + (ev.owner !== user.id ? ' · ' + firstName(userById(d0, ev.owner)) + '’s diary' : ''), body: ev.title + (ev.place ? '\n' + ev.place : '') };
+      setAlerts((l) => [...l.slice(-3), a]);
+      try {
+        if (popupPermission() === 'granted' && (document.hidden || !document.hasFocus())) {
+          const pop = new Notification(a.title, { body: a.body, icon: 'icon-192.png', tag: a.key });
+          pop.onclick = () => { window.focus(); const desk = window.floorboardDesktop; if (desk && desk.focus) desk.focus(); pop.close(); };
+        }
+      } catch (e) { /* the pop-up inside the app still shows */ }
+    });
+    if (soundOn) chime(false);
+  }, [user && user.id, cloud, mode, tick, db.events]);
   // A file dropped anywhere but a drop box mustn't open in place of the app (the desktop window would go to it).
   useEffect(() => {
     const stop = (e) => { if (e.defaultPrevented || !e.dataTransfer || ![...(e.dataTransfer.types || [])].includes('Files')) return; e.preventDefault(); if (e.type === 'dragover') e.dataTransfer.dropEffect = 'none'; };

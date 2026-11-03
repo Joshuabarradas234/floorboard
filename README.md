@@ -78,6 +78,16 @@ Switch it on in **People & access**: under Admin (or whichever department handle
 - **Printing**, if paper is still wanted: every approval has **Print with slip**. In the desktop app the drop box can also print each quote by itself, as it's sent or once it's approved, on the printer chosen on that computer.
 - In the desktop sidebar, the **pin** at the top keeps Floorboard in front of Outlook while dragging.
 
+## Calendar
+
+Everyone has a **Calendar** in the menu. Plan meetings in your own diary or in someone else's (an assistant can keep the manager's diary): the day, time, how long, where, who from the store, people from outside, an agenda, and whether it repeats every week or month.
+
+- The diary's owner, whoever planned it and the people in it all see it. **Let them know** sends them a heads-up on their board and phone.
+- A reminder pops up before each meeting (15 minutes before unless you choose otherwise) on any device with Floorboard open. The sidebar shows the next meeting, and the start-of-shift summary lists the day's meetings.
+- **Upcoming** shows the next 30 days with tasks and month-end dates in between; **Month** is the month at a glance; **Past** keeps track of what happened. Open a meeting to write what was agreed and the follow-ups, mark it done, or cancel one.
+
+Approvers and the people who asked can also answer with a **voice note** (Query, Don't approve, Approve, and answering a query), and the drop box takes **photos or videos** with each quote.
+
 ## Still to come
 
 - Real home-screen widgets (the live tiles on an iPhone or Android home screen) need a native app built on top of the server.
