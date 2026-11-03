@@ -89,7 +89,7 @@ Everyone has a **Calendar** in the menu. Plan meetings in your own diary or in s
 
 ### Recording a meeting
 
-Open a meeting and tap **Record the meeting**. After ticking that everyone knows it's being recorded, Floorboard writes down what's said as it's said (Chrome, Edge, or Safari on an iPad or iPhone; the desktop app can't). **Paste a transcript instead** takes one from Teams, Zoom or a recording app. Then Claude writes the notes, what was decided, the tasks (with who and when) and anything that needs approving. Nothing is sent until it's been checked: tick the tasks and approvals to send, then **Save to the meeting**.
+Open a meeting and tap **Record the meeting**. After ticking that everyone knows it's being recorded, Floorboard asks to use the microphone (choose **Allow**) and writes down what's said as it's said, in Chrome, Edge, or Safari on an iPad or iPhone. The desktop app can't hear speech, so there the button is **Record in your browser**: it opens that meeting's recorder in Chrome or Edge (sign in there once). **Paste a transcript instead** takes one from Teams, Zoom or a recording app. Then Claude writes the notes, what was decided, the tasks (with who and when) and anything that needs approving. Nothing is sent until it's been checked: tick the tasks and approvals to send, then **Save to the meeting**.
 
 Set it up once for the live store:
 

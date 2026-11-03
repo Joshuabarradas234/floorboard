@@ -5160,7 +5160,7 @@ function MeetRow({ it, showWho, onOpen }) {
     ${state && html`<span className=${'st ' + state[1]}>${state[0]}</span>`}
   </button>`;
 }
-function MeetingModal({ id, k, preset, onClose }) {
+function MeetingModal({ id, k, preset, record, onClose }) {
   const { db, user, update, toast, ask } = useApp();
   const ev = id && (db.events || []).find((x) => x.id === id);
   const o = ev && k ? (ev.occ || {})[k] || {} : {};
@@ -5169,7 +5169,7 @@ function MeetingModal({ id, k, preset, onClose }) {
   const [tell, setTell] = useState(!ev);
   const [notes, setNotes] = useState(o.notes || '');
   const [err, setErr] = useState('');
-  const [recording, setRecording] = useState(false);
+  const [recording, setRecording] = useState(!!record);
   const set = (f, x) => { setV((s) => ({ ...s, [f]: x })); setErr(''); };
   const people = db.users.filter((u) => u.active !== false);
   const editable = !ev || meetEdits(ev, user);
@@ -5255,7 +5255,7 @@ function MeetingModal({ id, k, preset, onClose }) {
   <//>`;
 }
 function CalendarView() {
-  const { db, user } = useApp();
+  const { db, user, recordAsk, clearRecordAsk } = useApp();
   const mine = (db.events || []).filter((ev) => meetSees(ev, user.id));
   const keeps = [...new Set(mine.filter((ev) => ev.createdBy === user.id && ev.owner !== user.id).map((ev) => ev.owner))].filter((id) => userById(db, id));
   const diaries = [...new Set([user.id, ...keeps, ...mine.map((ev) => ev.owner)])].filter((id) => userById(db, id));
@@ -5265,6 +5265,7 @@ function CalendarView() {
   const [month, setMonth] = useState(() => dkey().slice(0, 7));
   const [day, setDay] = useState(dkey());
   const [open, setOpen] = useState(null);
+  useEffect(() => { if (recordAsk && db.events && db.events.some((ev) => ev.id === recordAsk.id)) { setOpen({ id: recordAsk.id, k: recordAsk.k, record: true }); clearRecordAsk(); } }, [recordAsk, db.events]);
   const owners = new Set(whose === 'all' ? diaries : [whose]);
   const today = dkey(), showWho = owners.size > 1;
   // meetings anyone can see here: the diary's owner, its planner and the people in it
@@ -5310,7 +5311,7 @@ function CalendarView() {
       ${tab !== 'past' && html`<label className="me-check sm"><input id="cal-extras" type="checkbox" checked=${extras} onChange=${(e) => setExtras(e.target.checked)}/>Show tasks and month-end dates</label>`}
     </div>
     ${body}
-    ${open && html`<${MeetingModal} key=${(open.id || 'new') + (open.k || '')} id=${open.id} k=${open.k} preset=${open.preset} onClose=${() => setOpen(null)}/>`}
+    ${open && html`<${MeetingModal} key=${(open.id || 'new') + (open.k || '') + (open.record ? 'r' : '')} id=${open.id} k=${open.k} preset=${open.preset} record=${open.record} onClose=${() => setOpen(null)}/>`}
   <//>`;
 }
 // The sidebar's one line about meetings: what's next today, or nothing at all for people who don't use the calendar
@@ -5492,6 +5493,8 @@ function InkButtons({ p, noApprove }) {
 const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
 const canListen = () => !!SpeechRec && !DESKTOP_SHELL;
 const RECDRAFT = 'floorboard.recording.v1';
+// the web app, straight to this meeting's recorder (the desktop app hands recording to the browser)
+const recordLink = (ev, k) => phoneLink() + '#go-rec:' + encodeURIComponent(ev.id + ':' + k);
 const WEEKDAY_RE = /\b(monday|tuesday|wednesday|thursday|friday|saturday|sunday|tomorrow|next week)\b/i;
 function matchUser(db, who) {
   const w = String(who || '').trim().toLowerCase();
@@ -5603,7 +5606,18 @@ function MeetingRecorder({ ev, k, onClose }) {
     r.start();
   };
   const start = async () => {
-    setErr(''); started.current = Date.now(); setStage('recording');
+    setErr('');
+    // ask for the microphone first, so the browser's "Allow microphone?" question comes up straight away
+    try {
+      const s = await navigator.mediaDevices.getUserMedia({ audio: true });
+      s.getTracks().forEach((tr) => tr.stop());
+    } catch (e) {
+      setErr(e && e.name === 'NotAllowedError'
+        ? 'The microphone is blocked for Floorboard. Click the padlock (or the microphone icon) next to the web address, set Microphone to Allow, then press Start recording again.'
+        : 'No microphone was found. Plug one in or switch it on, or paste a transcript instead.');
+      return;
+    }
+    started.current = Date.now(); setStage('recording');
     try { listen(); } catch (e) { setErr('Recording couldn’t start here. Paste a transcript instead.'); setStage('ready'); return; }
     try { if (navigator.wakeLock) lock.current = await navigator.wakeLock.request('screen'); } catch (e) { /* the screen may dim, recording carries on while it's open */ }
   };
@@ -5678,15 +5692,18 @@ function MeetingRecorder({ ev, k, onClose }) {
   return html`<${Modal} title=${'Record: ' + ev.title} onClose=${close} wide footer=${html`
     ${stage === 'ready' && !paste && html`<button className="btn ghost" style=${{ marginRight: 'auto' }} onClick=${() => setPaste(true)}>Paste a transcript instead</button>`}
     ${stage === 'ready' && (paste || text.trim()) && html`<button className="btn primary" onClick=${finish}><${Icon} n="check" s=${16}/>Make the notes</button>`}
-    ${stage === 'ready' && !paste && !text.trim() && html`<button className="btn primary" disabled=${!agreed || !canListen()} onClick=${start}><${Icon} n="mic" s=${16}/>Start recording</button>`}
+    ${stage === 'ready' && !paste && !text.trim() && (DESKTOP_SHELL
+      ? html`<button className="btn primary" onClick=${() => { window.open(recordLink(ev, k), '_blank'); toast('Opening the recorder in your browser…'); onClose(); }}><${Icon} n="mic" s=${16}/>Record in your browser</button>`
+      : html`<button className="btn primary" disabled=${!agreed || !canListen()} onClick=${start}><${Icon} n="mic" s=${16}/>Start recording</button>`)}
     ${stage === 'recording' && html`<button className="btn" onClick=${pause}>Pause</button>`}
     ${stage === 'paused' && html`<button className="btn" onClick=${resume}><${Icon} n="mic" s=${15}/>Carry on</button>`}
     ${listening && html`<button className="btn primary" onClick=${finish}><${Icon} n="check" s=${16}/>Stop and make the notes</button>`}`}>
     ${stage === 'making' ? html`<div className="mr-making"><span className="mr-spin"></span><b>Writing the notes…</b><span className="muted sm">This can take a minute for a long meeting.</span></div>`
     : html`${stage === 'ready' && html`
         <p style=${{ margin: 0 }}>Floorboard writes down what’s said, then makes the notes, the tasks and anything that needs approving. You check them before anything is sent.</p>
-        ${!canListen() && html`<div className="notice"><${Icon} n="info" s=${16}/>${DESKTOP_SHELL ? 'The desktop app can’t write down speech. Open Floorboard in Chrome or Edge, or on an iPad or phone, to record, or paste a transcript here.' : 'This browser can’t write down speech. Use Chrome, Edge, or Safari on an iPad or iPhone, or paste a transcript.'}</div>`}
-        ${canListen() && !paste && html`<label className="me-check"><input id="mr-agree" type="checkbox" checked=${agreed} onChange=${(e) => setAgreed(e.target.checked)}/>I’ve told everyone in the meeting it’s being recorded</label>`}`}
+        ${!canListen() && html`<div className="notice"><${Icon} n="info" s=${16}/>${DESKTOP_SHELL ? 'The desktop app can’t hear speech, so recording opens this meeting in your browser (Chrome or Edge). It asks to use the microphone there: choose Allow. You only sign in there the first time.' : 'This browser can’t write down speech. Use Chrome, Edge, or Safari on an iPad or iPhone, or paste a transcript.'}</div>`}
+        ${canListen() && !paste && html`<label className="me-check"><input id="mr-agree" type="checkbox" checked=${agreed} onChange=${(e) => setAgreed(e.target.checked)}/>I’ve told everyone in the meeting it’s being recorded</label>
+          <p className="muted sm" style=${{ margin: 0 }}>When you press Start recording, your browser asks to use the microphone: choose <b>Allow</b>.</p>`}`}
       ${listening && html`<div className="mr-bar"><span className=${'rec-dot' + (stage === 'paused' ? ' still' : '')}></span><b>${stage === 'paused' ? 'Paused' : 'Recording'} ${clock}</b><span className="muted sm">Keep this open, and the device near the people talking.</span></div>`}
       ${(listening || text.trim() || paste) && html`<label className="field"><span>${listening ? 'What’s been said' : 'Transcript'}</span>
         <div ref=${live} className="mr-live" hidden=${!listening}>${text}${interim && html` <i>${interim}</i>`}${!text && !interim && html`<span className="muted">Listening…</span>`}</div>
@@ -6554,6 +6571,7 @@ function App() {
   const [phoneOpen, setPhoneOpen] = useState(false);
   const [season, setSeasonState] = useState(() => (SEASONS[lsGet(SEASON_KEY)] ? lsGet(SEASON_KEY) : seasonNow()));
   const [view, setView] = useState('chats');
+  const [recordAsk, setRecordAsk] = useState(null); // a link asked to record a meeting; kept until the person is signed in
   const [openChatId, setOpenChatId] = useState(null);
   const [openId, setOpenId] = useState(null);
   const [composer, setComposer] = useState(null);
@@ -6626,6 +6644,7 @@ function App() {
         const t = decodeURIComponent(hs.slice(4));
         setMode('full');
         if (t.startsWith('chat:')) { setOpenChatId(t.slice(5)); setView('chats'); } else if (t.startsWith('view:')) setView(t.slice(5)); else if (t.startsWith('post:')) setOpenId(t.slice(5));
+        else if (t.startsWith('rec:')) { const [id, day] = t.slice(4).split(':'); setRecordAsk({ id, k: day }); setView('calendar'); }
         try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { /* the hash just stays */ }
         return;
       }
@@ -6890,7 +6909,8 @@ function App() {
     },
     openPost: (id) => { setOpenId(id); setDrawer(false); }, closePost: () => setOpenId(null),
     compose: (preset) => setComposer(preset || {}), closeComposer: () => setComposer(null),
-    login: (id) => { lsSet(SESSION_KEY, id); setMe(id); setView('chats'); setOpenChatId(null); setOpenId(null); setFilters(NO_FILTERS); },
+    recordAsk, clearRecordAsk: () => setRecordAsk(null),
+    login: (id) => { lsSet(SESSION_KEY, id); setMe(id); setView(recordAsk ? 'calendar' : 'chats'); setOpenChatId(null); setOpenId(null); setFilters(NO_FILTERS); },
     logout: () => {
       setOpenId(null); setDrawer(false); setComposer(null); setOpenChatId(null);
       if (!CLOUD) { lsSet(SESSION_KEY, ''); setMe(null); return; }
@@ -6899,7 +6919,7 @@ function App() {
       // this person's alerts stop on this device before signing out (the next person to log in here gets theirs)
       (lsGet(PUSH_KEY) ? pushOff(true) : Promise.resolve()).finally(() => CLOUD.auth.signOut());
     },
-    cloud, syncStatus, cloudSignedIn: (session) => { setView('chats'); setOpenChatId(null); startCloud(session); },
+    cloud, syncStatus, cloudSignedIn: (session) => { setView(recordAsk ? 'calendar' : 'chats'); setOpenChatId(null); startCloud(session); },
     resetDemo: async () => { await Blobs.clear(); setDb(seed()); setOpenId(null); setOpenChatId(null); setView('chats'); setFilters(NO_FILTERS); toast('Demo store reset'); },
   };
   return html`<${Ctx.Provider} value=${ctx}>
