@@ -60,6 +60,18 @@ Switch it on in **People & access**: under Finance, turn on **Month end**. A **M
 - **Ask managers for invoices** sends every manager a task to hand in the month's invoices, so Finance can see who is still outstanding.
 - Before pasting a new month, remove last month's lists with the bin on each list (**By list** view).
 
+## My week (daily tasks)
+
+Switch it on in **People & access**: under the department, turn on **My week**. It replaces a weekly Excel task sheet: a column for each day with Done, Time and Reason.
+
+- **Everyday tasks** (like reading email or the bank recons) fill in every day you pick by themselves. Taking one off keeps it on the days already gone.
+- Add each day's other jobs in its column, or paste a list from Excel. Click a task to note the time or the reason it's late, move it to the next day, or take it off.
+- Today's list is in the sidebar and on Needs you. Managers (and admins) can open their team's weeks, set up someone's everyday tasks and add tasks for them; only the person ticks their own.
+
+## OneDrive
+
+Each person can link their own OneDrive: on the **Drive** page, paste the address from OneDrive in the browser, or an admin adds it under the person in People & access. Drive then has **Open OneDrive** at the top. The files stay in OneDrive.
+
 ## Approvals (Finance)
 
 Switch it on in **People & access**: under Finance, turn on **Approvals**. Anyone can then pick **Approval** as the kind of post: what it is (quote, invoice, payment, expense claim), the supplier, the amount, the invoice number, a photo or PDF of it, and who approves it (any one of them, or all of them).

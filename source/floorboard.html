@@ -855,6 +855,39 @@ td.mono{white-space:nowrap}
 .w-stk:has(.stk-slim){padding:10px 14px}
 .widget{overflow-y:auto}
 .widget .w-list{flex:1 0 260px;min-height:260px}
+.wk-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;align-items:start}
+.wk-day{display:grid;gap:6px;padding:12px;border-radius:var(--r-lg);background:var(--glass);border:1px solid var(--glass-line);border-top-color:rgba(255,255,255,.3);box-shadow:var(--hi)}
+.wk-day.today{border-color:rgba(255,255,255,.55);background:var(--glass-2)}
+.wk-h{display:flex;align-items:baseline;gap:8px;padding:0 2px 4px}
+.wk-h b{font-size:15px}
+.wk-h span{color:var(--ink-3);font-size:12.5px;flex:1}
+.wk-h em{font-style:normal;font-family:var(--f-mono);font-size:12px;color:var(--ink-2)}
+.wk-h .linkish{font-size:12.5px}
+.wk-row{display:flex;gap:9px;align-items:flex-start;padding:6px 4px;border-radius:10px}
+.wk-row:hover{background:rgba(255,255,255,.06)}
+.wk-row input[type=checkbox]{width:18px;height:18px;margin:2px 0 0;flex:none;accent-color:var(--green,#4caf50)}
+.wk-t{flex:1;min-width:0;text-align:left;background:none;border:0;padding:0;color:var(--ink);font:inherit;font-size:13.5px;line-height:1.35;cursor:pointer;display:grid;gap:2px}
+.wk-t>span svg{display:inline;vertical-align:-1px;margin-left:5px;opacity:.55}
+.od{display:flex;gap:12px;align-items:center;flex-wrap:wrap;background:var(--glass);border:1px solid var(--glass-line);border-top-color:rgba(255,255,255,.3);border-radius:var(--r);padding:14px 16px;box-shadow:var(--hi);margin-bottom:16px}
+.od-ic{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:#0f6cbd;color:#fff;flex:none}
+.od-t{flex:1;min-width:180px;display:grid;gap:2px}
+.od-t small{color:var(--ink-3);font-size:12.5px}
+.od form{display:flex;gap:8px;flex:1 1 320px}
+.wk-t small{font-size:11.5px;color:var(--ink-3)}
+.wk-row.done .wk-t>span{text-decoration:line-through;color:var(--ink-3)}
+.wk-row.late .wk-t>span{color:#ffb4a6}
+.wk-more{display:grid;gap:6px;margin:0 0 6px 31px}
+.wk-more .input{padding:6px 10px;font-size:13px}
+.wk-more .row-btns{display:flex;gap:6px;flex-wrap:wrap}
+.wk-add{padding:7px 11px;font-size:13px}
+.wk-days{display:flex;gap:4px;flex-wrap:wrap}
+.wk-days button{min-width:34px;padding:4px 6px;border-radius:99px;border:1px solid var(--glass-line);background:var(--glass);color:var(--ink-2);font-weight:700;font-size:12px}
+.wk-days button.on{background:#fff;color:var(--accent-ink);border-color:#fff}
+.wk-st{display:grid;gap:6px;padding:10px 0;border-bottom:1px solid var(--glass-line)}
+.wk-st-top{display:flex;gap:8px;align-items:center}
+.w-day{flex:none;padding:10px 12px;border-radius:22px}
+.w-day .wk-day,.board-col .wk-day.tdc,.inline-board .wk-day.tdc{background:none;border:0;box-shadow:none;padding:0}
+.board-col .tdc-wrap,.inline-board .tdc-wrap{margin-top:14px;padding:14px;border-radius:var(--r-lg);background:var(--glass);border:1px solid var(--glass-line);border-top-color:rgba(255,255,255,.3)}
 .board-col .stk,.inline-board .stk{margin-top:14px;padding:14px;border-radius:var(--r-lg);background:var(--glass);border:1px solid var(--glass-line);border-top-color:rgba(255,255,255,.3)}
 .w-stk{flex:none;padding:12px 14px;border-radius:22px}
 .stk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:9px;max-height:214px;overflow-y:auto;padding:2px 2px 4px;scrollbar-width:thin}
@@ -1552,6 +1585,8 @@ function seed() {
   db.depts.find((d) => d.id === 'finance').features.monthend = true; // Finance came on board first, with month end
   Object.assign(db.depts.find((d) => d.id === 'admin').features, { quotes: true, drive: true }); // Admin drops new-business quotes in for approval and keeps the signed copies
   db.deadlines = demoDeadlines(T);
+  db.depts.find((d) => d.id === 'finance').features.planner = true; // Finance keeps its daily tasks in My week
+  demoPlanner(db, T);
   const U = (id, name, title, role, depts, manages) => ({ id, name, title, role, depts, manages: manages || [], pin: '1234', active: true });
   db.users = [
     U('u1', 'Thandi Mokoena', 'Store Manager', 'admin', ['mgmt'], ['mgmt']),
@@ -1824,6 +1859,7 @@ function loadDb() {
         if (!Array.isArray(d.deadlines)) { d.deadlines = demoDeadlines(); const f = (d.depts || []).find((x) => x.id === 'finance'); if (f) f.features = { ...(f.features || {}), monthend: true }; }
         if (!(d.depts || []).some((x) => x.features && 'approvals' in x.features)) demoApprovals(d);
         if (!Array.isArray(d.events)) d.events = demoEvents();
+        if (!d.plans) { const f = (d.depts || []).find((x) => x.id === 'finance'); if (f) f.features = { ...(f.features || {}), planner: true }; demoPlanner(d); }
         if (!(d.depts || []).some((x) => x.features && 'quotes' in x.features)) {
           const ad = (d.depts || []).find((x) => x.id === 'admin');
           if (ad) ad.features = { ...(ad.features || {}), quotes: true, drive: true };
@@ -2054,6 +2090,7 @@ function Rail() {
     ${myDepts.map((d) => item('dept:' + d.id, html`<i className="sq" style=${{ '--c': d.color }}></i>`, d.name))}
     ${item('teams', html`<${Icon} n="store"/>`, 'All departments')}
     ${item('calendar', html`<${Icon} n="diary"/>`, 'Calendar')}
+    ${canSeePlanner(db, user) && item('week', html`<${Icon} n="list"/>`, 'My week')}
     ${canSeeME(db, user) && item('monthend', html`<${Icon} n="calendar"/>`, 'Month end')}
     ${canSeeAP(db, user) && item('approvals', html`<${Icon} n="stamp"/>`, 'Approvals')}
     <span className="rail-sep"></span>
@@ -2156,6 +2193,7 @@ function Widget() {
     </header>
     <${Board} onPick=${pick}/>
     <${NextMeeting}/>
+    ${plannerOn(db, user) && html`<div className="w-day glass"><${TodayCard} compact/></div>`}
     ${canQuoteDrop(db, user) && html`<div className="w-qd glass"><${QuoteDrop} compact/></div>`}
     <div className="w-stk glass"><${StickyNotes} compact/></div>
     <div className="filters" style=${{ justifyContent: 'space-between' }}>
@@ -2263,7 +2301,7 @@ function FeedView({ kind }) {
     <p>${filtered ? 'Try another type, level or department.' : kind === 'needs' ? 'Nothing needs you right now. New tasks, feedback requests and votes will show up here.' : kind === 'sent' ? 'Tag a person or a team to hand out a task, ask for feedback or run a vote.' : 'When someone tags you or your team, it shows up here.'}</p>
     ${filtered ? html`<button className="btn" onClick=${() => setFilters(NO_FILTERS)}>Clear filters</button>` : kind !== 'needs' && html`<button className="btn primary" onClick=${() => compose()}>New post</button>`}</div>`;
   return html`<${Page} title=${meta[0]} sub=${meta[1]}>
-    ${kind === 'needs' && html`<div className="inline-board"><${Board}/><${QuoteDrop}/><${StickyNotes}/><${Shortcuts}/></div>`}
+    ${kind === 'needs' && html`<div className="inline-board"><${Board}/><${TodayCard}/><${QuoteDrop}/><${StickyNotes}/><${Shortcuts}/></div>`}
     <${FilterBar} base=${base} status=${status} setStatus=${kind === 'needs' ? null : setStatus}/>
     ${shown.length === 0 ? empty : kind === 'needs'
       ? LEVEL_KEYS.map((l) => { const g = shown.filter((p) => p.level === l); return g.length > 0 && html`<section key=${l} className="group"><h2 className="group-h"><${LevelTag} l=${l}/>${LEVELS[l].long}<span className="n">${g.length}</span></h2><div className="cards">${g.map((p) => html`<${PostCard} key=${p.id} p=${p}/>`)}</div></section>`; })
@@ -2762,6 +2800,30 @@ function DocModal({ fileId, driveId, folderId, onClose }) {
   <//>`;
 }
 function useAttUrlMaybe(a) { const fake = { id: '', demo: 'none' }; const url = useAttUrl(a || fake); return a ? url : null; }
+// Each person's own OneDrive, opened from Drive: a link an admin adds under People & access, or one they add themselves
+// (kept with their pins). Floorboard only links to it; the files stay in OneDrive.
+const onedriveOf = (db, u) => ((db.pins[u.id] || {}).onedrive) || u.onedrive || '';
+const ONEDRIVE_OK = /^https:\/\/[^\s/]+\.(sharepoint\.com|onedrive\.live\.com|onedrive\.com|1drv\.ms|live\.com)(\/|$)|^https:\/\/1drv\.ms\//i;
+function OneDriveCard() {
+  const { db, user, update, toast } = useApp();
+  const link = onedriveOf(db, user);
+  const [edit, setEdit] = useState(false), [v, setV] = useState('');
+  const save = (e) => {
+    e.preventDefault();
+    const url = v.trim();
+    if (url && !ONEDRIVE_OK.test(url)) { toast('That isn’t a OneDrive address. Open OneDrive in your browser and copy the address at the top.', 'warn'); return; }
+    update((d) => { d.pins[user.id] = d.pins[user.id] || { posts: [], notes: [] }; d.pins[user.id].onedrive = url; });
+    setEdit(false); toast(url ? 'OneDrive linked' : 'OneDrive link removed');
+  };
+  return html`<div className="od">
+    <span className="od-ic"><${Icon} n="folder" s=${22}/></span>
+    ${link && !edit ? html`<div className="od-t"><b>My OneDrive</b><small>Your own files, as they are in OneDrive</small></div>
+        <a className="btn primary" href=${link} target="_blank" rel="noopener noreferrer">Open OneDrive</a>
+        <button className="btn sm ghost" onClick=${() => { setV((db.pins[user.id] || {}).onedrive || ''); setEdit(true); }}>Change</button>`
+      : html`<div className="od-t"><b>Link your OneDrive</b><small>Open OneDrive in your browser, copy the address at the top and paste it here. Then Drive opens it for you.</small></div>
+        <form onSubmit=${save}><input id="od-link" className="input" value=${v} onChange=${(e) => setV(e.target.value)} placeholder="https://…sharepoint.com/… or https://onedrive.live.com/…" aria-label="OneDrive address"/><button className="btn primary">Save</button>${edit && html`<button type="button" className="btn ghost" onClick=${() => setEdit(false)}>Cancel</button>`}</form>`}
+  </div>`;
+}
 function DriveView() {
   const { db, user, update, toast } = useApp();
   const drives = db.drives.filter((d) => driveOn(db, d)).map((d) => ({ ...d, ok: canDrive(user, d) }));
@@ -2778,8 +2840,9 @@ function DriveView() {
   const countIn = (fid) => { const kids = db.folders.filter((x) => x.parent === fid).map((x) => x.id); return db.files.filter((f) => f.folder === fid).length + kids.reduce((a, k) => a + countIn(k), 0); };
   const crumbs = []; let c = db.folders.find((x) => x.id === folderId); while (c) { crumbs.unshift(c); c = db.folders.find((x) => x.id === c.parent); }
   const addFolder = (e) => { e.preventDefault(); const name = (nf || '').trim(); if (!name) return setNf(null); update((d) => { d.folders.push({ id: uid('f'), drive: driveId, name, parent: folderId }); }); setNf(null); toast('Folder “' + name + '” created'); };
-  if (!drives.length) return html`<${Page} title="Drive"><div className="empty"><${Icon} n="folder" s=${24}/><h3>Drive isn’t switched on yet</h3><p>Drive gets switched on department by department. An admin can turn it on in People & access → Departments.</p></div><//>`;
+  if (!drives.length) return html`<${Page} title="Drive"><${OneDriveCard}/><div className="empty"><${Icon} n="folder" s=${24}/><h3>Drive isn’t switched on yet</h3><p>Drive gets switched on department by department. An admin can turn it on in People & access → Departments.</p></div><//>`;
   return html`<${Page} title="Drive" sub="Every document in one place. Search by name, reference, supplier, date or where the paper copy is filed. Your login decides which drives you can open.">
+    <${OneDriveCard}/>
     <div className="drive">
       <nav className="drives" aria-label="Drives">${drives.map((d) => { const dep = deptById(db, d.id.slice(2)); return html`<button key=${d.id} className=${'drv' + (d.id === driveId && !searching ? ' on' : '') + (d.ok ? '' : ' locked')} style=${{ '--c': d.id === 'd-shared' ? '#5E6B65' : dep.color }} onClick=${() => { setDriveId(d.id); setFolderId(null); setQ(''); setTypeF('any'); }}>${d.ok ? html`<i></i>` : html`<${Icon} n="lock" s=${14}/>`}<span>${d.name}</span></button>`; })}</nav>
       <div style=${{ display: 'grid', gap: 14, minWidth: 0 }}>
@@ -2900,7 +2963,8 @@ function PersonModal({ personId, onClose, onAdded }) {
     if (!v.depts.length) return setErr('Put them in at least one department.');
     if (!CLOUD && !/^\d{4}$/.test(v.pin || '')) return setErr('The PIN must be 4 digits.');
     if (p && p.id === user.id && v.role !== 'admin') return setErr('You can’t remove your own admin access.');
-    const clean = { ...v, name: v.name.trim(), title: v.title.trim() || 'Staff', manages: v.role === 'staff' ? [] : v.manages };
+    if ((v.onedrive || '').trim() && !ONEDRIVE_OK.test(v.onedrive.trim())) return setErr('The OneDrive link should be the address from OneDrive in the browser (it starts with https:// and has sharepoint.com or onedrive in it).');
+    const clean = { ...v, onedrive: (v.onedrive || '').trim(), name: v.name.trim(), title: v.title.trim() || 'Staff', manages: v.role === 'staff' ? [] : v.manages };
     const id = p ? p.id : uid('u');
     update((d) => { if (p) Object.assign(d.users.find((u) => u.id === p.id), clean); else d.users.push({ ...clean, id }); });
     onClose();
@@ -2914,6 +2978,7 @@ function PersonModal({ personId, onClose, onAdded }) {
       ${CLOUD ? html`<div className="field"><span>Login</span><small>After you add them, you get a setup code to give them. They choose their own PIN with it.</small></div>`
         : html`<label className="field"><span>Login PIN (4 digits)</span><input id="pm-pin" className="input mono" inputMode="numeric" maxLength="4" value=${v.pin} onChange=${(e) => set('pin', e.target.value.replace(/\D/g, ''))}/></label>`}
     </div>
+    <label className="field"><span>OneDrive link (optional)</span><input id="pm-onedrive" className="input" value=${v.onedrive || ''} onChange=${(e) => set('onedrive', e.target.value)} placeholder="https://…sharepoint.com/… or https://onedrive.live.com/…"/><small>Drive opens their own OneDrive with this. They can also add it themselves on the Drive page.</small></label>
     <div className="field"><span>Departments they belong to</span><div className="checks">${db.depts.map((d) => html`<label key=${d.id}><input type="checkbox" checked=${v.depts.includes(d.id)} onChange=${() => flip('depts', d.id)}/>${d.name}</label>`)}</div><small>Tagging one of these teams reaches this person.</small></div>
     <div className="field"><span>Departments they manage</span><div className="checks">${db.depts.map((d) => html`<label key=${d.id} className=${v.role === 'staff' ? 'dis' : ''}><input type="checkbox" disabled=${v.role === 'staff'} checked=${v.manages.includes(d.id)} onChange=${() => flip('manages', d.id)}/>${d.name}</label>`)}</div><small>Managers see the progress of everyone in these teams and can edit the team’s tools.</small></div>
     ${p && p.id !== user.id && html`<label className="sm" style=${{ display: 'flex', gap: 8, alignItems: 'center' }}><input type="checkbox" checked=${v.active === false} onChange=${(e) => set('active', !e.target.checked)}/>Deactivated: can’t log in and won’t be tagged</label>`}
@@ -2979,7 +3044,7 @@ function AdminView() {
       <form className="dtool" onSubmit=${addDept}><input id="nd-name" className="input" style=${{ maxWidth: 280 }} value=${nd.name} onChange=${(e) => setNd({ ...nd, name: e.target.value })} placeholder="New department, e.g. Butchery"/><div className="swatches">${TILE_COLORS.map((c) => html`<button type="button" key=${c} className=${nd.color === c ? 'on' : ''} style=${{ '--c': c }} onClick=${() => setNd({ ...nd, color: c })} aria-label=${'Colour ' + c}></button>`)}</div><button className="btn primary">Add department</button></form>
       <p className="feat-note">Every department starts with its group chat, tagging and the “Needs you” board. Switch on the extra tools as each department comes on board.</p>
       <div className="dgrid">${db.depts.map((d) => html`<div key=${d.id} className="dcard"><div className="dcard-h"><span className="dsw" style=${{ '--c': d.color }}></span><div><h3>${d.name}</h3><span className="muted sm">${deptMembers(db, d.id).length} people · ${db.users.filter((u) => u.manages.includes(d.id)).map((u) => firstName(u)).join(', ') || 'no manager'}</span></div></div>
-        <div className="toggles">${[['tools', 'Tools & manuals'], ['drive', 'Drive'], ['monthend', 'Month end'], ['approvals', 'Approvals'], ['quotes', 'Quote drop box']].map(([k, l]) => html`<button key=${k} className=${'toggle' + (featureOn(d, k) ? ' on' : '')} style=${{ '--c': d.color }} onClick=${() => flipFeature(d.id, k)} aria-pressed=${featureOn(d, k)}><i></i>${l}${featureOn(d, k) ? ' · on' : ' · off'}</button>`)}</div>
+        <div className="toggles">${[['tools', 'Tools & manuals'], ['drive', 'Drive'], ['monthend', 'Month end'], ['approvals', 'Approvals'], ['quotes', 'Quote drop box'], ['planner', 'My week']].map(([k, l]) => html`<button key=${k} className=${'toggle' + (featureOn(d, k) ? ' on' : '')} style=${{ '--c': d.color }} onClick=${() => flipFeature(d.id, k)} aria-pressed=${featureOn(d, k)}><i></i>${l}${featureOn(d, k) ? ' · on' : ' · off'}</button>`)}</div>
         ${featureOn(d, 'quotes') && html`<div className="dq">
           <label className="qd-to"><span>Drop box for</span><select id=${'dq-for-' + d.id} className="select" value=${d.quoteFor || ''} onChange=${(e) => setQuote(d.id, 'quoteFor', e.target.value)}><option value="">Everyone in ${d.name}</option>${deptMembers(db, d.id).map((id) => userById(db, id)).map((u) => html`<option key=${u.id} value=${u.id}>${u.name}</option>`)}</select></label>
           <label className="qd-to"><span>Quotes go to</span><select id=${'dq-to-' + d.id} className="select" value=${d.quoteTo || ''} onChange=${(e) => setQuote(d.id, 'quoteTo', e.target.value)}><option value="">Whoever sends them picks</option>${db.users.filter((u) => u.active !== false).map((u) => html`<option key=${u.id} value=${u.id}>${u.name}</option>`)}</select></label></div>`}</div>`)}</div>
@@ -3566,7 +3631,7 @@ const STAFF_DOMAIN = '@staff.floorboard.app';
 const pinPassword = (pin) => 'fb-' + pin + '-FB';
 const PIN_LEN = CLOUD ? 6 : 4;
 const CACHE_KEY = 'floorboard.cloud.cache.v1', STORE_CODE_KEY = 'floorboard.storecode.v1';
-function emptyDb() { return { v: 2, store: 'Your store', counter: 1000, depts: [], users: [], groups: [], shortcuts: [], drives: [], folders: [], files: [], tiles: [], pins: {}, status: {}, chats: [], messages: [], posts: [], deadlines: [], events: [], marks: {} }; }
+function emptyDb() { return { v: 2, store: 'Your store', counter: 1000, depts: [], users: [], groups: [], shortcuts: [], drives: [], folders: [], files: [], tiles: [], pins: {}, status: {}, chats: [], messages: [], posts: [], deadlines: [], events: [], marks: {}, plans: {}, ptasks: [], pdone: {} }; }
 
 // Same data, written with sorted keys, so a record that came back from the server compares equal to ours.
 function stable(v) {
@@ -3591,6 +3656,9 @@ function toRecs(db) {
   Object.entries(db.status || {}).forEach(([who, s]) => put('status', who, s));
   (db.events || []).forEach((ev) => put('events', ev.id, ev));
   Object.entries(db.marks || {}).forEach(([k, v]) => put('marks', k, v));
+  Object.entries(db.plans || {}).forEach(([who, v]) => put('plans', who, v));
+  (db.ptasks || []).forEach((t) => put('ptasks', t.id, t));
+  Object.entries(db.pdone || {}).forEach(([k, v]) => put('pdone', k, v));
   (db.deadlines || []).forEach((x) => { const { done, ...rest } = x; put('deadlines', x.id, rest); Object.entries(done || {}).forEach(([k, v]) => put('dltick', x.id + '|' + k, { ...v, dl: x.id, key: k })); });
   db.chats.forEach((c) => { const { read, ...rest } = c; put('chats', c.id, rest); Object.entries(read || {}).forEach(([who, at]) => put('read', c.id + '|' + who, { chat: c.id, user: who, at })); });
   db.messages.forEach((m) => { const { reactions, ...rest } = m; put('messages', m.id, rest); Object.entries(reactions || {}).forEach(([who, e]) => put('rx', m.id + '|' + who, { msg: m.id, user: who, e })); });
@@ -3614,6 +3682,9 @@ function fromRecs(list) {
   (by.status || []).forEach((r) => { db.status[r.id] = r.data; });
   db.events = of('events');
   (by.marks || []).forEach((r) => { db.marks[r.id] = r.data; });
+  (by.plans || []).forEach((r) => { db.plans[r.id] = r.data; });
+  db.ptasks = of('ptasks');
+  (by.pdone || []).forEach((r) => { db.pdone[r.id] = r.data; });
   const dls = {}; db.deadlines = of('deadlines').map((x) => (dls[x.id] = { ...x, done: {} }));
   (by.dltick || []).forEach(({ data: x }) => { const t = dls[x.dl]; if (t) { const { dl, key, ...v } = x; t.done[key] = v; } });
   const chats = {}; db.chats = of('chats').map((c) => (chats[c.id] = { ...c, read: {} }));
@@ -6302,6 +6373,152 @@ function PasteModal({ onClose }) {
     ${text.trim() && !plan.length && html`<p className="err">Couldn’t find any jobs in that. Copy the date and job columns from Excel and paste them again.</p>`}
   <//>`;
 }
+/* ---------------- my week: each person's daily tasks, the way Finance kept them in a weekly Excel sheet ---------------- */
+// Switched on per department (My week). Everyday tasks repeat on the days chosen; the rest belong to one day. Each day's
+// tick, the time and the reason (why it's late or not done) are kept for that day, like the sheet's Time, Reason and Done.
+const plannerOn = (db, u) => db.depts.some((d) => featureOn(d, 'planner') && (u.depts.includes(d.id) || u.manages.includes(d.id)));
+// whose weeks someone can look at: their own, their team's if they manage a department with My week, and everyone's for admins
+const plannerPeople = (db, u) => db.users.filter((x) => x.active !== false && plannerOn(db, x)
+  && (x.id === u.id || u.role === 'admin' || db.depts.some((d) => featureOn(d, 'planner') && u.manages.includes(d.id) && (x.depts.includes(d.id) || x.manages.includes(d.id)))));
+const canSeePlanner = (db, u) => plannerPeople(db, u).length > 0;
+const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+const weekStart = (k) => addDays(k, -((dowOf(k) + 6) % 7)); // the Monday
+const pkey = (who, k, id) => who + '|' + k + '|' + id;
+// one day's list: the everyday tasks that fall on it (from when they were added until they were taken off), then that day's own
+function dayList(db, who, k) {
+  const dow = dowOf(k), staples = (((db.plans || {})[who] || {}).staples || []).filter((s) => (s.days || [1, 2, 3, 4, 5]).includes(dow) && (!s.from || s.from <= k) && (!s.until || k < s.until));
+  const own = (db.ptasks || []).filter((t) => t.user === who && t.date === k).sort((a, b) => a.at - b.at);
+  return [...staples.map((s) => ({ id: s.id, title: s.title, staple: true })), ...own.map((t) => ({ id: t.id, title: t.title, by: t.by, staple: false }))]
+    .map((t) => ({ ...t, st: (db.pdone || {})[pkey(who, k, t.id)] || {} }));
+}
+function setDone(d, who, k, id, patch) { d.pdone = d.pdone || {}; const key = pkey(who, k, id); d.pdone[key] = { ...(d.pdone[key] || {}), user: who, date: k, task: id, ...patch }; }
+const splitLines = (raw) => String(raw || '').split(/\r?\n/).map((s) => s.split('\t')[0].trim()).filter(Boolean).map((s) => s.slice(0, 200));
+function demoPlanner(db, T = Date.now()) {
+  const today = dkey(T), mon = weekStart(today), from = addDays(mon, -7), at = (k) => keyToDate(k).getTime() + 8 * HOUR;
+  db.plans = { u4: { staples: ['Read email', 'Update the cashflow projection', 'Bank recon: store account', 'Bank recon: card payments'].map((title, i) => ({ id: 'st-d' + i, title, days: [1, 2, 3, 4, 5], from })) } };
+  db.ptasks = []; db.pdone = {};
+  const task = (k, title, by) => { const id = uid('pt'); db.ptasks.push({ id, user: 'u4', date: k, title, by: by || 'u4', at: at(k) + db.ptasks.length }); return id; };
+  for (let k = mon; k < today; k = addDays(k, 1)) {
+    if (dowOf(k) === 0 || dowOf(k) === 6) continue;
+    db.plans.u4.staples.forEach((s) => setDone(db, 'u4', k, s.id, { done: true, doneAt: at(k) + HOUR }));
+    setDone(db, 'u4', k, task(k, 'Approve supplier invoices x 2'), { done: true, doneAt: at(k) + 3 * HOUR, time: '11:30 to 12:15' });
+    const late = task(k, 'Send out tenant statements');
+    if (k === addDays(today, -1)) setDone(db, 'u4', k, late, { reason: 'Waiting on the utilities figures' }); else setDone(db, 'u4', k, late, { done: true, doneAt: at(k) + 6 * HOUR });
+  }
+  task(today, 'Supplier payments run', 'u3'); task(today, 'Balance sheet for the landlord'); task(addDays(today, 1), 'Lease renewal reminders');
+}
+function WkRow({ who, k, t, mine, open, onOpen }) {
+  const { db, update } = useApp();
+  const past = k < dkey(), by = t.by && t.by !== who ? userById(db, t.by) : null;
+  const tick = () => update((d) => setDone(d, who, k, t.id, { done: !t.st.done, doneAt: t.st.done ? null : Date.now() }));
+  const meta = [t.st.time, t.st.reason, by && 'from ' + firstName(by)].filter(Boolean).join(' · ');
+  return html`<div className=${'wk-row' + (t.st.done ? ' done' : past ? ' late' : '')}>
+    <input type="checkbox" checked=${!!t.st.done} disabled=${!mine} onChange=${tick} aria-label=${'Done: ' + t.title}/>
+    <button type="button" className="wk-t" onClick=${onOpen} aria-expanded=${open}><span>${t.title}${t.staple && html`<${Icon} n="refresh" s=${11}/>`}</span>${meta && html`<small>${meta}</small>`}</button>
+  </div>`;
+}
+function WkMore({ who, k, t, mine, onClose }) {
+  const { db, user, update } = useApp();
+  const [time, setTime] = useState(t.st.time || ''), [reason, setReason] = useState(t.st.reason || '');
+  const save = () => { if ((t.st.time || '') !== time.trim() || (t.st.reason || '') !== reason.trim()) update((d) => setDone(d, who, k, t.id, { time: time.trim(), reason: reason.trim() })); };
+  const today = dkey(), to = k < today ? today : addDays(k, dowOf(k) === 5 ? 3 : 1);
+  const own = !t.staple && (mine || t.by === user.id);
+  const move = () => { update((d) => { const x = (d.ptasks || []).find((y) => y.id === t.id); if (x) { x.date = to; x.at = Date.now(); } }); onClose(); };
+  const remove = () => { update((d) => { d.ptasks = (d.ptasks || []).filter((y) => y.id !== t.id); Object.keys(d.pdone || {}).forEach((key) => { if (key.endsWith('|' + t.id)) delete d.pdone[key]; }); }); onClose(); };
+  const enter = (e) => { if (e.key === 'Enter') { e.preventDefault(); save(); onClose(); } };
+  if (!mine) return html`<div className="wk-more muted sm">${t.st.done ? 'Done' + (t.st.doneAt ? ' at ' + new Date(t.st.doneAt).toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' }) : '') : 'Not done yet'}${t.st.time ? ' · Time: ' + t.st.time : ''}${t.st.reason ? ' · Reason: ' + t.st.reason : ''}
+    ${own && html`<div className="row-btns"><button className="btn sm ghost" onClick=${remove}><${Icon} n="trash" s=${13}/>Take it off</button></div>`}</div>`;
+  return html`<div className="wk-more">
+    <input className="input" value=${time} onChange=${(e) => setTime(e.target.value)} onBlur=${save} onKeyDown=${enter} placeholder="Time, e.g. 11:30 to 13:00" aria-label="Time" maxLength="40"/>
+    <input className="input" value=${reason} onChange=${(e) => setReason(e.target.value)} onBlur=${save} onKeyDown=${enter} placeholder="Reason, if it’s late or not done" aria-label="Reason" maxLength="200"/>
+    ${own && html`<div className="row-btns">
+      ${!t.st.done && html`<button className="btn sm ghost" onClick=${move}><${Icon} n="send" s=${13}/>Move to ${to === today ? 'today' : fmtKey(to, { weekday: 'long' })}</button>`}
+      <button className="btn sm ghost" onClick=${remove}><${Icon} n="trash" s=${13}/>Take it off</button></div>`}
+  </div>`;
+}
+function DayColumn({ who, k, mine, canAdd, compact }) {
+  const { db, user, update, toast, jump } = useApp();
+  const [open, setOpen] = useState(null);
+  const [text, setText] = useState('');
+  const today = dkey(), list = dayList(db, who, k), nd = list.filter((t) => t.st.done).length;
+  const shown = compact ? [...list.filter((t) => !t.st.done), ...list.filter((t) => t.st.done)] : list;
+  const add = (raw) => {
+    const lines = splitLines(raw); if (!lines.length) return;
+    const now = Date.now();
+    update((d) => { d.ptasks = d.ptasks || []; lines.forEach((title, i) => d.ptasks.push({ id: uid('pt'), user: who, date: k, title, by: user.id, at: now + i })); });
+    setText(''); if (lines.length > 1) toast('Added ' + lines.length + ' tasks');
+  };
+  return html`<section className=${'wk-day' + (k === today ? ' today' : '') + (compact ? ' tdc' : '')} aria-label=${fmtKey(k, { weekday: 'long', day: 'numeric', month: 'long' })}>
+    <div className="wk-h">${compact ? html`<span className="eyebrow" style=${{ flex: 1 }}>Today · ${fmtKey(k)}</span>` : html`<b>${fmtKey(k, { weekday: 'long' })}</b><span>${fmtKey(k, { day: 'numeric', month: 'short' })}</span>`}
+      <em>${nd}/${list.length}</em>${compact && html`<button className="linkish" onClick=${() => jump('view:week')}>My week</button>`}</div>
+    ${!list.length && html`<p className="muted sm" style=${{ margin: '2px 4px' }}>${compact ? 'Nothing planned for today yet.' : 'Nothing planned.'}</p>`}
+    ${shown.map((t) => html`<${React.Fragment} key=${t.id}><${WkRow} who=${who} k=${k} t=${t} mine=${mine} open=${open === t.id} onOpen=${() => setOpen(open === t.id ? null : t.id)}/>
+      ${open === t.id && html`<${WkMore} who=${who} k=${k} t=${t} mine=${mine} onClose=${() => setOpen(null)}/>`}<//>`)}
+    ${canAdd && html`<input className="input wk-add" value=${text} onChange=${(e) => setText(e.target.value)} placeholder=${mine ? 'Add a task…' : 'Add a task for ' + firstName(userById(db, who)) + '…'} aria-label=${'Add a task for ' + fmtKey(k, { weekday: 'long' })}
+      onKeyDown=${(e) => { if (e.key === 'Enter') { e.preventDefault(); add(text); } }} onPaste=${(e) => { const s = e.clipboardData.getData('text'); if (/\n/.test(s.trim())) { e.preventDefault(); add(s); } }}/>`}
+  </section>`;
+}
+function TodayCard({ compact }) {
+  const { db, user } = useApp();
+  if (!plannerOn(db, user)) return null;
+  const col = html`<${DayColumn} who=${user.id} k=${dkey()} mine canAdd compact/>`;
+  return compact ? col : html`<div className="tdc-wrap">${col}</div>`;
+}
+function StaplesModal({ who, onClose }) {
+  const { db, user, update, toast } = useApp();
+  const mine = who === user.id;
+  const [rows, setRows] = useState(() => ((((db.plans || {})[who] || {}).staples || []).filter((s) => !s.until)).map((s) => ({ ...s, days: s.days || [1, 2, 3, 4, 5] })));
+  const [text, setText] = useState('');
+  const set = (id, patch) => setRows((r) => r.map((x) => (x.id === id ? { ...x, ...patch } : x)));
+  const addLines = (raw) => { const lines = splitLines(raw); if (!lines.length) return; setRows((r) => [...r, ...lines.map((title) => ({ id: uid('st'), title, days: [1, 2, 3, 4, 5] }))]); setText(''); };
+  const moveUp = (i) => setRows((r) => { if (!i) return r; const n = r.slice(); [n[i - 1], n[i]] = [n[i], n[i - 1]]; return n; });
+  const save = () => {
+    const today = dkey(), keep = rows.filter((r) => r.title.trim() && r.days.length);
+    update((d) => {
+      d.plans = d.plans || {};
+      const p = (d.plans[who] = d.plans[who] || { staples: [] }), old = p.staples || [];
+      const next = keep.map((r) => { const o = old.find((x) => x.id === r.id); return { ...(o || { from: today }), ...r, title: r.title.trim() }; });
+      // ones taken off stay in the past days they were on
+      old.forEach((o) => { if (!next.some((r) => r.id === o.id)) next.push(o.until ? o : { ...o, until: today }); });
+      p.staples = next;
+    });
+    toast('Everyday tasks saved'); onClose();
+  };
+  return html`<${Modal} title=${mine ? 'Everyday tasks' : firstName(userById(db, who)) + '’s everyday tasks'} onClose=${onClose} wide footer=${html`<button className="btn" onClick=${onClose}>Cancel</button><button className="btn primary" onClick=${save}>Save</button>`}>
+    <p className="muted sm" style=${{ marginTop: 0 }}>The jobs you do without fail. They appear on your list every day you pick, so you don’t retype them each week. Taking one off keeps it on the days already gone.</p>
+    ${rows.map((r, i) => html`<div className="wk-st" key=${r.id}>
+      <div className="wk-st-top"><input className="input" value=${r.title} onChange=${(e) => set(r.id, { title: e.target.value })} aria-label="Task" maxLength="200"/>
+        <button className="icon-btn sm" disabled=${!i} onClick=${() => moveUp(i)} title="Move up" aria-label=${'Move up: ' + r.title}>↑</button>
+        <button className="icon-btn sm" onClick=${() => setRows((x) => x.filter((y) => y.id !== r.id))} title="Take it off" aria-label=${'Take off: ' + r.title}><${Icon} n="trash" s=${14}/></button></div>
+      <div className="wk-days" role="group" aria-label=${'Days for ' + r.title}>${[1, 2, 3, 4, 5, 6, 0].map((n) => html`<button type="button" key=${n} className=${r.days.includes(n) ? 'on' : ''} aria-pressed=${r.days.includes(n)}
+        onClick=${() => set(r.id, { days: r.days.includes(n) ? r.days.filter((x) => x !== n) : [...r.days, n] })}>${WD[n]}</button>`)}</div>
+    </div>`)}
+    <input id="st-new" className="input" style=${{ marginTop: 10 }} value=${text} onChange=${(e) => setText(e.target.value)} placeholder="Add an everyday task, or paste a list from Excel" aria-label="Add an everyday task"
+      onKeyDown=${(e) => { if (e.key === 'Enter') { e.preventDefault(); addLines(text); } }} onPaste=${(e) => { const s = e.clipboardData.getData('text'); if (/\n/.test(s.trim())) { e.preventDefault(); addLines(s); } }}/>
+  <//>`;
+}
+function WeekView() {
+  const { db, user } = useApp();
+  const people = plannerPeople(db, user);
+  const [who, setWho] = useState(() => (people.some((p) => p.id === user.id) ? user.id : (people[0] || {}).id));
+  const [wk, setWk] = useState(() => weekStart(dkey()));
+  const [staples, setStaples] = useState(false);
+  const person = userById(db, who), mine = who === user.id, thisWeek = weekStart(dkey());
+  if (!person) return html`<${Page} title="My week"><div className="empty"><${Icon} n="list" s=${24}/><h3>Nobody uses My week yet</h3><p>Switch it on for a department in People & access.</p></div><//>`;
+  const days = [0, 1, 2, 3, 4].map((i) => addDays(wk, i));
+  [5, 6].forEach((i) => { const k = addDays(wk, i); if (dayList(db, who, k).length) days.push(k); }); // the weekend only when something's on it
+  const all = days.flatMap((k) => dayList(db, who, k).map((t) => ({ k, t }))), today = dkey();
+  const open = all.filter((x) => !x.t.st.done && x.k < today).length;
+  return html`<${Page} title=${mine ? 'My week' : firstName(person) + '’s week'}
+    sub=${'Week of ' + fmtKey(wk, { day: 'numeric', month: 'long' }) + ' · ' + all.filter((x) => x.t.st.done).length + ' of ' + all.length + ' done' + (open ? ' · ' + open + ' not done from earlier days' : '')}
+    actions=${html`${people.length > 1 && html`<select id="wk-who" className="select" style=${{ width: 'auto' }} value=${who} onChange=${(e) => setWho(e.target.value)} aria-label="Whose week">${people.map((p) => html`<option key=${p.id} value=${p.id}>${p.id === user.id ? 'My week' : p.name}</option>`)}</select>`}
+      <div className="seg" role="group" aria-label="Week"><button onClick=${() => setWk(addDays(wk, -7))} aria-label="Last week">‹</button><button className=${wk === thisWeek ? 'on' : ''} onClick=${() => setWk(thisWeek)}>This week</button><button onClick=${() => setWk(addDays(wk, 7))} aria-label="Next week">›</button></div>
+      <button className="btn" onClick=${() => setStaples(true)}><${Icon} n="refresh" s=${15}/>Everyday tasks</button>`}>
+    ${mine && !(((db.plans || {})[user.id] || {}).staples || []).length && html`<div className="notice"><${Icon} n="info" s=${16}/>Start with your everyday tasks (like reading email or the bank recons): they fill in every day by themselves. Then add each day’s other jobs in its column, or paste them from Excel.</div>`}
+    <div className="wk-grid">${days.map((k) => html`<${DayColumn} key=${who + k} who=${who} k=${k} mine=${mine} canAdd=${true}/>`)}</div>
+    ${staples && html`<${StaplesModal} key=${who} who=${who} onClose=${() => setStaples(false)}/>`}
+  <//>`;
+}
 function MonthEndView() {
   const { db, user, update, toast, compose, ask } = useApp();
   const editor = canEditME(db, user);
@@ -6577,13 +6794,14 @@ function Shell() {
   else if (view === 'monthend') content = html`<${MonthEndView}/>`;
   else if (view === 'approvals') content = html`<${ApprovalsView}/>`;
   else if (view === 'calendar') content = html`<${CalendarView}/>`;
+  else if (view === 'week') content = html`<${WeekView}/>`;
   const note = CLOUD ? html`<p className="board-note">Live: everyone in the store sees changes as they happen.</p>` : html`<p className="board-note">Demo store with example staff. Changes stay on this device. <button onClick=${() => ask({ title: 'Reset the demo store?', body: 'All posts, files, pins and people go back to the example data. Anything you added is removed.', confirm: 'Reset demo', danger: true, onConfirm: resetDemo })}>Reset demo</button></p>`;
   return html`<div className=${'shell' + (openId ? ' has-detail' : '') + (chatsMode && openChatId ? ' chat-open' : '')}>
     <${Topbar}/>
     <${Rail}/>
     ${drawer && html`<div className="side-scrim" onClick=${() => setDrawer(false)}></div>`}
     ${chatsMode ? html`<main className="stage glass chats-mode"><${ChatsView}/></main>` : html`<main className="stage glass">
-      <aside className="board-col"><${Board} note=${note}/><${QuoteDrop}/><${StickyNotes}/><${Shortcuts}/></aside>
+      <aside className="board-col"><${Board} note=${note}/><${TodayCard}/><${QuoteDrop}/><${StickyNotes}/><${Shortcuts}/></aside>
       <section className="content" key=${view}>${content}</section>
     </main>`}
     <${Dock}/>
