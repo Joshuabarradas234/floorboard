@@ -6,4 +6,8 @@ window.FLOORBOARD_CONFIG = {
   supabaseKey: 'sb_publishable_njrV4tkcsyurg8YjTcuvtA_-4B4znfX',
   // Lets phones and computers get alerts when Floorboard is closed (the matching private key lives only on the server).
   vapidPublicKey: 'BObiDNxNhrWIwRFL9i6_Ulr5_Mk3wGqsdI8N_wgpSIGR7YitjJmXenVLpklE24tKxb8ePkcg2-QJja_ry4j6-fY',
+  // Outlook email: Floorboard registered in the company's Microsoft 365 (Entra ID). The Application (client) ID goes in msClientId;
+  // the Directory (tenant) ID is filled in. Both are public identifiers, not passwords. Empty msClientId = Outlook stays hidden.
+  msClientId: '',
+  msTenantId: '5adc1cd1-46ee-4ef1-ae71-56ad62bf8db0',
 };

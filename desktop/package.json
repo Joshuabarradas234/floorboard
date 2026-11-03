@@ -10,5 +10,8 @@
   },
   "devDependencies": {
     "electron": "33.2.1"
+  },
+  "dependencies": {
+    "@azure/msal-node": "7.1.0"
   }
 }

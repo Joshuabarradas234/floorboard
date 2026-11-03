@@ -74,6 +74,20 @@ Switch it on in **People & access**: under the department, turn on **My week**. 
 
 Each person can link their own OneDrive: on the **Drive** page, paste the address from OneDrive in the browser, or an admin adds it under the person in People & access. Drive then has **Open OneDrive** at the top. The files stay in OneDrive.
 
+## Outlook email
+
+Each person can see their own work email in Floorboard: their Outlook folders (with the inbox's own folders first, where Outlook rules file things, like a folder per person) and who emailed them, in the sidebar and on the **Outlook** page. On any email: **Open in Outlook**, **Add to my day**, **Task for someone**, or **Send for payment** (with the email's attachments).
+
+Nothing from a mailbox is kept in Floorboard: it's read live from Microsoft on the person's own device, with their own sign-in. The website signs in with Microsoft's sign-in library; the desktop app signs in through the browser and keeps the sign-in encrypted for that Windows user. Logging out of Floorboard disconnects Outlook on that device.
+
+Set it up once, in your company's Microsoft 365:
+
+1. At **entra.microsoft.com**, sign in with a work account: **Identity → Applications → App registrations → New registration**. Name it `Floorboard`, choose *Accounts in this organizational directory only*, and add the redirect URI as **Single-page application (SPA)**: the web address of the app (for example `https://you.github.io/floorboard/`). Register.
+2. **Authentication → Add a platform → Mobile and desktop applications**: add `http://localhost` (for the desktop sidebar).
+3. **API permissions → Add a permission → Microsoft Graph → Delegated**: tick **Mail.Read**. An admin can click **Grant admin consent** so nobody is asked.
+4. Copy the **Application (client) ID** and **Directory (tenant) ID** into `config.js` as `msClientId` and `msTenantId`.
+5. In **People & access**, turn on **Outlook email** for the departments that want it.
+
 ## Approvals (Finance)
 
 Switch it on in **People & access**: under Finance, turn on **Approvals**. Anyone can then pick **Approval** as the kind of post: what it is (quote, invoice, payment, expense claim), the supplier, the amount, the invoice number, a photo or PDF of it, and who approves it (any one of them, or all of them).

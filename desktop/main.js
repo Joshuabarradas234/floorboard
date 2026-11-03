@@ -1,6 +1,6 @@
 // Floorboard on Windows: a frosted-glass sidebar docked to the edge of the screen,
 // a tray icon to show or hide it, and the full app in its own window.
-const { app, BrowserWindow, Tray, Menu, nativeImage, screen, globalShortcut, ipcMain, shell, session } = require('electron');
+const { app, BrowserWindow, Tray, Menu, nativeImage, screen, globalShortcut, ipcMain, shell, session, safeStorage } = require('electron');
 const path = require('path'), fs = require('fs');
 
 const PAGE = path.join(__dirname, '..', 'index.html');
@@ -65,6 +65,55 @@ function openFull(_e, target) {
   full = new BrowserWindow({ width: 1320, height: 860, minWidth: 380, minHeight: 560, title: 'Floorboard', icon: ICON, backgroundColor: '#2b2018', autoHideMenuBar: true, webPreferences });
   full.loadFile(PAGE, { query: { shell: 'desktop' }, hash });
   openLinksOutside(full);
+}
+
+// Outlook: the desktop app signs in to Microsoft itself (in the browser, back to this computer) and reads the person's own
+// mail here, so the page never holds a Microsoft token. The sign-in is kept encrypted for this Windows user, or not at all.
+const MS_SCOPES = ['User.Read', 'Mail.Read'];
+const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+let msApp = null, msKey = '';
+const msCacheFile = () => path.join(app.getPath('userData'), 'outlook.bin');
+function msClient(cfg) {
+  if (!cfg || !GUID.test(String(cfg.clientId || '')) || !GUID.test(String(cfg.tenantId || ''))) throw new Error('Outlook isn’t set up for this store yet.');
+  const key = cfg.clientId + '|' + cfg.tenantId;
+  if (msApp && msKey === key) return msApp;
+  const { PublicClientApplication } = require('@azure/msal-node');
+  const cachePlugin = {
+    beforeCacheAccess: async (ctx) => { try { if (safeStorage.isEncryptionAvailable()) ctx.tokenCache.deserialize(safeStorage.decryptString(fs.readFileSync(msCacheFile()))); } catch (e) { /* signed out */ } },
+    afterCacheAccess: async (ctx) => { if (ctx.cacheHasChanged && safeStorage.isEncryptionAvailable()) { try { fs.writeFileSync(msCacheFile(), safeStorage.encryptString(ctx.tokenCache.serialize())); } catch (e) { /* stays signed in until closed */ } } },
+  };
+  msApp = new (PublicClientApplication)({ auth: { clientId: cfg.clientId, authority: 'https://login.microsoftonline.com/' + cfg.tenantId }, cache: { cachePlugin } });
+  msKey = key;
+  return msApp;
+}
+async function msToken(cfg, interactive) {
+  const pca = msClient(cfg), [account] = await pca.getTokenCache().getAllAccounts();
+  if (account) { try { return (await pca.acquireTokenSilent({ account, scopes: MS_SCOPES })).accessToken; } catch (e) { if (!interactive) throw new Error('signin'); } }
+  if (!interactive) throw new Error('signin');
+  const r = await pca.acquireTokenInteractive({
+    scopes: MS_SCOPES,
+    openBrowser: async (url) => { if (url.startsWith('https://login.microsoftonline.com/')) await shell.openExternal(url); },
+    successTemplate: '<h2 style="font-family:sans-serif">Signed in. You can close this tab and go back to Floorboard.</h2>',
+    errorTemplate: '<h2 style="font-family:sans-serif">Sign-in didn’t finish: {error}</h2>',
+  });
+  return r.accessToken;
+}
+const safe = (fn) => async (_e, arg) => { try { return { ok: await fn(arg || {}) }; } catch (e) { return { error: String((e && e.message) || e) } } };
+function msIpc() {
+  ipcMain.handle('ms-account', safe(async ({ cfg }) => { const [a] = await msClient(cfg).getTokenCache().getAllAccounts(); return a ? { username: a.username, name: a.name || '' } : null; }));
+  ipcMain.handle('ms-signin', safe(async ({ cfg }) => { await msToken(cfg, true); const [a] = await msClient(cfg).getTokenCache().getAllAccounts(); return a ? { username: a.username, name: a.name || '' } : null; }));
+  ipcMain.handle('ms-signout', safe(async ({ cfg }) => {
+    try { const c = msClient(cfg).getTokenCache(); for (const a of await c.getAllAccounts()) await c.removeAccount(a); } catch (e) { /* nothing to remove */ }
+    try { fs.unlinkSync(msCacheFile()); } catch (e) { /* already gone */ }
+    msApp = null; return true;
+  }));
+  // reads only: the person's own folders, messages and attachments
+  ipcMain.handle('ms-graph', safe(async ({ cfg, path: p }) => {
+    if (typeof p !== 'string' || !/^\/me\/(mailFolders|messages)[\w/().,$=&?'%:+ -]*$/.test(p)) throw new Error('Not allowed');
+    const res = await fetch('https://graph.microsoft.com/v1.0' + p, { headers: { Authorization: 'Bearer ' + (await msToken(cfg, false)) } });
+    if (!res.ok) throw new Error('Outlook answered ' + res.status);
+    return res.json();
+  }));
 }
 
 // Keep the sidebar in front of Outlook and everything else (from the pin in the sidebar, or the tray menu).
@@ -137,6 +186,7 @@ else {
     ipcMain.handle('on-top-set', (_e, on) => { setOnTop(on); return prefs.onTop; });
     ipcMain.handle('printers', async (e) => { try { return (await e.sender.getPrintersAsync()).map((p) => ({ name: p.name, isDefault: !!p.isDefault })); } catch (x) { return []; } });
     ipcMain.handle('print-html', printHtml);
+    msIpc();
   });
   app.on('window-all-closed', () => { /* keep running in the tray */ });
   app.on('will-quit', () => globalShortcut.unregisterAll());

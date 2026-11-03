@@ -13,6 +13,7 @@ const VENDOR = {
 const LAZY = [
   { base: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/', files: ['pdf.min.js', 'pdf.worker.min.js'] },
   { base: 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/', files: ['jspdf.umd.min.js'] },
+  { base: 'https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/', files: ['msal-browser.min.js'] },
 ];
 // Only the installed app talks to the store's server, so this one isn't in floorboard.html.
 const SUPABASE = { file: 'supabase.js', url: 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3/dist/umd/supabase.js' };
@@ -22,6 +23,9 @@ const CONFIG_TEMPLATE = `// Your store's server. Leave both empty to run the dem
 window.FLOORBOARD_CONFIG = {
   supabaseUrl: '',
   supabaseKey: '',
+  // Outlook email (optional): Floorboard registered in your Microsoft 365. The Application (client) ID and the Directory (tenant) ID.
+  msClientId: '',
+  msTenantId: '',
 };
 `;
 const BG = '#2b2018';

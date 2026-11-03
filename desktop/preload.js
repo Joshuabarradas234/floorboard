@@ -10,4 +10,14 @@ contextBridge.exposeInMainWorld('floorboardDesktop', {
   onTop: { get: () => ipcRenderer.invoke('on-top-get'), set: (on) => ipcRenderer.invoke('on-top-set', !!on) },
   printers: () => ipcRenderer.invoke('printers'),
   print: (html, printer) => ipcRenderer.invoke('print-html', { html: String(html || ''), printer: String(printer || '') }),
+  // Outlook: sign in and read your own mail through the desktop app (it keeps the Microsoft sign-in, not the page)
+  ms: (() => {
+    const c = (cfg) => ({ clientId: String((cfg && cfg.clientId) || ''), tenantId: String((cfg && cfg.tenantId) || '') });
+    return {
+      account: (cfg) => ipcRenderer.invoke('ms-account', { cfg: c(cfg) }),
+      signIn: (cfg) => ipcRenderer.invoke('ms-signin', { cfg: c(cfg) }),
+      signOut: (cfg) => ipcRenderer.invoke('ms-signout', { cfg: c(cfg) }),
+      graph: (cfg, path) => ipcRenderer.invoke('ms-graph', { cfg: c(cfg), path: String(path || '') }),
+    };
+  })(),
 });
