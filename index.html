@@ -869,6 +869,15 @@ td.mono{white-space:nowrap}
 .stk-slim{display:flex;align-items:center;gap:8px;width:100%;border:0;background:none;color:var(--ink-2);font-weight:700;font-size:13px;padding:0}
 .stk-slim:hover{color:var(--ink)}
 .w-stk:has(.stk-slim){padding:10px 14px}
+.w-stk:has(.stk-bar){padding:7px 10px 7px 12px}
+.stk-bar{display:flex;align-items:center;gap:6px}
+.board-col .stk-bar,.inline-board .stk-bar{margin-top:14px;padding:8px 10px 8px 14px;border-radius:var(--r-lg);background:var(--glass);border:1px solid var(--glass-line);border-top-color:rgba(255,255,255,.3)}
+.stk-tab{flex:1;display:flex;align-items:center;gap:9px;border:0;background:none;color:var(--ink);font:inherit;font-size:13.5px;padding:2px 0;cursor:pointer;text-align:left}
+.stk-tab b{flex:1;font-weight:700}
+.stk-tab em{font-style:normal;font-family:var(--f-mono);font-size:12px;font-weight:700;min-width:22px;text-align:center;padding:1px 7px;border-radius:99px;background:#FFE38A;color:#4a3a00}
+.stk-tab em.ring{background:var(--red-dot);color:#fff}
+.stk-ic{width:20px;height:20px;border-radius:4px;background:#FFE38A;box-shadow:inset 0 -5px 0 rgba(0,0,0,.08),0 1px 3px rgba(0,0,0,.25);transform:rotate(-6deg);flex:none}
+.stk-fold svg{transform:rotate(180deg)}
 .widget{overflow-y:auto}
 .widget .w-list{flex:1 0 260px;min-height:260px}
 .wk-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px;align-items:start}
@@ -4741,9 +4750,13 @@ function StickyModal({ id, onClose }) {
     ${err && html`<p className="err" role="alert">${err}</p>`}
   <//>`;
 }
+// Folded away to one small bar until it's opened (this device remembers which); + still adds a note straight away.
+const STK_OPEN_KEY = 'floorboard.stickies.open.v1';
 function StickyNotes({ compact }) {
   const { db, user, update, toast } = useApp();
   const [edit, setEdit] = useState(null);
+  const [opened, setOpened] = useState(() => lsGet(STK_OPEN_KEY) === 'open');
+  const fold = (v) => { setOpened(v); lsSet(STK_OPEN_KEY, v ? 'open' : ''); };
   const [showDone, setShowDone] = useState(false);
   const all = stickiesOf(db, user.id), now = Date.now();
   const open = all.filter((n) => !n.done), done = all.filter((n) => n.done);
@@ -4751,10 +4764,15 @@ function StickyNotes({ compact }) {
   // ringing ones first, then the next reminders, then the newest
   const list = showDone ? done.slice().sort((a, b) => b.doneAt - a.doneAt)
     : open.slice().sort((a, b) => due(b) - due(a) || (a.remindAt || Infinity) - (b.remindAt || Infinity) || b.at - a.at);
-  // in the sidebar, no notes yet is one slim line, so the list below keeps its room
-  if (compact && !all.length) return html`<${React.Fragment}><button className="stk-slim" onClick=${() => setEdit('new')}><${Icon} n="plus" s=${15}/>Add a sticky note</button>${edit && html`<${StickyModal} id=${null} onClose=${() => setEdit(null)}/>`}<//>`;
+  if (!opened) return html`<div className="stk-bar">
+      <button className="stk-tab" onClick=${() => fold(true)} aria-expanded="false" title="Open your sticky notes"><span className="stk-ic" aria-hidden="true"></span><b>Sticky notes</b>
+        ${open.length > 0 && html`<em className=${open.some(due) ? 'ring' : ''}>${open.length}</em>`}<${Icon} n="chevdown" s=${15}/></button>
+      <button className="icon-btn sm" onClick=${() => setEdit('new')} title="Add a sticky note" aria-label="Add a sticky note"><${Icon} n="plus" s=${15}/></button>
+      ${edit && html`<${StickyModal} id=${null} onClose=${() => setEdit(null)}/>`}
+    </div>`;
   return html`<section className=${'stk' + (compact ? ' compact' : '')} aria-label="Sticky notes">
-    <div className="sc-h"><span className="eyebrow">Sticky notes</span>${(done.length > 0 || showDone) && html`<button className="linkish sm" onClick=${() => setShowDone((s) => !s)}>${showDone ? 'Back to my notes' : done.length + ' done'}</button>`}</div>
+    <div className="sc-h"><span className="eyebrow">Sticky notes</span><span style=${{ display: 'flex', gap: 8, alignItems: 'center' }}>${(done.length > 0 || showDone) && html`<button className="linkish sm" onClick=${() => setShowDone((s) => !s)}>${showDone ? 'Back to my notes' : done.length + ' done'}</button>`}
+      <button className="icon-btn sm stk-fold" onClick=${() => fold(false)} title="Fold away" aria-label="Fold the sticky notes away"><${Icon} n="chevdown" s=${15}/></button></span></div>
     <div className="stk-grid" onWheel=${compact ? (e) => { if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) e.currentTarget.scrollLeft += e.deltaY; } : null}>
       ${!showDone && html`<button className="stk-add" onClick=${() => setEdit('new')} aria-label="New sticky note"><${Icon} n="plus" s=${20}/><small>Add a note</small></button>`}
       ${list.map((n) => html`<div key=${n.id} className=${'stk-n' + (due(n) ? ' ring' : '') + (n.done ? ' done' : '')} style=${{ '--n': STICKY_COLORS[n.color] || STICKY_COLORS.yellow }}>
