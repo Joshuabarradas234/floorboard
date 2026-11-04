@@ -22,7 +22,7 @@ The `floorboard-app` folder is an installable web app (a PWA). For a phone to in
 
 Add `#widget` to the end of the link to open the compact sidebar view.
 
-The **Get it on your phone** QR code opens the **sidebar view** by default (switch it to **Full app** under the code). A phone that scanned it keeps opening the sidebar view from its home-screen icon; the ↗ at its top opens the full app. To change it on a phone, use **Open Floorboard like this from my home screen** at the bottom of the sidebar view.
+The **Get it on your phone** QR code opens the full app. Choose **Sidebar view** under the code for a phone that should open the compact sidebar view from its home-screen icon instead (the ↗ at its top opens the full app). On a phone, **Open Floorboard like this from my home screen** at the bottom of the sidebar view changes it.
 
 ## Changing the app
 
