@@ -511,6 +511,13 @@ input[type=checkbox],input[type=radio]{accent-color:#fff}
 .fcard.white .fc-back{background-image:linear-gradient(160deg,#fbfbfa,#e3e1dd)}
 .fcard.white .fc-front{background:linear-gradient(180deg,rgba(255,255,255,.86),#fff)}
 .fcard.white .fc-add{box-shadow:0 0 0 1px rgba(0,0,0,.08),0 3px 10px rgba(0,0,0,.12)}
+.fc-new{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border:1.5px dashed rgba(40,30,20,.22);border-radius:18px;background:rgba(255,255,255,.35);color:#17130f;transition:background .2s,border-color .2s}
+.fc-new:hover{background:rgba(255,255,255,.7);border-color:rgba(40,30,20,.4)}
+.fc-new::before{display:none}
+.fc-new b{font:650 14px var(--f-display)}.fc-new small{font-size:11px;color:rgba(23,19,15,.5)}
+.fc-new-i{display:grid;place-items:center;width:34px;height:34px;border-radius:11px;background:#151110;color:#fff;margin-bottom:6px}
+.fdesk.mini .fc-new b{font-size:12px}.fdesk.mini .fc-new small{display:none}.fdesk.mini .fc-new-i{width:26px;height:26px;border-radius:8px}
+.fv-move{margin:0 0 6px;max-width:280px}
 .fcard.dark{--ink-f:#fff;--sub-f:rgba(255,255,255,.58);--paper:#f4f1ec;--btn:#fff;--btn-ink:#17130f}
 .fcard.dark .fc-back{background-image:linear-gradient(160deg,#3d3936,#141210)}
 .fcard.dark .fc-back::after{background:linear-gradient(180deg,rgba(0,0,0,0),rgba(0,0,0,.3))}
@@ -3258,9 +3265,47 @@ function DriveView() {
 const filesOff = (d) => !!(d && d.features && d.features.files === false); // on unless an admin switches it off
 const filesOn = (db, u) => u.role === 'admin' || db.depts.some((d) => (u.depts.includes(d.id) || u.manages.includes(d.id)) && !filesOff(d));
 const myFilesOf = (db, id) => ((db.pins[id] || {}).myfiles) || [];
+// Personal folders: named by their owner, kept with My files. where = 'me' (My files itself), 'mf:<folder id>', or an archive's drive id.
+const myFoldersOf = (db, id) => ((db.pins[id] || {}).myfolders) || [];
+const isMine = (where) => where === 'me' || String(where).startsWith('mf:');
+const myFolderId = (where) => (String(where).startsWith('mf:') ? where.slice(3) : null);
+function folderName(db, u, where) {
+  if (where === 'me') return 'My files';
+  const fid = myFolderId(where);
+  if (fid) { const f = myFoldersOf(db, u.id).find((x) => x.id === fid); return f ? f.name : null; }
+  const a = archivesFor(db, u).find((x) => x.drive.id === where);
+  return a ? a.dept.name + ' archive' : null;
+}
+// Every folder this person sees, in order: My files, their own folders, their department's archive.
+function foldersFor(db, u) {
+  const mine = myFilesOf(db, u.id), looks = ['white', 'dark'];
+  const out = [{ where: 'me', title: 'My files', sub: nFiles(mine.filter((f) => !f.folder).length) + ' · only you', papers: mine.filter((f) => !f.folder).map((f) => f.att) }];
+  myFoldersOf(db, u.id).forEach((fo) => { const fl = mine.filter((f) => f.folder === fo.id); out.push({ where: 'mf:' + fo.id, title: fo.name, sub: nFiles(fl.length) + ' · only you', papers: fl.map((f) => f.att) }); });
+  archivesFor(db, u).forEach(({ dept, drive }) => { const fl = archiveFiles(db, drive.id); out.push({ where: drive.id, title: dept.name + ' archive', short: dept.name, sub: nFiles(fl.length), dot: dept.color, papers: fl.map((f) => f.att || { id: f.id, name: '', kind: 'paper' }) }); });
+  return out.map((f, i) => ({ ...f, look: i === 0 ? null : looks[(i - 1) % 2] }));
+}
+// Name a new folder, or rename one
+function FolderNameModal({ folder, onClose, onMade }) {
+  const { user, update, toast } = useApp();
+  const [v, setV] = useState(folder ? folder.name : '');
+  const save = (e) => {
+    e.preventDefault();
+    const name = v.trim(); if (!name) { toast('Give the folder a name', 'warn'); return; }
+    const id = folder ? folder.id : uid('fo');
+    update((d) => {
+      const p = d.pins[user.id] = d.pins[user.id] || { posts: [], notes: [] };
+      if (folder) { const f = (p.myfolders || []).find((x) => x.id === folder.id); if (f) f.name = name; } else p.myfolders = [...(p.myfolders || []), { id, name, at: Date.now() }];
+    });
+    toast(folder ? 'Folder renamed' : 'Folder “' + name + '” made');
+    onClose(); if (!folder && onMade) onMade('mf:' + id);
+  };
+  return html`<${Modal} title=${folder ? 'Rename folder' : 'New folder'} onClose=${onClose} footer=${html`<button className="btn" onClick=${onClose}>Cancel</button><button className="btn primary" type="submit" form="fname-form">${folder ? 'Save' : 'Make folder'}</button>`}>
+    <form id="fname-form" onSubmit=${save}><label className="field"><span>Folder name</span><input id="fname" className="input" value=${v} onChange=${(e) => setV(e.target.value)} maxLength="60" placeholder="Payslips, Certificates, Training…" autoFocus/><small>Only you can see your folders.</small></label></form>
+  <//>`;
+}
 function archivesFor(db, u) {
   const mine = (d) => u.depts.includes(d.id) || u.manages.includes(d.id);
-  return db.depts.filter((d) => !filesOff(d) && (mine(d) || u.role === 'admin')).sort((a, b) => mine(b) - mine(a))
+  return db.depts.filter((d) => !filesOff(d) && mine(d))
     .map((d) => ({ dept: d, drive: db.drives.find((x) => x.id === 'd-' + d.id) })).filter((x) => x.drive && canDrive(u, x.drive));
 }
 const archiveFiles = (db, driveId) => db.files.filter((f) => f.drive === driveId).sort((a, b) => (b.at || 0) - (a.at || 0));
@@ -3310,11 +3355,14 @@ const attIcon = (a) => (!a ? 'archive' : a.kind === 'audio' ? 'mic' : a.kind ===
 // a page inside a folder: a photo shows itself, anything else a clean sheet with its type
 function FilePaper({ a, i }) {
   const url = useThumb(a);
-  return html`<span className="fc-paper" style=${{ '--i': i }}>${url ? html`<img src=${url} alt=""/>` : html`<span className="fc-sheet"><b>${a && a.name ? extOf(a.name).toUpperCase() : 'PAPER'}</b><i></i><i></i><i></i></span>`}</span>`;
+  return html`<span className="fc-paper" style=${{ '--i': i }}>${url ? html`<img src=${url} alt=""/>` : html`<span className="fc-sheet"><b>${a && a.name ? extOf(a.name).toUpperCase() : a && a.kind === 'paper' ? 'PAPER' : ''}</b><i></i><i></i><i></i></span>`}</span>`;
 }
 // The folder's shape: the back is a folder with its tab raised on the right, filled with the newest photo in it.
 const FOLDER_CLIP = html`<svg className="fc-defs" width="0" height="0" aria-hidden="true"><defs><clipPath id="fc-shape" clipPathUnits="objectBoundingBox">
   <path d="M0,0.30 Q0,0.21 0.065,0.21 L0.37,0.21 C0.43,0.21 0.425,0.035 0.49,0.035 L0.935,0.035 Q1,0.035 1,0.125 L1,0.91 Q1,1 0.935,1 L0.065,1 Q0,1 0,0.91 Z"/></clipPath></defs></svg>`;
+function NewFolderCard({ onClick }) {
+  return html`<button className="fcard fc-new" onClick=${onClick}><span className="fc-new-i"><${Icon} n="plus" s=${18}/></span><b>New folder</b><small>Name it what you need</small></button>`;
+}
 function FolderCard({ title, sub, look, dot, papers, onOpen, onAdd }) {
   const shown = papers.filter(Boolean).slice(0, 3), cover = useThumb(look === 'white' ? null : shown.find((a) => a.kind === 'image'));
   const list = shown.length ? shown : [null];
@@ -3330,50 +3378,59 @@ function FilesCard() {
   const { db, user, jump } = useApp();
   const [adding, setAdding] = useState(null);
   if (!filesOn(db, user)) return null;
-  const mine = myFilesOf(db, user.id), archives = archivesFor(db, user);
+  const [naming, setNaming] = useState(false);
   return html`<div className="w-files glass">
     <div className="w-files-h"><span className="eyebrow">Files</span><button className="linkish sm" onClick=${() => jump('view:files')}>Open all</button></div>
     ${FOLDER_CLIP}
     <div className="fdesk mini"><div className="fgrid">
-      <${FolderCard} title="My files" sub=${nFiles(mine.length)} papers=${mine.map((f) => f.att)} onOpen=${() => jump('view:files:me')} onAdd=${() => setAdding('me')}/>
-      ${archives.map(({ dept, drive }, i) => { const fl = archiveFiles(db, drive.id); return html`<${FolderCard} key=${drive.id} look=${i % 2 ? 'dark' : 'white'} title=${dept.name} sub=${nFiles(fl.length)} dot=${dept.color} papers=${fl.map((f) => f.att || { id: f.id, name: '', kind: 'paper' })} onOpen=${() => jump('view:files:' + drive.id)} onAdd=${() => setAdding(drive.id)}/>`; })}
+      ${foldersFor(db, user).map((f) => html`<${FolderCard} key=${f.where} look=${f.look} title=${f.short || f.title} sub=${f.sub.replace(' · only you', '')} dot=${f.dot} papers=${f.papers} onOpen=${() => jump('view:files:' + f.where)} onAdd=${() => setAdding(f.where)}/>`)}
+      <${NewFolderCard} onClick=${() => setNaming(true)}/>
     </div></div>
     ${adding && html`<${AddFilesModal} where=${adding} onClose=${() => setAdding(null)}/>`}
+    ${naming && html`<${FolderNameModal} onClose=${() => setNaming(false)}/>`}
   </div>`;
 }
 function FilesView({ start }) {
   const { db, user } = useApp();
-  const [open, setOpen] = useState(start || null); // 'me', or an archive's drive id
-  const [adding, setAdding] = useState(null);
-  const mine = myFilesOf(db, user.id), archives = archivesFor(db, user);
+  const [open, setOpen] = useState(start || null); // 'me', 'mf:<folder id>', or an archive's drive id
+  const [adding, setAdding] = useState(null), [naming, setNaming] = useState(false);
+  const archives = archivesFor(db, user);
   if (open) return html`<${FolderView} key=${open} where=${open} onBack=${() => setOpen(null)}/>`;
-  return html`<${Page} title="Files" sub="Your own files and your department’s archive. They’re kept on this device, so they open with no signal too.">
+  return html`<${Page} title="Files" sub="Your own files and folders, and your department’s archive. They’re kept on this device, so they open with no signal too.">
     ${FOLDER_CLIP}
     <div className="fdesk"><div className="fgrid">
-      <${FolderCard} title="My files" sub=${nFiles(mine.length) + ' · only you'} papers=${mine.map((f) => f.att)} onOpen=${() => setOpen('me')} onAdd=${() => setAdding('me')}/>
-      ${archives.map(({ dept, drive }, i) => { const fs = archiveFiles(db, drive.id); return html`<${FolderCard} key=${drive.id} look=${i % 2 ? 'dark' : 'white'} title=${dept.name + ' archive'} sub=${nFiles(fs.length)} dot=${dept.color} papers=${fs.map((f) => f.att || { id: f.id, name: '', kind: 'paper' })} onOpen=${() => setOpen(drive.id)} onAdd=${() => setAdding(drive.id)}/>`; })}
+      ${foldersFor(db, user).map((f) => html`<${FolderCard} key=${f.where} look=${f.look} title=${f.title} sub=${f.sub} dot=${f.dot} papers=${f.papers} onOpen=${() => setOpen(f.where)} onAdd=${() => setAdding(f.where)}/>`)}
+      <${NewFolderCard} onClick=${() => setNaming(true)}/>
     </div>
     ${!archives.length && html`<p className="fdesk-empty">You’re not in a department with an archive yet. An admin can add you to one in People & access.</p>`}</div>
     ${adding && html`<${AddFilesModal} where=${adding} onClose=${() => setAdding(null)}/>`}
+    ${naming && html`<${FolderNameModal} onClose=${() => setNaming(false)} onMade=${setOpen}/>`}
   <//>`;
 }
 function FolderView({ where, onBack }) {
-  const { db, user } = useApp();
-  const isMe = where === 'me', arch = !isMe && archivesFor(db, user).find((x) => x.drive.id === where);
-  const [q, setQ] = useState(''), [adding, setAdding] = useState(false), [openId, setOpenId] = useState(null);
-  if (!isMe && !arch) return html`<${Page} title="Files"><div className="empty"><p>You can’t open this archive any more.</p><button className="btn" onClick=${onBack}>Back to Files</button></div><//>`;
-  const items = isMe ? myFilesOf(db, user.id).map((f) => ({ id: f.id, title: f.title, att: f.att, at: f.at, by: user.id }))
+  const { db, user, update, ask, toast } = useApp();
+  const isMe = isMine(where), fid = myFolderId(where), arch = !isMe && archivesFor(db, user).find((x) => x.drive.id === where);
+  const myFolder = fid && myFoldersOf(db, user.id).find((x) => x.id === fid), title = folderName(db, user, where);
+  const [q, setQ] = useState(''), [adding, setAdding] = useState(false), [openId, setOpenId] = useState(null), [naming, setNaming] = useState(false);
+  if (!title) return html`<${Page} title="Files"><div className="empty"><p>You can’t open this archive any more.</p><button className="btn" onClick=${onBack}>Back to Files</button></div><//>`;
+  const items = isMe ? myFilesOf(db, user.id).filter((f) => (f.folder || null) === fid).map((f) => ({ id: f.id, title: f.title, att: f.att, at: f.at, by: user.id, mf: f.folder || null }))
     : archiveFiles(db, where).map((f) => ({ id: f.id, title: f.name, att: f.att, at: f.at || 0, by: f.by, folder: folderPath(db, f.folder), paper: f.hardCopy || '' }));
   const words = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
   const shown = items.filter((x) => { const s = (x.title + ' ' + (x.att ? x.att.name : '') + ' ' + (x.folder || '') + ' ' + x.paper).toLowerCase(); return words.every((w) => s.includes(w)); });
   const cur = openId && items.find((x) => x.id === openId);
-  return html`<${Page} title=${isMe ? 'My files' : arch.dept.name + ' archive'} sub=${isMe ? 'Only you can see these. Add what you need for work and give each one a title.' : 'Everything filed for ' + arch.dept.name + '. The same files as ' + arch.dept.name + '’s Drive.'}
-    actions=${html`<button className="btn" onClick=${onBack}><${Icon} n="back" s=${16}/>All files</button><button className="btn primary" onClick=${() => setAdding(true)}><${Icon} n="plus" s=${16}/>Add files</button>`}>
+  // a folder goes, its files stay: they move back to My files
+  const dropFolder = () => ask({ title: 'Delete the folder “' + myFolder.name + '”?', body: 'The files in it aren’t deleted. They move back to My files.', confirm: 'Delete folder', danger: true, onConfirm: () => {
+    update((d) => { const p = d.pins[user.id]; p.myfolders = (p.myfolders || []).filter((x) => x.id !== fid); (p.myfiles || []).forEach((f) => { if (f.folder === fid) f.folder = null; }); });
+    toast('Folder deleted. Its files are in My files.'); onBack();
+  } });
+  return html`<${Page} title=${title} sub=${isMe ? 'Only you can see these. Add what you need for work and give each one a title.' : 'Everything filed for ' + arch.dept.name + '. The same files as ' + arch.dept.name + '’s Drive.'}
+    actions=${html`<button className="btn" onClick=${onBack}><${Icon} n="back" s=${16}/>All files</button>${myFolder && html`<button className="btn" onClick=${() => setNaming(true)}><${Icon} n="edit" s=${15}/>Rename</button><button className="btn" onClick=${dropFolder} aria-label="Delete this folder"><${Icon} n="trash" s=${15}/></button>`}<button className="btn primary" onClick=${() => setAdding(true)}><${Icon} n="plus" s=${16}/>Add files</button>`}>
     ${items.length > 0 && html`<label className="tsearch fsearch"><${Icon} n="search" s=${16}/><input id="files-q" value=${q} onChange=${(e) => setQ(e.target.value)} placeholder=${isMe ? 'Search your files' : 'Search the archive: title, folder, cabinet…'} aria-label="Search files"/></label>`}
     ${shown.length ? html`<div className="ftiles">${shown.map((x) => html`<${FileTile} key=${x.id} x=${x} onOpen=${() => setOpenId(x.id)}/>`)}</div>`
       : html`<div className="empty"><${Icon} n=${isMe ? 'lock' : 'archive'} s=${24}/><h3>${items.length ? 'Nothing matches' : isMe ? 'No files yet' : 'The archive is empty'}</h3><p>${items.length ? 'Try another word from the title.' : isMe ? 'Add a payslip, a certificate, a photo of a delivery note, anything you want to keep to hand.' : 'Add the first file and everyone in ' + arch.dept.name + ' can open it.'}</p></div>`}
     ${adding && html`<${AddFilesModal} where=${where} onClose=${() => setAdding(false)}/>`}
     ${cur && html`<${FileViewer} x=${cur} where=${where} onClose=${() => setOpenId(null)}/>`}
+    ${naming && html`<${FolderNameModal} folder=${myFolder} onClose=${() => setNaming(false)}/>`}
   <//>`;
 }
 function FileTile({ x, onOpen }) {
@@ -3387,7 +3444,7 @@ function FileTile({ x, onOpen }) {
 }
 function FileViewer({ x, where, onClose }) {
   const { db, user, update, toast, ask } = useApp();
-  const isMe = where === 'me', a = x.att;
+  const isMe = isMine(where), a = x.att;
   const rec = !isMe && db.files.find((f) => f.id === x.id), drive = rec && db.drives.find((d) => d.id === rec.drive);
   const canEdit = isMe || user.role === 'admin' || (rec && rec.by === user.id) || !!(drive && drive.access.some((d) => user.manages.includes(d)));
   const [t, setT] = useState(x.title);
@@ -3426,6 +3483,8 @@ function FileViewer({ x, where, onClose }) {
     ${canEdit ? html`<form className="fv-title" onSubmit=${rename}><label className="field"><span>Title</span><input id="fv-title" className="input" value=${t} onChange=${(e) => setT(e.target.value)} maxLength="120"/></label>${t.trim() !== x.title && html`<button className="btn primary">Save title</button>`}</form>`
       : html`<p className="muted sm">Added by ${firstName(userById(db, x.by))}${x.at ? ', ' + ago(x.at) : ''}</p>`}
     ${x.folder && html`<p className="muted sm">Filed in ${x.folder}</p>`}
+    ${isMe && myFoldersOf(db, user.id).length > 0 && html`<label className="field fv-move"><span>Folder</span><select id="fv-folder" className="select" value=${x.mf || ''} onChange=${(e) => { const to = e.target.value || null; update((d) => { const f = (d.pins[user.id].myfiles || []).find((y) => y.id === x.id); if (f) f.folder = to; }); toast('Moved to ' + (to ? myFoldersOf(db, user.id).find((y) => y.id === to).name : 'My files')); onClose(); }}>
+      <option value="">My files</option>${myFoldersOf(db, user.id).map((fo) => html`<option key=${fo.id} value=${fo.id}>${fo.name}</option>`)}</select></label>`}
     ${x.paper && html`<p className="fv-paper"><${Icon} n="archive" s=${15}/>Paper copy: ${x.paper}</p>`}
     <div className="fv-body">
       ${!a ? html`<p className="muted">This is a record of a paper document. There’s no scan with it.</p>`
@@ -3442,7 +3501,7 @@ function FileViewer({ x, where, onClose }) {
 }
 function AddFilesModal({ where, onClose }) {
   const { db, user, update, toast } = useApp();
-  const isMe = where === 'me', arch = !isMe && archivesFor(db, user).find((x) => x.drive.id === where);
+  const isMe = isMine(where), arch = !isMe && archivesFor(db, user).find((x) => x.drive.id === where), here = folderName(db, user, where) || 'My files';
   const [list, setList] = useState([]), [folder, setFolder] = useState(''), [busy, setBusy] = useState(false), [over, setOver] = useState(false);
   const ref = useRef(null), listRef = useRef(list); listRef.current = list;
   useEffect(() => () => listRef.current.forEach((f) => f.url && URL.revokeObjectURL(f.url)), []);
@@ -3464,15 +3523,15 @@ function AddFilesModal({ where, onClose }) {
     update((d) => {
       if (isMe) {
         const p = d.pins[user.id] = d.pins[user.id] || { posts: [], notes: [] };
-        p.myfiles = [...list.map((f, i) => ({ id: uid('mf'), title: f.title.trim(), att: atts[i], at: now })), ...(p.myfiles || [])];
+        p.myfiles = [...list.map((f, i) => ({ id: uid('mf'), title: f.title.trim(), att: atts[i], at: now, folder: myFolderId(where) })), ...(p.myfiles || [])];
       } else list.forEach((f, i) => d.files.push({ id: uid('doc'), drive: where, folder: folder || null, name: f.title.trim(), docType: 'Other', ref: '', party: '', docDate: dkey(), tags: [], amount: null, att: atts[i], by: user.id, at: now }));
     });
     setBusy(false);
-    toast((list.length === 1 ? '“' + list[0].title.trim() + '” added to ' : nFiles(list.length) + ' added to ') + (isMe ? 'My files' : arch.dept.name + ' archive') + (CLOUD && !navigator.onLine ? '. It sends when you’re back online.' : ''));
+    toast((list.length === 1 ? '“' + list[0].title.trim() + '” added to ' : nFiles(list.length) + ' added to ') + here + (CLOUD && !navigator.onLine ? '. It sends when you’re back online.' : ''));
     onClose();
   };
   const folders = arch ? db.folders.filter((f) => f.drive === where) : [];
-  return html`<${Modal} title=${'Add to ' + (isMe ? 'My files' : arch.dept.name + ' archive')} onClose=${onClose} wide footer=${html`<button className="btn" onClick=${onClose}>Cancel</button><button className="btn primary" onClick=${save} disabled=${busy || !list.length}>${busy ? 'Saving…' : list.length > 1 ? 'Add ' + nFiles(list.length) : 'Add file'}</button>`}>
+  return html`<${Modal} title=${'Add to ' + here} onClose=${onClose} wide footer=${html`<button className="btn" onClick=${onClose}>Cancel</button><button className="btn primary" onClick=${save} disabled=${busy || !list.length}>${busy ? 'Saving…' : list.length > 1 ? 'Add ' + nFiles(list.length) : 'Add file'}</button>`}>
     <input type="file" ref=${ref} multiple hidden onChange=${(e) => { take(e.target.files); e.target.value = ''; }}/>
     <button type="button" className=${'fdrop' + (over ? ' over' : '')} onClick=${() => ref.current && ref.current.click()}
       onDragOver=${(e) => { e.preventDefault(); setOver(true); }} onDragLeave=${() => setOver(false)} onDrop=${(e) => { e.preventDefault(); setOver(false); take(e.dataTransfer.files); }}>
