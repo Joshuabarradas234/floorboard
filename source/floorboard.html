@@ -3329,8 +3329,8 @@ const TEST_TASKS = [
 ];
 let testIdx = 0;
 function StartSwitch() {
-  const [on, setOn] = useState(() => lsGet(START_KEY) === 'board');
-  return html`<label className="w-start"><input type="checkbox" checked=${on} onChange=${(e) => { setOn(e.target.checked); lsSet(START_KEY, e.target.checked ? 'board' : ''); }}/>Open Floorboard like this from my home screen</label>`;
+  const [on, setOn] = useState(() => lsGet(START_KEY) !== 'full');
+  return html`<label className="w-start"><input type="checkbox" checked=${on} onChange=${(e) => { setOn(e.target.checked); lsSet(START_KEY, e.target.checked ? 'board' : 'full'); }}/>Open Floorboard like this from my home screen</label>`;
 }
 function AlertControls({ onDone }) {
   const { soundOn, setSoundOn, sendTestTask, enablePopups, pushState, enablePush, disablePush, testPush } = useApp();
@@ -4015,18 +4015,19 @@ function phoneLink(board) {
   const base = !CLOUD ? APP_URL + '?demo' : APP_URL + (code ? '?store=' + encodeURIComponent(code) : '');
   return board ? base + (base.includes('?') ? '&' : '?') + 'view=board' : base;
 }
-// How the app opens from a phone's home screen: the sidebar view or the full app. A QR link can set it (?view=board or
-// ?view=full), and so can the switch at the bottom of the sidebar view. It's this device's choice, kept on the device.
+// How the app opens from a phone's home screen: the sidebar view, unless this phone chose the full app (a QR link with
+// ?view=full, or the switch at the bottom of the sidebar view). iPhones keep a home-screen app's storage apart from Safari's,
+// so the sidebar view is the default rather than something carried over from the scan.
 const START_KEY = 'floorboard.start.v1';
-const STANDALONE = (() => { try { return matchMedia('(display-mode: standalone)').matches || navigator.standalone === true; } catch (e) { return false; } })();
+const STANDALONE = (() => { try { return (matchMedia('(display-mode: standalone)').matches || navigator.standalone === true) && Math.min(screen.width, screen.height) < 820; } catch (e) { return false; } })();
 (() => {
   try {
     const q = new URLSearchParams(location.search), v = q.get('view');
     if (v === 'board' || v === 'full') {
-      lsSet(START_KEY, v === 'board' ? 'board' : '');
+      lsSet(START_KEY, v === 'board' ? 'board' : 'full');
       q.delete('view');
       history.replaceState(null, '', location.pathname + (q.toString() ? '?' + q : '') + (v === 'board' && !location.hash ? '#widget' : location.hash));
-    } else if (STANDALONE && !/[?&]shell=desktop\b/.test(location.search) && !location.hash && lsGet(START_KEY) === 'board') history.replaceState(null, '', location.pathname + location.search + '#widget');
+    } else if (STANDALONE && !/[?&]shell=desktop\b/.test(location.search) && !location.hash && lsGet(START_KEY) !== 'full') history.replaceState(null, '', location.pathname + location.search + '#widget');
   } catch (e) { /* opens as it is */ }
 })();
 const SEASONS = {
@@ -4312,7 +4313,7 @@ function PhoneModal({ onClose }) {
   const [sound, setSound] = useState(false);
   const [board, setBoard] = useState(true);
   const [link, setLink] = useState(() => phoneLink(true));
-  const pickView = (b) => { setBoard(b); setLink(phoneLink(b)); };
+  const pickView = (b) => { setBoard(b); const l = phoneLink(b); setLink(b ? l : l + (l.includes('?') ? '&' : '?') + 'view=full'); };
   const stage = useRef(null), sceneCv = useRef(null), live = useRef({ parts: [], drops: [], k: 0, target: 0 });
   const S = SEASONS[season];
   useEffect(() => { live.current.qr = qrMatrix(link.trim()); }, [link]);
