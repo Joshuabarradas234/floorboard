@@ -73,20 +73,34 @@ const MANIFEST = {
   share_target: { action: './', method: 'GET', params: { title: 'share_title', text: 'share_text', url: 'share_url' } },
 };
 
-const SW = `// Offline support for the app itself: network first so updates show, cached copy when there is no signal.
-// Calls to the store's server are never cached.
-const CACHE = 'floorboard-v4';
+const SW = `// Offline support: the whole app (page, libraries, PDF reader, fonts) is kept on the device when it's installed.
+// Network first so updates show, but a slow or missing signal gets the copy on the device after a few seconds.
+// Calls to the store's server are never cached here; the app keeps its own copy of the data and files.
+const CACHE = 'floorboard-v5';
 const SHELL = ['./', 'index.html', 'config.js', 'manifest.webmanifest', 'icon.svg', 'icon-192.png', 'icon-512.png',
-  'vendor/react.production.min.js', 'vendor/react-dom.production.min.js', 'vendor/htm.umd.js', 'vendor/qrcode.min.js', 'vendor/supabase.js'];
+  'vendor/react.production.min.js', 'vendor/react-dom.production.min.js', 'vendor/htm.umd.js', 'vendor/qrcode.min.js', 'vendor/supabase.js',
+  'vendor/pdf.min.js', 'vendor/pdf.worker.min.js', 'vendor/jspdf.umd.min.js', 'vendor/msal-browser.min.js'];
+const FONTS = ['https://fonts.googleapis.com', 'https://fonts.gstatic.com'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting())); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k)))).then(() => self.clients.claim())); });
 self.addEventListener('fetch', (e) => {
-  const req = e.request;
-  if (req.method !== 'GET' || new URL(req.url).origin !== location.origin) return;
-  e.respondWith(fetch(req).then((res) => {
-    if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); }
-    return res;
-  }).catch(() => caches.match(req, { ignoreSearch: true }).then((r) => r || caches.match('index.html'))));
+  const req = e.request, origin = new URL(req.url).origin;
+  if (req.method !== 'GET') return;
+  // fonts: the copy on the device, refreshed in the background
+  if (FONTS.includes(origin)) {
+    e.respondWith(caches.open(CACHE).then((c) => c.match(req).then((hit) => {
+      const net = fetch(req).then((res) => { if (res.ok || res.type === 'opaque') c.put(req, res.clone()); return res; });
+      return hit || net;
+    })));
+    return;
+  }
+  if (origin !== location.origin) return;
+  e.respondWith(caches.open(CACHE).then(async (c) => {
+    const net = fetch(req).then((res) => { if (res.ok) c.put(req, res.clone()); return res; });
+    const hit = await c.match(req, { ignoreSearch: true }) || (req.mode === 'navigate' ? await c.match('index.html') : null);
+    if (!hit) return net;
+    return Promise.race([net.catch(() => hit), new Promise((ok) => setTimeout(() => ok(hit), 4000))]);
+  }));
 });
 // Alerts when the app is closed: the store's server sends them, this shows them.
 self.addEventListener('push', (e) => {

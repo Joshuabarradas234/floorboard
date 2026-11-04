@@ -164,13 +164,21 @@ do $$ begin
 exception when duplicate_object then null; end $$;
 
 -- 6. Photos, videos, voice notes and documents ---------------------------
+-- Everything under att/ is for the whole store. Personal files (Files > My files) sit under me/<staff id>/ and only
+-- their owner can open, add or delete them.
 insert into storage.buckets (id, name, public) values ('files', 'files', false) on conflict (id) do nothing;
 drop policy if exists "staff read files" on storage.objects;
 create policy "staff read files" on storage.objects for select to authenticated
-  using (bucket_id = 'files' and public.is_member());
+  using (bucket_id = 'files' and public.is_member()
+         and (split_part(name, '/', 1) <> 'me' or split_part(name, '/', 2) = public.my_staff_id()));
 drop policy if exists "staff add files" on storage.objects;
 create policy "staff add files" on storage.objects for insert to authenticated
-  with check (bucket_id = 'files' and public.is_member());
+  with check (bucket_id = 'files' and public.is_member()
+              and (split_part(name, '/', 1) <> 'me' or split_part(name, '/', 2) = public.my_staff_id()));
+drop policy if exists "staff remove own files" on storage.objects;
+create policy "staff remove own files" on storage.objects for delete to authenticated
+  using (bucket_id = 'files' and public.is_member()
+         and split_part(name, '/', 1) = 'me' and split_part(name, '/', 2) = public.my_staff_id());
 
 -- 7. Your store: departments, their group chats and drives, and your admin login ----
 do $$

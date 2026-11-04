@@ -119,6 +119,26 @@ Once, after the steps above:
 
 Then each person taps the bell → **Get alerts when Floorboard is closed** on their phone. On an iPhone, Floorboard has to be added to the home screen from Safari first. The Windows sidebar alerts from the tray instead. Nobody gets phone alerts while they're off shift.
 
+## Files: my own files and the department archive
+
+**Files** is in the bottom bar for everyone. It shows folders:
+
+- **My files**: each person's own files. Add a file (or take a photo on a phone), give it a title, and it's kept. Only that person can see them; an admin's **See what they see** doesn't show them either. Click a file to open it, rename it, save a copy or delete it.
+- **Department archive** (one per department you're in, every department for admins): everything filed for that department. It's the same files as that department's **Drive**, so nothing is filed twice. Anyone in the department can add files, with a title and, if you like, one of the Drive's folders. A paper record shows where the paper copy is kept.
+
+It's on for every department. To hide it for a department, switch off **My files & archive** under the department in **People & access**.
+
+On the live store, run `supabase/setup.sql` once more (SQL Editor → New query → paste → Run; it's safe to run again). That makes personal files private on the server too: only their owner can open them. Until you do, Files still works.
+
+## Works with no signal
+
+Floorboard keeps a copy of itself and of the store on each device, so it keeps working with no connection:
+
+- The whole app, the PDF reader and the fonts are saved on the device the first time it opens with a signal. On a slow signal it opens from that copy after a few seconds instead of waiting.
+- Everything stays usable offline: chats, tasks, notes, Files. Changes, and files you add, wait on the device (even if the app is closed) and send by themselves when the signal is back. The top bar shows **Offline** until then, and **● Live** once everything is sent.
+- Files open with no signal once they're on the device. While there's a signal, each person's own files, their department archives, and the last two weeks of photos and files in their chats are brought onto the device in the background (files up to 25 MB). Anything else downloads the first time it's opened. The file shows **On this device** when it's ready.
+- Logging out with changes that haven't been sent yet asks first, because they'd be lost. Logging out also clears the store's data and files from that device.
+
 ## Month end (Finance)
 
 Switch it on in **People & access**: under Finance, turn on **Month end**. A **Month end** page then appears in the menu for Finance, the admins, and anyone with a deadline on it.

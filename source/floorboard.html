@@ -458,6 +458,75 @@ input[type=checkbox],input[type=radio]{accent-color:#fff}
 .folders{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px}
 .folder{display:flex;align-items:center;gap:10px;border:1px solid var(--glass-line);background:var(--glass);border-radius:var(--r-sm);padding:10px 12px;text-align:left;font-weight:700}
 .folder:hover{background:var(--glass-2)}
+
+/* files: folders like real ones, on a light dotted desk. A folder-shaped back (tab on the right), pages inside that rise and
+   tip back on hover, and a frosted front with the name. Three looks: photo (the newest photo fills the back), white and dark. */
+.fc-defs{position:absolute;width:0;height:0}
+.fdesk{border-radius:var(--r-lg);background:rgba(250,249,247,.93) radial-gradient(circle,rgba(40,30,20,.13) 1px,transparent 1.3px) 0 0/18px 18px;
+  box-shadow:inset 0 1px 0 #fff,0 18px 50px rgba(12,7,3,.3);padding:8px 26px 30px}
+.fgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:46px 34px;padding-top:44px}
+.fdesk-empty{color:rgba(28,22,18,.55);font-size:13px;margin:22px 0 0}
+.fcard{position:relative;aspect-ratio:1.36;--ink-f:#17130f;--sub-f:rgba(23,19,15,.5);--paper:#fbfaf7;--line:#e7e2da;--ext:#a0968a;--btn:#141110;--btn-ink:#fff}
+.fc-back{position:absolute;inset:0;clip-path:url(#fc-shape);-webkit-clip-path:url(#fc-shape);background:linear-gradient(150deg,#d9cbbb,#8f7b68) center/cover no-repeat}
+.fc-back::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(0,0,0,.12))}
+.fcard::before{content:"";position:absolute;left:10%;right:10%;bottom:-4px;height:26%;border-radius:50%;background:rgba(30,20,10,.32);filter:blur(16px);z-index:0}
+.fc-papers{position:absolute;inset:0;pointer-events:none;perspective:700px}
+.fc-paper{position:absolute;left:10%;right:10%;top:21%;height:58%;border-radius:8px;overflow:hidden;background:var(--paper);z-index:calc(3 - var(--i));
+  box-shadow:0 6px 16px rgba(0,0,0,.2);transform:translateY(calc(var(--i) * 4.5%)) scale(calc(1 - var(--i) * .04));transform-origin:50% 100%;
+  transition:transform .6s cubic-bezier(.2,1.05,.35,1) calc((2 - var(--i)) * 50ms)}
+.fc-paper img{width:100%;height:100%;object-fit:cover;display:block}
+.fc-sheet{display:grid;gap:6px;align-content:start;padding:11px 13px;height:100%}
+.fc-sheet b{font:600 9px/1 var(--f-mono);color:var(--ext);letter-spacing:.09em;margin-bottom:2px}
+.fc-sheet i{display:block;height:3px;border-radius:2px;background:var(--line)}
+.fc-sheet i:nth-child(3){width:78%}.fc-sheet i:nth-child(4){width:56%}
+.fcard:hover .fc-paper,.fcard:focus-within .fc-paper{transform:translate(calc(var(--i) * -3%),calc(-36% + var(--i) * 13%)) rotateX(calc(16deg - var(--i) * 5deg)) rotate(calc(-3deg + var(--i) * 2.5deg)) scale(calc(1 - var(--i) * .035))}
+.fc-front{position:absolute;left:0;right:0;bottom:0;height:58%;z-index:5;display:flex;flex-direction:column;justify-content:flex-end;align-items:flex-start;gap:1px;text-align:left;
+  padding:0 58px 14px 16px;border-radius:14px 14px 17px 17px;border:0;color:var(--ink-f);
+  background:linear-gradient(180deg,rgba(255,255,255,.66),rgba(255,255,255,.9));backdrop-filter:blur(14px) saturate(150%);-webkit-backdrop-filter:blur(14px) saturate(150%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.95),0 -4px 14px rgba(0,0,0,.06);transform-origin:50% 100%;transition:transform .55s cubic-bezier(.2,1,.35,1)}
+.fcard:hover .fc-front,.fcard:focus-within .fc-front{transform:perspective(800px) rotateX(-12deg)}
+.fc-front b{font:650 14.5px/1.2 var(--f-display);letter-spacing:-.005em}
+.fc-front small{display:flex;align-items:center;gap:6px;color:var(--sub-f);font-size:11px}
+.fc-front small i{width:6px;height:6px;border-radius:50%;flex:none}
+.fc-add{position:absolute;right:12px;bottom:12px;z-index:6;width:32px;height:32px;border-radius:10px;border:0;display:grid;place-items:center;background:var(--btn);color:var(--btn-ink);
+  box-shadow:0 3px 10px rgba(0,0,0,.22);transition:transform .2s}
+.fc-add:hover{transform:scale(1.07)}
+.fcard.white{--paper:#26221f;--line:rgba(255,255,255,.14);--ext:rgba(255,255,255,.45);--btn:#fff;--btn-ink:#17130f}
+.fcard.white .fc-back{background-image:linear-gradient(160deg,#fbfbfa,#e3e1dd)}
+.fcard.white .fc-front{background:linear-gradient(180deg,rgba(255,255,255,.86),#fff)}
+.fcard.white .fc-add{box-shadow:0 0 0 1px rgba(0,0,0,.08),0 3px 10px rgba(0,0,0,.12)}
+.fcard.dark{--ink-f:#fff;--sub-f:rgba(255,255,255,.58);--paper:#f4f1ec;--btn:#fff;--btn-ink:#17130f}
+.fcard.dark .fc-back{background-image:linear-gradient(160deg,#3d3936,#141210)}
+.fcard.dark .fc-back::after{background:linear-gradient(180deg,rgba(0,0,0,0),rgba(0,0,0,.3))}
+.fcard.dark .fc-front{background:linear-gradient(180deg,rgba(38,34,31,.72),rgba(16,14,12,.92));box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 -4px 14px rgba(0,0,0,.14)}
+.fsearch{width:100%;max-width:420px;margin:0 0 14px}
+.ftiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}
+.ftile{display:flex;flex-direction:column;gap:3px;text-align:left;border:1px solid var(--glass-line);background:var(--glass);border-radius:var(--r);padding:8px 8px 10px;box-shadow:var(--hi);min-width:0}
+.ftile:hover{background:var(--glass-2)}
+.ft-pic{display:grid;place-items:center;aspect-ratio:4/3;border-radius:10px;overflow:hidden;background:rgba(255,255,255,.08);margin-bottom:5px}
+.ft-pic img{width:100%;height:100%;object-fit:cover}
+.ft-doc{display:grid;justify-items:center;gap:6px;color:var(--ink-2)}
+.ft-doc b{font:600 11px var(--f-mono);letter-spacing:.06em}
+.ft-t{font-weight:700;line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.ft-m{font-size:12px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ft-here{align-self:flex-start;display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--ink-3);border:1px solid var(--glass-line);border-radius:999px;padding:1px 8px;margin-top:3px}
+.ft-here.on{color:var(--green);border-color:rgba(79,214,136,.4)}
+.fdrop{display:grid;justify-items:center;gap:4px;width:100%;padding:22px 16px;border:1.5px dashed var(--glass-line-2);border-radius:var(--r);background:var(--glass);text-align:center}
+.fdrop:hover,.fdrop.over{background:var(--glass-2);border-color:#fff}
+.fdrop small{color:var(--ink-3)}
+.fadd-list{display:grid;gap:10px;margin:14px 0}
+.fadd{display:grid;grid-template-columns:56px minmax(0,1fr) auto;gap:12px;align-items:center}
+.fadd .field{margin:0}
+.fadd-pic{display:grid;place-items:center;width:56px;height:56px;border-radius:10px;overflow:hidden;background:var(--glass-2)}
+.fadd-pic img{width:100%;height:100%;object-fit:cover}
+.fv-title{display:flex;gap:8px;align-items:flex-end;margin-bottom:6px}.fv-title .field{flex:1;margin:0}
+.fv-paper{display:flex;gap:8px;align-items:center;font-size:14px}
+.fv-body{margin-top:10px}
+.fv-body .fv-img,.fv-body video{display:block;max-width:100%;max-height:68vh;margin:0 auto;border-radius:12px}
+.fv-body audio{width:100%}
+.fv-pages{display:grid;gap:10px}.fv-pages img{width:100%;border-radius:6px;box-shadow:0 4px 14px rgba(0,0,0,.3)}
+@media (max-width:600px){.fdesk{padding:4px 12px 20px}.fgrid{grid-template-columns:1fr 1fr;gap:34px 14px;padding-top:34px}.fc-front{padding:0 40px 10px 11px}.fc-front b{font-size:13px}.fc-front small{font-size:10.5px}.fc-add{width:28px;height:28px;border-radius:9px;right:8px;bottom:8px}.ftiles{grid-template-columns:1fr 1fr}}
+@media (prefers-reduced-motion:reduce){.fc-paper,.fc-front,.fc-add{transition:none}}
 .folder .ic{color:var(--ink-3)}
 .folder small{display:block;font-weight:400;color:var(--ink-3);font-size:12px}
 .table-wrap{overflow-x:auto;background:var(--glass);border:1px solid var(--glass-line);border-radius:var(--r)}
@@ -1381,22 +1450,59 @@ const Blobs = (() => {
   }
   async function put(id, blob) {
     mem.set(id, blob);
-    const d = await open(); if (!d) return;
-    try { await new Promise((res, rej) => { const tx = d.transaction('b', 'readwrite'); tx.objectStore('b').put(blob, id); tx.oncomplete = res; tx.onerror = () => rej(tx.error); }); } catch (e) { /* kept in memory for this visit */ }
+    const d = await open();
+    if (d) { try { await new Promise((res, rej) => { const tx = d.transaction('b', 'readwrite'); tx.objectStore('b').put(blob, id); tx.oncomplete = res; tx.onerror = () => rej(tx.error); }); } catch (e) { /* kept in memory for this visit */ } }
+    try { window.dispatchEvent(new CustomEvent('floorboard-blob', { detail: id })); } catch (e) { }
   }
-  async function get(id) {
+  // path: where the server keeps it, for files that aren't under att/ (personal files live under me/<person>/)
+  async function get(id, path) {
     if (mem.has(id)) return mem.get(id);
     const d = await open();
     if (d) {
       try { const b = await new Promise((res) => { const rq = d.transaction('b', 'readonly').objectStore('b').get(id); rq.onsuccess = () => res(rq.result || null); rq.onerror = () => res(null); }); if (b) return b; } catch (e) { }
     }
     // not on this device yet: fetch it from the store's server and keep a copy
-    if (CLOUD) { try { const { data, error } = await CLOUD.storage.from('files').download('att/' + id); if (!error && data) { await put(id, data); return data; } } catch (e) { } }
+    if (CLOUD) { try { const { data, error } = await CLOUD.storage.from('files').download(path || 'att/' + id); if (!error && data) { await put(id, data); return data; } } catch (e) { } }
     return null;
   }
+  // is it already on this device? (without loading it)
+  async function has(id) {
+    if (mem.has(id)) return true;
+    const d = await open(); if (!d) return false;
+    try { return await new Promise((res) => { const rq = d.transaction('b', 'readonly').objectStore('b').getKey(id); rq.onsuccess = () => res(rq.result !== undefined); rq.onerror = () => res(false); }); } catch (e) { return false; }
+  }
+  // fetch from the server into this device's copy, without keeping it in memory
+  async function keep(id, path) {
+    if (!CLOUD || await has(id)) return;
+    try { const { data, error } = await CLOUD.storage.from('files').download(path || 'att/' + id); if (!error && data) { await put(id, data); mem.delete(id); } } catch (e) { }
+  }
   async function clear() { mem.clear(); const d = await open(); if (!d) return; try { d.transaction('b', 'readwrite').objectStore('b').clear(); } catch (e) { } }
-  return { put, get, clear };
+  return { put, get, has, keep, clear };
 })();
+// Files added with no signal: saved on the device straight away, sent to the store's server once there's a connection.
+const UPLOADS_KEY = 'floorboard.uploads.v1';
+const Uploads = {
+  busy: false, listeners: new Set(),
+  list() { try { return JSON.parse(localStorage.getItem(UPLOADS_KEY)) || []; } catch (e) { return []; } },
+  save(l) { try { localStorage.setItem(UPLOADS_KEY, JSON.stringify(l)); } catch (e) { } this.listeners.forEach((f) => f(l.length)); },
+  add(item) { this.save([...this.list().filter((x) => x.id !== item.id), item]); },
+  async send(id, path, blob, mime) {
+    if (!navigator.onLine) return false;
+    try { const { error } = await CLOUD.storage.from('files').upload(path, blob, { contentType: mime, upsert: true }); if (error) { console.warn('Upload failed: ' + error.message); return false; } return true; }
+    catch (e) { console.warn('Upload failed', e); return false; }
+  },
+  async retry() {
+    if (!CLOUD || this.busy || !navigator.onLine) return;
+    this.busy = true;
+    try {
+      for (const u of this.list()) {
+        const blob = await Blobs.get(u.id);
+        if (!blob) { this.save(this.list().filter((x) => x.id !== u.id)); continue; } // gone from this device: nothing left to send
+        if (await this.send(u.id, u.path, blob, u.mime)) this.save(this.list().filter((x) => x.id !== u.id)); else break;
+      }
+    } finally { this.busy = false; }
+  },
+};
 // An admin seeing the app as someone else (People & access › See what they see): look only, so nothing is uploaded or saved.
 const SEEAS_KEY = 'floorboard.seeas.v1';
 const LookOnly = { on: false };
@@ -1409,16 +1515,14 @@ function seeAsDb(db, me, them) {
     chats: db.chats.map((c) => (hidden.has(c.id) ? { ...c, private: true } : c)),
     messages: db.messages.filter((m) => !hidden.has(m.chat) || m.postId) };
 }
-async function storeFiles(files) {
+// folder: where on the server, 'att/' for everything everyone in the store can open, or 'me/<person>/' for personal files
+async function storeFiles(files, folder) {
   const out = [];
   for (const f of files) {
-    const id = uid('a');
+    const id = uid('a'), path = (folder || 'att/') + id;
     await Blobs.put(id, f.file);
-    if (CLOUD && !LookOnly.on) {
-      try { const { error } = await CLOUD.storage.from('files').upload('att/' + id, f.file, { contentType: f.mime, upsert: true }); if (error) console.warn('Upload failed: ' + error.message); }
-      catch (e) { console.warn('Upload failed', e); }
-    }
-    out.push({ id, name: f.name, mime: f.mime, size: f.size, kind: f.kind });
+    if (CLOUD && !LookOnly.on && !(await Uploads.send(id, path, f.file, f.mime))) Uploads.add({ id, path, mime: f.mime });
+    out.push({ id, name: f.name, mime: f.mime, size: f.size, kind: f.kind, ...(folder ? { path } : {}) });
   }
   return out;
 }
@@ -1451,7 +1555,7 @@ async function saveFile(name, getData, toast) {
 }
 function saveAttachment(a, toast) {
   if (a.demo && a.kind === 'image') return saveFile(a.name.replace(/\.[^.]+$/, '') + '.svg', async () => decodeURIComponent(demoArt(a.demo).split(',')[1]), toast);
-  return saveFile(a.name, () => Blobs.get(a.id), toast);
+  return saveFile(a.name, () => Blobs.get(a.id, a.path), toast);
 }
 
 /* ---------------- example photos for the demo store (drawn, not real) ---------------- */
@@ -1893,6 +1997,7 @@ function seed() {
   demoApprovals(db, T);
   demoSpotted(db, T);
   demoStickies(db, T);
+  demoFiles(db, T);
   db.events = demoEvents(T);
   return db;
 }
@@ -1906,6 +2011,7 @@ function loadDb() {
         if (!Array.isArray(d.deadlines)) { d.deadlines = demoDeadlines(); const f = (d.depts || []).find((x) => x.id === 'finance'); if (f) f.features = { ...(f.features || {}), monthend: true }; }
         if (!(d.depts || []).some((x) => x.features && 'approvals' in x.features)) demoApprovals(d);
         if (!Array.isArray(d.events)) d.events = demoEvents();
+        if (!Object.values(d.pins || {}).some((p) => p && p.myfiles)) { d.pins = d.pins || {}; demoFiles(d); }
         if (!(d.messages || []).some((m) => m.id === 'm-spot1')) demoSpotted(d);
         if (!(d.depts || []).some((x) => x.features && 'outlook' in x.features)) (d.depts || []).forEach((x) => { if (x.id === 'finance' || x.id === 'admin') x.features = { ...(x.features || {}), outlook: true }; });
         if (!d.plans) { const f = (d.depts || []).find((x) => x.id === 'finance'); if (f) f.features = { ...(f.features || {}), planner: true }; demoPlanner(d); }
@@ -1977,7 +2083,7 @@ function useAttUrl(a) {
   useEffect(() => {
     if (a.demo) return;
     let alive = true, made = null;
-    Blobs.get(a.id).then((b) => { if (alive && b) { made = URL.createObjectURL(b); setUrl(made); } });
+    Blobs.get(a.id, a.path).then((b) => { if (alive && b) { made = URL.createObjectURL(b); setUrl(made); } });
     return () => { alive = false; if (made) URL.revokeObjectURL(made); };
   }, [a.id]);
   return url;
@@ -2162,7 +2268,7 @@ function Dock() {
   const c = useCounts();
   const unreadChats = myChats(db, user.id).filter((ch) => unreadIn(db, ch, user.id) > 0).length;
   const items = [['chats', 'chat', 'Chats', unreadChats], ['needs', 'inbox', 'Needs you', c.mine.length], ['all', 'list', 'Everything'], ['sent', 'send', 'Sent'],
-    user.role !== 'staff' && ['team', 'team', 'Team'], db.drives.some((d) => driveOn(db, d)) && ['drive', 'folder', 'Drive'], ['pins', 'pin', 'Pins']].filter(Boolean);
+    user.role !== 'staff' && ['team', 'team', 'Team'], filesOn(db, user) && ['files', 'archive', 'Files'], db.drives.some((d) => driveOn(db, d)) && ['drive', 'folder', 'Drive'], ['pins', 'pin', 'Pins']].filter(Boolean);
   return html`<nav className="dock glass" aria-label="Views">
     ${items.map(([id, icon, label, n]) => html`<button key=${id} className=${'dock-i' + (view === id ? ' on' : '')} onClick=${() => { if (id === 'needs') setFilters(NO_FILTERS); go(id); }} aria-label=${label} aria-current=${view === id ? 'page' : null}><${Icon} n=${icon} s=${18}/><span>${label}</span>${n > 0 && html`<b className=${id === 'chats' ? 'g' : ''}>${n}</b>`}</button>`)}
     <button className="plus" onClick=${() => compose()} aria-label="New post" title="New post"><${Icon} n="plus" s=${22}/></button>
@@ -2172,7 +2278,7 @@ function Page({ title, sub, actions, children }) {
   const { saved, cloud } = useApp();
   return html`<div className="page">
     ${!saved && html`<div className="save-warn">This browser isn’t saving changes. They’ll be lost when you close the page.</div>`}
-    ${cloud === 'offline' && html`<div className="save-warn">You’re offline, so this is what you had last time. Reconnect to see new messages and send changes.</div>`}
+    ${cloud === 'offline' && html`<div className="save-warn">You’re offline. Everything still works from the copy on this device, and your changes send by themselves when the signal is back.</div>`}
     <div className="page-head"><div><h1>${title}</h1>${sub && html`<p className="sub">${sub}</p>`}</div>${actions && html`<div className="page-actions">${actions}</div>`}</div>
     ${children}
   </div>`;
@@ -2201,7 +2307,7 @@ function SideDock({ onClose, onNeeds }) {
   const unreadChats = myChats(db, user.id).filter((ch) => unreadIn(db, ch, user.id) > 0).length;
   const toApprove = db.posts.filter((p) => p.type === 'approval' && needsMe(p, user.id)).length;
   const main = [['chats', 'chat', 'Chats', unreadChats], ['needs', 'inbox', 'Needs you', c.mine.length], ['all', 'list', 'Everything'], ['sent', 'send', 'Sent'],
-    user.role !== 'staff' && ['team', 'team', 'Team'], db.drives.some((d) => driveOn(db, d)) && ['drive', 'folder', 'Drive'], ['pins', 'pin', 'Pins'], ['calendar', 'diary', 'Calendar']].filter(Boolean);
+    user.role !== 'staff' && ['team', 'team', 'Team'], filesOn(db, user) && ['files', 'archive', 'Files'], db.drives.some((d) => driveOn(db, d)) && ['drive', 'folder', 'Drive'], ['pins', 'pin', 'Pins'], ['calendar', 'diary', 'Calendar']].filter(Boolean);
   const finance = [canSeeME(db, user) && ['monthend', 'calendar', 'Month end'], canSeeAP(db, user) && ['approvals', 'stamp', 'Approvals', toApprove]].filter(Boolean);
   const go = (id) => { onClose(); if (id === 'needs') onNeeds(); else jump('view:' + id); };
   const row = ([id, icon, label, n]) => html`<button key=${id} className="sdock-i" onClick=${() => go(id)} title=${id === 'needs' ? 'Show Needs you here' : 'Open ' + label + ' in the full app'}><${Icon} n=${icon} s=${18}/><span>${label}</span>${n > 0 && html`<b className=${id === 'chats' ? 'g' : ''}>${n}</b>`}</button>`;
@@ -2924,6 +3030,225 @@ function DriveView() {
   <//>`;
 }
 
+/* ---------------- Files: my own files, and my department's archive ---------------- */
+// My files are private: the list is kept with the person's pins (only they can read those) and the files sit under
+// me/<person>/ on the store's server. A department's archive is that department's Drive shown as one folder: the same
+// records and the same access, so nothing is filed twice. Files open from this device's copy, so they work with no signal.
+const filesOff = (d) => !!(d && d.features && d.features.files === false); // on unless an admin switches it off
+const filesOn = (db, u) => u.role === 'admin' || db.depts.some((d) => (u.depts.includes(d.id) || u.manages.includes(d.id)) && !filesOff(d));
+const myFilesOf = (db, id) => ((db.pins[id] || {}).myfiles) || [];
+function archivesFor(db, u) {
+  const mine = (d) => u.depts.includes(d.id) || u.manages.includes(d.id);
+  return db.depts.filter((d) => !filesOff(d) && (mine(d) || u.role === 'admin')).sort((a, b) => mine(b) - mine(a))
+    .map((d) => ({ dept: d, drive: db.drives.find((x) => x.id === 'd-' + d.id) })).filter((x) => x.drive && canDrive(u, x.drive));
+}
+const archiveFiles = (db, driveId) => db.files.filter((f) => f.drive === driveId).sort((a, b) => (b.at || 0) - (a.at || 0));
+const titleOf = (name) => name.replace(/\.[^.]+$/, '').replace(/[_]+/g, ' ').trim() || name;
+const nFiles = (n) => n + (n === 1 ? ' file' : ' files');
+// While there's a signal, bring this person's files onto the device so they open with none: their own files, their
+// department archives, and the last two weeks of photos and files in their chats and tasks.
+let keeping = false;
+async function keepOnDevice(db, u) {
+  if (!CLOUD || keeping || !navigator.onLine) return;
+  keeping = true;
+  try {
+    const since = Date.now() - 14 * DAY, chats = new Set(myChats(db, u.id).map((c) => c.id));
+    const atts = [...myFilesOf(db, u.id).map((f) => f.att), ...archivesFor(db, u).flatMap(({ drive }) => archiveFiles(db, drive.id).map((f) => f.att)),
+      ...db.messages.filter((m) => m.at > since && chats.has(m.chat)).flatMap((m) => m.attachments || []),
+      ...db.posts.filter((p) => p.createdAt > since && (p.author === u.id || p.recips[u.id])).flatMap((p) => p.attachments || [])];
+    for (const a of atts) {
+      if (!navigator.onLine) break;
+      if (a && !a.demo && (a.size || 0) <= 25 * 1048576) await Blobs.keep(a.id, a.path);
+    }
+  } finally { keeping = false; }
+}
+function useThumb(a) {
+  const img = !!(a && a.kind === 'image');
+  const [url, setUrl] = useState(() => (img && a.demo ? demoArt(a.demo) : null));
+  useEffect(() => {
+    if (!img || a.demo) return;
+    let alive = true, made = null;
+    Blobs.get(a.id, a.path).then((b) => { if (alive && b) { made = URL.createObjectURL(b); setUrl(made); } });
+    return () => { alive = false; if (made) URL.revokeObjectURL(made); };
+  }, [a && a.id]);
+  return url;
+}
+function useOnDevice(a) {
+  const [here, setHere] = useState(!!(a && a.demo));
+  useEffect(() => {
+    if (!a || a.demo) return;
+    let alive = true;
+    const check = () => Blobs.has(a.id).then((h) => { if (alive) setHere(h); });
+    const h = (e) => { if (e.detail === a.id) setHere(true); };
+    check(); window.addEventListener('floorboard-blob', h);
+    return () => { alive = false; window.removeEventListener('floorboard-blob', h); };
+  }, [a && a.id]);
+  return here;
+}
+const attIcon = (a) => (!a ? 'archive' : a.kind === 'audio' ? 'mic' : a.kind === 'video' ? 'play' : a.kind === 'image' ? 'image' : 'doc');
+// a page inside a folder: a photo shows itself, anything else a clean sheet with its type
+function FilePaper({ a, i }) {
+  const url = useThumb(a);
+  return html`<span className="fc-paper" style=${{ '--i': i }}>${url ? html`<img src=${url} alt=""/>` : html`<span className="fc-sheet"><b>${a && a.name ? extOf(a.name).toUpperCase() : 'PAPER'}</b><i></i><i></i><i></i></span>`}</span>`;
+}
+// The folder's shape: the back is a folder with its tab raised on the right, filled with the newest photo in it.
+const FOLDER_CLIP = html`<svg className="fc-defs" width="0" height="0" aria-hidden="true"><defs><clipPath id="fc-shape" clipPathUnits="objectBoundingBox">
+  <path d="M0,0.30 Q0,0.21 0.065,0.21 L0.37,0.21 C0.43,0.21 0.425,0.035 0.49,0.035 L0.935,0.035 Q1,0.035 1,0.125 L1,0.91 Q1,1 0.935,1 L0.065,1 Q0,1 0,0.91 Z"/></clipPath></defs></svg>`;
+function FolderCard({ title, sub, look, dot, papers, onOpen, onAdd }) {
+  const shown = papers.filter(Boolean).slice(0, 3), cover = useThumb(look === 'white' ? null : shown.find((a) => a.kind === 'image'));
+  const list = shown.length ? shown : [null];
+  return html`<div className=${'fcard' + (look ? ' ' + look : '')}>
+    <span className="fc-back" style=${cover ? { backgroundImage: 'url("' + cover + '")' } : null}></span>
+    <span className="fc-papers" aria-hidden="true">${list.map((a, i) => html`<${FilePaper} key=${(a && a.id) || 'p' + i} a=${a} i=${i}/>`)}</span>
+    <button className="fc-front" onClick=${onOpen} aria-label=${'Open ' + title}><b>${title}</b><small>${dot && html`<i style=${{ background: dot }}></i>`}${sub}</small></button>
+    ${onAdd && html`<button className="fc-add" onClick=${onAdd} aria-label=${'Add files to ' + title} title="Add files"><${Icon} n="plus" s=${16}/></button>`}
+  </div>`;
+}
+function FilesView() {
+  const { db, user } = useApp();
+  const [open, setOpen] = useState(null); // 'me', or an archive's drive id
+  const [adding, setAdding] = useState(null);
+  const mine = myFilesOf(db, user.id), archives = archivesFor(db, user);
+  if (open) return html`<${FolderView} key=${open} where=${open} onBack=${() => setOpen(null)}/>`;
+  return html`<${Page} title="Files" sub="Your own files and your department’s archive. They’re kept on this device, so they open with no signal too.">
+    ${FOLDER_CLIP}
+    <div className="fdesk"><div className="fgrid">
+      <${FolderCard} title="My files" sub=${nFiles(mine.length) + ' · only you'} papers=${mine.map((f) => f.att)} onOpen=${() => setOpen('me')} onAdd=${() => setAdding('me')}/>
+      ${archives.map(({ dept, drive }, i) => { const fs = archiveFiles(db, drive.id); return html`<${FolderCard} key=${drive.id} look=${i % 2 ? 'dark' : 'white'} title=${dept.name + ' archive'} sub=${nFiles(fs.length)} dot=${dept.color} papers=${fs.map((f) => f.att || { id: f.id, name: '', kind: 'paper' })} onOpen=${() => setOpen(drive.id)} onAdd=${() => setAdding(drive.id)}/>`; })}
+    </div>
+    ${!archives.length && html`<p className="fdesk-empty">You’re not in a department with an archive yet. An admin can add you to one in People & access.</p>`}</div>
+    ${adding && html`<${AddFilesModal} where=${adding} onClose=${() => setAdding(null)}/>`}
+  <//>`;
+}
+function FolderView({ where, onBack }) {
+  const { db, user } = useApp();
+  const isMe = where === 'me', arch = !isMe && archivesFor(db, user).find((x) => x.drive.id === where);
+  const [q, setQ] = useState(''), [adding, setAdding] = useState(false), [openId, setOpenId] = useState(null);
+  if (!isMe && !arch) return html`<${Page} title="Files"><div className="empty"><p>You can’t open this archive any more.</p><button className="btn" onClick=${onBack}>Back to Files</button></div><//>`;
+  const items = isMe ? myFilesOf(db, user.id).map((f) => ({ id: f.id, title: f.title, att: f.att, at: f.at, by: user.id }))
+    : archiveFiles(db, where).map((f) => ({ id: f.id, title: f.name, att: f.att, at: f.at || 0, by: f.by, folder: folderPath(db, f.folder), paper: f.hardCopy || '' }));
+  const words = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  const shown = items.filter((x) => { const s = (x.title + ' ' + (x.att ? x.att.name : '') + ' ' + (x.folder || '') + ' ' + x.paper).toLowerCase(); return words.every((w) => s.includes(w)); });
+  const cur = openId && items.find((x) => x.id === openId);
+  return html`<${Page} title=${isMe ? 'My files' : arch.dept.name + ' archive'} sub=${isMe ? 'Only you can see these. Add what you need for work and give each one a title.' : 'Everything filed for ' + arch.dept.name + '. The same files as ' + arch.dept.name + '’s Drive.'}
+    actions=${html`<button className="btn" onClick=${onBack}><${Icon} n="back" s=${16}/>All files</button><button className="btn primary" onClick=${() => setAdding(true)}><${Icon} n="plus" s=${16}/>Add files</button>`}>
+    ${items.length > 0 && html`<label className="tsearch fsearch"><${Icon} n="search" s=${16}/><input id="files-q" value=${q} onChange=${(e) => setQ(e.target.value)} placeholder=${isMe ? 'Search your files' : 'Search the archive: title, folder, cabinet…'} aria-label="Search files"/></label>`}
+    ${shown.length ? html`<div className="ftiles">${shown.map((x) => html`<${FileTile} key=${x.id} x=${x} onOpen=${() => setOpenId(x.id)}/>`)}</div>`
+      : html`<div className="empty"><${Icon} n=${isMe ? 'lock' : 'archive'} s=${24}/><h3>${items.length ? 'Nothing matches' : isMe ? 'No files yet' : 'The archive is empty'}</h3><p>${items.length ? 'Try another word from the title.' : isMe ? 'Add a payslip, a certificate, a photo of a delivery note, anything you want to keep to hand.' : 'Add the first file and everyone in ' + arch.dept.name + ' can open it.'}</p></div>`}
+    ${adding && html`<${AddFilesModal} where=${where} onClose=${() => setAdding(false)}/>`}
+    ${cur && html`<${FileViewer} x=${cur} where=${where} onClose=${() => setOpenId(null)}/>`}
+  <//>`;
+}
+function FileTile({ x, onOpen }) {
+  const url = useThumb(x.att), here = useOnDevice(x.att);
+  return html`<button className="ftile" onClick=${onOpen}>
+    <span className="ft-pic">${url ? html`<img src=${url} alt=""/>` : html`<span className="ft-doc"><${Icon} n=${attIcon(x.att)} s=${26}/><b>${x.att ? extOf(x.att.name).toUpperCase() : 'PAPER'}</b></span>`}</span>
+    <span className="ft-t">${x.title}</span>
+    <span className="ft-m">${x.folder ? x.folder + ' · ' : ''}${x.at ? ago(x.at) : ''}${x.att && x.att.size ? ' · ' + fmtSize(x.att.size) : ''}</span>
+    ${CLOUD && x.att && html`<span className=${'ft-here' + (here ? ' on' : '')}>${here ? html`<${Icon} n="check" s=${12}/>On this device` : 'Downloads when opened'}</span>`}
+  </button>`;
+}
+function FileViewer({ x, where, onClose }) {
+  const { db, user, update, toast, ask } = useApp();
+  const isMe = where === 'me', a = x.att;
+  const rec = !isMe && db.files.find((f) => f.id === x.id), drive = rec && db.drives.find((d) => d.id === rec.drive);
+  const canEdit = isMe || user.role === 'admin' || (rec && rec.by === user.id) || !!(drive && drive.access.some((d) => user.manages.includes(d)));
+  const [t, setT] = useState(x.title);
+  const [st, setSt] = useState({ busy: !!(a && !a.demo) });
+  useEffect(() => {
+    if (!a || a.demo) return;
+    let alive = true, made = null;
+    (async () => {
+      const b = await Blobs.get(a.id, a.path);
+      if (!alive) return;
+      if (!b) { setSt({ missing: true }); return; }
+      made = URL.createObjectURL(b);
+      let pages = null;
+      if (/pdf/i.test(a.mime || '') || /\.pdf$/i.test(a.name)) { setSt({ busy: true, url: made }); try { pages = await pdfPages(b, 30); } catch (e) { /* shown as a file to save instead */ } }
+      if (alive) setSt({ url: made, pages });
+    })();
+    return () => { alive = false; if (made) URL.revokeObjectURL(made); };
+  }, [a && a.id]);
+  const rename = (e) => {
+    e.preventDefault();
+    const v = t.trim(); if (!v) { toast('A file needs a title', 'warn'); return; }
+    update((d) => { if (isMe) { const f = (d.pins[user.id].myfiles || []).find((y) => y.id === x.id); if (f) f.title = v; } else { const f = d.files.find((y) => y.id === x.id); if (f) f.name = v; } });
+    toast('Title saved');
+  };
+  const del = () => ask({ title: 'Delete “' + x.title + '”?', body: isMe ? 'It’s removed from your files on every device.' : 'It’s removed from the ' + (drive ? drive.name : '') + ' archive and Drive for everyone.', confirm: 'Delete', danger: true, onConfirm: () => {
+    update((d) => { if (isMe) d.pins[user.id].myfiles = (d.pins[user.id].myfiles || []).filter((y) => y.id !== x.id); else d.files = d.files.filter((y) => y.id !== x.id); });
+    if (CLOUD && isMe && a && a.path) Promise.resolve(CLOUD.storage.from('files').remove([a.path])).catch(() => {});
+    onClose(); toast('Deleted');
+  } });
+  const demoUrl = a && a.demo && a.kind === 'image' ? demoArt(a.demo) : null;
+  const url = st.url || demoUrl;
+  return html`<${Modal} title=${x.title} onClose=${onClose} wide cls="fview" footer=${html`
+    ${canEdit && html`<button className="btn danger" style=${{ marginRight: 'auto' }} onClick=${del}><${Icon} n="trash" s=${15}/>Delete</button>`}
+    ${st.url && html`<a className="btn" href=${st.url} download=${a.name}><${Icon} n="download" s=${15}/>Save a copy</a>`}
+    <button className="btn primary" onClick=${onClose}>Close</button>`}>
+    ${canEdit ? html`<form className="fv-title" onSubmit=${rename}><label className="field"><span>Title</span><input id="fv-title" className="input" value=${t} onChange=${(e) => setT(e.target.value)} maxLength="120"/></label>${t.trim() !== x.title && html`<button className="btn primary">Save title</button>`}</form>`
+      : html`<p className="muted sm">Added by ${firstName(userById(db, x.by))}${x.at ? ', ' + ago(x.at) : ''}</p>`}
+    ${x.folder && html`<p className="muted sm">Filed in ${x.folder}</p>`}
+    ${x.paper && html`<p className="fv-paper"><${Icon} n="archive" s=${15}/>Paper copy: ${x.paper}</p>`}
+    <div className="fv-body">
+      ${!a ? html`<p className="muted">This is a record of a paper document. There’s no scan with it.</p>`
+        : st.busy ? html`<p className="muted">Opening…</p>`
+        : st.missing ? html`<div className="empty"><${Icon} n="download" s=${22}/><h3>Not on this device yet</h3><p>Open it once while you have signal, and after that it opens anywhere, even with none.</p></div>`
+        : a.kind === 'image' && url ? html`<img className="fv-img" src=${url} alt=${x.title}/>`
+        : a.kind === 'video' && url ? html`<video src=${url} controls playsInline></video>`
+        : a.kind === 'audio' && url ? html`<audio src=${url} controls></audio>`
+        : st.pages ? html`<div className="fv-pages">${st.pages.pages.map((p, i) => html`<img key=${i} src=${p} alt=${'Page ' + (i + 1)}/>`)}${st.pages.more > 0 && html`<p className="muted sm">${st.pages.more} more pages: save a copy to read them all.</p>`}</div>`
+        : html`<div className="doc-row"><span className="doc-ic"><${Icon} n="doc"/></span><div className="doc-meta"><div className="doc-name">${a.name}</div><div className="doc-sub">${extOf(a.name).toUpperCase()} · ${fmtSize(a.size)}${a.demo ? ' · example file, no content' : ''}</div></div>
+            ${st.url && html`<a className="btn sm" href=${st.url} target="_blank" rel="noopener">Open</a>`}</div>`}
+    </div>
+  <//>`;
+}
+function AddFilesModal({ where, onClose }) {
+  const { db, user, update, toast } = useApp();
+  const isMe = where === 'me', arch = !isMe && archivesFor(db, user).find((x) => x.drive.id === where);
+  const [list, setList] = useState([]), [folder, setFolder] = useState(''), [busy, setBusy] = useState(false), [over, setOver] = useState(false);
+  const ref = useRef(null), listRef = useRef(list); listRef.current = list;
+  useEffect(() => () => listRef.current.forEach((f) => f.url && URL.revokeObjectURL(f.url)), []);
+  const take = (picked) => {
+    const ok = [];
+    for (const f of [...picked]) {
+      if (f.size > 100 * 1048576) { toast(f.name + ' is over 100 MB', 'warn'); continue; }
+      const mime = f.type || 'application/octet-stream', kind = kindOf(mime);
+      ok.push({ tmp: uid('t'), file: f, name: f.name, mime, size: f.size, kind, url: kind === 'image' ? URL.createObjectURL(f) : null, title: titleOf(f.name) });
+    }
+    setList((l) => [...l, ...ok]);
+  };
+  const setTitle = (tmp, v) => setList((l) => l.map((f) => (f.tmp === tmp ? { ...f, title: v } : f)));
+  const save = async () => {
+    if (!list.length) { toast('Pick a file first', 'warn'); return; }
+    if (list.some((f) => !f.title.trim())) { toast('Give every file a title', 'warn'); return; }
+    setBusy(true);
+    const atts = await storeFiles(list, isMe ? 'me/' + user.id + '/' : null), now = Date.now();
+    update((d) => {
+      if (isMe) {
+        const p = d.pins[user.id] = d.pins[user.id] || { posts: [], notes: [] };
+        p.myfiles = [...list.map((f, i) => ({ id: uid('mf'), title: f.title.trim(), att: atts[i], at: now })), ...(p.myfiles || [])];
+      } else list.forEach((f, i) => d.files.push({ id: uid('doc'), drive: where, folder: folder || null, name: f.title.trim(), docType: 'Other', ref: '', party: '', docDate: dkey(), tags: [], amount: null, att: atts[i], by: user.id, at: now }));
+    });
+    setBusy(false);
+    toast((list.length === 1 ? '“' + list[0].title.trim() + '” added to ' : nFiles(list.length) + ' added to ') + (isMe ? 'My files' : arch.dept.name + ' archive') + (CLOUD && !navigator.onLine ? '. It sends when you’re back online.' : ''));
+    onClose();
+  };
+  const folders = arch ? db.folders.filter((f) => f.drive === where) : [];
+  return html`<${Modal} title=${'Add to ' + (isMe ? 'My files' : arch.dept.name + ' archive')} onClose=${onClose} wide footer=${html`<button className="btn" onClick=${onClose}>Cancel</button><button className="btn primary" onClick=${save} disabled=${busy || !list.length}>${busy ? 'Saving…' : list.length > 1 ? 'Add ' + nFiles(list.length) : 'Add file'}</button>`}>
+    <input type="file" ref=${ref} multiple hidden onChange=${(e) => { take(e.target.files); e.target.value = ''; }}/>
+    <button type="button" className=${'fdrop' + (over ? ' over' : '')} onClick=${() => ref.current && ref.current.click()}
+      onDragOver=${(e) => { e.preventDefault(); setOver(true); }} onDragLeave=${() => setOver(false)} onDrop=${(e) => { e.preventDefault(); setOver(false); take(e.dataTransfer.files); }}>
+      <${Icon} n="clip" s=${22}/><b>${list.length ? 'Add more' : 'Choose files or take a photo'}</b><small>${isMe ? 'Only you will see them.' : 'Everyone in ' + arch.dept.name + ' can open them.'} Or drop them here.</small></button>
+    ${list.length > 0 && html`<div className="fadd-list">${list.map((f) => html`<div className="fadd" key=${f.tmp}>
+      <span className="fadd-pic">${f.url ? html`<img src=${f.url} alt=""/>` : html`<${Icon} n=${f.kind === 'audio' ? 'mic' : f.kind === 'video' ? 'play' : 'doc'} s=${20}/>`}</span>
+      <label className="field"><span>Title</span><input className="input" value=${f.title} onChange=${(e) => setTitle(f.tmp, e.target.value)} maxLength="120" aria-label=${'Title for ' + f.name}/><small>${f.name} · ${fmtSize(f.size)}</small></label>
+      <button type="button" className="icon-btn sm" aria-label=${'Remove ' + f.name} onClick=${() => setList((l) => l.filter((y) => y.tmp !== f.tmp))}><${Icon} n="close" s=${14}/></button>
+    </div>`)}</div>`}
+    ${folders.length > 0 && html`<label className="field"><span>Folder (optional)</span><select id="fadd-folder" className="select" value=${folder} onChange=${(e) => setFolder(e.target.value)}><option value="">${arch.dept.name} archive (top level)</option>${folders.map((x) => html`<option key=${x.id} value=${x.id}>${folderPath(db, x.id)}</option>`)}</select></label>`}
+  <//>`;
+}
+
 /* ---------------- pins ---------------- */
 function PinsView() {
   const { db, user, update, toast, ask } = useApp();
@@ -3043,7 +3368,7 @@ function PersonModal({ personId, onClose, onAdded }) {
 }
 function AdminView() {
   const { db, user, update, toast, startSeeing } = useApp();
-  const flipFeature = (deptId, key) => update((d) => { const x = d.depts.find((y) => y.id === deptId); x.features = { ...(x.features || {}), [key]: !featureOn(x, key) }; });
+  const flipFeature = (deptId, key) => update((d) => { const x = d.depts.find((y) => y.id === deptId); x.features = { ...(x.features || {}), [key]: key === 'files' ? filesOff(x) : !featureOn(x, key) }; });
   const setQuote = (deptId, k, id) => update((d) => { const x = d.depts.find((y) => y.id === deptId); x[k] = id || null; });
   const [tab, setTab] = useState('people');
   const [edit, setEdit] = useState(null);
@@ -3100,7 +3425,7 @@ function AdminView() {
       <form className="dtool" onSubmit=${addDept}><input id="nd-name" className="input" style=${{ maxWidth: 280 }} value=${nd.name} onChange=${(e) => setNd({ ...nd, name: e.target.value })} placeholder="New department, e.g. Butchery"/><div className="swatches">${TILE_COLORS.map((c) => html`<button type="button" key=${c} className=${nd.color === c ? 'on' : ''} style=${{ '--c': c }} onClick=${() => setNd({ ...nd, color: c })} aria-label=${'Colour ' + c}></button>`)}</div><button className="btn primary">Add department</button></form>
       <p className="feat-note">Every department starts with its group chat, tagging and the “Needs you” board. Switch on the extra tools as each department comes on board.</p>
       <div className="dgrid">${db.depts.map((d) => html`<div key=${d.id} className="dcard"><div className="dcard-h"><span className="dsw" style=${{ '--c': d.color }}></span><div><h3>${d.name}</h3><span className="muted sm">${deptMembers(db, d.id).length} people · ${db.users.filter((u) => u.manages.includes(d.id)).map((u) => firstName(u)).join(', ') || 'no manager'}</span></div></div>
-        <div className="toggles">${[['tools', 'Tools & manuals'], ['drive', 'Drive'], ['monthend', 'Month end'], ['approvals', 'Approvals'], ['quotes', 'Quote drop box'], ['planner', 'My week'], ['outlook', 'Outlook email']].map(([k, l]) => html`<button key=${k} className=${'toggle' + (featureOn(d, k) ? ' on' : '')} style=${{ '--c': d.color }} onClick=${() => flipFeature(d.id, k)} aria-pressed=${featureOn(d, k)}><i></i>${l}${featureOn(d, k) ? ' · on' : ' · off'}</button>`)}</div>
+        <div className="toggles">${[['files', 'My files & archive'], ['tools', 'Tools & manuals'], ['drive', 'Drive'], ['monthend', 'Month end'], ['approvals', 'Approvals'], ['quotes', 'Quote drop box'], ['planner', 'My week'], ['outlook', 'Outlook email']].map(([k, l]) => { const on = k === 'files' ? !filesOff(d) : featureOn(d, k); return html`<button key=${k} className=${'toggle' + (on ? ' on' : '')} style=${{ '--c': d.color }} onClick=${() => flipFeature(d.id, k)} aria-pressed=${on}><i></i>${l}${on ? ' · on' : ' · off'}</button>`; })}</div>
         ${featureOn(d, 'quotes') && html`<div className="dq">
           <label className="qd-to"><span>Drop box for</span><select id=${'dq-for-' + d.id} className="select" value=${d.quoteFor || ''} onChange=${(e) => setQuote(d.id, 'quoteFor', e.target.value)}><option value="">Everyone in ${d.name}</option>${deptMembers(db, d.id).map((id) => userById(db, id)).map((u) => html`<option key=${u.id} value=${u.id}>${u.name}</option>`)}</select></label>
           <label className="qd-to"><span>Quotes go to</span><select id=${'dq-to-' + d.id} className="select" value=${d.quoteTo || ''} onChange=${(e) => setQuote(d.id, 'quoteTo', e.target.value)}><option value="">Whoever sends them picks</option>${db.users.filter((u) => u.active !== false).map((u) => html`<option key=${u.id} value=${u.id}>${u.name}</option>`)}</select></label></div>`}</div>`)}</div>
@@ -3765,10 +4090,38 @@ function fromRecs(list) {
 const PARENT = { rcp: ['posts', 'post'], act: ['posts', 'post'], vote: ['posts', 'post'], rx: ['messages', 'msg'], read: ['chats', 'chat'], dltick: ['deadlines', 'dl'], marks: ['posts', 'post'] };
 const parentKey = (r) => (PARENT[r.coll] ? PARENT[r.coll][0] + '|' + r.data[PARENT[r.coll][1]] : null);
 
+const PENDING_KEY = 'floorboard.cloud.pending.v1';
 const Sync = {
-  recs: new Map(), queue: new Map(), drops: new Map(), timer: null, notifyTimer: null, channel: null, down: false, me: null, pings: [],
+  recs: new Map(), queue: new Map(), drops: new Map(), timer: null, notifyTimer: null, saveTimer: null, channel: null, down: false, me: null, pings: [],
   listeners: new Set(), statusListeners: new Set(), status: 'ok',
   setStatus(s) { if (s === this.status) return; this.status = s; this.statusListeners.forEach((f) => f(s)); },
+  // Changes not sent yet are kept on the device too, so closing the app with no signal doesn't lose them.
+  savePending() {
+    clearTimeout(this.saveTimer);
+    this.saveTimer = setTimeout(() => {
+      try { localStorage.setItem(PENDING_KEY, JSON.stringify({ me: this.me, queue: [...this.queue.values()], drops: [...this.drops.values()], pings: this.pings })); } catch (e) { }
+    }, 200);
+  },
+  // No connection when the app opens: work from the copy on this device. Changes queue up and send once it's back.
+  startOffline(db, me) {
+    this.me = me; this.recs = new Map();
+    toRecs(db).forEach((r) => this.recs.set(r.coll + '|' + r.id, { ...r, sig: stable(r.data) }));
+    this.restorePending(me);
+    this.drops.forEach((r, k) => this.recs.delete(k));
+    this.setStatus('offline');
+  },
+  // what this person changed last time and couldn't send (another person's leftovers on a shared device are dropped)
+  restorePending(me) {
+    if (this.queue.size || this.drops.size) return;
+    try {
+      const p = JSON.parse(localStorage.getItem(PENDING_KEY));
+      if (!p || p.me !== me) return;
+      (p.queue || []).forEach((r) => this.queue.set(r.coll + '|' + r.id, r));
+      (p.drops || []).forEach((r) => this.drops.set(r.coll + '|' + r.id, r));
+      this.pings = p.pings || [];
+    } catch (e) { }
+  },
+  pending() { return this.queue.size + this.drops.size; },
   async loadAll() {
     const fresh = new Map();
     for (let from = 0; ; from += 1000) {
@@ -3810,27 +4163,31 @@ const Sync = {
       // otherwise its parent simply hasn't arrived yet: leave it alone
     });
     gone.forEach((k) => { const r = this.recs.get(k); this.recs.delete(k); this.queue.delete(k); this.drops.set(k, r); });
-    if (this.queue.size || this.drops.size) { clearTimeout(this.timer); this.timer = setTimeout(() => this.flush(), 250); }
+    if (this.queue.size || this.drops.size) { this.savePending(); clearTimeout(this.timer); this.timer = setTimeout(() => this.flush(), 250); }
   },
   async flush() {
     clearTimeout(this.timer);
+    if (!this.pending()) return;
+    // no signal at all: keep everything queued until the device says it's back (the 'online' event sends it)
+    if (!navigator.onLine) { this.setStatus('offline'); this.timer = setTimeout(() => this.flush(), 15000); return; }
     const ups = [...this.queue.values()].map((r) => ({ coll: r.coll, id: r.id, data: r.data }));
     const dels = [...this.drops.values()], pings = this.pings.splice(0);
     this.queue.clear(); this.drops.clear();
-    if (!ups.length && !dels.length) return;
     try {
       for (let i = 0; i < ups.length; i += 500) { const { error } = await CLOUD.from('records').upsert(ups.slice(i, i + 500)); if (error) throw error; }
       const byColl = {}; dels.forEach((r) => (byColl[r.coll] = byColl[r.coll] || []).push(r.id));
       for (const [coll, ids] of Object.entries(byColl)) {
         for (let i = 0; i < ids.length; i += 200) { const { error } = await CLOUD.from('records').delete().eq('coll', coll).in('id', ids.slice(i, i + 200)); if (error) throw error; }
       }
+      this.savePending();
       this.setStatus('ok');
       if (pings.length) this.ping(pings);
     } catch (e) {
-      if (e && e.code === '42501') { this.setStatus('refused'); return; } // not allowed: don't keep retrying
+      if (e && e.code === '42501') { this.savePending(); this.setStatus('refused'); return; } // not allowed: don't keep retrying
       this.pings.unshift(...pings);
       ups.forEach((r) => { const k = r.coll + '|' + r.id; if (!this.queue.has(k)) this.queue.set(k, r); });
       dels.forEach((r) => { const k = r.coll + '|' + r.id; if (!this.recs.has(k)) this.drops.set(k, r); });
+      this.savePending();
       this.setStatus('offline');
       this.timer = setTimeout(() => this.flush(), 5000);
     }
@@ -3854,13 +4211,14 @@ const Sync = {
         this.notify();
       })
       .subscribe((s) => {
-        if (s === 'SUBSCRIBED') { if (this.down) { this.down = false; this.loadAll().then(() => this.notify()).catch(() => {}); } this.setStatus('ok'); }
+        if (s === 'SUBSCRIBED') { if (this.down) { this.down = false; this.loadAll().then(() => { this.notify(); if (this.pending()) this.flush(); Uploads.retry(); }).catch(() => {}); } this.setStatus('ok'); }
         if (s === 'CHANNEL_ERROR' || s === 'TIMED_OUT' || s === 'CLOSED') { this.down = true; this.setStatus('offline'); }
       });
   },
-  stop() { if (this.channel) CLOUD.removeChannel(this.channel); this.channel = null; this.recs = new Map(); this.queue.clear(); this.drops.clear(); this.pings = []; this.me = null; clearTimeout(this.timer); },
+  stop() { if (this.channel) CLOUD.removeChannel(this.channel); this.channel = null; this.recs = new Map(); this.queue.clear(); this.drops.clear(); this.pings = []; this.me = null; clearTimeout(this.timer); clearTimeout(this.saveTimer); },
 };
-window.addEventListener('online', () => { if (CLOUD && Sync.queue.size + Sync.drops.size) Sync.flush(); });
+window.addEventListener('online', () => { if (CLOUD && Sync.pending()) Sync.flush(); });
+if (CLOUD) { window.addEventListener('online', () => Uploads.retry()); setInterval(() => { if (Uploads.list().length) Uploads.retry(); }, 30000); }
 
 /* ---------------- who's online and who's typing ---------------- */
 // Live store only: each open app says who is using it and which chat they're typing in. Nothing is saved.
@@ -4794,6 +5152,29 @@ function StickyNotes({ compact }) {
     ${!all.length && html`<p className="stk-hint">For anything you’d scribble on paper and stick to your desk. Only you see them.</p>`}
     ${edit && html`<${StickyModal} id=${edit === 'new' ? null : edit} onClose=${() => setEdit(null)}/>`}
   </section>`;
+}
+// Files for the demo: each example person has a few of their own, and the department archives get some photos (drawn, not real).
+function demoFiles(db, T = Date.now()) {
+  const A = (name, kind, demo, size) => ({ id: uid('a'), name, mime: kind === 'image' ? 'image/svg+xml' : 'application/pdf', size, kind, demo });
+  const pics = ['shelf', 'display', 'guard'];
+  db.users.forEach((u, i) => {
+    const p = db.pins[u.id] = db.pins[u.id] || { posts: [], notes: [] };
+    p.myfiles = [
+      { id: 'mf-' + u.id + '-3', title: 'My section, the way it should look', att: A('My section.jpg', 'image', pics[i % 3], 412000), at: T - 2 * DAY },
+      { id: 'mf-' + u.id + '-2', title: 'October payslip', att: A('Payslip October 2026.pdf', 'doc', 'slip', 92160), at: T - 4 * DAY },
+      { id: 'mf-' + u.id + '-1', title: 'Food safety certificate', att: A('Food safety certificate.pdf', 'doc', 'cert', 184320), at: T - (20 + i) * DAY },
+    ];
+  });
+  const by = (dept) => (db.users.find((u) => u.depts.includes(dept)) || db.users[0]).id;
+  const P = (dept, name, demo, ago) => db.files.push({ id: uid('doc'), drive: 'd-' + dept, folder: null, name, docType: 'Other', ref: '', party: '', docDate: dkey(T - ago), tags: [], amount: null, att: A(name + '.jpg', 'image', demo, 380000), by: by(dept), at: T - ago });
+  P('bakery', 'Bread shelf, the standard to keep', 'shelf', 6 * DAY);
+  P('fv', 'Front display for the weekend special', 'display', 3 * DAY);
+  P('deli', 'Hot counter sneeze guard, before the repair', 'guard', 9 * DAY);
+  P('receiving', 'Signed delivery note, short delivery example', 'delivery', 5 * DAY);
+  P('finance', 'Signed delivery note for HP-55821', 'delivery', 3 * DAY);
+  P('tills', 'Till point layout', 'display', 12 * DAY);
+  P('admin', 'Notice board, how it should look', 'shelf', 8 * DAY);
+  P('mgmt', 'Store front display, last month', 'display', 30 * DAY);
 }
 function demoStickies(db, T) {
   const add = (who, list) => {
@@ -7144,6 +7525,7 @@ function Shell() {
   else if (view.startsWith('group:')) content = html`<${GroupView} key=${view} id=${view.slice(6)}/>`;
   else if (view.startsWith('dept:')) content = html`<${DeptView} id=${view.slice(5)}/>`;
   else if (view === 'drive') content = html`<${DriveView}/>`;
+  else if (view === 'files') content = html`<${FilesView}/>`;
   else if (view === 'pins') content = html`<${PinsView}/>`;
   else if (view === 'search') content = html`<${SearchView}/>`;
   else if (view === 'admin') content = html`<${AdminView}/>`;
@@ -7213,38 +7595,54 @@ function App() {
   const dbRef = useRef(db); dbRef.current = db;
   useEffect(() => {
     if (!CLOUD) { setSaved(saveDb(db)); return; }
-    if (cloud !== 'ready') return;
+    if (cloud !== 'ready' && cloud !== 'offline') return;
+    // offline, changes still go into the queue: they're kept on this device and sent once there's a signal
     Sync.push(db);
-    try { localStorage.setItem(CACHE_KEY, JSON.stringify(db)); } catch (e) { /* the copy for offline viewing is optional */ }
+    try { localStorage.setItem(CACHE_KEY, JSON.stringify(db)); } catch (e) { /* the copy for offline use is optional */ }
   }, [db]);
+  // No connection: carry on with the copy on this device. Everything works; changes send when the signal is back.
+  const goOffline = useCallback(() => {
+    const last = lsGet('floorboard.cloud.me');
+    if (!last) { setMe(null); setCloud('signedout'); return; }
+    Sync.startOffline(dbRef.current, last);
+    setMe(last); setCloud('offline');
+  }, []);
   const startCloud = useCallback(async (session) => {
     if (!session) { setMe(null); setCloud('signedout'); return; }
-    setCloud('loading');
+    if (cloudRef.current !== 'offline') setCloud('loading'); // coming back online: keep the app on screen meanwhile
     try {
       const { data: mem, error } = await CLOUD.from('members').select('staff_id').maybeSingle();
       if (error) throw error;
       if (!mem) { setMe(null); setCloud('signedout'); return; }
+      Sync.restorePending(mem.staff_id);
       const fresh = await Sync.loadAll();
       Sync.me = mem.staff_id;
       setDb(fresh); setMe(mem.staff_id); setCloud('ready'); lsSet('floorboard.cloud.me', mem.staff_id);
       Sync.subscribe(); Presence.start(mem.staff_id);
+      if (Sync.pending()) Sync.flush(); else Sync.setStatus('ok');
+      Uploads.retry();
       // this device already had alerts on: make sure they now go to whoever just logged in
       if (lsGet(PUSH_KEY) && pushAvailability() === 'ready' && Notification.permission === 'granted') pushOn(false).then((r) => setPushState(r === 'on' ? 'on' : r === 'setup' ? 'setup' : 'off'));
     } catch (e) {
-      // no connection: show the last copy this device had, without sending anything
-      const last = lsGet('floorboard.cloud.me');
-      if (last) { setMe(last); setCloud('offline'); } else { setMe(null); setCloud('signedout'); }
+      goOffline();
     }
   }, []);
+  // The login on this device may need renewing, which can't happen with no signal. If it's still kept here, open offline.
+  const resume = useCallback(() => CLOUD.auth.getSession().then(({ data, error }) => {
+    if (data.session) return startCloud(data.session);
+    if ((error || !navigator.onLine) && lsGet('floorboard.auth') && lsGet('floorboard.cloud.me')) return goOffline();
+    return startCloud(null);
+  }).catch(() => goOffline()), []);
   useEffect(() => {
     if (!CLOUD) return;
     const onDb = (d) => setDb(d);
     Sync.listeners.add(onDb); Sync.statusListeners.add(setSyncStatus);
-    CLOUD.auth.getSession().then(({ data }) => startCloud(data.session));
+    resume();
     const { data: sub } = CLOUD.auth.onAuthStateChange((ev) => { if (ev === 'SIGNED_OUT') { Sync.stop(); Presence.stop(); setMe(null); setCloud('signedout'); } });
-    const retry = () => { if (cloudRef.current === 'offline') CLOUD.auth.getSession().then(({ data }) => startCloud(data.session)); };
+    const retry = () => { if (cloudRef.current === 'offline' && navigator.onLine) resume(); };
     window.addEventListener('online', retry);
-    return () => { Sync.listeners.delete(onDb); Sync.statusListeners.delete(setSyncStatus); sub.subscription.unsubscribe(); window.removeEventListener('online', retry); };
+    const t = setInterval(retry, 20000); // some devices never say the signal is back
+    return () => { Sync.listeners.delete(onDb); Sync.statusListeners.delete(setSyncStatus); sub.subscription.unsubscribe(); window.removeEventListener('online', retry); clearInterval(t); };
   }, []);
   const cloudRef = useRef(cloud); cloudRef.current = cloud;
   // The desktop sidebar, the full app and other tabs share this storage: follow their changes live.
@@ -7491,6 +7889,12 @@ function App() {
     const now = Date.now();
     if (meReminders(dbRef.current, now, true)) update((d) => { meReminders(d, now); });
   }, [self && self.id, cloud, tick, db.deadlines]);
+  // with a signal, this person's files come onto the device in the background, so they open with none
+  useEffect(() => {
+    if (!self || cloud !== 'ready') return;
+    const t = setTimeout(() => keepOnDevice(dbRef.current, self), 3000);
+    return () => clearTimeout(t);
+  }, [self && self.id, cloud, tick, db.files, db.pins]);
   // the start-of-shift summary: once a day, once this person is on shift
   useEffect(() => {
     if (!self || (CLOUD && cloud !== 'ready')) return;
@@ -7560,12 +7964,18 @@ function App() {
     compose: (preset) => setComposer(preset || {}), closeComposer: () => setComposer(null),
     recordAsk, clearRecordAsk: () => setRecordAsk(null),
     login: (id) => { lsSet(SESSION_KEY, id); setMe(id); lsSet(SEEAS_KEY, ''); setSeeAs(''); setView(recordAsk ? 'calendar' : 'chats'); setOpenChatId(null); setOpenId(null); setFilters(NO_FILTERS); },
-    logout: () => {
+    logout: (sure) => {
+      // changes still waiting for a signal would be lost: say so first
+      if (CLOUD && sure !== true && (Sync.pending() || Uploads.list().length)) {
+        setConfirmState({ title: 'Some changes haven’t been sent yet', body: 'You made changes with no signal and they haven’t reached the store yet. If you log out now they are lost. Connect to the internet first and wait for ● Live.', confirm: 'Log out anyway', danger: true, onConfirm: () => ctx.logout(true) });
+        return;
+      }
       setOpenId(null); setDrawer(false); setComposer(null); setOpenChatId(null); lsSet(SEEAS_KEY, ''); setSeeAs('');
       MS.signOut().catch(() => {}); // the next person on this device doesn't get this mailbox
       if (!CLOUD) { lsSet(SESSION_KEY, ''); setMe(null); return; }
-      // shared devices: don't leave the store's data behind
-      lsSet(CACHE_KEY, ''); lsSet('floorboard.cloud.me', ''); Sync.stop(); Presence.stop(); setDb(emptyDb()); setMe(null); setCloud('signedout');
+      // shared devices: don't leave the store's data or anyone's files behind
+      lsSet(CACHE_KEY, ''); lsSet('floorboard.cloud.me', ''); lsSet(PENDING_KEY, ''); lsSet(UPLOADS_KEY, ''); Blobs.clear();
+      Sync.stop(); Presence.stop(); setDb(emptyDb()); setMe(null); setCloud('signedout');
       // this person's alerts stop on this device before signing out (the next person to log in here gets theirs)
       (lsGet(PUSH_KEY) ? pushOff(true) : Promise.resolve()).finally(() => CLOUD.auth.signOut());
     },
