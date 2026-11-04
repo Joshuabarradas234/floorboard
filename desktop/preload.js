@@ -5,6 +5,8 @@ contextBridge.exposeInMainWorld('floorboardDesktop', {
   openFull: (target) => ipcRenderer.send('open-full', typeof target === 'string' ? target : undefined),
   hide: () => ipcRenderer.send('hide-sidebar'),
   showSidebar: () => ipcRenderer.send('show-sidebar'),
+  // fold the sidebar into its slim rail of icons, or open it back to full width
+  slim: (on) => ipcRenderer.send('sidebar-slim', !!on),
   focus: () => ipcRenderer.send('show-sidebar'),
   // the bar at the top of the screen: 'pill' (closed) or 'open'; focus to type a reply
   bar: (state, focus) => ipcRenderer.send('bar-state', state === 'open' ? 'open' : 'pill', !!focus),

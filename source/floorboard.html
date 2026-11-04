@@ -668,6 +668,21 @@ td .fname .ic{color:var(--ink-3);margin-top:1px}
 /* widget: the narrow sidebar / phone view */
 .widget{height:100%;display:flex;flex-direction:column;gap:10px;padding:10px max(10px,env(safe-area-inset-right,0px)) 10px max(10px,env(safe-area-inset-left,0px))}
 .w-head{display:flex;align-items:center;gap:8px;border-radius:999px;padding:6px 6px 6px 8px;-webkit-app-region:drag}
+/* the sidebar folded into a slim glass rail */
+.widget.slim{padding:10px 8px;overflow:hidden;align-items:flex-start}
+.srail{position:relative;width:56px;height:100%;display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 0 10px;border-radius:28px;animation:srail-in .28s cubic-bezier(.2,1,.35,1)}
+@keyframes srail-in{from{opacity:.3;transform:scaleX(.7);transform-origin:right}to{opacity:1;transform:none}}
+.srail-hl{position:absolute;left:6px;top:0;width:44px;height:44px;border-radius:15px;background:rgba(255,255,255,.18);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 4px 12px rgba(0,0,0,.18);
+  pointer-events:none;transition:transform .28s cubic-bezier(.2,1,.35,1),opacity .2s}
+.srail-i{position:relative;z-index:1;display:grid;place-items:center;width:44px;height:44px;border:0;border-radius:15px;background:none;color:var(--ink);-webkit-app-region:no-drag}
+.srail-i:focus-visible{outline:2px solid var(--sky)}
+.srail-top .fbar-mark{width:30px;height:30px}
+.srail-new{background:#fff;color:var(--accent-ink);width:38px;height:38px;border-radius:50%;margin:4px 0;box-shadow:0 4px 12px rgba(0,0,0,.25)}
+.srail-sep{width:26px;height:1px;background:var(--glass-line);margin:2px 0 4px}
+.srail-grow{flex:1;width:100%;-webkit-app-region:drag}
+.srail-n{position:absolute;top:3px;right:2px;min-width:17px;height:17px;padding:0 4px;border-radius:9px;background:rgba(255,255,255,.28);color:#fff;font:700 10px/17px var(--f-body);box-shadow:0 0 0 2px rgba(30,22,16,.6)}
+.srail-n.r{background:var(--red-dot)}.srail-n.g{background:#2fb36a}
+@media (prefers-reduced-motion:reduce){.srail,.srail-hl{animation:none;transition:none}}
 .w-head button{-webkit-app-region:no-drag}
 .w-head .greet{flex:1}
 .w-list{flex:1;overflow-y:auto;display:grid;gap:8px;align-content:start;padding-bottom:70px}
@@ -2381,6 +2396,35 @@ function SideDock({ onClose, onNeeds }) {
       <button className="sdock-new" onClick=${() => { onClose(); compose(); }}><span className="plus"><${Icon} n="plus" s=${22}/></span>New post</button>
     </nav>`;
 }
+// The sidebar folded into a slim glass rail: one icon per section with its count. Click one and the sidebar opens on it.
+const SLIM_KEY = 'floorboard.slim.v1';
+function SlimRail({ onOpen }) {
+  const { db, user, compose } = useApp();
+  const c = useCounts(), desk = window.floorboardDesktop;
+  const [hl, setHl] = useState(null);
+  const unreadChats = myChats(db, user.id).filter((ch) => unreadIn(db, ch, user.id) > 0).length;
+  const notes = stickiesOf(db, user.id).filter((n) => !n.done).length;
+  const full = (t) => (desk && desk.openFull ? desk.openFull(t) : (location.hash = 'go-' + t));
+  const items = [
+    ['needs', 'inbox', 'Needs you', c.mine.length, c.mine.some((p) => p.level === 'red'), () => onOpen('.w-list')],
+    ['chats', 'chat', 'Chats', unreadChats, false, () => full('view:chats')],
+    plannerOn(db, user) && ['today', 'list', 'Today', 0, false, () => onOpen('.w-day')],
+    ['notes', 'edit', 'Sticky notes', notes, false, () => onOpen('.w-stk')],
+    filesOn(db, user) && ['files', 'archive', 'Files', 0, false, () => onOpen('.w-files')],
+    ['calendar', 'diary', 'Calendar', 0, false, () => full('view:calendar')],
+  ].filter(Boolean);
+  const over = (e) => setHl(e.currentTarget.offsetTop);
+  return html`<nav className="srail glass" aria-label="Floorboard" onMouseLeave=${() => setHl(null)}>
+    <span className="srail-hl" style=${{ transform: 'translateY(' + (hl || 0) + 'px)', opacity: hl === null ? 0 : 1 }}></span>
+    <button className="srail-i srail-top" onClick=${() => onOpen()} onMouseEnter=${over} title="Open the sidebar" aria-label="Open the sidebar">${BAR_MARK}</button>
+    <span className="srail-sep"></span>
+    ${items.map(([k, icon, label, n, red, go]) => html`<button key=${k} className="srail-i" onClick=${go} onMouseEnter=${over} title=${label + (n ? ' · ' + n : '')} aria-label=${label + (n ? ', ' + n : '')}>
+      <${Icon} n=${icon} s=${19}/>${n > 0 && html`<b className=${'srail-n' + (red ? ' r' : k === 'chats' ? ' g' : '')}>${n > 99 ? '99+' : n}</b>`}</button>`)}
+    <button className="srail-i srail-new" onClick=${() => { onOpen(); setTimeout(() => compose(), 260); }} onMouseEnter=${over} title="New post" aria-label="New post"><${Icon} n="plus" s=${19}/></button>
+    <span className="srail-grow"></span>
+    <button className="srail-i srail-me" onClick=${() => onOpen()} onMouseEnter=${over} title=${user.name} aria-label="Open the sidebar"><${Avatar} u=${user} s=${30}/></button>
+  </nav>`;
+}
 function Widget() {
   const { db, user, openId, composer, closeComposer, compose, toast } = useApp();
   const c = useCounts();
@@ -2388,6 +2432,11 @@ function Widget() {
   const [f, setF] = useState(NO_FILTERS);
   const [bar, setBar] = useState(false);
   const closeBar = useCallback(() => setBar(false), []);
+  const [slim, setSlimState] = useState(() => lsGet(SLIM_KEY) === '1');
+  const setSlim = (on) => { lsSet(SLIM_KEY, on ? '1' : ''); setSlimState(on); setBar(false); const d = window.floorboardDesktop; if (d && d.slim) d.slim(on); };
+  useEffect(() => { const d = window.floorboardDesktop; if (d && d.slim) d.slim(slim); }, []);
+  // open from the rail, then bring the section that was clicked into view
+  const openOn = (sel) => { setSlim(false); if (sel) setTimeout(() => { const el = document.querySelector(sel); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 280); };
   // the desktop sidebar can stay in front of Outlook and everything else, for dragging quotes in
   const [onTop, setOnTop] = useState(null);
   useEffect(() => { const d = window.floorboardDesktop; if (d && d.onTop) d.onTop.get().then((v) => setOnTop(!!v)).catch(() => {}); }, []);
@@ -2398,6 +2447,7 @@ function Widget() {
   const pick = (x) => { setTab('needs'); setF((cur) => { const n = { ...NO_FILTERS, ...x }; return n.type === cur.type && n.level === cur.level ? NO_FILTERS : n; }); };
   const openFull = () => { if (desk && desk.openFull) desk.openFull(); else location.hash = ''; };
   const filtered = f.type !== 'any' || f.level !== 'any';
+  if (slim) return html`<div className="widget slim"><${SlimRail} onOpen=${openOn}/><${ConfirmModal}/></div>`;
   return html`<div className="widget">
     <header className="w-head glass">
       <button className=${'icon-btn' + (bar ? ' solid' : '')} onClick=${() => setBar((b) => !b)} title="Chats, Sent, Team, Drive and more" aria-label="Open the menu bar" aria-expanded=${bar}><${Icon} n="grid" s=${17}/></button>
@@ -2405,6 +2455,7 @@ function Widget() {
       <${ShiftChip} small/>
       ${onTop !== null && html`<button className=${'icon-btn' + (onTop ? ' white' : '')} onClick=${flipTop} aria-pressed=${onTop} title=${onTop ? 'Staying in front of other windows. Click to let it go behind.' : 'Keep Floorboard in front of other windows'} aria-label="Keep Floorboard in front"><${Icon} n="pin" s=${17}/></button>`}
       <button className="icon-btn" onClick=${openFull} title="Open the full app" aria-label="Open the full app"><${Icon} n="expand" s=${17}/></button>
+      <button className="icon-btn" onClick=${() => setSlim(true)} title="Fold into a slim bar" aria-label="Fold the sidebar into a slim bar"><${Icon} n="sidebar" s=${17}/></button>
       ${desk && desk.hide && html`<button className="icon-btn" onClick=${() => desk.hide()} title="Hide the sidebar" aria-label="Hide the sidebar"><${Icon} n="close" s=${17}/></button>`}
     </header>
     <${Board} onPick=${pick}/>

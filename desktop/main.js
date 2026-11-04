@@ -6,6 +6,7 @@ const path = require('path'), fs = require('fs');
 const PAGE = path.join(__dirname, '..', 'index.html');
 const ICON = path.join(__dirname, '..', 'icon-192.png');
 const SIDEBAR_WIDTH = 380;
+const SLIM_WIDTH = 72; // the sidebar folded into its slim rail of icons
 const SMOKE = process.env.FLOORBOARD_SMOKE === '1'; // load once, print the result, quit (used for testing)
 // Windows can wrongly judge the full window to be covered (with the sidebar kept in front, or some screen tools), and it
 // then stops drawing and stays black. Draw it whenever it's open.
@@ -13,9 +14,9 @@ app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
 const BUBBLE = 64; // the round button's window: the 48px button and its shadow
 // the bar at the top of the screen: its window closed (the pill and its shadow) and open (the chat panel)
 const BAR = { pill: { width: 320, height: 48 }, open: { width: 430, height: 490 } };
-let prefs = { onTop: false, side: 'right', bubble: true, bubbleY: 120, bar: true };
+let prefs = { onTop: false, side: 'right', bubble: true, bubbleY: 120, bar: true, slim: false, width: SIDEBAR_WIDTH };
 let sidebar = null, full = null, tray = null, bubble = null, bar = null, barState = 'pill';
-let opened = false, slide = null, need = { count: 0, urgent: false };
+let opened = false, slide = null, sizing = null, need = { count: 0, urgent: false };
 
 const prefsFile = () => path.join(app.getPath('userData'), 'prefs.json');
 function loadPrefs() { try { prefs = { ...prefs, ...JSON.parse(fs.readFileSync(prefsFile(), 'utf8')) }; } catch (e) { /* first run */ } }
@@ -30,9 +31,26 @@ function openLinksOutside(win) {
 // Between slides its bounds stay docked, even while it's hidden.
 function docked() {
   const { workArea } = screen.getDisplayMatching(sidebar.getBounds());
-  const width = Math.min(Math.max(sidebar.getBounds().width, 320), 520);
+  const width = prefs.slim ? SLIM_WIDTH : Math.min(Math.max(prefs.width || SIDEBAR_WIDTH, 320), 520);
   const left = prefs.side === 'left';
   return { workArea, width, x: left ? workArea.x : workArea.x + workArea.width - width, away: left ? workArea.x - width : workArea.x + workArea.width };
+}
+// Fold the sidebar into its slim rail, or open it back to full width, keeping it docked to the screen edge.
+function setSlim(_e, on) {
+  on = !!on;
+  if (!sidebar || on === prefs.slim) return;
+  const from = sidebar.getBounds().width;
+  prefs.slim = on; savePrefs();
+  sidebar.setMinimumSize(on ? SLIM_WIDTH : 320, 200);
+  if (!sidebar.isVisible()) { dock(); return; }
+  clearInterval(sizing);
+  const { workArea, width: to } = docked(), left = prefs.side === 'left', t0 = Date.now(), ms = 200;
+  sizing = setInterval(() => {
+    const k = Math.min(1, (Date.now() - t0) / ms), w = Math.round(from + (to - from) * (1 - Math.pow(1 - k, 3)));
+    sidebar.setBounds({ x: left ? workArea.x : workArea.x + workArea.width - w, y: workArea.y, width: w, height: workArea.height });
+    placeBubble();
+    if (k >= 1) { clearInterval(sizing); sizing = null; dock(); }
+  }, 15);
 }
 function dock() {
   if (!sidebar || slide) return;
@@ -140,8 +158,8 @@ function setBar(on) {
 function createSidebar() {
   const { workArea } = screen.getPrimaryDisplay();
   sidebar = new BrowserWindow({
-    x: workArea.x + workArea.width - SIDEBAR_WIDTH, y: workArea.y, width: SIDEBAR_WIDTH, height: workArea.height,
-    minWidth: 320, maxWidth: 520, frame: false, maximizable: false, fullscreenable: false, show: false,
+    x: workArea.x + workArea.width - SIDEBAR_WIDTH, y: workArea.y, width: prefs.slim ? SLIM_WIDTH : prefs.width || SIDEBAR_WIDTH, height: workArea.height,
+    minWidth: prefs.slim ? SLIM_WIDTH : 320, maxWidth: 520, frame: false, maximizable: false, fullscreenable: false, show: false,
     title: 'Floorboard', icon: ICON, backgroundColor: '#00000000', backgroundMaterial: 'acrylic',
     alwaysOnTop: prefs.onTop, webPreferences,
   });
@@ -149,7 +167,8 @@ function createSidebar() {
   openLinksOutside(sidebar);
   sidebar.on('close', (e) => { if (!app.isQuitting) { e.preventDefault(); hideSidebar(); } });
   sidebar.on('focus', () => { sidebar.flashFrame(false); if (bubble) bubble.moveTop(); });
-  sidebar.on('resize', () => { if (!slide) placeBubble(); });
+  // remember the width someone drags it to (not while it's folded or moving)
+  sidebar.on('resize', () => { if (slide || sizing) return; if (!prefs.slim) { prefs.width = sidebar.getBounds().width; savePrefs(); } placeBubble(); });
   if (SMOKE) {
     sidebar.webContents.on('console-message', (_e, level, message) => { if (level >= 2) console.log('console:', message); });
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -165,6 +184,9 @@ function createSidebar() {
         console.log('SMOKE bar', JSON.stringify(bar.getBounds()), bar.isVisible() ? 'shown' : 'hidden', bar.isAlwaysOnTop() ? 'on top' : '', '|', await bar.webContents.executeJavaScript(`[document.documentElement.className, document.querySelector('.fbar-pill') ? document.querySelector('.fbar-pill').innerText.replace(/\\s+/g, ' ') : document.body.innerText.slice(0, 120)].join(' | ')`));
         placeBar('open'); console.log('SMOKE bar open', JSON.stringify(bar.getBounds())); placeBar('pill');
       }
+      slideTo(true); await wait(400);
+      setSlim(null, true); await wait(400); console.log('SMOKE folded', JSON.stringify(sidebar.getBounds()), 'button at', JSON.stringify(bubble && bubble.getBounds()));
+      setSlim(null, false); await wait(400); console.log('SMOKE opened', JSON.stringify(sidebar.getBounds()));
       app.isQuitting = true; app.quit();
     }, 1500));
   } else {
@@ -300,6 +322,7 @@ else {
     createBubble();
     createBar();
     bubbleIpc();
+    ipcMain.on('sidebar-slim', setSlim);
     ipcMain.on('bar-state', (_e, state, focus) => { placeBar(state); if (bar && state === 'open' && focus) bar.focus(); });
     if (SMOKE) return;
     buildTray();
