@@ -35,12 +35,15 @@ function docked() {
   const left = prefs.side === 'left';
   return { workArea, width, x: left ? workArea.x : workArea.x + workArea.width - width, away: left ? workArea.x - width : workArea.x + workArea.width };
 }
+// The sidebar stays in front of other windows while it's folded into its rail (so it's always to hand), and otherwise
+// only when it's pinned.
+function applyOnTop() { if (sidebar) sidebar.setAlwaysOnTop(prefs.slim || prefs.onTop, prefs.slim ? 'screen-saver' : 'floating'); if (bubble) bubble.moveTop(); }
 // Fold the sidebar into its slim rail, or open it back to full width, keeping it docked to the screen edge.
 function setSlim(_e, on) {
   on = !!on;
   if (!sidebar || on === prefs.slim) return;
   const from = sidebar.getBounds().width;
-  prefs.slim = on; savePrefs();
+  prefs.slim = on; savePrefs(); applyOnTop();
   sidebar.setMinimumSize(on ? SLIM_WIDTH : 320, 200);
   if (!sidebar.isVisible()) { dock(); return; }
   clearInterval(sizing);
@@ -164,7 +167,7 @@ function createSidebar() {
     x: workArea.x + workArea.width - SIDEBAR_WIDTH, y: workArea.y, width: prefs.slim ? SLIM_WIDTH : prefs.width || SIDEBAR_WIDTH, height: workArea.height,
     minWidth: prefs.slim ? SLIM_WIDTH : 320, maxWidth: 520, frame: false, maximizable: false, fullscreenable: false, show: false,
     title: 'Floorboard', icon: ICON, backgroundColor: '#00000000', backgroundMaterial: 'acrylic',
-    alwaysOnTop: prefs.onTop, webPreferences,
+    alwaysOnTop: prefs.onTop || prefs.slim, webPreferences,
   });
   sidebar.loadFile(PAGE, { hash: 'widget', query: { shell: 'desktop' } });
   openLinksOutside(sidebar);
@@ -188,8 +191,8 @@ function createSidebar() {
         placeBar('open'); console.log('SMOKE bar open', JSON.stringify(bar.getBounds())); placeBar('pill');
       }
       slideTo(true); await wait(400);
-      setSlim(null, true); await wait(400); console.log('SMOKE folded', JSON.stringify(sidebar.getBounds()), 'button at', JSON.stringify(bubble && bubble.getBounds()));
-      setSlim(null, false); await wait(400); console.log('SMOKE opened', JSON.stringify(sidebar.getBounds()));
+      setSlim(null, true); await wait(400); console.log('SMOKE folded', JSON.stringify(sidebar.getBounds()), sidebar.isAlwaysOnTop() ? 'in front' : 'not in front', 'button at', JSON.stringify(bubble && bubble.getBounds()));
+      setSlim(null, false); await wait(400); console.log('SMOKE opened', JSON.stringify(sidebar.getBounds()), sidebar.isAlwaysOnTop() ? 'in front' : 'not in front');
       app.isQuitting = true; app.quit();
     }, 1500));
   } else {
@@ -261,8 +264,7 @@ function msIpc() {
 // Keep the sidebar in front of Outlook and everything else (from the pin in the sidebar, or the tray menu).
 function setOnTop(on) {
   prefs.onTop = !!on;
-  if (sidebar) sidebar.setAlwaysOnTop(prefs.onTop);
-  if (bubble) bubble.moveTop();
+  applyOnTop();
   savePrefs();
   if (tray) tray.setContextMenu(trayMenu());
 }
