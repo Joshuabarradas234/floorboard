@@ -1,0 +1,73 @@
+{
+  "expo": {
+    "name": "Floorboard",
+    "slug": "floorboard",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "floorboard",
+    "userInterfaceStyle": "dark",
+    "backgroundColor": "#2b2018",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#2b2018"
+    },
+    "ios": {
+      "bundleIdentifier": "io.github.joshuabarradas234.floorboard",
+      "supportsTablet": true,
+      "entitlements": {
+        "com.apple.security.application-groups": ["group.io.github.joshuabarradas234.floorboard"]
+      },
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSCameraUsageDescription": "Floorboard uses the camera when you add a photo or video to a post.",
+        "NSMicrophoneUsageDescription": "Floorboard uses the microphone for voice notes and meeting recordings.",
+        "NSPhotoLibraryUsageDescription": "Floorboard lets you attach photos and videos to posts.",
+        "NSSpeechRecognitionUsageDescription": "Floorboard writes down what's said when you record a meeting."
+      }
+    },
+    "android": {
+      "package": "io.github.joshuabarradas234.floorboard",
+      "adaptiveIcon": {
+        "backgroundColor": "#2b2018",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "permissions": ["android.permission.CAMERA", "android.permission.RECORD_AUDIO", "android.permission.MODIFY_AUDIO_SETTINGS"]
+    },
+    "plugins": [
+      "expo-background-task",
+      "@bacons/apple-targets",
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "Floorboard",
+              "label": "Floorboard",
+              "description": "What needs you, and today's list from My week",
+              "minWidth": "110dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "maxResizeWidth": "600dp",
+              "maxResizeHeight": "600dp",
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000
+            }
+          ]
+        }
+      ]
+    ],
+    "extra": {
+      "floorboard": {
+        "webUrl": "https://joshuabarradas234.github.io/floorboard/",
+        "supabaseUrl": "https://dtddkocntgxlktwzcvyt.supabase.co",
+        "supabaseKey": "sb_publishable_njrV4tkcsyurg8YjTcuvtA_-4B4znfX",
+        "appGroup": "group.io.github.joshuabarradas234.floorboard"
+      }
+    }
+  }
+}

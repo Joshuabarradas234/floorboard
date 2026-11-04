@@ -24,6 +24,71 @@ Add `#widget` to the end of the link to open the compact sidebar view.
 
 The **Get it on your phone** QR code opens the full app. Choose **Sidebar view** under the code for a phone that should open the compact sidebar view from its home-screen icon instead (the ↗ at its top opens the full app). On a phone, **Open Floorboard like this from my home screen** at the bottom of the sidebar view changes it.
 
+## Phone: a home-screen widget (the Floorboard app)
+
+A web app can't put a widget on a phone's home screen, so `mobile/` is a small iPhone and Android app whose main job is the widget. It shows the signed-in person's **Needs you** count (ASAP, Important, General), the top 3 things waiting on them, and today's **My week** list with ticks: everyday tasks, that day's tasks, tasks other people sent, and month-end jobs. It comes in small, medium and large. It refreshes by itself about every 15 minutes on iPhone and every 30 on Android, and straight away when you leave the app. Tapping a row opens that post or page.
+
+The app itself is the full web app (the live link above) with a sign-in screen in front: store code, pick your name, PIN, the same as the web app. Changes to the web app reach it with no new build. Keep using the home-screen web app for alerts when Floorboard is closed and for Outlook email, because they don't work inside the app.
+
+### What it costs and what to sign up for
+
+| | Cost | Needed for |
+|---|---|---|
+| **Expo** account (expo.dev) | Free | Building the app in the cloud. You don't need a Mac. The free plan's monthly builds are plenty. |
+| **Apple Developer Program** (developer.apple.com/programs) | US$99 a year | Any iPhone install, through TestFlight. Sign up with an Apple ID that has two-factor on. Approval can take a day or two. As an individual, Apple checks your ID. As a company, it asks for a D-U-N-S number. |
+| **Google Play Console** (play.google.com/console) | US$25 once | Optional. Without it you share an APK file, which phones install directly. Google is starting to ask for registered developers even for APKs, country by country. If phones ever refuse the APK, use Play's internal testing. |
+
+### Build it (on this Windows computer)
+
+1. Make a free account at expo.dev. Then, in a terminal in the `mobile` folder, run:
+
+   ```bash
+   npm install
+   ```
+
+   ```bash
+   npx eas-cli@latest login
+   ```
+
+   ```bash
+   npx eas-cli@latest init
+   ```
+
+   `init` links the folder to your Expo account and writes a `projectId` into `app.json`. Commit that change.
+
+2. **Android:** run the following, then open the link it prints on each phone and allow installing from that app. Staff can also scan the QR code on the build's page at expo.dev.
+
+   ```bash
+   npx eas-cli@latest build -p android --profile apk
+   ```
+
+3. **iPhone:** once Apple has accepted you, put your Team ID (developer.apple.com → Account → Membership) into `mobile/app.json` as `"appleTeamId"` under `"ios"`. Then build and send the build to TestFlight:
+
+   ```bash
+   npx eas-cli@latest build -p ios --profile production
+   ```
+
+   ```bash
+   npx eas-cli@latest submit -p ios --latest
+   ```
+
+   The first build asks you to sign in to Apple. It then sets up the certificates, the app and widget IDs and the shared App Group by itself. After about 15 minutes the build appears in App Store Connect under TestFlight. Add staff there as testers. They install Apple's **TestFlight** app and accept the invite. Testers you add by email (not part of your App Store Connect team) need Apple's short beta review first.
+
+To check the iPhone project compiles before paying for Apple, `npx eas-cli@latest build -p ios --profile simulator` builds a simulator copy. You can't install it on a phone, and it only runs on a Mac.
+
+### On each phone
+
+Open Floorboard and sign in. Then add the widget:
+
+- **iPhone:** touch and hold the home screen → **Edit** → **Add Widget** → **Floorboard** → choose a size.
+- **Android:** touch and hold the home screen → **Widgets** → **Floorboard**. Drag its edges to make it bigger: wider shows the top 3, taller adds today's list.
+
+Logging out of the web app inside the app logs the widget out too.
+
+### Changing the widget
+
+`mobile/src/snapshot.js` works out what the widget shows, the same way `source/floorboard.html` does (`needsMe`, `dayList`, `taggedFor`, `deadlinesFor`). Change both together. The iPhone widget runs a copy of that file. After changing it, run `npm run embed` in `mobile/` to refresh `targets/widget/SnapshotSource.swift`, and `npm test` to check it. A change in `mobile/` needs a new build (steps 2 and 3). Changes to the web app don't.
+
 ## Changing the app
 
 `source/floorboard.html` is the single source file (every build also copies it here, with `source/build.js`). After editing it, run `node source/build.js` to rebuild the app. Nothing secret is in `source/`: the server address and publishable key live in `config.js`, and the private alert key only in Supabase.

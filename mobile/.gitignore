@@ -1,0 +1,22 @@
+node_modules/
+# made by expo prebuild / EAS on every build
+ios/
+android/
+.expo/
+dist/
+web-build/
+# the widget's colours, made from expo-target.config.js at prebuild
+targets/*/Assets.xcassets/
+*.apk
+*.aab
+*.ipa
+# signing keys and local secrets never go in the repo
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+credentials.json
+.env*.local
+npm-debug.*
+*.log
