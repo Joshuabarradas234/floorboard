@@ -1065,6 +1065,17 @@ td.mono{white-space:nowrap}
 .board-col .tdc-wrap,.inline-board .tdc-wrap{margin-top:14px;padding:14px;border-radius:var(--r-lg);background:var(--glass);border:1px solid var(--glass-line);border-top-color:rgba(255,255,255,.3)}
 .board-col .stk,.inline-board .stk{margin-top:14px;padding:14px;border-radius:var(--r-lg);background:var(--glass);border:1px solid var(--glass-line);border-top-color:rgba(255,255,255,.3)}
 .w-stk{flex:none;padding:12px 14px;border-radius:22px}
+.w-files{flex:none;padding:12px 12px 14px;border-radius:22px}
+.w-files-h{display:flex;align-items:center;justify-content:space-between;margin:0 2px 8px}
+.fdesk.mini{padding:2px 12px 14px;border-radius:16px}
+.fdesk.mini .fgrid{grid-template-columns:1fr 1fr;gap:26px 12px;padding-top:24px}
+.fdesk.mini .fc-front{padding:0 34px 8px 10px;border-radius:10px 10px 12px 12px}
+.fdesk.mini .fc-front b{font-size:12px}
+.fdesk.mini .fc-front small{font-size:10px;gap:4px}
+.fdesk.mini .fc-add{width:24px;height:24px;border-radius:8px;right:6px;bottom:6px}
+.fdesk.mini .fc-paper{border-radius:6px}
+.fdesk.mini .fc-sheet{padding:7px 8px;gap:4px}
+.fdesk.mini .fc-sheet b{font-size:7.5px}
 .stk-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:9px;max-height:214px;overflow-y:auto;padding:2px 2px 4px;scrollbar-width:thin}
 /* in the sidebar: one row that scrolls sideways, so the list below keeps its room */
 .stk.compact .stk-grid{grid-template-columns:none;grid-auto-flow:column;grid-auto-columns:94px;max-height:none;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x proximity;padding-bottom:6px}
@@ -2420,6 +2431,7 @@ function Widget() {
     ${outlookOn(db, user) && html`<div className="w-mail glass"><${OutlookCard} compact/></div>`}
     ${canQuoteDrop(db, user) && html`<div className="w-qd glass"><${QuoteDrop} compact/></div>`}
     <div className="w-stk glass"><${StickyNotes} compact/></div>
+    <${FilesCard}/>
     <div className="filters" style=${{ justifyContent: 'space-between' }}>
       <div className="seg" role="group" aria-label="List">
         <button className=${tab === 'needs' ? 'on' : ''} onClick=${() => { setTab('needs'); setF(NO_FILTERS); }}>Needs you <b>${c.mine.length}</b></button>
@@ -3262,9 +3274,25 @@ function FolderCard({ title, sub, look, dot, papers, onOpen, onAdd }) {
     ${onAdd && html`<button className="fc-add" onClick=${onAdd} aria-label=${'Add files to ' + title} title="Add files"><${Icon} n="plus" s=${16}/></button>`}
   </div>`;
 }
-function FilesView() {
+// Files in the sidebar: the same folders, small. A folder opens in the full app; + adds files right here.
+function FilesCard() {
+  const { db, user, jump } = useApp();
+  const [adding, setAdding] = useState(null);
+  if (!filesOn(db, user)) return null;
+  const mine = myFilesOf(db, user.id), archives = archivesFor(db, user);
+  return html`<div className="w-files glass">
+    <div className="w-files-h"><span className="eyebrow">Files</span><button className="linkish sm" onClick=${() => jump('view:files')}>Open all</button></div>
+    ${FOLDER_CLIP}
+    <div className="fdesk mini"><div className="fgrid">
+      <${FolderCard} title="My files" sub=${nFiles(mine.length)} papers=${mine.map((f) => f.att)} onOpen=${() => jump('view:files:me')} onAdd=${() => setAdding('me')}/>
+      ${archives.map(({ dept, drive }, i) => { const fl = archiveFiles(db, drive.id); return html`<${FolderCard} key=${drive.id} look=${i % 2 ? 'dark' : 'white'} title=${dept.name} sub=${nFiles(fl.length)} dot=${dept.color} papers=${fl.map((f) => f.att || { id: f.id, name: '', kind: 'paper' })} onOpen=${() => jump('view:files:' + drive.id)} onAdd=${() => setAdding(drive.id)}/>`; })}
+    </div></div>
+    ${adding && html`<${AddFilesModal} where=${adding} onClose=${() => setAdding(null)}/>`}
+  </div>`;
+}
+function FilesView({ start }) {
   const { db, user } = useApp();
-  const [open, setOpen] = useState(null); // 'me', or an archive's drive id
+  const [open, setOpen] = useState(start || null); // 'me', or an archive's drive id
   const [adding, setAdding] = useState(null);
   const mine = myFilesOf(db, user.id), archives = archivesFor(db, user);
   if (open) return html`<${FolderView} key=${open} where=${open} onBack=${() => setOpen(null)}/>`;
@@ -7683,7 +7711,7 @@ function Shell() {
   else if (view.startsWith('group:')) content = html`<${GroupView} key=${view} id=${view.slice(6)}/>`;
   else if (view.startsWith('dept:')) content = html`<${DeptView} id=${view.slice(5)}/>`;
   else if (view === 'drive') content = html`<${DriveView}/>`;
-  else if (view === 'files') content = html`<${FilesView}/>`;
+  else if (view === 'files' || view.startsWith('files:')) content = html`<${FilesView} key=${view} start=${view.slice(6) || null}/>`;
   else if (view === 'pins') content = html`<${PinsView}/>`;
   else if (view === 'search') content = html`<${SearchView}/>`;
   else if (view === 'admin') content = html`<${AdminView}/>`;

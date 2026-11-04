@@ -124,6 +124,7 @@ Then each person taps the bell → **Get alerts when Floorboard is closed** on t
 
 **Files** is in the bottom bar for everyone. It shows folders:
 
+- In the Windows sidebar (and the phone's sidebar view) a **Files** card shows the same folders, small: click one to open it in the full app, or **+** to add files right there.
 - **My files**: each person's own files. Add a file (or take a photo on a phone), give it a title, and it's kept. Only that person can see them; an admin's **See what they see** doesn't show them either. Click a file to open it, rename it, save a copy or delete it.
 - **Department archive** (one per department you're in, every department for admins): everything filed for that department. It's the same files as that department's **Drive**, so nothing is filed twice. Anyone in the department can add files, with a title and, if you like, one of the Drive's folders. A paper record shows where the paper copy is kept.
 
