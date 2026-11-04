@@ -11,10 +11,10 @@ const SMOKE = process.env.FLOORBOARD_SMOKE === '1'; // load once, print the resu
 // Windows can wrongly judge the full window to be covered (with the sidebar kept in front, or some screen tools), and it
 // then stops drawing and stays black. Draw it whenever it's open.
 app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
-const BUBBLE = 64; // the round button's window: the 48px button and its shadow
+const BUBBLE = 80; // the floating button's window: the 56px button and its shadow
 // the bar at the top of the screen: its window closed (the pill and its shadow) and open (the chat panel)
 const BAR = { pill: { width: 320, height: 48 }, open: { width: 430, height: 490 } };
-let prefs = { onTop: false, side: 'right', bubble: true, bubbleY: 120, bar: true, slim: false, width: SIDEBAR_WIDTH };
+let prefs = { onTop: false, side: 'right', bubble: true, bubbleAt: null, bar: true, slim: false, width: SIDEBAR_WIDTH };
 let sidebar = null, full = null, tray = null, bubble = null, bar = null, barState = 'pill';
 let opened = false, slide = null, sizing = null, need = { count: 0, urgent: false };
 
@@ -58,20 +58,20 @@ function dock() {
   sidebar.setBounds({ x, y: workArea.y, width, height: workArea.height });
   placeBubble();
 }
-// Slide the sidebar in from the screen edge or back out, carrying the round button with it.
+// Slide the sidebar in from the screen edge or back out. The floating button stands in for it while it's closed.
 function slideTo(open, { focus = true } = {}) {
   if (!sidebar) return;
   clearInterval(slide); slide = null;
   const { workArea, width, x, away } = docked(), y = workArea.y, height = workArea.height;
   const from = sidebar.isVisible() ? sidebar.getBounds().x : away, to = open ? x : away;
   opened = open; sendBubble();
+  if (open) placeBubble();
   if (open && !sidebar.isVisible()) { sidebar.setBounds({ x: from, y, width, height }); if (focus) sidebar.show(); else sidebar.showInactive(); }
   if (open && focus) sidebar.focus();
   const t0 = Date.now(), ms = 220;
   const step = () => {
     const k = Math.min(1, (Date.now() - t0) / ms), nx = Math.round(from + (to - from) * (1 - Math.pow(1 - k, 3)));
     sidebar.setBounds({ x: nx, y, width, height });
-    placeBubble(nx);
     if (k < 1) return;
     clearInterval(slide); slide = null;
     if (!open) { sidebar.hide(); sidebar.setBounds({ x, y, width, height }); }
@@ -84,16 +84,19 @@ const showSidebar = () => slideTo(true);
 const hideSidebar = () => slideTo(false);
 const toggleSidebar = () => slideTo(!opened);
 
-// The round button stays in front of every window. It rides on the sidebar's inner edge while the sidebar is open,
-// and waits at the screen edge while it's closed. Drag it up or down to move it.
-function placeBubble(sidebarX) {
-  if (!bubble || !sidebar) return;
-  const { workArea, width, x, away } = docked();
-  const sx = sidebarX !== undefined ? sidebarX : opened ? x : away;
-  const edge = prefs.side === 'left' ? sx + width : sx;
-  const bx = Math.max(workArea.x + 4, Math.min(edge - BUBBLE / 2, workArea.x + workArea.width - BUBBLE - 4));
-  const by = workArea.y + Math.max(8, Math.min(prefs.bubbleY, workArea.height - BUBBLE - 8));
-  bubble.setBounds({ x: Math.round(bx), y: Math.round(by), width: BUBBLE, height: BUBBLE });
+// The floating button: while the sidebar is closed, one small button floats in front of every window, wherever it was
+// dragged to (bottom right at first). Click it and the whole sidebar opens; while the sidebar is open the button steps aside.
+function bubbleSpot() {
+  const { workArea } = screen.getPrimaryDisplay();
+  const want = prefs.bubbleAt || { x: workArea.x + workArea.width - BUBBLE - 18, y: workArea.y + workArea.height - BUBBLE - 18 };
+  const wa = screen.getDisplayNearestPoint({ x: Math.round(want.x + BUBBLE / 2), y: Math.round(want.y + BUBBLE / 2) }).workArea;
+  return { x: Math.round(Math.max(wa.x, Math.min(want.x, wa.x + wa.width - BUBBLE))), y: Math.round(Math.max(wa.y, Math.min(want.y, wa.y + wa.height - BUBBLE))) };
+}
+function placeBubble() {
+  if (!bubble) return;
+  if (opened) { if (bubble.isVisible()) bubble.hide(); return; }
+  bubble.setBounds({ ...bubbleSpot(), width: BUBBLE, height: BUBBLE });
+  if (!bubble.isVisible()) bubble.showInactive();
 }
 function sendBubble() { if (bubble && !bubble.webContents.isLoading()) bubble.webContents.send('bubble-state', { open: opened, ...need }); }
 function createBubble() {
@@ -107,7 +110,7 @@ function createBubble() {
   bubble.setAlwaysOnTop(true, 'screen-saver'); // above the sidebar and other windows kept on top
   bubble.loadFile(path.join(__dirname, 'bubble.html'));
   bubble.webContents.on('did-finish-load', sendBubble);
-  bubble.once('ready-to-show', () => { placeBubble(); bubble.showInactive(); });
+  bubble.once('ready-to-show', placeBubble);
   bubble.on('closed', () => { bubble = null; });
 }
 function setBubble(on) {
@@ -118,12 +121,12 @@ function setBubble(on) {
 let dragFrom = null;
 function bubbleIpc() {
   ipcMain.on('bubble-toggle', toggleSidebar);
-  ipcMain.on('bubble-drag', (_e, dy) => {
-    if (!sidebar) return;
-    if (dragFrom === null) dragFrom = prefs.bubbleY;
-    const { workArea } = docked();
-    prefs.bubbleY = Math.max(8, Math.min(dragFrom + (Number(dy) || 0), workArea.height - BUBBLE - 8));
-    if (!slide) placeBubble();
+  // dragged anywhere on the screen; it stays where it's let go
+  ipcMain.on('bubble-drag', (_e, dx, dy) => {
+    if (!bubble) return;
+    if (dragFrom === null) dragFrom = bubbleSpot();
+    prefs.bubbleAt = { x: dragFrom.x + (Number(dx) || 0), y: dragFrom.y + (Number(dy) || 0) };
+    placeBubble();
   });
   ipcMain.on('bubble-drop', () => { dragFrom = null; savePrefs(); });
 }
@@ -172,7 +175,7 @@ function createSidebar() {
   if (SMOKE) {
     sidebar.webContents.on('console-message', (_e, level, message) => { if (level >= 2) console.log('console:', message); });
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
-    const where = () => 'sidebar ' + (sidebar.isVisible() ? 'open at x=' + sidebar.getBounds().x : 'closed') + ', button at ' + JSON.stringify(bubble && bubble.getBounds()) + (bubble && bubble.isAlwaysOnTop() ? ' on top' : '');
+    const where = () => 'sidebar ' + (sidebar.isVisible() ? 'open at x=' + sidebar.getBounds().x : 'closed') + ', button ' + (bubble && bubble.isVisible() ? 'shown at ' + JSON.stringify(bubble.getBounds()) : 'hidden') + (bubble && bubble.isAlwaysOnTop() ? ' (on top)' : '');
     sidebar.webContents.on('did-finish-load', () => setTimeout(async () => {
       const out = await sidebar.webContents.executeJavaScript(`[!!window.floorboardDesktop, document.documentElement.className, document.querySelector('.login, .widget') ? document.querySelector('.login, .widget').className : document.body.innerText.slice(0, 200)].join(' | ')`);
       console.log('SMOKE', out);
@@ -286,7 +289,7 @@ function trayMenu() {
     { label: 'Open the full app', click: openFull },
     { type: 'separator' },
     { label: 'Keep the sidebar on top', type: 'checkbox', checked: prefs.onTop, click: (i) => setOnTop(i.checked) },
-    { label: 'Show the round open/close button', type: 'checkbox', checked: prefs.bubble, click: (i) => setBubble(i.checked) },
+    { label: 'Show the floating button when the sidebar is closed', type: 'checkbox', checked: prefs.bubble, click: (i) => setBubble(i.checked) },
     { label: 'Show the bar at the top of the screen', type: 'checkbox', checked: prefs.bar, click: (i) => setBar(i.checked) },
     { label: 'Dock on the left', type: 'checkbox', checked: prefs.side === 'left', click: (i) => { prefs.side = i.checked ? 'left' : 'right'; savePrefs(); dock(); } },
     { label: 'Start with Windows', type: 'checkbox', checked: app.getLoginItemSettings().openAtLogin, click: (i) => app.setLoginItemSettings({ openAtLogin: i.checked }) },
