@@ -1,4 +1,4 @@
-// The only bridge between the page and Windows: open the full app, show or hide the sidebar, keep it in front,
+// The only bridge between the page and Windows: open the full app, show or hide the sidebar, open or close the bar, keep it in front,
 // print quotes to a printer, and tell Windows how many things need you (red items wake the sidebar).
 const { contextBridge, ipcRenderer } = require('electron');
 contextBridge.exposeInMainWorld('floorboardDesktop', {
@@ -6,6 +6,8 @@ contextBridge.exposeInMainWorld('floorboardDesktop', {
   hide: () => ipcRenderer.send('hide-sidebar'),
   showSidebar: () => ipcRenderer.send('show-sidebar'),
   focus: () => ipcRenderer.send('show-sidebar'),
+  // the bar at the top of the screen: 'pill' (closed) or 'open'; focus to type a reply
+  bar: (state, focus) => ipcRenderer.send('bar-state', state === 'open' ? 'open' : 'pill', !!focus),
   attention: (info) => ipcRenderer.send('attention', { count: Number(info && info.count) || 0, urgent: !!(info && info.urgent) }),
   onTop: { get: () => ipcRenderer.invoke('on-top-get'), set: (on) => ipcRenderer.invoke('on-top-set', !!on) },
   printers: () => ipcRenderer.invoke('printers'),

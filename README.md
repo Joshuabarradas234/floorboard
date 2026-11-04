@@ -11,8 +11,9 @@ Double-click `desktop/Start Floorboard.cmd`.
 - The sidebar docks to the right edge of the screen. Windows shows your wallpaper through it as frosted glass.
 - A round Floorboard button stays in front of every window, whatever you have open. Click it to slide the sidebar open or closed. While the sidebar is open, the button sits on its edge and shows ✕. Drag the button up or down to move it. Its badge shows how many things need you, and turns red for ASAP.
 - You can also show or hide the sidebar with **Ctrl+Alt+F**, or by clicking the Floorboard icon in the system tray.
-- Right-click the tray icon for: open the full app, keep the sidebar on top, show or hide the round button, dock it on the left, start with Windows.
-- The sidebar and the full app share the same data and update each other live.
+- **The bar at the top of the screen:** a small dark pill hangs from the top middle of the screen, in front of everything. It shows the newest unread chat, how many messages are unread (green) and how many things need you (red for ASAP). Point at it or click it and it opens: one line per chat with who wrote, what they said and how many are unread. Photos, voice notes and files show as labels. Click a chat to read it there and type an answer; **Enter** sends. A chat only counts as read once you open it. **Esc**, or clicking somewhere else, folds it back into the pill. The arrow button opens that chat in the full app.
+- Right-click the tray icon for: open the full app, keep the sidebar on top, show or hide the round button, show or hide the bar at the top, dock it on the left, start with Windows.
+- The sidebar, the bar and the full app share the same data and update each other live.
 
 ## Phone: app icon on your home screen
 

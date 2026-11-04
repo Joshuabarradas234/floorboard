@@ -515,6 +515,55 @@ input[type=checkbox],input[type=radio]{accent-color:#fff}
 .fcard.dark .fc-back{background-image:linear-gradient(160deg,#3d3936,#141210)}
 .fcard.dark .fc-back::after{background:linear-gradient(180deg,rgba(0,0,0,0),rgba(0,0,0,.3))}
 .fcard.dark .fc-front{background:linear-gradient(180deg,rgba(38,34,31,.72),rgba(16,14,12,.92));box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 -4px 14px rgba(0,0,0,.14)}
+/* the bar at the top of the screen (Windows app): a dark pill hanging from the top edge that opens into a chat panel */
+html.bar-mode,html.bar-mode body,html.bar-mode #root{background:transparent!important;overflow:hidden}
+.fbar{position:fixed;left:50%;top:0;transform:translateX(-50%);display:flex;justify-content:center;font:13px/1.35 var(--f-body)}
+.fbar-pill{display:flex;align-items:center;gap:8px;height:34px;max-width:300px;padding:0 10px 0 8px;border:0;border-radius:0 0 18px 18px;color:#f4ece4;
+  background:linear-gradient(180deg,#0d0b0a,#1c1714);box-shadow:0 8px 20px rgba(0,0,0,.35),inset 0 -1px 0 rgba(255,255,255,.08)}
+.fbar-mark{width:22px;height:22px;flex:none}
+.fbar-peek{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;color:rgba(244,236,228,.72);max-width:190px}
+.fbar-peek b{color:#fff;font-weight:700}
+.fbar-n{flex:none;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:rgba(255,255,255,.16);color:#fff;font:700 10.5px/18px var(--f-body);text-align:center}
+.fbar-n.g{background:#2fb36a}.fbar-n.r{background:#ff6b57}
+.fbar-panel{width:396px;height:460px;display:flex;flex-direction:column;border-radius:0 0 24px 24px;overflow:hidden;color:#f4ece4;
+  background:linear-gradient(180deg,rgba(13,11,10,.97),rgba(28,23,20,.97));box-shadow:0 16px 40px rgba(0,0,0,.45),inset 0 -1px 0 rgba(255,255,255,.08);animation:fbar-in .22s cubic-bezier(.2,1,.35,1)}
+@keyframes fbar-in{from{transform:scale(.6,.12);transform-origin:50% 0;opacity:.4}to{transform:none;opacity:1}}
+.fbar-head{display:flex;align-items:center;gap:8px;padding:10px 12px 8px}
+.fbar-head>b{font:700 14px var(--f-display)}
+.fbar-chips{display:flex;gap:2px;background:rgba(255,255,255,.07);border-radius:999px;padding:2px}
+.fbar-chips button{border:0;background:none;color:rgba(244,236,228,.7);font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:999px}
+.fbar-chips button.on{background:rgba(255,255,255,.16);color:#fff}
+.fbar-need{margin-left:auto;border:0;border-radius:999px;padding:3px 9px;font-size:11.5px;font-weight:700;background:rgba(255,181,71,.2);color:#ffcf85}
+.fbar-need.r{background:rgba(255,107,87,.22);color:#ff9c8c}
+.fbar-ic{display:grid;place-items:center;width:28px;height:28px;border:0;border-radius:9px;background:rgba(255,255,255,.08);color:#f4ece4;flex:none}
+.fbar-head .fbar-ic{margin-left:auto}.fbar-need+.fbar-ic{margin-left:0}
+.fbar-ic:hover{background:rgba(255,255,255,.16)}
+.fbar-list{flex:1;overflow-y:auto;padding:0 6px 8px}
+.fbar-row{display:flex;align-items:center;gap:10px;width:100%;border:0;background:none;text-align:left;padding:7px 8px;border-radius:12px;color:inherit}
+.fbar-row:hover{background:rgba(255,255,255,.07)}
+.fbar-row-m{flex:1;min-width:0;display:grid;gap:1px}
+.fbar-row-t{display:flex;gap:6px;align-items:baseline}.fbar-row-t b{flex:1;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fbar-row-t i{font-style:normal;font-size:11px;color:rgba(244,236,228,.5)}.fbar-row.new .fbar-row-t i{color:#5fd497}
+.fbar-row-s{font-size:12px;color:rgba(244,236,228,.62);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fbar-row.new .fbar-row-s{color:rgba(244,236,228,.86)}
+.fbar-tag{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.1);color:#f4ece4;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fbar-tag.sm{font-size:10.5px;padding:0 6px;vertical-align:1px}
+.fbar-empty{color:rgba(244,236,228,.55);text-align:center;margin:40px 0}
+.fbar-thread{display:flex;flex-direction:column;height:100%}
+.fbar-th{display:flex;align-items:center;gap:8px;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.07)}
+.fbar-th b{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fbar-msgs{flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:6px}
+.fbar-m{align-self:flex-start;max-width:82%;display:grid;gap:3px;padding:6px 10px 5px;border-radius:14px 14px 14px 4px;background:rgba(255,255,255,.09);font-size:12.5px;line-height:1.35;word-wrap:break-word}
+.fbar-m.mine{align-self:flex-end;border-radius:14px 14px 4px 14px;background:#1f6e46}
+.fbar-m small{font-weight:700;font-size:11px}
+.fbar-m i{font-style:normal;font-size:10px;color:rgba(244,236,228,.5);justify-self:end}
+.fbar-sys{align-self:center;font-size:11px;color:rgba(244,236,228,.5);margin:2px 0}
+.fbar-reply{display:flex;gap:6px;padding:8px 10px 12px}
+.fbar-reply input{flex:1;min-width:0;border:0;border-radius:999px;padding:8px 14px;background:rgba(255,255,255,.09);color:#fff;font-size:13px;outline:none}
+.fbar-reply input:focus{background:rgba(255,255,255,.13)}
+.fbar-reply button{display:grid;place-items:center;width:34px;height:34px;border:0;border-radius:50%;background:#2fb36a;color:#fff}
+.fbar-reply button:disabled{opacity:.4}
+@media (prefers-reduced-motion:reduce){.fbar-panel{animation:none}}
 .fsearch{width:100%;max-width:420px;margin:0 0 14px}
 .ftiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}
 .ftile{display:flex;flex-direction:column;gap:3px;text-align:left;border:1px solid var(--glass-line);background:var(--glass);border-radius:var(--r);padding:8px 8px 10px;box-shadow:var(--hi);min-width:0}
@@ -2390,6 +2439,97 @@ function Widget() {
     ${composer && html`<${Composer} preset=${composer} onClose=${closeComposer}/>`}
     <${ConfirmModal}/>
     <${Lightbox}/>
+  </div>`;
+}
+
+/* ---------------- the bar: Floorboard at the top of the screen (Windows app) ---------------- */
+// A small pill hanging from the top of the screen. Hover or click it and it opens: one line per chat (who, what, how many
+// unread), photos, voice notes and files shown as labels, and a chat opens right there to read and answer (Enter sends).
+// A chat only counts as read once it's opened here or in the app, never just because the bar showed it.
+const attTag = (a) => (a.kind === 'image' ? 'Photo' : a.kind === 'video' ? 'Video' : a.kind === 'audio' ? 'Voice note' : a.name);
+function barPreview(db, m, me) {
+  if (!m) return { who: '', text: 'No messages yet' };
+  if (m.kind === 'system') return { who: '', text: m.text };
+  const p = m.postId && db.posts.find((x) => x.id === m.postId), a = (m.attachments || [])[0];
+  return { who: m.user === me ? 'You' : firstName(userById(db, m.user)), text: p ? TYPES[p.type].label + ': ' + p.title : m.text, tag: !p && a ? attTag(a) : '' };
+}
+const BAR_MARK = html`<svg className="fbar-mark" viewBox="0 0 512 512" aria-hidden="true"><rect x="122.9" y="133.1" width="266.2" height="51.2" rx="25.6" fill="#ff6b57"/><rect x="122.9" y="215" width="194.6" height="51.2" rx="25.6" fill="#ffb547"/><rect x="122.9" y="297" width="112.6" height="51.2" rx="25.6" fill="#4fd688"/></svg>`;
+function BarThread({ c, onBack }) {
+  const { db, user, update } = useApp();
+  const [text, setText] = useState('');
+  const box = useRef(null), input = useRef(null);
+  const msgs = db.messages.filter((m) => m.chat === c.id).sort((a, b) => a.at - b.at).slice(-40);
+  const lastAt = msgs.length ? msgs[msgs.length - 1].at : 0;
+  useEffect(() => {
+    if (((c.read || {})[user.id] || 0) < lastAt) update((d) => { const x = d.chats.find((y) => y.id === c.id); x.read = x.read || {}; x.read[user.id] = Date.now(); }, true);
+  }, [c.id, lastAt]);
+  useEffect(() => { const el = box.current; if (el) el.scrollTop = el.scrollHeight; }, [c.id, msgs.length]);
+  useEffect(() => { if (input.current) input.current.focus(); }, [c.id]);
+  const send = (e) => {
+    e.preventDefault();
+    const body = text.trim(); if (!body) return;
+    const now = Date.now();
+    update((d) => {
+      d.messages.push({ id: uid('m'), chat: c.id, user: user.id, at: now, text: body, attachments: [], mentions: [], replyTo: null, postId: null, kind: 'msg' });
+      const x = d.chats.find((y) => y.id === c.id); x.read = x.read || {}; x.read[user.id] = now;
+    });
+    setText('');
+  };
+  const desk = window.floorboardDesktop;
+  return html`<div className="fbar-thread">
+    <div className="fbar-th"><button className="fbar-ic" onClick=${onBack} aria-label="Back to chats"><${Icon} n="back" s=${16}/></button>
+      <${ChatAvatar} c=${c} s=${26}/><b>${chatName(db, c, user.id)}</b>
+      <button className="fbar-ic" style=${{ marginLeft: 'auto' }} onClick=${() => (desk && desk.openFull ? desk.openFull('chat:' + c.id) : (location.hash = 'go-chat:' + c.id))} title="Open in Floorboard" aria-label="Open this chat in Floorboard"><${Icon} n="expand" s=${15}/></button></div>
+    <div className="fbar-msgs" ref=${box}>${msgs.map((m) => {
+      if (m.kind === 'system') return html`<p key=${m.id} className="fbar-sys">${m.text}</p>`;
+      const mine = m.user === user.id, p = m.postId && db.posts.find((x) => x.id === m.postId);
+      return html`<div key=${m.id} className=${'fbar-m' + (mine ? ' mine' : '')}>
+        ${!mine && c.kind !== 'dm' && html`<small style=${{ color: nameColor(m.user) }}>${firstName(userById(db, m.user))}</small>`}
+        ${p && html`<span className="fbar-tag">${TYPES[p.type].label}: ${p.title}</span>`}
+        ${(m.attachments || []).map((a) => html`<span key=${a.id} className="fbar-tag"><${Icon} n=${attIcon(a)} s=${12}/>${attTag(a)}</span>`)}
+        ${m.text && !p && html`<span>${m.text}</span>`}
+        <i>${hm(m.at)}</i></div>`;
+    })}</div>
+    <form className="fbar-reply" onSubmit=${send}><input id=${'bar-reply-' + c.id} ref=${input} value=${text} onChange=${(e) => setText(e.target.value)} placeholder=${'Message ' + chatName(db, c, user.id)} aria-label="Reply" autoComplete="off"/><button aria-label="Send" disabled=${!text.trim()}><${Icon} n="send" s=${15}/></button></form>
+  </div>`;
+}
+function Bar() {
+  const { db, user } = useApp();
+  const [open, setOpen] = useState(false), [pinned, setPinned] = useState(false), [only, setOnly] = useState(false), [chatId, setChatId] = useState(null);
+  const leave = useRef(null), desk = window.floorboardDesktop;
+  const rows = myChats(db, user.id).map((c) => ({ c, last: lastMsg(db, c), unread: unreadIn(db, c, user.id) })).sort((a, b) => ((b.last && b.last.at) || 0) - ((a.last && a.last.at) || 0));
+  const unread = rows.filter((r) => r.unread), needs = db.posts.filter((p) => needsMe(p, user.id));
+  const urgent = needs.some((p) => p.level === 'red');
+  const shown = only ? unread : rows, cur = chatId && rows.find((r) => r.c.id === chatId);
+  const show = (on, pin) => {
+    clearTimeout(leave.current); setOpen(on); setPinned(!!(on && pin));
+    if (!on) setChatId(null);
+    if (desk && desk.bar) desk.bar(on ? 'open' : 'pill', !!pin);
+  };
+  useEffect(() => {
+    const blur = () => show(false), key = (e) => { if (e.key === 'Escape') show(false); };
+    window.addEventListener('blur', blur); window.addEventListener('keydown', key);
+    return () => { window.removeEventListener('blur', blur); window.removeEventListener('keydown', key); };
+  }, []);
+  const top = unread[0], tp = top && barPreview(db, top.last, user.id);
+  return html`<div className=${'fbar' + (open ? ' open' : '')} onMouseEnter=${() => { clearTimeout(leave.current); if (!open) show(true); }}
+    onMouseLeave=${() => { if (!pinned) leave.current = setTimeout(() => show(false), 500); }}>
+    ${!open ? html`<button className="fbar-pill" onClick=${() => show(true, true)} aria-label="Open the Floorboard bar">
+        ${BAR_MARK}<span className="fbar-peek">${tp ? html`<b>${chatName(db, top.c, user.id)}</b> ${tp.text || tp.tag}` : 'All caught up'}</span>
+        ${unread.length > 0 && html`<b className="fbar-n g">${unread.reduce((a, r) => a + r.unread, 0)}</b>`}${needs.length > 0 && html`<b className=${'fbar-n' + (urgent ? ' r' : '')}>${needs.length}</b>`}</button>`
+    : html`<div className="fbar-panel" onMouseDown=${() => setPinned(true)}>
+      ${cur ? html`<${BarThread} key=${cur.c.id} c=${cur.c} onBack=${() => setChatId(null)}/>` : html`
+        <div className="fbar-head">${BAR_MARK}<b>Chats</b>
+          <div className="fbar-chips"><button className=${only ? '' : 'on'} onClick=${() => setOnly(false)}>All</button><button className=${only ? 'on' : ''} onClick=${() => setOnly(true)}>Unread${unread.length ? ' ' + unread.length : ''}</button></div>
+          ${needs.length > 0 && html`<button className=${'fbar-need' + (urgent ? ' r' : '')} onClick=${() => desk && desk.showSidebar && desk.showSidebar()} title="Open Needs you in the sidebar">${needs.length} need you</button>`}
+          <button className="fbar-ic" onClick=${() => (desk && desk.openFull ? desk.openFull() : (location.hash = ''))} title="Open Floorboard" aria-label="Open Floorboard"><${Icon} n="expand" s=${15}/></button></div>
+        <div className="fbar-list">${shown.length ? shown.map(({ c, last, unread: n }) => { const pv = barPreview(db, last, user.id); return html`<button key=${c.id} className=${'fbar-row' + (n ? ' new' : '')} onClick=${() => { setPinned(true); setChatId(c.id); }}>
+            <${ChatAvatar} c=${c} s=${30}/>
+            <span className="fbar-row-m"><span className="fbar-row-t"><b>${chatName(db, c, user.id)}</b><i>${last ? shortTime(last.at) : ''}</i></span>
+              <span className="fbar-row-s">${pv.who && (c.kind !== 'dm' || pv.who === 'You') ? pv.who + ': ' : ''}${pv.tag && html`<span className="fbar-tag sm"><${Icon} n=${attIcon((last.attachments || [])[0])} s=${11}/>${pv.tag}</span>`} ${pv.text}</span></span>
+            ${n > 0 && html`<b className="fbar-n g">${n}</b>`}</button>`; })
+          : html`<p className="fbar-empty">${only ? 'Nothing unread. All caught up.' : 'No chats yet.'}</p>`}</div>`}
+    </div>`}
   </div>`;
 }
 
@@ -7587,7 +7727,7 @@ function App() {
   // off: demo store in this browser. checking/loading: connecting. signedout, ready, or offline (showing the last copy, read only).
   const [cloud, setCloud] = useState(CLOUD ? 'checking' : 'off');
   const [syncStatus, setSyncStatus] = useState('ok');
-  const [mode, setMode] = useState(() => (location.hash === '#widget' ? 'widget' : 'full'));
+  const [mode, setMode] = useState(() => (location.hash === '#widget' ? 'widget' : location.hash === '#bar' ? 'bar' : 'full'));
   const [localLook, setLocalLook] = useState(readLocalLook);
   const [lookOpen, setLookOpen] = useState(false);
   const [phoneOpen, setPhoneOpen] = useState(false);
@@ -7687,12 +7827,12 @@ function App() {
         try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { /* the hash just stays */ }
         return;
       }
-      setMode(hs === '#widget' ? 'widget' : 'full');
+      setMode(hs === '#widget' ? 'widget' : hs === '#bar' ? 'bar' : 'full');
     };
     if (location.hash.startsWith('#go-')) h();
     window.addEventListener('hashchange', h); return () => window.removeEventListener('hashchange', h);
   }, []);
-  useEffect(() => { document.documentElement.classList.toggle('native-glass', DESKTOP_SHELL && mode === 'widget'); }, [mode]);
+  useEffect(() => { document.documentElement.classList.toggle('native-glass', DESKTOP_SHELL && mode === 'widget'); document.documentElement.classList.toggle('bar-mode', mode === 'bar'); }, [mode]);
   useEffect(() => { MS.finish(); }, []);
   // a tapped phone alert, when the app was already open in the background: go to what it was about
   useEffect(() => {
@@ -7771,7 +7911,7 @@ function App() {
   const openAlertRef = useRef(openAlert); openAlertRef.current = openAlert;
   useEffect(() => { known.current = null; setAlerts([]); }, [me]);
   useEffect(() => {
-    if (!self) return;
+    if (!self || mode === 'bar') return; // the sidebar already alerts; the bar doesn't repeat it
     const desk = window.floorboardDesktop;
     const items = alertItems(db, self.id);
     const count = db.posts.filter((p) => needsMe(p, self.id)).length;
@@ -7798,7 +7938,7 @@ function App() {
   const stickySig = self ? stickiesOf(db, self.id).map((n) => n.id + ':' + (n.remindAt || 0) + ':' + (n.firedAt || 0) + ':' + (n.done ? 1 : 0)).join('|') : '';
   const [stickyWake, setStickyWake] = useState(0);
   useEffect(() => {
-    if (!self || (CLOUD && cloud !== 'ready')) return;
+    if (!self || (CLOUD && cloud !== 'ready') || mode === 'bar') return;
     const now = Date.now(), waiting = stickiesOf(dbRef.current, self.id).filter((n) => !n.done && n.remindAt && !n.firedAt);
     const due = waiting.filter((n) => n.remindAt <= now + 1000);
     if (due.length) {
@@ -8000,6 +8140,9 @@ function App() {
     cloud, syncStatus, cloudSignedIn: (session) => { setView(recordAsk ? 'calendar' : 'chats'); setOpenChatId(null); startCloud(session); },
     resetDemo: async () => { await Blobs.clear(); setDb(seed()); setOpenId(null); setOpenChatId(null); setView('chats'); setFilters(NO_FILTERS); toast('Demo store reset'); },
   };
+  // the bar at the top of the screen: just the pill, on a see-through window
+  if (mode === 'bar') return html`<${Ctx.Provider} value=${ctx}>${user && (!CLOUD || cloud === 'ready' || cloud === 'offline') ? html`<${Bar}/>`
+    : html`<div className="fbar"><button className="fbar-pill" onClick=${() => { const d = window.floorboardDesktop; if (d && d.showSidebar) d.showSidebar(); }}>${BAR_MARK}<span className="fbar-peek">${cloud === 'checking' || cloud === 'loading' ? 'Connecting…' : 'Log in to Floorboard'}</span></button></div>`}<//>`;
   return html`<${Ctx.Provider} value=${ctx}>
     <${Scene} look=${look}/>
     ${cloud === 'checking' || cloud === 'loading' ? html`<${CloudLoading} text=${cloud === 'loading' ? 'Loading your store…' : 'Connecting…'}/>`

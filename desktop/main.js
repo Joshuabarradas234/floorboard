@@ -1,5 +1,5 @@
-// Floorboard on Windows: a frosted-glass sidebar docked to the edge of the screen,
-// a tray icon to show or hide it, and the full app in its own window.
+// Floorboard on Windows: a frosted-glass sidebar docked to the edge of the screen, a bar at the top of the screen
+// for chats, a tray icon to show or hide them, and the full app in its own window.
 const { app, BrowserWindow, Tray, Menu, nativeImage, screen, globalShortcut, ipcMain, shell, session, safeStorage } = require('electron');
 const path = require('path'), fs = require('fs');
 
@@ -11,8 +11,10 @@ const SMOKE = process.env.FLOORBOARD_SMOKE === '1'; // load once, print the resu
 // then stops drawing and stays black. Draw it whenever it's open.
 app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
 const BUBBLE = 64; // the round button's window: the 48px button and its shadow
-let prefs = { onTop: false, side: 'right', bubble: true, bubbleY: 120 };
-let sidebar = null, full = null, tray = null, bubble = null;
+// the bar at the top of the screen: its window closed (the pill and its shadow) and open (the chat panel)
+const BAR = { pill: { width: 320, height: 48 }, open: { width: 430, height: 490 } };
+let prefs = { onTop: false, side: 'right', bubble: true, bubbleY: 120, bar: true };
+let sidebar = null, full = null, tray = null, bubble = null, bar = null, barState = 'pill';
 let opened = false, slide = null, need = { count: 0, urgent: false };
 
 const prefsFile = () => path.join(app.getPath('userData'), 'prefs.json');
@@ -108,6 +110,33 @@ function bubbleIpc() {
   ipcMain.on('bubble-drop', () => { dragFrom = null; savePrefs(); });
 }
 
+// The bar hangs from the top middle of the main screen, in front of everything. It's the app in its own small window
+// (#bar): a pill showing the newest unread chat, which opens into a list of chats to read and answer.
+function placeBar(state) {
+  if (!bar) return;
+  barState = state === 'open' ? 'open' : 'pill';
+  const { bounds } = screen.getPrimaryDisplay(), size = BAR[barState];
+  bar.setBounds({ x: Math.round(bounds.x + (bounds.width - size.width) / 2), y: bounds.y, ...size });
+}
+function createBar() {
+  if (bar || !prefs.bar) return;
+  bar = new BrowserWindow({
+    ...BAR.pill, frame: false, transparent: true, backgroundColor: '#00000000', hasShadow: false, resizable: false, movable: false,
+    minimizable: false, maximizable: false, fullscreenable: false, skipTaskbar: true, alwaysOnTop: true, show: false, title: 'Floorboard bar', webPreferences,
+  });
+  bar.setAlwaysOnTop(true, 'screen-saver');
+  bar.loadFile(PAGE, { hash: 'bar', query: { shell: 'desktop' } });
+  openLinksOutside(bar);
+  bar.once('ready-to-show', () => { placeBar('pill'); bar.showInactive(); });
+  bar.on('close', (e) => { if (!app.isQuitting) { e.preventDefault(); setBar(false); } });
+  bar.on('closed', () => { bar = null; });
+}
+function setBar(on) {
+  prefs.bar = !!on; savePrefs();
+  if (prefs.bar) createBar(); else if (bar) { const b = bar; bar = null; b.destroy(); }
+  if (tray) tray.setContextMenu(trayMenu());
+}
+
 function createSidebar() {
   const { workArea } = screen.getPrimaryDisplay();
   sidebar = new BrowserWindow({
@@ -132,6 +161,10 @@ function createSidebar() {
       console.log('SMOKE button page:', await bubble.webContents.executeJavaScript(`[!!window.floorboardBubble, document.body.className || 'closed', document.getElementById('b').getAttribute('aria-label')].join(' | ')`));
       toggleSidebar(); await wait(400); console.log('SMOKE', where());
       console.log('SMOKE button page:', await bubble.webContents.executeJavaScript(`[document.body.className || 'closed', document.getElementById('b').getAttribute('aria-label')].join(' | ')`));
+      if (bar) {
+        console.log('SMOKE bar', JSON.stringify(bar.getBounds()), bar.isVisible() ? 'shown' : 'hidden', bar.isAlwaysOnTop() ? 'on top' : '', '|', await bar.webContents.executeJavaScript(`[document.documentElement.className, document.querySelector('.fbar-pill') ? document.querySelector('.fbar-pill').innerText.replace(/\\s+/g, ' ') : document.body.innerText.slice(0, 120)].join(' | ')`));
+        placeBar('open'); console.log('SMOKE bar open', JSON.stringify(bar.getBounds())); placeBar('pill');
+      }
       app.isQuitting = true; app.quit();
     }, 1500));
   } else {
@@ -232,6 +265,7 @@ function trayMenu() {
     { type: 'separator' },
     { label: 'Keep the sidebar on top', type: 'checkbox', checked: prefs.onTop, click: (i) => setOnTop(i.checked) },
     { label: 'Show the round open/close button', type: 'checkbox', checked: prefs.bubble, click: (i) => setBubble(i.checked) },
+    { label: 'Show the bar at the top of the screen', type: 'checkbox', checked: prefs.bar, click: (i) => setBar(i.checked) },
     { label: 'Dock on the left', type: 'checkbox', checked: prefs.side === 'left', click: (i) => { prefs.side = i.checked ? 'left' : 'right'; savePrefs(); dock(); } },
     { label: 'Start with Windows', type: 'checkbox', checked: app.getLoginItemSettings().openAtLogin, click: (i) => app.setLoginItemSettings({ openAtLogin: i.checked }) },
     { type: 'separator' },
@@ -264,11 +298,13 @@ else {
     session.defaultSession.setPermissionRequestHandler((_wc, permission, done) => done(permission === 'media' || permission === 'notifications'));
     createSidebar();
     createBubble();
+    createBar();
     bubbleIpc();
+    ipcMain.on('bar-state', (_e, state, focus) => { placeBar(state); if (bar && state === 'open' && focus) bar.focus(); });
     if (SMOKE) return;
     buildTray();
     globalShortcut.register('Control+Alt+F', toggleSidebar);
-    screen.on('display-metrics-changed', dock);
+    screen.on('display-metrics-changed', () => { dock(); placeBar(barState); });
     ipcMain.on('open-full', openFull);
     ipcMain.on('hide-sidebar', hideSidebar);
     ipcMain.on('show-sidebar', showSidebar);
