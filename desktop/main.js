@@ -10,8 +10,10 @@ const SMOKE = process.env.FLOORBOARD_SMOKE === '1'; // load once, print the resu
 // Windows can wrongly judge the full window to be covered (with the sidebar kept in front, or some screen tools), and it
 // then stops drawing and stays black. Draw it whenever it's open.
 app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
-let prefs = { onTop: false, side: 'right' };
-let sidebar = null, full = null, tray = null;
+const BUBBLE = 64; // the round button's window: the 48px button and its shadow
+let prefs = { onTop: false, side: 'right', bubble: true, bubbleY: 120 };
+let sidebar = null, full = null, tray = null, bubble = null;
+let opened = false, slide = null, need = { count: 0, urgent: false };
 
 const prefsFile = () => path.join(app.getPath('userData'), 'prefs.json');
 function loadPrefs() { try { prefs = { ...prefs, ...JSON.parse(fs.readFileSync(prefsFile(), 'utf8')) }; } catch (e) { /* first run */ } }
@@ -22,15 +24,89 @@ function openLinksOutside(win) {
   win.webContents.setWindowOpenHandler(({ url }) => { if (/^https?:/.test(url)) shell.openExternal(url); return { action: 'deny' }; });
 }
 
-function dock() {
-  if (!sidebar) return;
+// x is where the sidebar sits docked; away is just past the screen edge, where it slides to when it closes.
+// Between slides its bounds stay docked, even while it's hidden.
+function docked() {
   const { workArea } = screen.getDisplayMatching(sidebar.getBounds());
   const width = Math.min(Math.max(sidebar.getBounds().width, 320), 520);
-  const x = prefs.side === 'left' ? workArea.x : workArea.x + workArea.width - width;
-  sidebar.setBounds({ x, y: workArea.y, width, height: workArea.height });
+  const left = prefs.side === 'left';
+  return { workArea, width, x: left ? workArea.x : workArea.x + workArea.width - width, away: left ? workArea.x - width : workArea.x + workArea.width };
 }
-function showSidebar() { if (!sidebar) return; dock(); sidebar.show(); sidebar.focus(); }
-function toggleSidebar() { if (sidebar && sidebar.isVisible()) sidebar.hide(); else showSidebar(); }
+function dock() {
+  if (!sidebar || slide) return;
+  const { workArea, width, x } = docked();
+  sidebar.setBounds({ x, y: workArea.y, width, height: workArea.height });
+  placeBubble();
+}
+// Slide the sidebar in from the screen edge or back out, carrying the round button with it.
+function slideTo(open, { focus = true } = {}) {
+  if (!sidebar) return;
+  clearInterval(slide); slide = null;
+  const { workArea, width, x, away } = docked(), y = workArea.y, height = workArea.height;
+  const from = sidebar.isVisible() ? sidebar.getBounds().x : away, to = open ? x : away;
+  opened = open; sendBubble();
+  if (open && !sidebar.isVisible()) { sidebar.setBounds({ x: from, y, width, height }); if (focus) sidebar.show(); else sidebar.showInactive(); }
+  if (open && focus) sidebar.focus();
+  const t0 = Date.now(), ms = 220;
+  const step = () => {
+    const k = Math.min(1, (Date.now() - t0) / ms), nx = Math.round(from + (to - from) * (1 - Math.pow(1 - k, 3)));
+    sidebar.setBounds({ x: nx, y, width, height });
+    placeBubble(nx);
+    if (k < 1) return;
+    clearInterval(slide); slide = null;
+    if (!open) { sidebar.hide(); sidebar.setBounds({ x, y, width, height }); }
+    placeBubble();
+  };
+  slide = setInterval(step, 15);
+  step();
+}
+const showSidebar = () => slideTo(true);
+const hideSidebar = () => slideTo(false);
+const toggleSidebar = () => slideTo(!opened);
+
+// The round button stays in front of every window. It rides on the sidebar's inner edge while the sidebar is open,
+// and waits at the screen edge while it's closed. Drag it up or down to move it.
+function placeBubble(sidebarX) {
+  if (!bubble || !sidebar) return;
+  const { workArea, width, x, away } = docked();
+  const sx = sidebarX !== undefined ? sidebarX : opened ? x : away;
+  const edge = prefs.side === 'left' ? sx + width : sx;
+  const bx = Math.max(workArea.x + 4, Math.min(edge - BUBBLE / 2, workArea.x + workArea.width - BUBBLE - 4));
+  const by = workArea.y + Math.max(8, Math.min(prefs.bubbleY, workArea.height - BUBBLE - 8));
+  bubble.setBounds({ x: Math.round(bx), y: Math.round(by), width: BUBBLE, height: BUBBLE });
+}
+function sendBubble() { if (bubble && !bubble.webContents.isLoading()) bubble.webContents.send('bubble-state', { open: opened, ...need }); }
+function createBubble() {
+  if (bubble || !prefs.bubble) return;
+  bubble = new BrowserWindow({
+    width: BUBBLE, height: BUBBLE, frame: false, transparent: true, backgroundColor: '#00000000', hasShadow: false, resizable: false,
+    movable: false, minimizable: false, maximizable: false, fullscreenable: false, skipTaskbar: true, focusable: false,
+    alwaysOnTop: true, show: false, title: 'Floorboard',
+    webPreferences: { preload: path.join(__dirname, 'bubble-preload.js'), contextIsolation: true, sandbox: true },
+  });
+  bubble.setAlwaysOnTop(true, 'screen-saver'); // above the sidebar and other windows kept on top
+  bubble.loadFile(path.join(__dirname, 'bubble.html'));
+  bubble.webContents.on('did-finish-load', sendBubble);
+  bubble.once('ready-to-show', () => { placeBubble(); bubble.showInactive(); });
+  bubble.on('closed', () => { bubble = null; });
+}
+function setBubble(on) {
+  prefs.bubble = !!on; savePrefs();
+  if (prefs.bubble) createBubble(); else if (bubble) bubble.destroy();
+  if (tray) tray.setContextMenu(trayMenu());
+}
+let dragFrom = null;
+function bubbleIpc() {
+  ipcMain.on('bubble-toggle', toggleSidebar);
+  ipcMain.on('bubble-drag', (_e, dy) => {
+    if (!sidebar) return;
+    if (dragFrom === null) dragFrom = prefs.bubbleY;
+    const { workArea } = docked();
+    prefs.bubbleY = Math.max(8, Math.min(dragFrom + (Number(dy) || 0), workArea.height - BUBBLE - 8));
+    if (!slide) placeBubble();
+  });
+  ipcMain.on('bubble-drop', () => { dragFrom = null; savePrefs(); });
+}
 
 function createSidebar() {
   const { workArea } = screen.getPrimaryDisplay();
@@ -42,13 +118,21 @@ function createSidebar() {
   });
   sidebar.loadFile(PAGE, { hash: 'widget', query: { shell: 'desktop' } });
   openLinksOutside(sidebar);
-  sidebar.on('close', (e) => { if (!app.isQuitting) { e.preventDefault(); sidebar.hide(); } });
-  sidebar.on('focus', () => sidebar.flashFrame(false));
+  sidebar.on('close', (e) => { if (!app.isQuitting) { e.preventDefault(); hideSidebar(); } });
+  sidebar.on('focus', () => { sidebar.flashFrame(false); if (bubble) bubble.moveTop(); });
+  sidebar.on('resize', () => { if (!slide) placeBubble(); });
   if (SMOKE) {
     sidebar.webContents.on('console-message', (_e, level, message) => { if (level >= 2) console.log('console:', message); });
+    const wait = (ms) => new Promise((r) => setTimeout(r, ms));
+    const where = () => 'sidebar ' + (sidebar.isVisible() ? 'open at x=' + sidebar.getBounds().x : 'closed') + ', button at ' + JSON.stringify(bubble && bubble.getBounds()) + (bubble && bubble.isAlwaysOnTop() ? ' on top' : '');
     sidebar.webContents.on('did-finish-load', () => setTimeout(async () => {
       const out = await sidebar.webContents.executeJavaScript(`[!!window.floorboardDesktop, document.documentElement.className, document.querySelector('.login, .widget') ? document.querySelector('.login, .widget').className : document.body.innerText.slice(0, 200)].join(' | ')`);
-      console.log('SMOKE', out); app.isQuitting = true; app.quit();
+      console.log('SMOKE', out);
+      slideTo(true); await wait(400); console.log('SMOKE', where());
+      console.log('SMOKE button page:', await bubble.webContents.executeJavaScript(`[!!window.floorboardBubble, document.body.className || 'closed', document.getElementById('b').getAttribute('aria-label')].join(' | ')`));
+      toggleSidebar(); await wait(400); console.log('SMOKE', where());
+      console.log('SMOKE button page:', await bubble.webContents.executeJavaScript(`[document.body.className || 'closed', document.getElementById('b').getAttribute('aria-label')].join(' | ')`));
+      app.isQuitting = true; app.quit();
     }, 1500));
   } else {
     sidebar.once('ready-to-show', showSidebar);
@@ -120,6 +204,7 @@ function msIpc() {
 function setOnTop(on) {
   prefs.onTop = !!on;
   if (sidebar) sidebar.setAlwaysOnTop(prefs.onTop);
+  if (bubble) bubble.moveTop();
   savePrefs();
   if (tray) tray.setContextMenu(trayMenu());
 }
@@ -146,6 +231,7 @@ function trayMenu() {
     { label: 'Open the full app', click: openFull },
     { type: 'separator' },
     { label: 'Keep the sidebar on top', type: 'checkbox', checked: prefs.onTop, click: (i) => setOnTop(i.checked) },
+    { label: 'Show the round open/close button', type: 'checkbox', checked: prefs.bubble, click: (i) => setBubble(i.checked) },
     { label: 'Dock on the left', type: 'checkbox', checked: prefs.side === 'left', click: (i) => { prefs.side = i.checked ? 'left' : 'right'; savePrefs(); dock(); } },
     { label: 'Start with Windows', type: 'checkbox', checked: app.getLoginItemSettings().openAtLogin, click: (i) => app.setLoginItemSettings({ openAtLogin: i.checked }) },
     { type: 'separator' },
@@ -163,23 +249,28 @@ function buildTray() {
 // the tray tooltip always shows how many things need you.
 function attention(_e, { count, urgent }) {
   if (tray) tray.setToolTip(count ? 'Floorboard · ' + count + (count === 1 ? ' thing needs you' : ' things need you') : 'Floorboard · all caught up');
-  if (urgent && sidebar) { if (!sidebar.isVisible()) { dock(); sidebar.showInactive(); } sidebar.flashFrame(true); }
+  need = { count, urgent }; sendBubble();
+  if (urgent && sidebar) { if (!opened) slideTo(true, { focus: false }); sidebar.flashFrame(true); }
 }
 
 app.setAppUserModelId('Floorboard'); // lets Windows show pop-up notifications for the app
-if (!app.requestSingleInstanceLock()) app.quit();
+// a test run keeps its own settings and runs beside an open Floorboard instead of handing over to it
+if (SMOKE) app.setPath('userData', path.join(app.getPath('temp'), 'floorboard-smoke'));
+if (!SMOKE && !app.requestSingleInstanceLock()) app.quit();
 else {
   app.on('second-instance', showSidebar);
   app.whenReady().then(() => {
     loadPrefs();
     session.defaultSession.setPermissionRequestHandler((_wc, permission, done) => done(permission === 'media' || permission === 'notifications'));
     createSidebar();
+    createBubble();
+    bubbleIpc();
     if (SMOKE) return;
     buildTray();
     globalShortcut.register('Control+Alt+F', toggleSidebar);
     screen.on('display-metrics-changed', dock);
     ipcMain.on('open-full', openFull);
-    ipcMain.on('hide-sidebar', () => sidebar && sidebar.hide());
+    ipcMain.on('hide-sidebar', hideSidebar);
     ipcMain.on('show-sidebar', showSidebar);
     ipcMain.on('attention', attention);
     ipcMain.handle('on-top-get', () => !!prefs.onTop);

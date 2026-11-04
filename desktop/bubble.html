@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+<title>Floorboard</title>
+<!-- The round button that stays in front of every window: click it to slide the sidebar open or closed, drag it up or down the edge. -->
+<style>
+  html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; user-select: none; -webkit-user-select: none; }
+  body { display: grid; place-items: center; font-family: "Segoe UI Variable", "Segoe UI", system-ui, sans-serif; }
+  button {
+    position: relative; width: 48px; height: 48px; border-radius: 50%; padding: 0; cursor: pointer; outline: none;
+    border: 1px solid rgba(255, 244, 232, .28);
+    background: radial-gradient(circle at 30% 25%, rgba(255, 244, 232, .22), rgba(255, 244, 232, 0) 60%), linear-gradient(160deg, #4a382a, #261c15);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, .38), inset 0 1px 0 rgba(255, 255, 255, .18);
+    display: grid; place-items: center; transition: transform .16s ease, box-shadow .16s ease;
+  }
+  button:hover { transform: scale(1.06); box-shadow: 0 8px 22px rgba(0, 0, 0, .45), inset 0 1px 0 rgba(255, 255, 255, .22); }
+  button:active { transform: scale(.96); }
+  button:focus-visible { box-shadow: 0 0 0 3px rgba(255, 181, 71, .7); }
+  .bars, .shut { position: absolute; inset: 0; display: grid; place-items: center; transition: opacity .18s ease, transform .22s ease; }
+  .bars svg { width: 36px; height: 36px; }
+  .shut svg { width: 18px; height: 18px; }
+  .open .bars { opacity: 0; transform: scale(.6); }
+  .shut { opacity: 0; transform: rotate(-90deg) scale(.6); }
+  .open .shut { opacity: 1; transform: none; }
+  .badge {
+    position: absolute; top: -3px; left: -3px; min-width: 18px; height: 18px; padding: 0 5px; box-sizing: border-box; border-radius: 9px;
+    background: #5e4a3a; color: #fff4e8; font: 700 11px/18px "Segoe UI", sans-serif; text-align: center; border: 1.5px solid #261c15;
+  }
+  .badge.urgent { background: #ff6b57; }
+  .badge[hidden] { display: none; }
+  @media (prefers-reduced-motion: reduce) { button, .bars, .shut { transition: none; } }
+</style>
+</head>
+<body>
+<button id="b" type="button" aria-label="Open the Floorboard sidebar" title="Floorboard: click to open or close, drag to move">
+  <span class="bars"><svg viewBox="0 0 512 512" aria-hidden="true"><rect x="122.88" y="133.12" width="266.24" height="51.2" rx="25.6" fill="#ff6b57"/><rect x="122.88" y="215.04" width="194.56" height="51.2" rx="25.6" fill="#ffb547"/><rect x="122.88" y="296.96" width="112.64" height="51.2" rx="25.6" fill="#4fd688"/></svg></span>
+  <span class="shut"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="#fff4e8" stroke-width="2.4" stroke-linecap="round"/></svg></span>
+  <span class="badge" id="n" hidden></span>
+</button>
+<script>
+  const b = document.getElementById('b'), n = document.getElementById('n'), api = window.floorboardBubble;
+  // a press that moves more than a few pixels is a drag along the edge; otherwise it's a click
+  let start = null, dragging = false;
+  b.addEventListener('pointerdown', (e) => { if (e.button !== 0) return; start = e.screenY; dragging = false; b.setPointerCapture(e.pointerId); });
+  b.addEventListener('pointermove', (e) => {
+    if (start === null) return;
+    if (!dragging && Math.abs(e.screenY - start) > 4) dragging = true;
+    if (dragging) api.drag(e.screenY - start);
+  });
+  b.addEventListener('pointerup', () => { if (start === null) return; start = null; if (dragging) api.drop(); else api.toggle(); });
+  b.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); api.toggle(); } });
+  api.onState(({ open, count, urgent }) => {
+    document.body.classList.toggle('open', open);
+    b.setAttribute('aria-label', open ? 'Close the Floorboard sidebar' : 'Open the Floorboard sidebar');
+    n.hidden = !count; n.textContent = count > 99 ? '99+' : String(count); n.classList.toggle('urgent', !!urgent);
+  });
+</script>
+</body>
+</html>

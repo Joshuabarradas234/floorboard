@@ -9,8 +9,9 @@ This is a working prototype with an example store and example staff. Every login
 Double-click `desktop/Start Floorboard.cmd`.
 
 - The sidebar docks to the right edge of the screen. Windows shows your wallpaper through it as frosted glass.
-- Show or hide it with **Ctrl+Alt+F**, or click the Floorboard icon in the system tray.
-- Right-click the tray icon for: open the full app, keep the sidebar on top, dock it on the left, start with Windows.
+- A round Floorboard button stays in front of every window, whatever you have open. Click it to slide the sidebar open or closed. While the sidebar is open, the button sits on its edge and shows ✕. Drag the button up or down to move it. Its badge shows how many things need you, and turns red for ASAP.
+- You can also show or hide the sidebar with **Ctrl+Alt+F**, or by clicking the Floorboard icon in the system tray.
+- Right-click the tray icon for: open the full app, keep the sidebar on top, show or hide the round button, dock it on the left, start with Windows.
 - The sidebar and the full app share the same data and update each other live.
 
 ## Phone: app icon on your home screen
