@@ -161,6 +161,24 @@ To have the store's AI read the files too (photos of paperwork, scans with no te
 
 Without it, sorting still works, by the words in and on the files.
 
+## Ask Floorboard
+
+**Ask Floorboard** (in the sidebar under the board, at the top of the full app's side column, and the ✦ on the slim rail) answers questions in plain words:
+
+- "Find the last Highveld invoice", "Where's my October payslip?" (your files, your folders and your department's archive, including the words inside PDFs kept on this device)
+- "How far is the bakery with its tasks?", "Who hasn't touched the waste sheets?" (each person's progress, what's overdue and who's been quiet for 2 days)
+- "What needs me today?", "Any meetings tomorrow?", "What did Johan say about the fridge?"
+- "Any emails from SunPack this week?" (Outlook: your Microsoft 365 mailbox if it's connected, or Outlook (classic) open on the Windows computer)
+
+It only sees what you can see in Floorboard. The looking up happens on your own device; Claude (Anthropic) gets your question and what was found, and writes the answer. Set it up once:
+
+1. **Edge Functions → Deploy a new function → Via editor**: name it `ask`, paste all of `supabase/functions/ask/index.ts`, and deploy. In its settings, switch **Verify JWT** off.
+2. It uses the same `ANTHROPIC_API_KEY` secret as meeting notes. It runs on Claude Opus 5.5, so each question costs a little; to make it cheaper, change `MODEL` at the top of the function to `claude-haiku-5-5`.
+
+Until it's set up (and with no signal), Ask Floorboard still gives a quick answer by keyword from the same look-ups, and says so under the answer.
+
+**In Coucou's chat (Windows).** The Windows app also answers Coucou's chat, so you can ask from the island at the top of the screen: in Coucou, **Settings… → Chat → Local models → OpenAI-compatible**, enter `http://127.0.0.1:47831`, click **Connect**, then **Use in chat**. Ask in the island's 💬 tab (or Ctrl+Alt+Space); Floorboard's blue card shows what it's looking up while it works. Only programs on this computer can reach that address, and Floorboard has to be open and signed in.
+
 ## Works with no signal
 
 Floorboard keeps a copy of itself and of the store on each device, so it keeps working with no connection:

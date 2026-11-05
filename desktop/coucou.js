@@ -47,8 +47,13 @@ function update(info, again) {
   if (fresh) { post({ hook_event_name: 'UserPromptSubmit', prompt: text }); lastText = text; }
   if (step !== lastStep || again || fresh) show(step);
 }
+// Ask Floorboard at work on a question from Coucou's chat: the card shows the question, then what it's looking up, then
+// goes back to what it said before
+function asked(question) { if (pipe && shown) post({ hook_event_name: 'UserPromptSubmit', prompt: String(question || '').slice(0, 160) }); }
+function busy(text) { if (pipe && shown && text) post({ hook_event_name: 'PreToolUse', tool_name: String(text).slice(0, 80), tool_input: {} }); }
+function done() { if (pipe && shown) show(lastStep || 'Floorboard is open'); }
 function init(cb) { onChange = cb || onChange; if (timer) return; check(); timer = setInterval(check, 5000); }
 // the card leaves Coucou's island (Floorboard quits, or the person switched it off); resolves once Coucou has it
 function stop() { clearInterval(timer); timer = null; const done = post({ hook_event_name: 'SessionEnd', reason: 'exit' }); pipe = null; shown = false; return done; }
 
-module.exports = { init, update, stop, running: () => !!pipe };
+module.exports = { init, update, stop, asked, busy, done, running: () => !!pipe };

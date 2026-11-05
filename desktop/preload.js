@@ -39,4 +39,18 @@ contextBridge.exposeInMainWorld('floorboardDesktop', {
       graph: (cfg, path) => ipcRenderer.invoke('ms-graph', { cfg: c(cfg), path: String(path || '') }),
     };
   })(),
+  // Ask Floorboard from Coucou's chat: questions reach the app's small server on this computer and the sidebar answers them
+  ask: {
+    onRun: (fn) => {
+      const h = async (_e, req) => {
+        const id = req && req.id, step = (text) => ipcRenderer.send('ask-step', { id, text: String(text || '').slice(0, 120) });
+        try { ipcRenderer.send('ask-done', { id, answer: String((await fn({ question: String(req.question || ''), history: Array.isArray(req.history) ? req.history : [] }, step)) || '') }); }
+        catch (e) { ipcRenderer.send('ask-done', { id, error: String((e && e.message) || e) }); }
+      };
+      ipcRenderer.on('ask-run', h); ipcRenderer.send('ask-ready', true);
+      return () => { ipcRenderer.removeListener('ask-run', h); ipcRenderer.send('ask-ready', false); };
+    },
+  },
+  // Outlook (classic) on this computer, for Ask Floorboard's email search
+  outlook: { search: (query, days) => ipcRenderer.invoke('outlook-search', { query: String(query || '').slice(0, 200), days: Number(days) || 30 }) },
 });

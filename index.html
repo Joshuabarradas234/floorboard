@@ -1143,6 +1143,30 @@ td.mono{white-space:nowrap}
 .w-stk{flex:none;padding:12px 14px;border-radius:22px}
 .w-files{flex:none;padding:12px 12px 14px;border-radius:22px}
 .w-files-h{display:flex;align-items:center;justify-content:space-between;margin:0 2px 8px}
+/* Ask Floorboard */
+.w-ask{flex:none;padding:12px;border-radius:22px}
+.w-ask:has(.stk-bar){padding:7px 10px 7px 12px}
+.board-col .w-ask{margin-bottom:14px}
+.fold-ic.ask{background:linear-gradient(135deg,#bcd6ff,#d9c4ff);color:#1b1630}
+.ask-eb{display:inline-flex;align-items:center;gap:6px}
+.ask-ideas{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.ask-idea{border:1px solid var(--glass-line);background:var(--glass);color:var(--ink-2);border-radius:99px;padding:5px 11px;font:inherit;font-size:12px;font-weight:600;cursor:pointer;text-align:left}
+.ask-idea:hover{border-color:var(--glass-line-2);color:var(--ink)}
+.ask-thread{display:flex;flex-direction:column;gap:8px;max-height:340px;overflow-y:auto;margin:0 0 10px;padding:2px 2px 2px 0}
+.w-ask.compact .ask-thread{max-height:280px}
+.ask-me{align-self:flex-end;max-width:85%;background:#fff;color:var(--accent-ink);padding:7px 11px;border-radius:14px 14px 4px 14px;font-size:13px;line-height:1.4;white-space:pre-wrap;overflow-wrap:anywhere}
+.ask-fb{align-self:flex-start;max-width:96%;background:var(--glass);border:1px solid var(--glass-line);padding:8px 11px;border-radius:14px 14px 14px 4px;font-size:13px;line-height:1.45;overflow-wrap:anywhere}
+.ask-fb p{margin:0 0 5px}.ask-fb p:last-child{margin:0}
+.ask-fb ul{margin:2px 0 5px;padding-left:18px}.ask-fb li{margin:3px 0}
+.ask-fb.err{border-color:rgba(255,140,140,.55)}
+.ask-note{display:block;margin-top:6px;color:var(--ink-3);font-size:11px;line-height:1.35}
+.ask-busy{display:flex;align-items:center;gap:8px;color:var(--ink-2);font-size:12.5px;padding:2px 4px}
+.ask-dots{display:inline-flex;gap:3px}.ask-dots i{width:5px;height:5px;border-radius:50%;background:currentColor;animation:ask-b 1s ease-in-out infinite}
+.ask-dots i:nth-child(2){animation-delay:.15s}.ask-dots i:nth-child(3){animation-delay:.3s}
+@keyframes ask-b{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-2px)}}
+.ask-form{display:flex;gap:6px;align-items:center}
+.ask-form .input{flex:1;min-width:0}
+@media (prefers-reduced-motion:reduce){.ask-dots i{animation:none}}
 .fdesk.mini{padding:2px 12px 14px;border-radius:16px}
 .fdesk.mini .fgrid{grid-template-columns:1fr 1fr;gap:26px 12px;padding-top:24px}
 .fdesk.mini .fc-front{padding:0 34px 8px 10px;border-radius:10px 10px 12px 12px}
@@ -1520,6 +1544,7 @@ const ICONS = {
   folder: '<path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2.5h8.5A1.5 1.5 0 0 1 21 9v9.5a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5z"/>',
   pin: '<path d="M9 3h6l-1 6 4 3v2H6v-2l4-3z"/><path d="M12 14v7"/>',
   search: '<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2"/>',
+  spark: '<path d="M12 3.5c.6 3.9 2.6 5.9 6.5 6.5-3.9.6-5.9 2.6-6.5 6.5-.6-3.9-2.6-5.9-6.5-6.5 3.9-.6 5.9-2.6 6.5-6.5z"/><path d="M18.5 15.5c.3 1.6 1 2.3 2.5 2.5-1.5.2-2.2.9-2.5 2.5-.3-1.6-1-2.3-2.5-2.5 1.5-.2 2.2-.9 2.5-2.5z"/>',
   shield: '<path d="M12 3 4 6v6c0 4.5 3.4 8 8 9 4.6-1 8-4.5 8-9V6z"/>',
   plus: '<path d="M12 5v14M5 12h14"/>',
   close: '<path d="M6 6l12 12M18 6 6 18"/>',
@@ -2491,6 +2516,7 @@ function SlimRail({ onOpen }) {
   const full = (t) => (desk && desk.openFull ? desk.openFull(t) : (location.hash = 'go-' + t));
   const items = [
     ['needs', 'inbox', 'Needs you', c.mine.length, c.mine.some((p) => p.level === 'red'), () => onOpen('.w-list')],
+    ['ask', 'spark', 'Ask Floorboard', 0, false, () => onOpen('.w-ask')],
     ['chats', 'chat', 'Chats', unreadChats, false, () => full('view:chats')],
     plannerOn(db, user) && ['today', 'list', 'Today', 0, false, () => onOpen('.w-day')],
     ['notes', 'edit', 'Sticky notes', notes, false, () => onOpen('.w-stk')],
@@ -2513,6 +2539,7 @@ function SlimRail({ onOpen }) {
 }
 function Widget() {
   const { db, user, openId, composer, closeComposer, compose, toast } = useApp();
+  useAskBridge();
   const c = useCounts();
   const [tab, setTab] = useState('needs');
   const [f, setF] = useState(NO_FILTERS);
@@ -2525,6 +2552,7 @@ function Widget() {
   const openOn = (sel) => {
     if (!DESKTOP_SHELL) setSlim(false);
     if (sel === '#compose') { setTimeout(() => compose(), 260); return; }
+    if (sel === '.w-ask') setTimeout(() => window.dispatchEvent(new Event('floorboard-ask')), 200); // unfolds it, ready to type
     if (sel) setTimeout(() => { const el = document.querySelector(sel); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 280);
   };
   const openOnRef = useRef(openOn); openOnRef.current = openOn;
@@ -2551,6 +2579,7 @@ function Widget() {
     </header>
     <${UpdateNotice}/>
     <${Board} onPick=${pick}/>
+    <${AskCard} compact/>
     <${NextMeeting}/>
     ${plannerOn(db, user) && html`<div className="w-day glass"><${TodayCard} compact/></div>`}
     ${outlookOn(db, user) && html`<div className="w-mail glass"><${OutlookCard} compact/></div>`}
@@ -7713,6 +7742,309 @@ function OutlookCard({ compact }) {
     ${!compact && html`<div className="ol-foot"><span>${acct.username}${at ? ' · checked ' + hm(at) : ''}</span><button className="linkish sm" onClick=${disconnect}>Disconnect Outlook</button></div>`}
   </section>`;
 }
+/* ---------------- Ask Floorboard: an assistant that looks things up for you ---------------- */
+// You ask in plain words. Claude (through the store's "ask" function) picks what to look up, the app looks it up here on
+// your own device, with only what you can see, and Claude answers from that. With no function to ask (the demo, no signal,
+// or before it's set up), a quick answer comes from the same look-ups by keyword. The Windows app also answers Coucou's chat.
+const ASK = { ctx: null }; // the latest data and person, for questions from outside the page (Coucou's chat)
+const ASK_STOP = new Set(('the a an and or of for to in on my me i is are was what whats where wheres who whos how find show any about from with this that these those last please can could you get all some do does did has have it its at by be there their them us we our'
+  + ' say said says tell told people know need want look see check give been being anything something').split(' '));
+const askWords = (q) => String(q || '').toLowerCase().split(/[^a-z0-9@.\-]+/).filter((w) => w.length > 1 && !ASK_STOP.has(w));
+const askScore = (hay, words) => { const h = String(hay || '').toLowerCase(); return words.filter((w) => h.includes(w)).length; };
+const askDay = (k) => { const d = keyToDate(k); return fmtDay(d.getTime(), { weekday: 'short' }) + ' ' + d.getDate() + ' ' + fmtDay(d.getTime(), { month: 'short' }); }; // Tue 4 Nov
+const askRand = (n) => (n == null || n === '' ? '' : 'R ' + Number(n).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+
+async function askFiles(db, u, { query = '', where = 'all' } = {}) {
+  const words = askWords(query), all = [];
+  if (where !== 'archive') {
+    const folders = myFoldersOf(db, u.id);
+    myFilesOf(db, u.id).forEach((f) => {
+      const fo = f.folder && folders.find((x) => x.id === f.folder), place = fo ? fo.name + ' (your folder)' : 'My files';
+      all.push({ att: f.att, title: f.title || (f.att ? titleOf(f.att.name) : 'Untitled'), place, at: f.at || 0, hay: [f.title, f.att && f.att.name, place].join(' ') });
+    });
+  }
+  if (where !== 'mine') archivesFor(db, u).forEach(({ dept, drive }) => archiveFiles(db, drive.id).forEach((f) => {
+    const path = f.folder ? folderPath(db, f.folder) : '', place = dept.name + ' archive' + (path ? ' › ' + path : '');
+    all.push({ att: f.att, title: titleOf(f.name || 'Untitled'), place, at: f.at || (f.docDate ? keyToDate(f.docDate).getTime() : 0), kind: f.docType && f.docType !== 'Other' ? f.docType : '',
+      party: f.party || '', ref: f.ref || '', amount: f.amount, docDate: f.docDate || '',
+      hay: [f.name, f.docType, f.ref, f.party, f.docDate, f.amount != null ? String(f.amount) : '', (f.tags || []).join(' '), place, f.att && f.att.name].join(' ') });
+  }));
+  all.forEach((x) => { x.score = words.length ? askScore(x.hay + ' ' + (x.at ? fmtDay(x.at, { month: 'long', year: 'numeric' }) : ''), words) : 1; });
+  let hits = all.filter((x) => x.score > 0);
+  // few hits by name: look inside the PDFs kept on this device too
+  if (words.length && hits.length < 5) {
+    const pdfs = all.filter((x) => !x.score && x.att && (/pdf/i.test(x.att.mime || '') || /\.pdf$/i.test(x.att.name || ''))).sort((a, b) => b.at - a.at).slice(0, 25);
+    for (const x of pdfs) {
+      if (!(await Blobs.has(x.att.id))) continue;
+      const text = await docText(x.att, await Blobs.get(x.att.id)).catch(() => '');
+      const s = askScore(text, words); if (s) { x.score = s; x.inside = true; hits.push(x); }
+    }
+  }
+  hits.sort((a, b) => b.score - a.score || b.at - a.at);
+  const every = hits.filter((x) => x.score >= words.length);
+  if (words.length > 1 && every.length) hits = every; // files that match every word, when there are any
+  // words no file has: the list is only the closest matches
+  const missing = words.filter((w) => !hits.some((x) => askScore(x.hay, [w]) || x.inside));
+  return {
+    found: hits.length, ...(missing.length && hits.length ? { not_found: missing.join(', '), note: 'No file matches every word; these are the closest.' } : {}),
+    files: hits.slice(0, 12).map((x) => ({ title: x.title, file: x.att ? x.att.name : '', where: x.place, kind: x.kind || undefined, from: x.party || undefined, ref: x.ref || undefined,
+      amount: x.amount != null ? askRand(x.amount) : undefined, document_date: x.docDate ? askDay(x.docDate) : undefined, added: x.at ? fmtDay(x.at, { day: 'numeric', month: 'short', year: 'numeric' }) : undefined,
+      found_by: x.inside ? 'words inside the document' : undefined })),
+  };
+}
+function askTasks(db, u, { query = '', person = '', department = '', status = 'open' } = {}) {
+  const words = askWords(query), name = String(person || '').toLowerCase().trim(), dn = String(department || '').toLowerCase().trim();
+  const who = name ? db.users.filter((x) => x.name.toLowerCase().includes(name)) : null;
+  const dep = dn ? db.depts.find((d) => d.name.toLowerCase().includes(dn)) : null;
+  const allDone = (p) => p.closed || Object.values(p.recips).every((r) => r.status === 'done');
+  let list = db.posts.filter((p) => p.type === 'task' && canSee(db, p, u));
+  if (words.length) list = list.filter((p) => askScore(p.title + ' ' + (p.body || ''), words) > 0);
+  if (who) list = list.filter((p) => who.some((x) => p.recips[x.id]));
+  if (dep) list = list.filter((p) => p.about === dep.id || p.toDepts.includes(dep.id) || Object.keys(p.recips).some((id) => { const m = userById(db, id); return m && m.depts.includes(dep.id); }));
+  list = list.filter((p) => (status === 'all' ? true : status === 'done' ? allDone(p) : status === 'overdue' ? isOverdue(p) : status === 'stale' ? Object.keys(p.recips).some((id) => isStale(p, id)) : !allDone(p)));
+  list.sort((a, b) => isOverdue(b) - isOverdue(a) || (a.due || '9999').localeCompare(b.due || '9999') || b.createdAt - a.createdAt);
+  return {
+    found: list.length,
+    tasks: list.slice(0, 15).map((p) => {
+      const pr = progressOf(p);
+      return {
+        title: p.title, from: firstName(userById(db, p.author)), sent: fmtDay(p.createdAt), due: p.due ? askDay(p.due) : undefined, urgency: (LEVELS[p.level] || {}).label,
+        overdue: isOverdue(p), closed: !!p.closed, progress: pr.done + ' of ' + pr.total + ' done, ' + pr.pct + '% overall',
+        people: Object.entries(p.recips).filter(([id]) => !who || who.some((x) => x.id === id)).slice(0, 30).map(([id, r]) => ({
+          name: (userById(db, id) || {}).name || 'Former staff',
+          status: r.status === 'done' ? 'done' : r.pct ? r.pct + '% done' : 'not started',
+          last_update: r.updatedAt ? ago(r.updatedAt) : 'never', quiet_2_days: isStale(p, id) || undefined,
+        })),
+      };
+    }),
+  };
+}
+function askNeeds(db, u) {
+  const list = db.posts.filter((p) => canSee(db, p, u) && needsMe(p, u.id)).sort(sortNeeds(u.id));
+  return { waiting: list.length, items: list.slice(0, 25).map((p) => ({ title: p.title, kind: (TYPES[p.type] || {}).label, urgency: (LEVELS[p.level] || {}).label, from: firstName(userById(db, p.author)), due: p.due ? askDay(p.due) : undefined, overdue: isOverdue(p, u.id) || undefined })) };
+}
+function askPosts(db, u, { query = '', type = 'any' } = {}) {
+  const words = askWords(query);
+  const list = db.posts.filter((p) => canSee(db, p, u) && (type === 'any' || p.type === type)).map((p) => ({ p, s: words.length ? askScore(p.title + ' ' + (p.body || ''), words) : 1 }))
+    .filter((x) => x.s > 0).sort((a, b) => b.s - a.s || b.p.createdAt - a.p.createdAt);
+  return { found: list.length, posts: list.slice(0, 12).map(({ p }) => { const pr = progressOf(p); return { title: p.title, kind: (TYPES[p.type] || {}).label, from: firstName(userById(db, p.author)), sent: fmtDay(p.createdAt), to: toLabel(db, p), urgency: (LEVELS[p.level] || {}).label, answered: pr.total ? pr.done + ' of ' + pr.total : undefined, closed: !!p.closed, text: (p.body || '').slice(0, 300) }; }) };
+}
+function askChats(db, u, { query = '', days = 30 } = {}) {
+  const words = askWords(query), from = Date.now() - Math.min(365, Math.max(1, Number(days) || 30)) * DAY;
+  const chats = new Map(myChats(db, u.id).map((c) => [c.id, c]));
+  const list = db.messages.filter((m) => chats.has(m.chat) && m.at >= from && m.kind !== 'system' && m.text).map((m) => ({ m, s: words.length ? askScore(m.text, words) : 1 }))
+    .filter((x) => x.s > 0).sort((a, b) => b.s - a.s || b.m.at - a.m.at);
+  return { found: list.length, messages: list.slice(0, 15).map(({ m }) => ({ chat: chatName(db, chats.get(m.chat), u.id), from: (userById(db, m.user) || {}).name || 'Someone', when: ago(m.at), text: m.text.slice(0, 300) })) };
+}
+function askCalendar(db, u, { from = '', to = '' } = {}) {
+  const ok = (k) => /^\d{4}-\d{2}-\d{2}$/.test(k || '');
+  const a = ok(from) ? from : dkey(), b = ok(to) && to >= a ? to : addDays(a, 7), out = [];
+  (db.events || []).filter((ev) => meetSees(ev, u.id)).forEach((ev) => occurrences(ev, a, b).forEach((k) => {
+    const o = (ev.occ || {})[k] || {};
+    out.push({ k, t: ev.time || '', date: askDay(k), time: meetWhen(ev), title: ev.title, place: ev.place || undefined,
+      with: [...(ev.attendees || []).map((id) => (userById(db, id) || {}).name).filter(Boolean), ev.guests].filter(Boolean).join(', ') || undefined,
+      notes: (o.notes || ev.notes || '').slice(0, 300) || undefined, done: o.status === 'done' || undefined });
+  }));
+  out.sort((x, y) => x.k.localeCompare(y.k) || x.t.localeCompare(y.t));
+  return { from: askDay(a), to: askDay(b), meetings: out.slice(0, 30).map(({ k, t, ...x }) => x) };
+}
+function askPeople(db, u, { query = '' } = {}) {
+  const q = String(query || '').toLowerCase().trim(), dn = (ids) => ids.map((id) => deptById(db, id).name);
+  const list = db.users.filter((x) => x.active !== false).filter((x) => !q || x.name.toLowerCase().includes(q) || dn([...x.depts, ...x.manages]).some((n) => n.toLowerCase().includes(q)));
+  return { found: list.length, people: list.slice(0, 40).map((x) => ({ name: x.name, role: x.role, departments: dn(x.depts).join(', ') || undefined, manages: dn(x.manages).join(', ') || undefined })) };
+}
+// email: the person's Microsoft 365 mailbox if it's connected, otherwise Outlook (classic) on this Windows computer
+async function askEmail(db, u, { query = '', days = 30 } = {}) {
+  const words = askWords(query), n = Math.min(365, Math.max(1, Number(days) || 30)), from = Date.now() - n * DAY, desk = window.floorboardDesktop;
+  if (MS.on && await MS.account().catch(() => null)) {
+    const got = [];
+    for (const f of (await mailFolders()).slice(0, 8)) {
+      const r = await MS.get('/me/mailFolders/' + encodeURIComponent(f.inbox ? 'inbox' : f.id) + '/messages?$top=50&' + OL_SEL).catch(() => ({ value: [] }));
+      (r.value || []).forEach((m) => got.push({ m, folder: f.displayName }));
+    }
+    const hay = ({ m }) => [m.subject, (m.from || {}).emailAddress && m.from.emailAddress.name, (m.from || {}).emailAddress && m.from.emailAddress.address, m.bodyPreview].join(' ');
+    const hits = got.filter((x) => new Date(x.m.receivedDateTime).getTime() >= from && (!words.length || askScore(hay(x), words) === words.length))
+      .sort((a, b) => new Date(b.m.receivedDateTime) - new Date(a.m.receivedDateTime));
+    return { source: 'Outlook', found: hits.length, emails: hits.slice(0, 12).map(({ m, folder }) => ({ subject: m.subject, from: ((m.from || {}).emailAddress || {}).name, address: ((m.from || {}).emailAddress || {}).address, received: ago(new Date(m.receivedDateTime).getTime()), folder, unread: !m.isRead || undefined, attachments: m.hasAttachments || undefined, preview: (m.bodyPreview || '').slice(0, 300) })) };
+  }
+  if (desk && desk.outlook) {
+    const r = await desk.outlook.search(words.join(' '), n);
+    if (r && r.error) return { error: r.error };
+    return { source: 'Outlook on this computer', found: (r.emails || []).length, emails: (r.emails || []).map((m) => ({ ...m, received: m.received ? ago(new Date(m.received).getTime()) : undefined, unread: m.unread || undefined, preview: (m.preview || '').replace(/\s+/g, ' ').slice(0, 300) })) };
+  }
+  return { error: MS.on ? 'Email isn’t connected on this device yet: connect Outlook on the Outlook card in Floorboard, then ask again.'
+    : 'Email isn’t connected on this device: in Floorboard’s Windows app, with Outlook (classic) open and signed in, it can search your email.' };
+}
+const ASK_RUN = { find_files: askFiles, task_progress: askTasks, needs_me: askNeeds, search_posts: askPosts, search_chats: askChats, calendar: askCalendar, people: askPeople, search_email: askEmail };
+const ASK_STEP = { find_files: 'Looking through files', task_progress: 'Checking tasks', needs_me: 'Checking what needs you', search_posts: 'Searching the board', search_chats: 'Searching chats', calendar: 'Checking the calendar', people: 'Looking up people', search_email: 'Searching email' };
+const askStep = (name, input) => (ASK_STEP[name] || 'Looking it up') + (input && (input.query || input.person) ? ': ' + String(input.query || input.person).slice(0, 40) : '');
+
+// one conversation: who's asking and when, set once (Claude's earlier thinking is tied to it), and every turn as it was
+async function newConvo(db, u) {
+  const names = (ids) => ids.map((id) => deptById(db, id).name).join(', ');
+  const email = !!((MS.on && await MS.account().catch(() => null)) || (window.floorboardDesktop && window.floorboardDesktop.outlook));
+  return { at: Date.now(), messages: [], context: { name: u.name, role: u.role, departments: names(u.depts), manages: names(u.manages), now: new Date().toLocaleString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }), email } };
+}
+// live() gives the newest data each time, since it can change while Floorboard works
+async function askFloorboard(convo, question, onStep, live) {
+  convo.messages.push({ role: 'user', content: question });
+  convo.at = Date.now();
+  const quick = async (why, detail) => { const r = await askLocally(live(), question, onStep); convo.messages.push({ role: 'assistant', content: [{ type: 'text', text: r }] }); return { text: r, how: 'quick', why, detail }; };
+  if (!CLOUD) return quick('demo');
+  for (let round = 0; round < 10; round++) {
+    onStep(round ? 'Putting it together' : 'Thinking');
+    let res;
+    try { res = await CLOUD.functions.invoke('ask', { body: { messages: convo.messages, context: convo.context } }); } catch (e) { res = { error: e }; }
+    const { data, error } = res;
+    if (error || !data || !data.content) {
+      // what the function said, if it said anything (a missing function answers 404)
+      const ctx = error && error.context, status = ctx && ctx.status;
+      let msg = data && data.error;
+      if (!msg && ctx && typeof ctx.clone === 'function') { try { msg = (await ctx.clone().json()).error; } catch (e) { } }
+      // the assistant isn't set up yet, there's no signal, or it went wrong: answer from the look-ups instead
+      if (round === 0) return quick(!navigator.onLine ? 'offline' : status === 404 ? 'off' : 'error', msg || (error && error.message) || '');
+      throw new Error(msg || 'Floorboard lost the connection while it was working.');
+    }
+    convo.messages.push({ role: 'assistant', content: data.content });
+    if (data.stop_reason === 'tool_use') {
+      const uses = data.content.filter((b) => b.type === 'tool_use');
+      const results = await Promise.all(uses.map(async (b) => {
+        onStep(askStep(b.name, b.input));
+        const { db, user } = live();
+        let out; try { out = ASK_RUN[b.name] ? await ASK_RUN[b.name](db, user, b.input || {}) : { error: 'Floorboard can’t do that.' }; } catch (e) { out = { error: 'That look-up didn’t work: ' + ((e && e.message) || e) }; }
+        let s = JSON.stringify(out); if (s.length > 24000) s = s.slice(0, 24000) + ' …(more left out)';
+        return { type: 'tool_result', tool_use_id: b.id, content: s, ...(out && out.error ? { is_error: true } : {}) };
+      }));
+      convo.messages.push({ role: 'user', content: results });
+      continue;
+    }
+    if (data.stop_reason === 'pause_turn') continue;
+    if (data.stop_reason === 'refusal') return { text: 'I can’t help with that one. Try asking another way.', how: 'ai' };
+    const text = data.content.filter((b) => b.type === 'text').map((b) => b.text).join('').trim();
+    return { text: text || 'I couldn’t find an answer to that.', how: 'ai' };
+  }
+  return { text: 'That took too many steps. Try a narrower question, like one supplier or one person.', how: 'ai' };
+}
+
+// the quick answer: guess what's being asked from its words, look it up, and say what was found
+async function askLocally({ db, user: u }, q, onStep) {
+  const t = String(q || '').toLowerCase(), said = new Set(t.split(/[^a-z'-]+/)), firsts = db.users.filter((x) => x.active !== false && x.id !== u.id && said.has(x.name.split(' ')[0].toLowerCase()));
+  const dep = db.depts.find((d) => t.includes(d.name.toLowerCase())), words = askWords(q).filter((w) => !/^(files?|documents?|docs?|emails?|mails?|tasks?|chats?|messages?)$/.test(w));
+  const list = (xs, f) => xs.map((x) => '- ' + f(x)).join('\n');
+  if (/\b(e-?mails?|mail|outlook|inbox)\b/.test(t)) {
+    onStep(ASK_STEP.search_email); const r = await askEmail(db, u, { query: words.filter((w) => !/^(email|mail|outlook|inbox|sent|send)$/.test(w)).join(' ') });
+    if (r.error) return r.error;
+    return r.found ? 'Emails I found:\n' + list(r.emails, (m) => '**' + m.subject + '** from ' + (m.from || m.address) + ', ' + m.received) : 'No emails match that. Try a sender or a word from the subject.';
+  }
+  if (/\b(tasks?|progress|how far|behind|overdue|late|finished|done|stale|quiet|hasn'?t|haven'?t|still)\b/.test(t)) {
+    onStep(ASK_STEP.task_progress);
+    const status = /\b(overdue|late|behind)\b/.test(t) ? 'overdue' : /\b(quiet|stale|hasn'?t updated|not updated)\b/.test(t) ? 'stale' : /\b(finished|completed)\b/.test(t) ? 'done' : 'open';
+    const pick = { person: firsts[0] ? firsts[0].name.split(' ')[0] : '', department: dep ? dep.name : '', status };
+    const query = firsts[0] || dep ? '' : words.filter((w) => !/^(progress|far|behind|overdue|late|finished|done|stale|quiet|still|open|everyone|everybody|team|people|staff)$/.test(w)).join(' ');
+    let r = askTasks(db, u, { ...pick, query }), every = false;
+    if (!r.found && query) { r = askTasks(db, u, pick); every = r.found > 0; } // the other words weren't in any task: show them all
+    if (!r.found) return 'No ' + (status === 'open' ? 'open ' : status + ' ') + 'tasks match that.';
+    return (every ? 'No task mentions “' + query + '”, so here are all of them. ' : '') + r.found + (r.found === 1 ? ' task:' : ' tasks:') + '\n' + list(r.tasks, (x) => '**' + x.title + '**: ' + x.progress + (x.due ? ', due ' + x.due : '') + (x.overdue ? ', overdue' : '')
+      + (x.people.some((p) => p.status !== 'done') ? '. Still going: ' + x.people.filter((p) => p.status !== 'done').slice(0, 6).map((p) => p.name.split(' ')[0] + ' (' + p.status + (p.quiet_2_days ? ', quiet 2+ days' : '') + ')').join(', ') : ''));
+  }
+  if (/\b(meetings?|calendar|diary|appointments?)\b/.test(t)) {
+    onStep(ASK_STEP.calendar); const tom = /\btomorrow\b/.test(t), a = tom ? addDays(dkey(), 1) : dkey();
+    const r = askCalendar(db, u, { from: a, to: /\b(today|tomorrow)\b/.test(t) ? a : addDays(a, 7) });
+    const span = r.from === r.to ? 'on ' + r.from : 'from ' + r.from + ' to ' + r.to;
+    return r.meetings.length ? 'Meetings ' + span + ':\n' + list(r.meetings, (m) => m.date + ', ' + m.time + ': **' + m.title + '**' + (m.place ? ' (' + m.place + ')' : '')) : 'No meetings ' + span + '.';
+  }
+  if (/\b(needs? me|waiting|to ?do|on my plate)\b/.test(t)) {
+    onStep(ASK_STEP.needs_me); const r = askNeeds(db, u);
+    return r.waiting ? r.waiting + ' things need you:\n' + list(r.items.slice(0, 10), (x) => '**' + x.title + '** (' + x.kind + ', from ' + x.from + (x.due ? ', due ' + x.due : '') + ')') : 'Nothing needs you right now.';
+  }
+  if (/\b(chats?|said|messages?|whatsapp)\b/.test(t)) {
+    onStep(ASK_STEP.search_chats); const r = askChats(db, u, { query: words.join(' ') });
+    return r.found ? 'In your chats:\n' + list(r.messages, (m) => m.from.split(' ')[0] + ' in ' + m.chat + ', ' + m.when + ': “' + m.text.slice(0, 120) + '”') : 'Nothing in your chats matches that.';
+  }
+  onStep(ASK_STEP.find_files); const r = await askFiles(db, u, { query: words.join(' ') });
+  return r.found ? (r.not_found ? 'No file mentions “' + r.not_found + '”. The closest ' + (r.found === 1 ? 'match:' : r.found + ' matches:') : r.found === 1 ? 'I found this file:' : 'I found ' + r.found + ' files:') + '\n' + list(r.files.slice(0, 8), (f) => '**' + f.title + '** in ' + f.where + (f.added ? ', added ' + f.added : '') + (f.found_by ? ' (' + f.found_by + ')' : ''))
+    : 'I couldn’t find a file like that. Try a supplier, a kind of document (invoice, quote, payslip) or a month.';
+}
+
+// answers come back as short lines; **bold** and "- " lists are shown as such, nothing else is read as markup
+function AskText({ text }) {
+  const bold = (s) => s.split(/\*\*(.+?)\*\*/g).map((x, i) => (i % 2 ? html`<b key=${i}>${x}</b>` : x));
+  const out = [], lines = String(text || '').split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    const l = lines[i].trim(); if (!l) continue;
+    if (/^[-*•]\s+/.test(l)) { const items = []; while (i < lines.length && /^[-*•]\s+/.test(lines[i].trim())) { items.push(lines[i].trim().replace(/^[-*•]\s+/, '')); i++; } i--; out.push(html`<ul key=${i}>${items.map((x, j) => html`<li key=${j}>${bold(x)}</li>`)}</ul>`); }
+    else out.push(html`<p key=${i}>${bold(l.replace(/^#+\s*/, ''))}</p>`);
+  }
+  return out;
+}
+// why an answer came by keyword rather than from the AI assistant (nothing to say in the demo)
+const askNote = (r) => (r.how !== 'quick' || r.why === 'demo' ? ''
+  : r.why === 'offline' ? 'A quick answer from what’s on this device: there’s no signal right now.'
+  : r.why === 'off' ? 'A quick answer by keyword: the store’s AI assistant isn’t switched on yet.'
+  : 'A quick answer by keyword: the AI assistant didn’t answer' + (r.detail ? ' (' + String(r.detail).slice(0, 120) + ')' : '') + '.');
+const ASK_IDEAS = ['Find the last Highveld invoice', 'How far is everyone with their tasks?', 'What needs me today?', 'Any emails about quotes this week?'];
+function AskCard({ compact }) {
+  const { db, user } = useApp();
+  const [open, setOpen] = useFold('floorboard.ask.fold.v1');
+  const [q, setQ] = useState(''), [turns, setTurns] = useState([]), [busy, setBusy] = useState('');
+  const convo = useRef(null), live = useRef(null), thread = useRef(null), box = useRef(null);
+  live.current = { db, user };
+  useEffect(() => { if (thread.current) thread.current.scrollTop = thread.current.scrollHeight; }, [turns.length, busy]);
+  // opened from the slim rail: unfold and put the cursor in the box
+  useEffect(() => {
+    const go = () => { setOpen(true); setTimeout(() => { if (box.current) box.current.focus(); }, 120); };
+    window.addEventListener('floorboard-ask', go); return () => window.removeEventListener('floorboard-ask', go);
+  }, []);
+  const ask = async (text) => {
+    text = String(text || '').trim(); if (!text || busy) return;
+    setQ('');
+    // a new conversation after half an hour, so "today" stays today
+    if (!convo.current || Date.now() - convo.current.at > 30 * MIN) { convo.current = await newConvo(db, user); setTurns([]); }
+    setTurns((t) => [...t, { me: true, text }]); setBusy('Thinking');
+    try { const r = await askFloorboard(convo.current, text, setBusy, () => live.current); setTurns((t) => [...t, r]); }
+    catch (e) { setTurns((t) => [...t, { text: 'Sorry, I couldn’t finish that: ' + ((e && e.message) || e), err: true }]); convo.current = null; }
+    finally { setBusy(''); }
+  };
+  const fresh = () => { convo.current = null; setTurns([]); setQ(''); };
+  if (!open) return html`<div className="w-ask glass" id="ask"><${FoldBar} icon="spark" kind="ask" title="Ask Floorboard" onOpen=${() => setOpen(true)}/></div>`;
+  return html`<div className=${'w-ask glass' + (compact ? ' compact' : '')} id="ask">
+    <div className="w-files-h"><span className="eyebrow ask-eb"><${Icon} n="spark" s=${14}/>Ask Floorboard</span><span className="w-card-a">
+      ${turns.length > 0 && !busy && html`<button className="linkish sm" onClick=${fresh}>New question</button>`}<${FoldBtn} what="Ask Floorboard" onFold=${() => setOpen(false)}/></span></div>
+    ${turns.length === 0 && !busy ? html`<div className="ask-ideas">${ASK_IDEAS.map((s) => html`<button key=${s} className="ask-idea" onClick=${() => ask(s)}>${s}</button>`)}</div>`
+      : html`<div className="ask-thread" ref=${thread} aria-live="polite">
+        ${turns.map((t, i) => (t.me ? html`<div key=${i} className="ask-me">${t.text}</div>`
+          : html`<div key=${i} className=${'ask-fb' + (t.err ? ' err' : '')}><${AskText} text=${t.text}/>
+            ${askNote(t) && html`<small className="ask-note">${askNote(t)}</small>`}</div>`))}
+        ${busy && html`<div className="ask-busy"><span className="ask-dots" aria-hidden="true"><i/><i/><i/></span>${busy}…</div>`}
+      </div>`}
+    <form className="ask-form" onSubmit=${(e) => { e.preventDefault(); ask(q); }}>
+      <input ref=${box} className="input" value=${q} onChange=${(e) => setQ(e.target.value)} placeholder="Ask about files, tasks, emails…" aria-label="Ask Floorboard" maxLength="600"/>
+      <button className="icon-btn solid" type="submit" disabled=${!q.trim() || !!busy} title="Ask" aria-label="Ask"><${Icon} n="send" s=${15}/></button>
+    </form>
+  </div>`;
+}
+// the Windows app hands over questions from Coucou's chat; they're answered here, where the data and the sign-in are
+function useAskBridge() {
+  const { db, user } = useApp();
+  ASK.ctx = { db, user };
+  useEffect(() => {
+    const d = window.floorboardDesktop; if (!d || !d.ask) return undefined;
+    return d.ask.onRun(async ({ question, history }, step) => {
+      const { db: db0, user: u0 } = ASK.ctx, convo = await newConvo(db0, u0);
+      // Coucou sends the earlier turns as plain text: they go in as they are, starting with a question
+      (Array.isArray(history) ? history : []).forEach((m) => {
+        const role = m.role === 'assistant' ? 'assistant' : 'user', text = String(m.text || '').slice(0, 4000), last = convo.messages[convo.messages.length - 1];
+        if (!text || (!last && role !== 'user')) return;
+        if (last && last.role === role) { if (role === 'user') last.content += '\n\n' + text; else last.content[0].text += '\n\n' + text; return; }
+        convo.messages.push(role === 'user' ? { role, content: text } : { role, content: [{ type: 'text', text }] });
+      });
+      if (convo.messages.length && convo.messages[convo.messages.length - 1].role === 'user') convo.messages.pop();
+      const r = await askFloorboard(convo, question, step, () => ASK.ctx);
+      return r.text + (askNote(r) ? '\n\n(' + askNote(r) + ')' : '');
+    });
+  }, []);
+}
+
 /* ---------------- my week: each person's daily tasks, the way Finance kept them in a weekly Excel sheet ---------------- */
 // Switched on per department (My week). Everyday tasks repeat on the days chosen; the rest belong to one day. Each day's
 // tick, the time and the reason (why it's late or not done) are kept for that day, like the sheet's Time, Reason and Done.
@@ -8185,7 +8517,7 @@ function Shell() {
     <${Rail}/>
     ${drawer && html`<div className="side-scrim" onClick=${() => setDrawer(false)}></div>`}
     ${chatsMode ? html`<main className="stage glass chats-mode"><${ChatsView}/></main>` : html`<main className="stage glass">
-      <aside className="board-col"><${Board} note=${note}/><${TodayCard}/><${OutlookSide}/><${QuoteDrop}/><${StickyNotes}/><${Shortcuts}/></aside>
+      <aside className="board-col"><${Board} note=${note}/><${AskCard}/><${TodayCard}/><${OutlookSide}/><${QuoteDrop}/><${StickyNotes}/><${Shortcuts}/></aside>
       <section className="content" key=${view}>${content}</section>
     </main>`}
     <${Dock}/>

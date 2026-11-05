@@ -4,6 +4,8 @@ const { app, BrowserWindow, Tray, Menu, nativeImage, screen, globalShortcut, ipc
 const path = require('path'), fs = require('fs');
 const updates = require('./updates');
 const coucou = require('./coucou');
+const ask = require('./ask');
+const outlook = require('./outlook');
 
 const PAGE = path.join(__dirname, '..', 'index.html');
 const ICON = path.join(__dirname, '..', 'icon-192.png');
@@ -234,6 +236,19 @@ function createSidebar() {
       if (process.env.FLOORBOARD_SMOKE_DEMO && rail) fs.writeFileSync(path.join(app.getPath('temp'), 'floorboard-rail.png'), (await rail.webContents.capturePage()).toPNG()); console.log('SMOKE folded: rail', rail && rail.isVisible() ? 'shown at ' + JSON.stringify(rail.getBounds()) + (rail.isAlwaysOnTop() ? ' in front' : '') : 'not shown', '| sidebar', sidebar.isVisible() ? 'visible' : 'put away', '| button', bubble && bubble.isVisible() ? 'shown' : 'hidden');
       console.log('SMOKE rail page', await rail.webContents.executeJavaScript(`document.documentElement.className + ' | ' + (document.querySelector('.srail') ? 'rail drawn' : document.body.innerText.slice(0, 80))`));
       setSlim(null, false); await wait(600); console.log('SMOKE opened: sidebar', sidebar.isVisible() ? 'open at ' + JSON.stringify(sidebar.getBounds()) : 'closed', '| rail', rail && rail.isVisible() ? 'shown' : 'hidden');
+      if (process.env.FLOORBOARD_SMOKE_DEMO) { // Ask Floorboard through the server Coucou's chat uses, signed in as the demo's u5
+        sidebar.webContents.reload(); await wait(4000);
+        const req = (method, p, body, headers = {}) => new Promise((ok) => {
+          const r = require('http').request({ host: '127.0.0.1', port: ask.PORT, path: p, method, headers: { 'Content-Type': 'application/json', ...headers } }, (res) => { let t = ''; res.on('data', (d) => (t += d)); res.on('end', () => ok({ status: res.statusCode, text: t })); });
+          r.on('error', (e) => ok({ status: 0, text: e.message })); r.end(body ? JSON.stringify(body) : undefined);
+        });
+        console.log('SMOKE ask models', (await req('GET', '/v1/models')).text, '| from a web page:', (await req('GET', '/v1/models', null, { Origin: 'https://example.com' })).status);
+        for (const q of ['What needs me today?', 'How far is the bakery with its tasks?', 'Find my payslip', 'Any meetings tomorrow?']) {
+          const r = await req('POST', '/v1/chat/completions', { model: 'floorboard', stream: true, messages: [{ role: 'system', content: 'You are Coucou.' }, { role: 'user', content: q }] });
+          const said = r.text.split('\n').filter((l) => l.startsWith('data: {')).map((l) => { try { const j = JSON.parse(l.slice(6)); return j.error ? '[error: ' + j.error.message + ']' : j.choices[0].delta.content || ''; } catch (e) { return ''; } }).join('');
+          console.log('SMOKE ask', JSON.stringify(q), '->', JSON.stringify(said.replace(/<think>[\s\S]*?<\/think>/, '').slice(0, 400)), '| steps:', JSON.stringify((said.match(/<think>([\s\S]*?)<\/think>/) || [])[1] || ''));
+        }
+      }
       if (process.env.FLOORBOARD_UPDATE_BASE) { // updates through the page's bridge, against a stand-in GitHub
         const U = (js) => sidebar.webContents.executeJavaScript('window.floorboardDesktop.updates.' + js), brief = (s) => JSON.stringify({ ask: s.ask, on: s.on, current: s.current, latest: s.latest, available: s.available, busy: s.busy, error: s.error });
         console.log('SMOKE upd first', brief(await U('state()')));
@@ -386,6 +401,8 @@ else {
     ipcMain.on('bar-state', (_e, state, focus) => { placeBar(state); if (bar && state === 'open' && focus) bar.focus(); });
     ipcMain.handle('on-top-get', () => !!prefs.onTop);
     ipcMain.handle('on-top-set', (_e, on) => { setOnTop(on); return prefs.onTop; });
+    ask.start(() => sidebar); // Ask Floorboard from Coucou's chat
+    ipcMain.handle('outlook-search', (_e, a) => outlook.search(a && a.query, a && a.days));
     if (SMOKE) return;
     buildTray();
     globalShortcut.register('Control+Alt+F', toggleSidebar);
