@@ -100,6 +100,7 @@ function slideTo(open, { focus = true } = {}) {
   const from = sidebar.isVisible() ? sidebar.getBounds().x : away, to = open ? x : away;
   opened = open; sendBubble();
   if (open) placeBubble();
+  if (open && sidebar.isMinimized()) sidebar.restore(); // Windows can minimize it (Show desktop): bring it back first
   if (open && !sidebar.isVisible()) { sidebar.setBounds({ x: from, y, width, height }); if (focus) sidebar.show(); else sidebar.showInactive(); }
   if (open && focus) sidebar.focus();
   const t0 = Date.now(), ms = 220;
