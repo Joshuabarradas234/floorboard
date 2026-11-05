@@ -412,6 +412,18 @@ async function printHtml(_e, job) {
   }
 }
 
+// Start with Windows: run from its folder (not an installer), Floorboard is electron.exe plus that folder, so the
+// login item says both, or Windows would start a bare Electron
+const loginItem = () => (app.isPackaged ? {} : { path: process.execPath, args: [path.resolve(app.getAppPath())] });
+// "electron . --start-with-windows" (or --no-start-with-windows) sets it without the tray menu, in the Floorboard
+// that's running if there is one; true when the command line asked for it
+function startupFlag(argv) {
+  const on = argv.includes('--start-with-windows') ? true : argv.includes('--no-start-with-windows') ? false : null;
+  if (on === null) return false;
+  app.setLoginItemSettings({ openAtLogin: on, ...loginItem() });
+  if (tray) tray.setContextMenu(trayMenu());
+  return true;
+}
 function trayMenu() {
   return Menu.buildFromTemplate([
     { label: 'Show or hide the sidebar   Ctrl+Alt+F', click: toggleSidebar },
@@ -425,7 +437,7 @@ function trayMenu() {
     { label: 'Dock on the left', type: 'checkbox', checked: prefs.side === 'left', click: (i) => { prefs.side = i.checked ? 'left' : 'right'; savePrefs(); dock(); } },
     { label: 'Check GitHub for new versions', type: 'checkbox', checked: updates.getState().on, click: (i) => { updates.answer(i.checked); tray.setContextMenu(trayMenu()); } },
     { label: 'Check for a new version now', enabled: updates.getState().on, click: () => { updates.check().then((st) => { if (st.available) showSidebar(); }); } },
-    { label: 'Start with Windows', type: 'checkbox', checked: app.getLoginItemSettings().openAtLogin, click: (i) => app.setLoginItemSettings({ openAtLogin: i.checked }) },
+    { label: 'Start with Windows', type: 'checkbox', checked: app.getLoginItemSettings(loginItem()).openAtLogin, click: (i) => app.setLoginItemSettings({ openAtLogin: i.checked, ...loginItem() }) },
     { type: 'separator' },
     { label: 'Quit Floorboard', click: () => { app.isQuitting = true; app.quit(); } },
   ]);
@@ -451,7 +463,7 @@ app.setAppUserModelId('Floorboard'); // lets Windows show pop-up notifications f
 if (SMOKE) app.setPath('userData', path.join(app.getPath('temp'), 'floorboard-smoke'));
 if (!SMOKE && !app.requestSingleInstanceLock()) app.quit();
 else {
-  app.on('second-instance', showSidebar);
+  app.on('second-instance', (_e, argv) => { if (!startupFlag(argv)) showSidebar(); });
   app.whenReady().then(() => {
     loadPrefs();
     updates.init(); // new versions from GitHub, if the person said it may look
@@ -476,6 +488,7 @@ else {
     mfsIpc();
     if (SMOKE) return;
     buildTray();
+    startupFlag(process.argv);
     globalShortcut.register('Control+Alt+F', toggleSidebar);
     screen.on('display-metrics-changed', () => { dock(); placeBar(barState); placeRail(); });
     ipcMain.on('open-full', openFull);
