@@ -571,6 +571,37 @@ html.bar-mode,html.bar-mode body,html.bar-mode #root{background:transparent!impo
 .fbar-reply button{display:grid;place-items:center;width:34px;height:34px;border:0;border-radius:50%;background:#2fb36a;color:#fff}
 .fbar-reply button:disabled{opacity:.4}
 @media (prefers-reduced-motion:reduce){.fbar-panel{animation:none}}
+/* Sort my files: the pile of files on the right flies into folder panels on the left */
+.srt-stats{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin-bottom:14px}
+.srt-stats div{display:grid;gap:2px;padding:10px 12px;border-radius:var(--r);background:var(--glass);border:1px solid var(--glass-line)}
+.srt-stats small{font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em}
+.srt-stats b{font:700 24px/1.1 var(--f-display)}
+.srt-stage{position:relative;display:grid;grid-template-columns:minmax(0,1.5fr) minmax(220px,1fr);gap:16px;min-height:340px}
+.srt-panels{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;align-content:start}
+.srt-wait{grid-column:1/-1;margin:8px 0}
+.srt-panel{min-height:96px;border-radius:var(--r);background:rgba(0,0,0,.18);border:1px solid var(--glass-line);padding:10px 12px;overflow:hidden}
+.srt-panel.dup{border-style:dashed}
+.srt-ph{display:flex;align-items:center;gap:6px}.srt-ph b{flex:1;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.srt-ph span{font:700 12px var(--f-mono);color:var(--ink-2)}.srt-ph i{font-style:normal;font-size:10px;font-weight:700;padding:1px 6px;border-radius:999px;background:var(--sky-soft);color:var(--sky)}
+.srt-pile{position:relative;aspect-ratio:1;align-self:start;display:grid;place-items:end center;padding-bottom:6px}
+.srt-ring{position:absolute;inset:6%;border-radius:50%;border:1px solid var(--glass-line);background:radial-gradient(circle,rgba(255,255,255,.06),transparent 70%)}
+.srt-pile small{position:relative;color:var(--ink-3);font-size:12px}
+.srt-tile{position:absolute;left:0;top:0;width:34px;height:34px;border-radius:8px;overflow:hidden;display:grid;place-items:center;background:#f4f1ec;color:#5a4c40;
+  font:700 9px var(--f-mono);box-shadow:0 3px 8px rgba(0,0,0,.35);transition:transform .75s cubic-bezier(.2,.9,.25,1),opacity .4s;pointer-events:none;z-index:3}
+.srt-tile img{width:100%;height:100%;object-fit:cover}
+.srt-tile.float{animation:srt-float 2.6s ease-in-out var(--d) infinite alternate}
+@keyframes srt-float{to{translate:0 -6px}}
+.srt-check{margin-top:18px;display:grid;gap:12px}
+.srt-check-h{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.chk-inline{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-2)}
+.srt-group{border-radius:var(--r);background:var(--glass);border:1px solid var(--glass-line);padding:10px 12px}
+.srt-group h4{margin:0 0 6px;font:700 14px var(--f-display)}
+.srt-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-top:1px solid var(--glass-line)}
+.srt-row-t{flex:1;min-width:0;display:grid}.srt-row-t b{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.srt-row-t small{font-size:11.5px;color:var(--ink-3)}
+.srt-row .select{max-width:170px}
+.srt-done{display:flex;gap:14px;align-items:flex-start;padding:18px 20px;border-radius:var(--r-lg)}.srt-done h3{margin:0 0 4px}.srt-done>.ic{color:var(--green);margin-top:3px}
+@media (max-width:700px){.srt-stats{grid-template-columns:repeat(3,minmax(0,1fr))}.srt-stage{grid-template-columns:1fr}.srt-pile{order:-1;max-width:260px;justify-self:center;width:100%}}
+@media (prefers-reduced-motion:reduce){.srt-tile{transition:none}.srt-tile.float{animation:none}}
 /* new version notice (Windows app) */
 .w-upd{flex:none;display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:20px}
 .w-upd>.ic{margin-top:2px;flex:none}
@@ -1450,7 +1481,7 @@ button.stat:hover{border-color:rgba(255,255,255,.4)}
 <script src="vendor/qrcode.min.js"></script>
 <script>
 'use strict';
-const { useState, useEffect, useMemo, useRef, useCallback, createContext, useContext } = React;
+const { useState, useEffect, useLayoutEffect, useMemo, useRef, useCallback, createContext, useContext } = React;
 const html = htm.bind(React.createElement);
 
 /* ---------------- constants ---------------- */
@@ -2137,6 +2168,7 @@ function seed() {
   demoSpotted(db, T);
   demoStickies(db, T);
   demoFiles(db, T);
+  demoUnsorted(db, T);
   db.events = demoEvents(T);
   return db;
 }
@@ -2151,6 +2183,7 @@ function loadDb() {
         if (!(d.depts || []).some((x) => x.features && 'approvals' in x.features)) demoApprovals(d);
         if (!Array.isArray(d.events)) d.events = demoEvents();
         if (!Object.values(d.pins || {}).some((p) => p && p.myfiles)) { d.pins = d.pins || {}; demoFiles(d); }
+        if (!Object.values(d.pins || {}).some((p) => p && (p.myfiles || []).some((f) => /^mf-.*-u\d+$/.test(f.id)))) demoUnsorted(d);
         if (!(d.messages || []).some((m) => m.id === 'm-spot1')) demoSpotted(d);
         if (!(d.depts || []).some((x) => x.features && 'outlook' in x.features)) (d.depts || []).forEach((x) => { if (x.id === 'finance' || x.id === 'admin') x.features = { ...(x.features || {}), outlook: true }; });
         if (!d.plans) { const f = (d.depts || []).find((x) => x.id === 'finance'); if (f) f.features = { ...(f.features || {}), planner: true }; demoPlanner(d); }
@@ -3560,10 +3593,12 @@ function FilesCard() {
 function FilesView({ start }) {
   const { db, user } = useApp();
   const [open, setOpen] = useState(start || null); // 'me', 'mf:<folder id>', or an archive's drive id
-  const [adding, setAdding] = useState(null), [naming, setNaming] = useState(false);
+  const [adding, setAdding] = useState(null), [naming, setNaming] = useState(false), [sorting, setSorting] = useState(null);
   const archives = archivesFor(db, user);
+  if (sorting) return html`<${SortView} where=${sorting} onClose=${() => setSorting(null)}/>`;
   if (open) return html`<${FolderView} key=${open} where=${open} onBack=${() => setOpen(null)}/>`;
-  return html`<${Page} title="Files" sub="Your own files and folders, and your department’s archive. They’re kept on this device, so they open with no signal too.">
+  return html`<${Page} title="Files" sub="Your own files and folders, and your department’s archive. They’re kept on this device, so they open with no signal too."
+    actions=${html`<button className="btn primary" onClick=${() => setSorting('me')} title="Put every file in My files into the right folder"><${Icon} n="list" s=${16}/>Sort my files</button>`}>
     ${FOLDER_CLIP}
     <div className="fdesk"><div className="fgrid">
       ${foldersFor(db, user).map((f) => html`<${FolderCard} key=${f.where} look=${f.look} title=${f.title} sub=${f.sub} dot=${f.dot} papers=${f.papers} onOpen=${() => setOpen(f.where)} onAdd=${() => setAdding(f.where)}/>`)}
@@ -3578,7 +3613,8 @@ function FolderView({ where, onBack }) {
   const { db, user, update, ask, toast } = useApp();
   const isMe = isMine(where), fid = myFolderId(where), arch = !isMe && archivesFor(db, user).find((x) => x.drive.id === where);
   const myFolder = fid && myFoldersOf(db, user.id).find((x) => x.id === fid), title = folderName(db, user, where);
-  const [q, setQ] = useState(''), [adding, setAdding] = useState(false), [openId, setOpenId] = useState(null), [naming, setNaming] = useState(false);
+  const [q, setQ] = useState(''), [adding, setAdding] = useState(false), [openId, setOpenId] = useState(null), [naming, setNaming] = useState(false), [sorting, setSorting] = useState(false);
+  if (sorting) return html`<${SortView} where=${where} onClose=${() => setSorting(false)}/>`;
   if (!title) return html`<${Page} title="Files"><div className="empty"><p>You can’t open this archive any more.</p><button className="btn" onClick=${onBack}>Back to Files</button></div><//>`;
   const items = isMe ? myFilesOf(db, user.id).filter((f) => (f.folder || null) === fid).map((f) => ({ id: f.id, title: f.title, att: f.att, at: f.at, by: user.id, mf: f.folder || null }))
     : archiveFiles(db, where).map((f) => ({ id: f.id, title: f.name, att: f.att, at: f.at || 0, by: f.by, folder: folderPath(db, f.folder), paper: f.hardCopy || '' }));
@@ -3591,7 +3627,7 @@ function FolderView({ where, onBack }) {
     toast('Folder deleted. Its files are in My files.'); onBack();
   } });
   return html`<${Page} title=${title} sub=${isMe ? 'Only you can see these. Add what you need for work and give each one a title.' : 'Everything filed for ' + arch.dept.name + '. The same files as ' + arch.dept.name + '’s Drive.'}
-    actions=${html`<button className="btn" onClick=${onBack}><${Icon} n="back" s=${16}/>All files</button>${myFolder && html`<button className="btn" onClick=${() => setNaming(true)}><${Icon} n="edit" s=${15}/>Rename</button><button className="btn" onClick=${dropFolder} aria-label="Delete this folder"><${Icon} n="trash" s=${15}/></button>`}<button className="btn primary" onClick=${() => setAdding(true)}><${Icon} n="plus" s=${16}/>Add files</button>`}>
+    actions=${html`<button className="btn" onClick=${onBack}><${Icon} n="back" s=${16}/>All files</button>${myFolder && html`<button className="btn" onClick=${() => setNaming(true)}><${Icon} n="edit" s=${15}/>Rename</button><button className="btn" onClick=${dropFolder} aria-label="Delete this folder"><${Icon} n="trash" s=${15}/></button>`}${(where === 'me' || (arch && canSortArchive(db, user, where))) && html`<button className="btn" onClick=${() => setSorting(true)} title="Put these files into the right folders"><${Icon} n="list" s=${15}/>Sort these</button>`}<button className="btn primary" onClick=${() => setAdding(true)}><${Icon} n="plus" s=${16}/>Add files</button>`}>
     ${items.length > 0 && html`<label className="tsearch fsearch"><${Icon} n="search" s=${16}/><input id="files-q" value=${q} onChange=${(e) => setQ(e.target.value)} placeholder=${isMe ? 'Search your files' : 'Search the archive: title, folder, cabinet…'} aria-label="Search files"/></label>`}
     ${shown.length ? html`<div className="ftiles">${shown.map((x) => html`<${FileTile} key=${x.id} x=${x} onOpen=${() => setOpenId(x.id)}/>`)}</div>`
       : html`<div className="empty"><${Icon} n=${isMe ? 'lock' : 'archive'} s=${24}/><h3>${items.length ? 'Nothing matches' : isMe ? 'No files yet' : 'The archive is empty'}</h3><p>${items.length ? 'Try another word from the title.' : isMe ? 'Add a payslip, a certificate, a photo of a delivery note, anything you want to keep to hand.' : 'Add the first file and everyone in ' + arch.dept.name + ' can open it.'}</p></div>`}
@@ -3709,6 +3745,232 @@ function AddFilesModal({ where, onClose }) {
       <button type="button" className="icon-btn sm" aria-label=${'Remove ' + f.name} onClick=${() => setList((l) => l.filter((y) => y.tmp !== f.tmp))}><${Icon} n="close" s=${14}/></button>
     </div>`)}</div>`}
     ${folders.length > 0 && html`<label className="field"><span>Folder (optional)</span><select id="fadd-folder" className="select" value=${folder} onChange=${(e) => setFolder(e.target.value)}><option value="">${arch.dept.name} archive (top level)</option>${folders.map((x) => html`<option key=${x.id} value=${x.id}>${folderPath(db, x.id)}</option>`)}</select></label>`}
+  <//>`;
+}
+
+/* ---------------- Sort my files: every document into the right folder ---------------- */
+// Goes by what each document is: the text inside PDFs and text files, a picture of photographed or scanned paper (read
+// by the store's AI, the sort-files function, when it's set up), and the title and file name. Without the AI, clear
+// rules on those words do it. Exact copies are found by their content and put in Duplicates, never deleted.
+// Nothing moves until the person has checked the plan, and it can be undone.
+const SORT_TYPES = [
+  ['Invoices', /\b(tax\s*)?invoices?\b|\binv[\s_.#-]*\d/i],
+  ['Credit notes', /credit\s*notes?|\bcn[\s_.#-]*\d/i],
+  ['Quotes', /\bquot(e|es|ation|ations)\b|\bqte\b/i],
+  ['Delivery notes', /delivery|\bgrv\b|goods\s*receiv|\bdn[\s_.#-]*\d/i],
+  ['Orders', /purchase\s*orders?|\borders?\b|\bpo[\s_.#-]*\d/i],
+  ['Statements', /statements?\b|\bstmt\b/i],
+  ['Receipts', /receipts?\b|till\s*slip|proof\s*of\s*payment|\bpop\b/i],
+  ['Payslips', /pay\s*slips?|salary|\birp5\b|\buif\b|payroll/i],
+  ['Contracts', /contracts?\b|agreements?\b|\blease\b|terms\s*(and|&)\s*conditions/i],
+  ['Certificates', /certificates?\b|\bcert\b|licen[cs]es?\b|permits?\b|compliance/i],
+  ['Forms', /\bforms?\b|applications?\b|leave\s*request/i],
+  ['Policies & SOPs', /polic(y|ies)|\bsops?\b|procedures?\b|manuals?\b|handbook|\bguides?\b/i],
+  ['Price lists', /price\s*lists?|pricelist|\bprices\b|tariffs?\b/i],
+  ['Reports', /reports?\b|stock\s*count|waste\s*sheet|summary|\blogs?\b|minutes/i],
+];
+const MEDIA_FOLDERS = { image: 'Photos', video: 'Videos', audio: 'Voice notes' };
+const EXT_FOLDERS = [[/^(xlsx?|csv|ods)$/i, 'Spreadsheets'], [/^(pdf|docx?|odt|rtf|txt|pptx?)$/i, 'Documents']];
+const SORT_NAMES = [...SORT_TYPES.map((t) => t[0]), 'Photos', 'Videos', 'Voice notes', 'Spreadsheets', 'Documents', 'Other'];
+const sameName = (a, b) => { const n = (s) => String(s || '').toLowerCase().replace(/&/g, 'and').replace(/[^a-z0-9]+/g, ' ').replace(/(ies|es|s)\b/g, '').trim(); return n(a) === n(b); };
+function ruleFolder(x, text) {
+  const words = [x.title, x.att && x.att.name, text].join(' ');
+  for (const [name, re] of SORT_TYPES) if (re.test(words)) return name;
+  if (x.att && MEDIA_FOLDERS[x.att.kind]) return MEDIA_FOLDERS[x.att.kind];
+  const ext = x.att ? extOf(x.att.name) : '';
+  for (const [re, name] of EXT_FOLDERS) if (re.test(ext)) return name;
+  return 'Other';
+}
+// the words inside a document: the first pages of a PDF, or a text file
+async function docText(a, blob) {
+  if (!blob) return '';
+  try {
+    if (/pdf/i.test(a.mime || '') || /\.pdf$/i.test(a.name)) {
+      const lib = await loadPdfJs(), doc = await lib.getDocument({ data: new Uint8Array(await blob.arrayBuffer()) }).promise;
+      let t = '';
+      for (let i = 1; i <= Math.min(2, doc.numPages); i++) t += (await (await doc.getPage(i)).getTextContent()).items.map((it) => it.str).join(' ') + '\n';
+      return t.replace(/\s+/g, ' ').trim().slice(0, 2000);
+    }
+    if (/^text\/|csv|json/i.test(a.mime || '') || /\.(txt|csv)$/i.test(a.name)) return (await blob.text()).slice(0, 2000);
+  } catch (e) { /* unreadable: it goes by its name */ }
+  return '';
+}
+// a small picture for the AI to read: a photographed page, or the first page of a scanned PDF with no text in it
+async function smallPicture(a, blob) {
+  try {
+    let src = null;
+    if (a.kind === 'image') src = URL.createObjectURL(blob);
+    else if (/pdf/i.test(a.mime || '') || /\.pdf$/i.test(a.name)) src = (await pdfPages(blob, 1)).pages[0];
+    if (!src) return '';
+    const img = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = src; });
+    const k = Math.min(1, 900 / Math.max(img.naturalWidth, img.naturalHeight)), cv = document.createElement('canvas');
+    cv.width = Math.round(img.naturalWidth * k); cv.height = Math.round(img.naturalHeight * k);
+    cv.getContext('2d').drawImage(img, 0, 0, cv.width, cv.height);
+    if (src.startsWith('blob:')) URL.revokeObjectURL(src);
+    return cv.toDataURL('image/jpeg', 0.8);
+  } catch (e) { return ''; }
+}
+async function contentKey(a, blob) {
+  if (a.demo) return 'demo:' + a.demo + ':' + a.name;
+  if (!blob || !(window.crypto && crypto.subtle)) return '';
+  const h = await crypto.subtle.digest('SHA-256', await blob.arrayBuffer());
+  return [...new Uint8Array(h)].map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+// The plan: for each file, the folder it goes in (one of theirs where it fits) and maybe a clearer title.
+async function makeSortPlan(items, existing, onStep) {
+  const options = [...existing.map((f) => f.name), ...SORT_NAMES.filter((n) => !existing.some((f) => sameName(f.name, n)))];
+  const seen = new Map(), read = [];
+  for (const x of items) {
+    const blob = x.att && !x.att.demo ? await Blobs.get(x.att.id, x.att.path) : null;
+    const text = x.att ? await docText(x.att, blob) : '';
+    const key = x.att ? await contentKey(x.att, blob) : '';
+    const dupOf = key && seen.get(key);
+    if (key && !dupOf) seen.set(key, x.id);
+    read.push({ x, text, blob, dupOf });
+    onStep(read.length);
+  }
+  // the store's AI reads what the rules can't, in batches
+  let ai = {}, how = 'rules';
+  if (CLOUD && navigator.onLine) {
+    try {
+      const todo = read.filter((r) => !r.dupOf);
+      for (let i = 0; i < todo.length; i += 20) {
+        const files = [];
+        for (const r of todo.slice(i, i + 20)) {
+          const a = r.x.att, pic = a && r.blob && !r.text && (a.kind === 'image' || /pdf/i.test(a.mime || '')) ? await smallPicture(a, r.blob) : '';
+          files.push({ id: r.x.id, title: r.x.title, name: a ? a.name : '', text: r.text, image: pic });
+        }
+        const { data, error } = await CLOUD.functions.invoke('sort-files', { body: { folders: options, files } });
+        if (error || !data || !data.results) throw new Error((data && data.error) || (error && error.message) || 'no answer');
+        data.results.forEach((r) => { ai[r.id] = r; });
+      }
+      how = 'ai';
+    } catch (e) { ai = {}; how = 'rules'; }
+  }
+  const rows = read.map(({ x, text, dupOf }) => {
+    const pick = dupOf ? 'Duplicates' : (ai[x.id] && ai[x.id].folder) || ruleFolder(x, text);
+    const mine = existing.find((f) => sameName(f.name, pick));
+    const title = ai[x.id] && ai[x.id].title && ai[x.id].title !== x.title ? ai[x.id].title : '';
+    return { x, to: mine ? mine.name : pick, title, dup: !!dupOf };
+  });
+  return { rows, how };
+}
+// where the sorting happens: My files ('me'), or a department archive (its drive id) for admins and its managers
+function sortScope(db, user, where) {
+  if (where === 'me') {
+    return { name: 'My files', items: myFilesOf(db, user.id).filter((f) => !f.folder).map((f) => ({ id: f.id, title: f.title, att: f.att })), existing: myFoldersOf(db, user.id).map((f) => ({ id: f.id, name: f.name })) };
+  }
+  const a = archivesFor(db, user).find((x) => x.drive.id === where);
+  if (!a) return null;
+  return { name: a.dept.name + ' archive', items: archiveFiles(db, where).filter((f) => !f.folder && f.att).map((f) => ({ id: f.id, title: f.name, att: f.att })),
+    existing: db.folders.filter((f) => f.drive === where && !f.parent).map((f) => ({ id: f.id, name: f.name })) };
+}
+const canSortArchive = (db, user, driveId) => { const d = db.drives.find((x) => x.id === driveId); return user.role === 'admin' || !!(d && d.access.some((x) => user.manages.includes(x))); };
+function SortTile({ x }) {
+  const url = useThumb(x.att);
+  return url ? html`<img src=${url} alt=""/>` : html`<span>${x.att ? extOf(x.att.name).slice(0, 4).toUpperCase() : 'DOC'}</span>`;
+}
+function SortView({ where, onClose }) {
+  const { db, user, update, toast } = useApp();
+  const scope = useMemo(() => sortScope(db, user, where), []); // the files as they were when sorting started
+  const [phase, setPhase] = useState('reading'), [readN, setReadN] = useState(0), [plan, setPlan] = useState(null);
+  const [landed, setLanded] = useState(0), [moves, setMoves] = useState({}), [useTitles, setUseTitles] = useState(true), [undo, setUndo] = useState(null);
+  const stage = useRef(null), pileRef = useRef(null), panelRefs = useRef({}), [geo, setGeo] = useState(null);
+  const items = scope ? scope.items : [];
+  useEffect(() => {
+    if (!scope || !items.length) return undefined;
+    let alive = true;
+    makeSortPlan(items, scope.existing, (n) => alive && setReadN(n)).then((p) => { if (alive) { setPlan(p); setPhase('plan'); } });
+    return () => { alive = false; };
+  }, []);
+  // the files fly from the pile into their folders, one after another
+  useEffect(() => {
+    if (phase !== 'plan' || !plan) return undefined;
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) { setLanded(plan.rows.length); return undefined; }
+    const t = setInterval(() => setLanded((n) => { if (n >= plan.rows.length) { clearInterval(t); return n; } return n + 1; }), Math.max(45, Math.min(160, 3200 / plan.rows.length))); // about 3 seconds in all
+    return () => clearInterval(t);
+  }, [phase, plan]);
+  const rowsTo = plan ? plan.rows.map((r) => ({ ...r, to: moves[r.x.id] || r.to })) : [];
+  const groups = {}; rowsTo.forEach((r) => { (groups[r.to] = groups[r.to] || []).push(r); });
+  const names = Object.keys(groups).sort((a, b) => (a === 'Duplicates') - (b === 'Duplicates') || (a === 'Other') - (b === 'Other') || groups[b].length - groups[a].length);
+  // where each folder panel and the pile are, so the files know where to fly
+  useLayoutEffect(() => {
+    const measure = () => {
+      const s = stage.current; if (!s) return;
+      const sr = s.getBoundingClientRect(), rel = (el) => { const r = el.getBoundingClientRect(); return { x: r.left - sr.left, y: r.top - sr.top, w: r.width, h: r.height }; };
+      const panels = {}; Object.entries(panelRefs.current).forEach(([k, el]) => { if (el) panels[k] = rel(el); });
+      setGeo({ pile: pileRef.current ? rel(pileRef.current) : { x: sr.width / 2, y: 0, w: 200, h: 200 }, panels });
+    };
+    measure(); window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [phase, names.join('|')]);
+  if (!scope) return html`<${Page} title="Sort my files"><div className="empty"><p>You can’t sort this folder.</p><button className="btn" onClick=${onClose}>Back</button></div><//>`;
+  if (!items.length) return html`<${Page} title=${'Sort ' + scope.name}><div className="empty"><${Icon} n="check" s=${24}/><h3>Nothing to sort</h3><p>Every file here is already in a folder. New files you add land here, ready to sort.</p><button className="btn" onClick=${onClose}>Back to files</button></div><//>`;
+  const tileAt = (i, r) => {
+    if (!geo) return { opacity: 0 };
+    const n = items.length, R = Math.min(geo.pile.w, geo.pile.h) / 2 - 22, cx = geo.pile.x + geo.pile.w / 2, cy = geo.pile.y + geo.pile.h / 2;
+    const rr = R * Math.sqrt((i + 0.5) / n), th = i * 2.39996;
+    const pile = { x: cx + rr * Math.cos(th) - 17, y: cy + rr * Math.sin(th) - 17, s: 1, rot: ((i * 37) % 30) - 15 };
+    if (!r || i >= landed || !geo.panels[r.to]) return { transform: 'translate(' + pile.x + 'px,' + pile.y + 'px) rotate(' + pile.rot + 'deg)' };
+    const p = geo.panels[r.to], k = groups[r.to].indexOf(r), cols = Math.max(1, Math.floor((p.w - 24) / 22));
+    const x = p.x + 12 + (k % cols) * 22, y = p.y + 40 + Math.floor(k / cols) * 22;
+    if (y > p.y + p.h - 18) return { transform: 'translate(' + (p.x + p.w / 2 - 17) + 'px,' + (p.y + p.h / 2 - 17) + 'px) scale(.2)', opacity: 0 };
+    return { transform: 'translate(' + (x - 9) + 'px,' + (y - 9) + 'px) scale(.53)' };
+  };
+  const sorted = Math.min(landed, rowsTo.length), newFolders = names.filter((n) => !scope.existing.some((f) => sameName(f.name, n))).length;
+  const dups = rowsTo.filter((r) => r.to === 'Duplicates').length, other = rowsTo.filter((r) => r.to === 'Other').length;
+  const apply = () => {
+    const before = [], made = [], now = Date.now();
+    update((d) => {
+      const personal = where === 'me', p = personal ? (d.pins[user.id] = d.pins[user.id] || { posts: [], notes: [] }) : null;
+      const folderFor = (name) => {
+        const list = personal ? (p.myfolders = p.myfolders || []) : d.folders.filter((f) => f.drive === where && !f.parent);
+        const hit = list.find((f) => sameName(f.name, name));
+        if (hit) return hit.id;
+        const f = personal ? { id: uid('fo'), name, at: now } : { id: uid('f'), drive: where, name, parent: null };
+        if (personal) p.myfolders.push(f); else d.folders.push(f);
+        made.push(f.id); return f.id;
+      };
+      rowsTo.forEach((r) => {
+        const f = personal ? (p.myfiles || []).find((y) => y.id === r.x.id) : d.files.find((y) => y.id === r.x.id);
+        if (!f) return;
+        before.push({ id: f.id, folder: f.folder || null, title: personal ? f.title : f.name });
+        f.folder = folderFor(r.to);
+        if (useTitles && r.title) { if (personal) f.title = r.title; else f.name = r.title; }
+      });
+    });
+    setUndo({ before, made }); setPhase('done');
+  };
+  const undoIt = () => {
+    update((d) => {
+      const personal = where === 'me', p = personal ? d.pins[user.id] : null;
+      undo.before.forEach((b) => { const f = personal ? (p.myfiles || []).find((y) => y.id === b.id) : d.files.find((y) => y.id === b.id); if (!f) return; f.folder = b.folder; if (personal) f.title = b.title; else f.name = b.title; });
+      if (personal) p.myfolders = (p.myfolders || []).filter((f) => !undo.made.includes(f.id)); else d.folders = d.folders.filter((f) => !undo.made.includes(f.id));
+    });
+    toast('Put back the way it was'); onClose();
+  };
+  if (phase === 'done') return html`<${Page} title="Sorted" sub=${scope.name}>
+    <div className="srt-done glass"><${Icon} n="check" s=${26}/><div><h3>${nFiles(rowsTo.length)} sorted into ${names.length} ${names.length === 1 ? 'folder' : 'folders'}</h3>
+      <p className="muted">${newFolders ? newFolders + ' new ' + (newFolders === 1 ? 'folder' : 'folders') + ' made. ' : ''}${dups ? dups + ' exact ' + (dups === 1 ? 'copy is' : 'copies are') + ' in Duplicates, nothing was deleted.' : ''}</p>
+      <div className="w-upd-a"><button className="btn primary" onClick=${onClose}>Back to files</button><button className="btn ghost" onClick=${undoIt}>Undo</button></div></div></div>
+  <//>`;
+  return html`<${Page} title=${'Sorting ' + scope.name} sub=${phase === 'reading' ? 'Reading what each file is…' : plan && plan.how === 'ai' ? 'Read by the store’s AI. Check where each file goes, then put them in their folders.' : 'Sorted by what the files say and are called. Check where each file goes, then put them in their folders.'}
+    actions=${html`<button className="btn" onClick=${onClose}>Cancel</button>${phase === 'plan' && html`<button className="btn primary" onClick=${apply} disabled=${landed < rowsTo.length}>Put them in folders</button>`}`}>
+    <div className="srt-stats">${[['Files', items.length], [phase === 'reading' ? 'Read' : 'Sorted', phase === 'reading' ? readN : sorted], ['Folders', names.length], ['New folders', newFolders], ['Duplicates', dups]].map(([l, n]) => html`<div key=${l}><small>${l}</small><b>${n}</b></div>`)}</div>
+    <div className="srt-stage" ref=${stage}>
+      <div className="srt-panels">${phase === 'reading' ? html`<p className="muted sm srt-wait">Reading ${readN} of ${items.length}…</p>`
+        : names.map((n) => html`<div key=${n} className=${'srt-panel' + (n === 'Duplicates' ? ' dup' : '')} ref=${(el) => { panelRefs.current[n] = el; }}>
+          <div className="srt-ph"><b>${n}</b><span>${groups[n].filter((r) => rowsTo.indexOf(r) < landed).length}</span>${!scope.existing.some((f) => sameName(f.name, n)) && html`<i>new</i>`}</div></div>`)}</div>
+      <div className="srt-pile" ref=${pileRef}><span className="srt-ring"></span><small>${phase === 'reading' ? 'Reading…' : landed < rowsTo.length ? 'Sorting…' : 'All sorted'}</small></div>
+      ${items.map((x, i) => { const r = plan ? rowsTo.find((y) => y.x.id === x.id) : null; return html`<span key=${x.id} className=${'srt-tile' + (phase === 'reading' ? ' float' : '')} style=${{ ...tileAt(i, r), '--d': (i % 7) * 0.3 + 's' }}><${SortTile} x=${x}/></span>`; })}
+    </div>
+    ${phase === 'plan' && landed >= rowsTo.length && html`<div className="srt-check">
+      <div className="srt-check-h"><b>Check the plan</b><label className="chk-inline"><input type="checkbox" checked=${useTitles} onChange=${(e) => setUseTitles(e.target.checked)}/> Use the clearer titles</label></div>
+      ${names.map((n) => html`<div key=${n} className="srt-group"><h4>${n} <span className="muted">${groups[n].length}</span></h4>
+        ${groups[n].map((r) => html`<div key=${r.x.id} className="srt-row"><span className="srt-row-t"><b>${useTitles && r.title ? r.title : r.x.title}</b>${useTitles && r.title && html`<small>was “${r.x.title}”</small>`}${r.dup && html`<small>an exact copy of another file</small>`}</span>
+          <select className="select sm" value=${r.to} onChange=${(e) => setMoves((m) => ({ ...m, [r.x.id]: e.target.value }))} aria-label=${'Folder for ' + r.x.title}>
+            ${[...new Set([...names, ...scope.existing.map((f) => f.name), ...SORT_NAMES, 'Duplicates'])].map((o) => html`<option key=${o} value=${o}>${o}</option>`)}</select></div>`)}</div>`)}
+    </div>`}
   <//>`;
 }
 
@@ -5640,6 +5902,25 @@ function demoFiles(db, T = Date.now()) {
   P('tills', 'Till point layout', 'display', 12 * DAY);
   P('admin', 'Notice board, how it should look', 'shelf', 8 * DAY);
   P('mgmt', 'Store front display, last month', 'display', 30 * DAY);
+}
+// a pile of unsorted paperwork in each demo person's My files (made up), for Sort my files
+function demoUnsorted(db, T = Date.now()) {
+  const A = (name, kind, demo, size) => ({ id: uid('a'), name, mime: kind === 'image' ? 'image/svg+xml' : /\.xlsx$/.test(name) ? 'application/vnd.ms-excel' : 'application/pdf', size, kind, demo });
+  const pile = [
+    ['Highveld Produce invoice HP-55821', 'HP-55821.pdf', 'doc', 'inv1'], ['Golden Crust invoice GC-10388', 'GC-10388.pdf', 'doc', 'inv2'],
+    ['SunPack quote for carrier bags', 'Quotation SP-Q-2231.pdf', 'doc', 'q1'], ['Fryer service quotation', 'quote_fryer.pdf', 'doc', 'q2'],
+    ['Signed delivery note, Karoo Meats', 'IMG_4471.jpg', 'image', 'delivery'], ['Highveld credit note CN-2291', 'CN-2291.pdf', 'doc', 'cn1'],
+    ['Payslip September 2026', 'Payslip Sep 2026.pdf', 'doc', 'ps1'], ['Leave form, December', 'leave-form.pdf', 'doc', 'lf1'],
+    ['Fruit & veg price list November', 'pricelist_nov.xlsx', 'doc', 'pl1'], ['Food handler certificate 2026', 'certificate.pdf', 'doc', 'c1'],
+    ['Waste sheet week 44', 'waste wk44.xlsx', 'doc', 'ws1'], ['Highveld Produce invoice HP-55821', 'HP-55821.pdf', 'doc', 'inv1'],
+    ['Cold room temperature log', 'temp log Oct.pdf', 'doc', 'tl1'], ['Scan_0012', 'Scan_0012.pdf', 'doc', 'sc1'],
+  ];
+  db.users.forEach((u) => {
+    const p = db.pins[u.id] = db.pins[u.id] || { posts: [], notes: [] };
+    if ((p.myfiles || []).some((f) => /^mf-.*-u\d+$/.test(f.id))) return;
+    const add = pile.map(([title, name, kind, demo], i) => ({ id: 'mf-' + u.id + '-u' + i, title, att: A(name, kind, demo, 60000 + i * 7919), at: T - (i + 1) * 3 * HOUR }));
+    p.myfiles = [...(p.myfiles || []), ...add];
+  });
 }
 function demoStickies(db, T) {
   const add = (who, list) => {

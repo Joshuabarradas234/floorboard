@@ -159,6 +159,19 @@ It's on for every department. To hide it for a department, switch off **My files
 
 On the live store, run `supabase/setup.sql` once more (SQL Editor → New query → paste → Run; it's safe to run again). That makes personal files private on the server too: only their owner can open them. Until you do, Files still works.
 
+### Sort my files
+
+**Sort my files** (on the Files page, or **Sort these** inside My files) puts every loose file into the right folder: invoices, quotes, credit notes, delivery notes, orders, statements, receipts, payslips, contracts, certificates, forms, policies and SOPs, price lists, reports, and photos, videos and voice notes. It uses your own folders where they fit (your Payslips folder, say) and makes new ones only where needed. Exact copies of the same file go in **Duplicates**; nothing is deleted.
+
+It goes by what each file says: the words inside PDFs and text files, and its title and file name. You see the plan first (the files fly from the pile into their folders), can move any file to another folder, then click **Put them in folders**. **Undo** puts everything back. Admins and a department's managers can sort that department's archive the same way, into its Drive folders.
+
+To have the store's AI read the files too (photos of paperwork, scans with no text, and clearer titles for files named like "Scan_0012"), set up the sort-files function once, the same way as meeting notes:
+
+1. **Edge Functions → Deploy a new function → Via editor**: name it `sort-files`, paste all of `supabase/functions/sort-files/index.ts`, and deploy. In its settings, switch **Verify JWT** off.
+2. It uses the same `ANTHROPIC_API_KEY` secret as meeting notes. Sorting a batch of documents costs a few cents.
+
+Without it, sorting still works, by the words in and on the files.
+
 ## Works with no signal
 
 Floorboard keeps a copy of itself and of the store on each device, so it keeps working with no connection:
