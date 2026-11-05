@@ -1,6 +1,6 @@
 // Updates for the Windows app: it asks once whether it may check GitHub for new versions. If yes, it looks when it
-// starts and every few hours; a newer version is one click, then it swaps its files and restarts. Settings, logins and
-// the WhatsApp link live in the app's own data folder, so an update never touches them.
+// starts and every few hours; a newer version is one click, then it swaps its files and restarts. Settings and logins
+// live in the app's own data folder, so an update never touches them.
 const { app, ipcMain, BrowserWindow } = require('electron');
 const path = require('path'), fs = require('fs'), os = require('os');
 const { execFile } = require('child_process');

@@ -2,7 +2,6 @@
 // for chats, a tray icon to show or hide them, and the full app in its own window.
 const { app, BrowserWindow, Tray, Menu, nativeImage, screen, globalShortcut, ipcMain, shell, session, safeStorage } = require('electron');
 const path = require('path'), fs = require('fs');
-const whatsapp = require('./whatsapp');
 const updates = require('./updates');
 const coucou = require('./coucou');
 
@@ -20,7 +19,7 @@ const BUBBLE = 80; // the floating button's window: the 56px button and its shad
 const BAR = { pill: { width: 320, height: 48 }, open: { width: 430, height: 490 } };
 let prefs = { onTop: false, side: 'right', bubble: true, bubbleAt: null, bar: true, slim: false, width: SIDEBAR_WIDTH, coucou: true };
 let sidebar = null, full = null, tray = null, bubble = null, bar = null, rail = null, barState = 'pill';
-let opened = false, slide = null, need = { count: 0, urgent: false };
+let opened = false, slide = null, home = null, need = { count: 0, urgent: false }; // home: the work area of the screen the sidebar docks to
 
 const prefsFile = () => path.join(app.getPath('userData'), 'prefs.json');
 function loadPrefs() { try { prefs = { ...prefs, ...JSON.parse(fs.readFileSync(prefsFile(), 'utf8')) }; } catch (e) { /* first run */ } }
@@ -36,7 +35,9 @@ function openLinksOutside(win) {
 // x is where the sidebar sits docked; away is just past the screen edge, where it slides to when it closes.
 // Between slides its bounds stay docked, even while it's hidden.
 function docked() {
-  const { workArea } = screen.getDisplayMatching(sidebar.getBounds());
+  // mid-slide the sidebar can poke onto a second screen, so it keeps to the screen it docked to
+  const workArea = slide && home ? home : screen.getDisplayMatching(sidebar.getBounds()).workArea;
+  if (!slide) home = workArea;
   const width = Math.min(Math.max(prefs.width || SIDEBAR_WIDTH, 320), 520), height = workArea.height;
   const left = prefs.side === 'left';
   return { workArea, width, height, y: workArea.y, x: left ? workArea.x : workArea.x + workArea.width - width, away: left ? workArea.x - width : workArea.x + workArea.width };
@@ -47,7 +48,7 @@ function applyOnTop() { if (sidebar) sidebar.setAlwaysOnTop(prefs.onTop); if (bu
 // window (so there's no box around it), always in front. Clicking an icon opens the sidebar on that section.
 function placeRail() {
   if (!rail) return;
-  const { workArea } = screen.getDisplayMatching(sidebar ? sidebar.getBounds() : screen.getPrimaryDisplay().bounds);
+  const workArea = home || screen.getPrimaryDisplay().workArea; // the sidebar's own screen, even while it's sliding away
   const h = Math.min(railHeight, workArea.height - 80), left = prefs.side === 'left';
   rail.setBounds({ x: left ? workArea.x : workArea.x + workArea.width - RAIL_W, y: workArea.y + Math.round((workArea.height - h) / 2), width: RAIL_W, height: h });
 }
@@ -176,6 +177,7 @@ function createBar() {
     minimizable: false, maximizable: false, fullscreenable: false, skipTaskbar: true, alwaysOnTop: true, show: false, title: 'Floorboard bar', webPreferences,
   });
   bar.setAlwaysOnTop(true, 'screen-saver');
+  placeBar('pill'); // in its spot from the start, even if it stays hidden for now
   bar.loadFile(PAGE, { hash: 'bar', query: { shell: 'desktop' } });
   openLinksOutside(bar);
   bar.once('ready-to-show', () => { placeBar('pill'); if (!inCoucou()) bar.showInactive(); });
@@ -184,7 +186,7 @@ function createBar() {
 }
 // With Coucou running and Floorboard showing in its island, Floorboard's own bar steps aside: one island, not two.
 const inCoucou = () => prefs.coucou && coucou.running();
-function coucouChanged() { if (!bar) return; if (inCoucou()) bar.hide(); else if (prefs.bar) bar.showInactive(); }
+function coucouChanged() { if (!bar) return; if (inCoucou()) bar.hide(); else if (prefs.bar) { placeBar(barState); bar.showInactive(); } }
 function setCoucou(on) {
   prefs.coucou = !!on; savePrefs();
   if (prefs.coucou) coucou.init(coucouChanged); else coucou.stop();
@@ -237,20 +239,6 @@ function createSidebar() {
         console.log('SMOKE upd first', brief(await U('state()')));
         await U('answer(true)'); await wait(1500); console.log('SMOKE upd checked', brief(await U('state()')));
         console.log('SMOKE upd installed', brief(await U('install()')));
-      }
-      if (process.env.FLOORBOARD_WA_MOCK) { // WhatsApp through the page's bridge, against a stand-in helper
-        const W = (js) => sidebar.webContents.executeJavaScript('window.floorboardDesktop.wa.' + js), sam = '27820000001@s.whatsapp.net';
-        console.log('SMOKE wa state', JSON.stringify(await W('state()')));
-        const q = await W('qr()'); console.log('SMOKE wa qr', q.ok && q.ok.dataUrl ? 'picture, ' + q.ok.dataUrl.length + ' chars, ' + q.ok.seconds + 's' : JSON.stringify(q));
-        await fetch(process.env.FLOORBOARD_WA_MOCK + '/mock/link'); await wait(4500);
-        const list = (c) => JSON.stringify(c.map((x) => [x.name, x.unread, x.last && (x.last.text || x.last.tag)]));
-        console.log('SMOKE wa linked', (await W('state()')).linked, list(await W('chats()')));
-        console.log('SMOKE wa messages', JSON.stringify(((await W(`messages('${sam}')`)).ok || []).map((m) => [m.me ? 'me' : m.who, m.text || m.tag])));
-        console.log('SMOKE wa read', JSON.stringify(await W(`read('${sam}')`)), list(await W('chats()')));
-        console.log('SMOKE wa send', JSON.stringify(await W(`send('${sam}', 'Thanks, gate 2')`)));
-        console.log('SMOKE wa bad send', JSON.stringify(await W(`send('not a chat', 'x')`)));
-        await wait(1500); console.log('SMOKE wa after send', list(await W('chats()')));
-        console.log('SMOKE wa helper saw', JSON.stringify((await (await fetch(process.env.FLOORBOARD_WA_MOCK + '/mock/log')).json()).results.filter((x) => x[0] === 'POST')));
       }
       app.isQuitting = true; app.quit();
     }, 1500));
@@ -385,7 +373,6 @@ else {
   app.on('second-instance', showSidebar);
   app.whenReady().then(() => {
     loadPrefs();
-    whatsapp.init(); // WhatsApp beside Floorboard, once it's been linked
     updates.init(); // new versions from GitHub, if the person said it may look
     session.defaultSession.setPermissionRequestHandler((_wc, permission, done) => done(permission === 'media' || permission === 'notifications'));
     createSidebar();
@@ -397,6 +384,8 @@ else {
     ipcMain.on('sidebar-slim-size', (_e, h) => { h = Math.round(Number(h) || 0); if (h < 200 || h > 1200 || h === railHeight) return; railHeight = h; placeRail(); });
     ipcMain.on('rail-open', openSidebarAt);
     ipcMain.on('bar-state', (_e, state, focus) => { placeBar(state); if (bar && state === 'open' && focus) bar.focus(); });
+    ipcMain.handle('on-top-get', () => !!prefs.onTop);
+    ipcMain.handle('on-top-set', (_e, on) => { setOnTop(on); return prefs.onTop; });
     if (SMOKE) return;
     buildTray();
     globalShortcut.register('Control+Alt+F', toggleSidebar);
@@ -405,12 +394,10 @@ else {
     ipcMain.on('hide-sidebar', hideSidebar);
     ipcMain.on('show-sidebar', showSidebar);
     ipcMain.on('attention', attention);
-    ipcMain.handle('on-top-get', () => !!prefs.onTop);
-    ipcMain.handle('on-top-set', (_e, on) => { setOnTop(on); return prefs.onTop; });
     ipcMain.handle('printers', async (e) => { try { return (await e.sender.getPrintersAsync()).map((p) => ({ name: p.name, isDefault: !!p.isDefault })); } catch (x) { return []; } });
     ipcMain.handle('print-html', printHtml);
     msIpc();
   });
   app.on('window-all-closed', () => { /* keep running in the tray */ });
-  app.on('will-quit', () => { globalShortcut.unregisterAll(); whatsapp.stop(); coucou.stop(); });
+  app.on('will-quit', () => { globalShortcut.unregisterAll(); coucou.stop(); });
 }

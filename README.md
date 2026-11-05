@@ -21,25 +21,13 @@ Double-click `desktop/Start Floorboard.cmd`.
 If you use [Coucou](https://github.com/Louis-CFM/coucou) (a free app that puts WhatsApp, classic Outlook mail and more in an island at the top of the screen), Floorboard joins it: a **floorboard** card shows the newest thing for you, how many things need you and how many chats are unread. While Coucou is open, Floorboard's own bar at the top steps aside so there's one island, and it comes back if Coucou is closed. Floorboard only talks to Coucou on this computer.
 
 - Turn it on or off from the tray icon's menu: **Show Floorboard in Coucou's island**.
-- WhatsApp and Outlook are Coucou's own: link WhatsApp in Coucou (Settings → Integrations → Install WhatsApp) and keep classic Outlook signed in. Floorboard's own WhatsApp link isn't needed then.
+- WhatsApp and Outlook live in Coucou's island: link WhatsApp in Coucou (Settings → Integrations → Install WhatsApp, then scan the code with your phone) and keep classic Outlook signed in.
 
 ### Keeping it up to date (Windows)
 
-The first time, the sidebar asks whether Floorboard may check GitHub for new versions. If you say yes, it looks when it starts and every few hours. When there's a newer version, the sidebar shows **A new version of Floorboard is ready** with **Update now**: one click and it updates, restarts and keeps your settings, logins and WhatsApp link. You can switch the checking on or off, or check straight away, from the tray icon's menu.
+The first time, the sidebar asks whether Floorboard may check GitHub for new versions. If you say yes, it looks when it starts and every few hours. When there's a newer version, the sidebar shows **A new version of Floorboard is ready** with **Update now**: one click and it updates, restarts and keeps your settings and logins. You can switch the checking on or off, or check straight away, from the tray icon's menu.
 
 New versions only arrive once they've been pushed to GitHub. A copy with changes that aren't on GitHub yet isn't updated, so nothing is lost.
-
-### WhatsApp beside Floorboard (Windows)
-
-Your own WhatsApp chats can show in the bar at the top of the screen and in the sidebar, next to Floorboard's.
-
-1. In the sidebar's **WhatsApp** card (or the bar's **WhatsApp** tab), click **Link WhatsApp**. The first time, Floorboard downloads a small free helper (about 13 MB) and checks it's exactly the published file.
-2. On your phone: WhatsApp → Settings → **Linked devices** → **Link a device**, and point it at the QR code.
-3. That's it. One line per chat: who, what they said, how many are unread. Photos, voice notes and files show as labels. Click a chat to read it and reply; **Enter** sends. A chat only counts as read when you open it (it's marked read on your phone too). The rail has a WhatsApp icon with its count.
-
-- It stays on this computer. The helper only answers this computer, behind a password, and nothing from WhatsApp goes to the store's server. **Unlink** in the WhatsApp card stops it (nothing is deleted from your phone).
-- The helper is GOWA (go-whatsapp-web-multidevice, open source). It links the same way WhatsApp Web does, but it isn't made by WhatsApp. Use it on your own number, not a shared store number: WhatsApp may restrict accounts used for bulk or automatic messages.
-- Windows may ask once whether to let it on the network: it only needs to reach WhatsApp.
 
 ## Phone: app icon on your home screen
 

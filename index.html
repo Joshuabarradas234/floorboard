@@ -609,25 +609,6 @@ html.bar-mode,html.bar-mode body,html.bar-mode #root{background:transparent!impo
 .w-upd.bad>.ic{color:var(--red)}
 .w-upd-t{display:grid;gap:3px;min-width:0}.w-upd-t b{font-size:13.5px}.w-upd-t small{font-size:12px;color:var(--ink-2);line-height:1.4}
 .w-upd-a{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
-/* WhatsApp beside Floorboard */
-.fbar-tabs{display:flex;gap:2px;margin:10px 12px 0;background:rgba(255,255,255,.07);border-radius:999px;padding:2px}
-.fbar-tabs button{flex:1;border:0;background:none;color:rgba(244,236,228,.7);font-size:12px;font-weight:700;padding:5px 10px;border-radius:999px}
-.fbar-tabs button.on{background:rgba(255,255,255,.16);color:#fff}
-.fbar-n.w,.srail-n.w{background:#1fae5b}
-.fbar-m.mine.wa{background:#156b45}
-.wa-av{display:grid;place-items:center;flex:none;border-radius:50%;color:#1a1410;font-weight:800}
-.wa-chip{margin-left:auto;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:999px;background:rgba(31,174,91,.22);color:#7fe0a8}
-.wa-link{display:grid;gap:10px;padding:14px 16px;color:#f4ece4}
-.wa-intro{display:grid;gap:8px;justify-items:start}.wa-intro span{font-size:12.5px;color:rgba(244,236,228,.72)}
-.wa-busy{display:grid;gap:8px;font-size:13px}.wa-prog{height:6px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden}.wa-prog i{display:block;height:100%;background:#1fae5b;transition:width .3s}
-.wa-qr{display:grid;justify-items:center;gap:10px}.wa-qr img{width:200px;height:200px;border-radius:12px;background:#fff;padding:8px}
-.wa-qr-wait{width:200px;height:200px;display:grid;place-items:center;border-radius:12px;background:rgba(255,255,255,.08);font-size:12px}
-.wa-qr ol{margin:0;padding-left:18px;font-size:12px;line-height:1.6;color:rgba(244,236,228,.8)}
-.wa-err{margin:0 12px;font-size:12px;color:#ff9c8c}
-.wa-note{margin:0;font-size:11px;color:rgba(244,236,228,.5)}
-.w-wa{flex:none;padding:12px 10px 12px;border-radius:22px}
-.w-wa-body{max-height:440px;overflow:hidden;display:flex;flex-direction:column}
-.w-wa-body .fbar-thread{height:420px}.w-wa-body .fbar-list{padding:0}.w-wa-body .wa-link{padding:4px 4px}
 .fsearch{width:100%;max-width:420px;margin:0 0 14px}
 .ftiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px}
 .ftile{display:flex;flex-direction:column;gap:3px;text-align:left;border:1px solid var(--glass-line);background:var(--glass);border-radius:var(--r);padding:8px 8px 10px;box-shadow:var(--hi);min-width:0}
@@ -1078,13 +1059,12 @@ td.mono{white-space:nowrap}
 .w-stk:has(.stk-slim){padding:10px 14px}
 .w-stk:has(.stk-bar){padding:7px 10px 7px 12px}
 .stk-bar{display:flex;align-items:center;gap:6px}
-.w-files:has(.stk-bar),.w-wa:has(.stk-bar){padding:7px 10px 7px 12px}
+.w-files:has(.stk-bar){padding:7px 10px 7px 12px}
 .w-card-a{display:flex;align-items:center;gap:8px}
 .fold-ic{display:grid;place-items:center;width:20px;height:20px;border-radius:6px;flex:none;box-shadow:0 1px 3px rgba(0,0,0,.25)}
 .fold-ic.files{background:#f3efe9;color:#17130f}
-.fold-ic.wa{background:#1fae5b;color:#fff;border-radius:50%}
 .stk-tab em.fold-n{background:rgba(255,255,255,.2);color:#fff}
-.stk-tab em.fold-n.wa{background:#1fae5b}
+
 .board-col .stk-bar,.inline-board .stk-bar{margin-top:14px;padding:8px 10px 8px 14px;border-radius:var(--r-lg);background:var(--glass);border:1px solid var(--glass-line);border-top-color:rgba(255,255,255,.3)}
 .stk-tab{flex:1;display:flex;align-items:center;gap:9px;border:0;background:none;color:var(--ink);font:inherit;font-size:13.5px;padding:2px 0;cursor:pointer;text-align:left}
 .stk-tab b{flex:1;font-weight:700}
@@ -2507,12 +2487,11 @@ function SlimRail({ onOpen }) {
   const c = useCounts(), desk = window.floorboardDesktop;
   const [hl, setHl] = useState(null);
   const unreadChats = myChats(db, user.id).filter((ch) => unreadIn(db, ch, user.id) > 0).length;
-  const notes = stickiesOf(db, user.id).filter((n) => !n.done).length, wa = useWa();
+  const notes = stickiesOf(db, user.id).filter((n) => !n.done).length;
   const full = (t) => (desk && desk.openFull ? desk.openFull(t) : (location.hash = 'go-' + t));
   const items = [
     ['needs', 'inbox', 'Needs you', c.mine.length, c.mine.some((p) => p.level === 'red'), () => onOpen('.w-list')],
     ['chats', 'chat', 'Chats', unreadChats, false, () => full('view:chats')],
-    wa && ['wa', 'phone', 'WhatsApp', wa.unread, false, () => onOpen('.w-wa')],
     plannerOn(db, user) && ['today', 'list', 'Today', 0, false, () => onOpen('.w-day')],
     ['notes', 'edit', 'Sticky notes', notes, false, () => onOpen('.w-stk')],
     filesOn(db, user) && ['files', 'archive', 'Files', 0, false, () => onOpen('.w-files')],
@@ -2527,7 +2506,7 @@ function SlimRail({ onOpen }) {
     <button className="srail-i srail-top" onClick=${() => onOpen()} onMouseEnter=${over} title="Open the sidebar" aria-label="Open the sidebar">${BAR_MARK}</button>
     <span className="srail-sep"></span>
     ${items.map(([k, icon, label, n, red, go]) => html`<button key=${k} className="srail-i" onClick=${go} onMouseEnter=${over} title=${label + (n ? ' · ' + n : '')} aria-label=${label + (n ? ', ' + n : '')}>
-      <${Icon} n=${icon} s=${19}/>${n > 0 && html`<b className=${'srail-n' + (red ? ' r' : k === 'chats' ? ' g' : k === 'wa' ? ' w' : '')}>${n > 99 ? '99+' : n}</b>`}</button>`)}
+      <${Icon} n=${icon} s=${19}/>${n > 0 && html`<b className=${'srail-n' + (red ? ' r' : k === 'chats' ? ' g' : '')}>${n > 99 ? '99+' : n}</b>`}</button>`)}
     <button className="srail-i srail-new" onClick=${() => onOpen('#compose')} onMouseEnter=${over} title="New post" aria-label="New post"><${Icon} n="plus" s=${19}/></button>
         <button className="srail-i srail-me" onClick=${() => onOpen()} onMouseEnter=${over} title=${user.name} aria-label="Open the sidebar"><${Avatar} u=${user} s=${30}/></button>
   </nav>`;
@@ -2578,7 +2557,6 @@ function Widget() {
     ${canQuoteDrop(db, user) && html`<div className="w-qd glass"><${QuoteDrop} compact/></div>`}
     <div className="w-stk glass"><${StickyNotes} compact/></div>
     <${FilesCard}/>
-    <${WaCard}/>
     <div className="filters" style=${{ justifyContent: 'space-between' }}>
       <div className="seg" role="group" aria-label="List">
         <button className=${tab === 'needs' ? 'on' : ''} onClick=${() => { setTab('needs'); setF(NO_FILTERS); }}>Needs you <b>${c.mine.length}</b></button>
@@ -2654,8 +2632,7 @@ function BarThread({ c, onBack }) {
 }
 function Bar() {
   const { db, user } = useApp();
-  const [open, setOpen] = useState(false), [pinned, setPinned] = useState(false), [only, setOnly] = useState(false), [chatId, setChatId] = useState(null), [tab, setTab] = useState('fb');
-  const wa = useWa();
+  const [open, setOpen] = useState(false), [pinned, setPinned] = useState(false), [only, setOnly] = useState(false), [chatId, setChatId] = useState(null);
   const leave = useRef(null), desk = window.floorboardDesktop;
   const rows = myChats(db, user.id).map((c) => ({ c, last: lastMsg(db, c), unread: unreadIn(db, c, user.id) })).sort((a, b) => ((b.last && b.last.at) || 0) - ((a.last && a.last.at) || 0));
   const unread = rows.filter((r) => r.unread), needs = db.posts.filter((p) => needsMe(p, user.id));
@@ -2672,16 +2649,13 @@ function Bar() {
     return () => { window.removeEventListener('blur', blur); window.removeEventListener('keydown', key); };
   }, []);
   const top = unread[0], tp = top && barPreview(db, top.last, user.id);
-  const waTop = wa && wa.chats.find((c) => c.unread > 0), waFirst = waTop && (!top || (waTop.at || 0) > ((top.last && top.last.at) || 0));
   return html`<div className=${'fbar' + (open ? ' open' : '')} onMouseEnter=${() => { clearTimeout(leave.current); if (!open) show(true); }}
     onMouseLeave=${() => { if (!pinned) leave.current = setTimeout(() => show(false), 500); }}>
     ${!open ? html`<button className="fbar-pill" onClick=${() => show(true, true)} aria-label="Open the Floorboard bar">
-        ${BAR_MARK}<span className="fbar-peek">${waFirst ? html`<b>${waTop.name}</b> ${waTop.last ? waTop.last.text || waTop.last.tag : ''}` : tp ? html`<b>${chatName(db, top.c, user.id)}</b> ${tp.text || tp.tag}` : 'All caught up'}</span>
-        ${wa && wa.unread > 0 && html`<b className="fbar-n w" title="Unread on WhatsApp">${wa.unread}</b>`}
+        ${BAR_MARK}<span className="fbar-peek">${tp ? html`<b>${chatName(db, top.c, user.id)}</b> ${tp.text || tp.tag}` : 'All caught up'}</span>
         ${unread.length > 0 && html`<b className="fbar-n g">${unread.reduce((a, r) => a + r.unread, 0)}</b>`}${needs.length > 0 && html`<b className=${'fbar-n' + (urgent ? ' r' : '')}>${needs.length}</b>`}</button>`
     : html`<div className="fbar-panel" onMouseDown=${() => setPinned(true)}>
-      ${wa && html`<div className="fbar-tabs"><button className=${tab === 'fb' ? 'on' : ''} onClick=${() => setTab('fb')}>Floorboard${unread.length ? ' ' + unread.length : ''}</button><button className=${tab === 'wa' ? 'on' : ''} onClick=${() => setTab('wa')}>WhatsApp${wa.unread ? ' ' + wa.unread : ''}</button></div>`}
-      ${wa && tab === 'wa' ? html`<${WaPanel} wa=${wa}/>` : cur ? html`<${BarThread} key=${cur.c.id} c=${cur.c} onBack=${() => setChatId(null)}/>` : html`
+      ${cur ? html`<${BarThread} key=${cur.c.id} c=${cur.c} onBack=${() => setChatId(null)}/>` : html`
         <div className="fbar-head">${BAR_MARK}<b>Chats</b>
           <div className="fbar-chips"><button className=${only ? '' : 'on'} onClick=${() => setOnly(false)}>All</button><button className=${only ? 'on' : ''} onClick=${() => setOnly(true)}>Unread${unread.length ? ' ' + unread.length : ''}</button></div>
           ${needs.length > 0 && html`<button className=${'fbar-need' + (urgent ? ' r' : '')} onClick=${() => desk && desk.showSidebar && desk.showSidebar()} title="Open Needs you in the sidebar">${needs.length} need you</button>`}
@@ -2713,93 +2687,6 @@ function UpdateNotice() {
   return null;
 }
 
-/* ---------------- WhatsApp on this computer (Windows app) ---------------- */
-// The Windows app runs a small open-source helper (GOWA) that links to the person's phone like WhatsApp Web. Their
-// WhatsApp chats show in the bar and the sidebar, beside Floorboard's own. Nothing from WhatsApp goes to the store's server.
-const WA = (() => { const d = window.floorboardDesktop; return d && d.wa ? d.wa : null; })();
-function useWa() {
-  const [st, setSt] = useState(null), [chats, setChats] = useState([]);
-  useEffect(() => {
-    if (!WA) return undefined;
-    WA.state().then(setSt).catch(() => {}); WA.chats().then((c) => setChats(c || [])).catch(() => {});
-    const a = WA.onState(setSt), b = WA.onChats((c) => setChats(c || []));
-    return () => { if (a) a(); if (b) b(); };
-  }, []);
-  if (!WA) return null;
-  return { st: st || {}, chats, unread: chats.reduce((n, c) => n + (c.unread || 0), 0) };
-}
-const waInitials = (name) => (name || '?').replace(/[^\p{L}\p{N} ]/gu, '').trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase() || '#';
-function WaAvatar({ c, s = 30 }) {
-  return html`<span className="wa-av" style=${{ width: s, height: s, fontSize: Math.round(s * 0.38), background: nameColor(c.jid) }}>${c.group ? html`<${Icon} n="team" s=${Math.round(s * 0.5)}/>` : waInitials(c.name)}</span>`;
-}
-// Linking: one click gets the helper ready, then the phone scans the QR code
-function WaLink({ wa, compact }) {
-  const st = wa.st, [code, setCode] = useState(null), [err, setErr] = useState('');
-  const ready = st.running && !st.linked && !st.busy;
-  useEffect(() => {
-    if (!ready) { setCode(null); return undefined; }
-    let alive = true, t = null;
-    const load = () => WA.qr().then((r) => {
-      if (!alive) return;
-      if (r && r.ok && r.ok.dataUrl) { setCode(r.ok.dataUrl); setErr(''); t = setTimeout(load, Math.max(10, r.ok.seconds || 30) * 1000); }
-      else if (r && r.error) { setErr(r.error); t = setTimeout(load, 5000); }
-    });
-    load();
-    return () => { alive = false; clearTimeout(t); };
-  }, [ready]);
-  return html`<div className=${'wa-link' + (compact ? ' compact' : '')}>
-    ${st.busy ? html`<div className="wa-busy"><b>${st.busy}</b>${st.progress > 0 && st.progress < 100 && html`<span className="wa-prog"><i style=${{ width: st.progress + '%' }}></i></span>`}</div>`
-      : ready ? html`<div className="wa-qr">${code ? html`<img src=${code} alt="QR code to link WhatsApp"/>` : html`<span className="wa-qr-wait">Getting the code…</span>`}
-          <ol><li>Open WhatsApp on your phone</li><li>Settings › Linked devices › Link a device</li><li>Point the phone at this code</li></ol></div>`
-      : html`<div className="wa-intro"><b>See your WhatsApp here</b><span>Your chats show beside Floorboard’s, one line each. Read and reply without opening WhatsApp. It stays on this computer.</span>
-          <button className="btn primary sm" onClick=${() => WA.setup()}>Link WhatsApp</button></div>`}
-    ${(err || st.error) && !st.busy && html`<p className="wa-err">${err || st.error}</p>`}
-    ${!compact && html`<p className="wa-note">Uses GOWA, a free open-source helper that links like WhatsApp Web. It isn’t made by WhatsApp. Use it on your own number: WhatsApp may restrict accounts used for bulk or automatic messages.</p>`}
-  </div>`;
-}
-function WaRows({ chats, onOpen, limit }) {
-  const list = limit ? chats.slice(0, limit) : chats;
-  if (!list.length) return html`<p className="fbar-empty">No chats yet. New WhatsApp messages show here.</p>`;
-  return list.map((c) => { const l = c.last; return html`<button key=${c.jid} className=${'fbar-row' + (c.unread ? ' new' : '')} onClick=${() => onOpen(c.jid)}>
-    <${WaAvatar} c=${c} s=${30}/>
-    <span className="fbar-row-m"><span className="fbar-row-t"><b>${c.name}</b><i>${c.at ? shortTime(c.at) : ''}</i></span>
-      <span className="fbar-row-s">${l ? html`${l.me ? 'You: ' : c.group && l.who ? l.who.split(' ')[0] + ': ' : ''}${l.tag && html`<span className="fbar-tag sm">${l.tag}</span>`} ${l.text}` : ''}</span></span>
-    ${c.unread > 0 && html`<b className="fbar-n w">${c.unread}</b>`}</button>`; });
-}
-function WaThread({ chat, onBack }) {
-  const [msgs, setMsgs] = useState(null), [text, setText] = useState(''), [busy, setBusy] = useState(false), [err, setErr] = useState('');
-  const box = useRef(null), input = useRef(null);
-  // opening it is what marks it read (here and on the phone)
-  useEffect(() => { WA.messages(chat.jid).then((r) => setMsgs((r && r.ok) || [])); WA.read(chat.jid); }, [chat.jid, chat.at]);
-  useEffect(() => { const el = box.current; if (el) el.scrollTop = el.scrollHeight; }, [msgs]);
-  useEffect(() => { if (input.current) input.current.focus(); }, [chat.jid]);
-  const send = async (e) => {
-    e.preventDefault();
-    const body = text.trim(); if (!body || busy) return;
-    setBusy(true); setErr('');
-    const r = await WA.send(chat.jid, body);
-    setBusy(false);
-    if (r && r.error) { setErr('Not sent: ' + r.error); return; }
-    setText(''); setMsgs((m) => [...(m || []), { id: 'tmp' + Date.now(), me: true, text: body, at: Date.now() }]);
-  };
-  return html`<div className="fbar-thread">
-    <div className="fbar-th"><button className="fbar-ic" onClick=${onBack} aria-label="Back to WhatsApp chats"><${Icon} n="back" s=${16}/></button><${WaAvatar} c=${chat} s=${26}/><b>${chat.name}</b><span className="wa-chip">WhatsApp</span></div>
-    <div className="fbar-msgs" ref=${box}>${msgs === null ? html`<p className="fbar-sys">Opening…</p>` : msgs.map((m) => html`<div key=${m.id} className=${'fbar-m' + (m.me ? ' mine wa' : '')}>
-      ${!m.me && chat.group && m.who && html`<small style=${{ color: nameColor(m.who) }}>${m.who}</small>`}
-      ${m.tag && html`<span className="fbar-tag">${m.tag}</span>`}${m.text && html`<span>${m.text}</span>`}<i>${m.at ? hm(m.at) : ''}</i></div>`)}</div>
-    ${err && html`<p className="wa-err">${err}</p>`}
-    <form className="fbar-reply" onSubmit=${send}><input id=${'wa-reply-' + chat.jid} ref=${input} value=${text} onChange=${(e) => setText(e.target.value)} placeholder=${'Message ' + chat.name} aria-label="Reply on WhatsApp" autoComplete="off"/><button aria-label="Send" disabled=${!text.trim() || busy}><${Icon} n="send" s=${15}/></button></form>
-  </div>`;
-}
-// WhatsApp as a whole: link it, then the chats, then one chat
-function WaPanel({ wa, limit, compact }) {
-  const [open, setOpen] = useState(null);
-  if (!wa.st.linked) return html`<${WaLink} wa=${wa} compact=${compact}/>`;
-  const cur = open && wa.chats.find((c) => c.jid === open);
-  if (cur) return html`<${WaThread} key=${cur.jid} chat=${cur} onBack=${() => setOpen(null)}/>`;
-  return html`<div className="fbar-list"><${WaRows} chats=${wa.chats} onOpen=${setOpen} limit=${limit}/></div>`;
-}
-// in the sidebar
 // Sidebar cards that fold away to one small bar, like Sticky notes (this device remembers which are folded)
 function useFold(key) {
   const [open, setOpen] = useState(() => lsGet(key) !== 'folded');
@@ -2813,17 +2700,6 @@ function FoldBar({ icon, kind, title, count, hot, onOpen, children }) {
   </div>`;
 }
 const FoldBtn = ({ onFold, what }) => html`<button className="icon-btn sm stk-fold" onClick=${onFold} title="Fold away" aria-label=${'Fold ' + what + ' away'}><${Icon} n="chevdown" s=${15}/></button>`;
-function WaCard() {
-  const wa = useWa(), { ask, toast } = useApp(), [open, setOpen] = useFold('floorboard.wa.fold.v1');
-  if (!wa) return null;
-  if (!open) return html`<div className="w-wa glass"><${FoldBar} icon="chat" kind="wa" title="WhatsApp" count=${wa.unread} onOpen=${() => setOpen(true)}/></div>`;
-  const unlink = () => ask({ title: 'Unlink WhatsApp from this computer?', body: 'Your WhatsApp chats stop showing in Floorboard. Nothing is deleted from your phone.', confirm: 'Unlink', danger: true, onConfirm: () => WA.unlink().then(() => toast('WhatsApp unlinked from this computer')) });
-  return html`<div className="w-wa glass">
-    <div className="w-files-h"><span className="eyebrow">WhatsApp${wa.unread > 0 ? ' · ' + wa.unread + ' unread' : ''}</span><span className="w-card-a">${wa.st.linked && html`<button className="linkish sm" onClick=${unlink}>Unlink</button>`}<${FoldBtn} what="WhatsApp" onFold=${() => setOpen(false)}/></span></div>
-    <div className="w-wa-body"><${WaPanel} wa=${wa} limit=${8} compact/></div>
-  </div>`;
-}
-
 /* ---------------- feed ---------------- */
 function MyState({ p, who }) {
   const r = p.recips[who];
