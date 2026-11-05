@@ -1143,6 +1143,41 @@ td.mono{white-space:nowrap}
 .w-stk{flex:none;padding:12px 14px;border-radius:22px}
 .w-files{flex:none;padding:12px 12px 14px;border-radius:22px}
 .w-files-h{display:flex;align-items:center;justify-content:space-between;margin:0 2px 8px}
+/* Petrol & expense slips, and the receipt that prints and tears off */
+.w-slip{flex:none;display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:22px}
+.board-col .w-slip{margin-bottom:14px}
+.slip-ic{display:grid;place-items:center;width:30px;height:30px;border-radius:10px;background:#fff3d6;color:#4a3300;flex:none}
+.slip-txt{flex:1;min-width:0;display:grid}.slip-txt b{font-size:13px}.slip-txt small{color:var(--ink-3);font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.slip-form{display:grid;gap:12px}
+.slip-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.slip-row.three{grid-template-columns:1fr 1fr 1.2fr}
+.slip-pic{position:relative;display:grid;place-items:center;min-height:110px;border-radius:var(--r);border:1px dashed var(--glass-line-2);background:var(--glass);cursor:pointer;overflow:hidden;color:var(--ink-2);font-size:13px;text-align:center;padding:10px}
+.slip-pic span{display:inline-flex;align-items:center;gap:8px}
+.slip-pic img{max-height:200px;max-width:100%;border-radius:10px;object-fit:contain}
+.slip-pic input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.slip-overlay{position:fixed;inset:0;z-index:90;display:grid;place-content:center;justify-items:center;gap:18px;padding:16px;background:rgba(8,8,10,.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.printer{width:min(310px,88vw);background:linear-gradient(#1d2026,#14161a);border-radius:22px;padding:14px 16px 0;box-shadow:0 24px 60px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.08)}
+.printer-top{display:flex;justify-content:space-between;color:#d6dae1;font-size:12px;font-weight:700}
+.printer-top span:last-child{color:#8b919b;font-weight:600}
+.printer-slot{height:7px;margin:14px 0 0;border-radius:99px;background:#050506;box-shadow:inset 0 2px 3px rgba(0,0,0,.9),0 1px 0 rgba(255,255,255,.06)}
+.rcpt-clip{overflow:hidden;margin:-3px 12px 0;padding-bottom:30px;min-height:40px}
+.rcpt{--z:6px;background:#f7f5ef;color:#1d1d1f;font:12px/1.6 var(--f-mono);padding:14px 16px 26px;box-shadow:0 6px 14px rgba(0,0,0,.35);
+  -webkit-mask:conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) 50%/calc(2*var(--z)) 100%;mask:conic-gradient(from -45deg at bottom,#0000,#000 1deg 89deg,#0000 90deg) 50%/calc(2*var(--z)) 100%}
+.rcpt.rp-print{animation:rcpt-print 2.6s steps(26,end) both}
+.rcpt.rp-tear{animation:rcpt-tear .95s cubic-bezier(.55,0,.8,.3) both}
+.rcpt.rp-sent{transform:translateY(120vh);opacity:0}
+@keyframes rcpt-print{from{transform:translateY(-100%)}to{transform:none}}
+@keyframes rcpt-tear{0%{transform:none}18%{transform:translateY(5px) rotate(-1.5deg)}100%{transform:translateY(115vh) rotate(12deg);opacity:.85}}
+.rcpt-h{display:block;text-align:center;font-weight:700;letter-spacing:.06em;margin-bottom:8px;font-size:11.5px}
+.rcpt-l{display:flex;justify-content:space-between;gap:12px}.rcpt-l span:last-child{text-align:right}
+.rcpt hr{border:0;border-top:1px dashed #9a968c;margin:8px 0}
+.rcpt-total{font-weight:700;font-size:14px}
+.rcpt-code{height:34px;margin:12px 6px 6px;background:repeating-linear-gradient(90deg,#1d1d1f 0 2px,transparent 2px 3px,#1d1d1f 3px 4px,transparent 4px 7px,#1d1d1f 7px 10px,transparent 10px 11px)}
+.rcpt-foot{text-align:center;font-size:11px;color:#555}
+.slip-sent{display:grid;gap:12px;justify-items:center;text-align:center;color:#fff;max-width:340px;animation:slip-in .35s ease both}
+.slip-sent p{margin:0;display:flex;gap:8px;align-items:flex-start;font-size:14px;line-height:1.45}.slip-sent .ic{color:var(--green-dot);flex:none;margin-top:2px}
+.slip-sent-a{display:flex;gap:10px}
+@keyframes slip-in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.rcpt.rp-print,.rcpt.rp-tear,.slip-sent{animation:none}.rcpt.rp-sent{transform:none;opacity:1}}
 /* Task board */
 .w-tb{flex:none;padding:12px;border-radius:22px;display:grid;gap:8px}
 .w-tb:has(.stk-bar){padding:7px 10px 7px 12px}
@@ -2615,6 +2650,7 @@ function Widget() {
     <${Board} onPick=${pick}/>
     <${AskCard} compact/>
     <${TaskBoardCard}/>
+    <${SlipCard}/>
     <${NextMeeting}/>
     ${plannerOn(db, user) && html`<div className="w-day glass"><${TodayCard} compact/></div>`}
     ${outlookOn(db, user) && html`<div className="w-mail glass"><${OutlookCard} compact/></div>`}
@@ -4057,7 +4093,7 @@ function PersonModal({ personId, onClose, onAdded }) {
 }
 function AdminView() {
   const { db, user, update, toast, startSeeing } = useApp();
-  const flipFeature = (deptId, key) => update((d) => { const x = d.depts.find((y) => y.id === deptId); x.features = { ...(x.features || {}), [key]: key === 'files' ? filesOff(x) : key === 'taskboard' ? tboardOff(x) : !featureOn(x, key) }; });
+  const flipFeature = (deptId, key) => update((d) => { const x = d.depts.find((y) => y.id === deptId); x.features = { ...(x.features || {}), [key]: key === 'files' ? filesOff(x) : key === 'taskboard' ? tboardOff(x) : key === 'slips' ? !slipsOn(x) : !featureOn(x, key) }; });
   const setQuote = (deptId, k, id) => update((d) => { const x = d.depts.find((y) => y.id === deptId); x[k] = id || null; });
   const [tab, setTab] = useState('people');
   const [edit, setEdit] = useState(null);
@@ -4114,7 +4150,7 @@ function AdminView() {
       <form className="dtool" onSubmit=${addDept}><input id="nd-name" className="input" style=${{ maxWidth: 280 }} value=${nd.name} onChange=${(e) => setNd({ ...nd, name: e.target.value })} placeholder="New department, e.g. Butchery"/><div className="swatches">${TILE_COLORS.map((c) => html`<button type="button" key=${c} className=${nd.color === c ? 'on' : ''} style=${{ '--c': c }} onClick=${() => setNd({ ...nd, color: c })} aria-label=${'Colour ' + c}></button>`)}</div><button className="btn primary">Add department</button></form>
       <p className="feat-note">Every department starts with its group chat, tagging and the “Needs you” board. Switch on the extra tools as each department comes on board.</p>
       <div className="dgrid">${db.depts.map((d) => html`<div key=${d.id} className="dcard"><div className="dcard-h"><span className="dsw" style=${{ '--c': d.color }}></span><div><h3>${d.name}</h3><span className="muted sm">${deptMembers(db, d.id).length} people · ${db.users.filter((u) => u.manages.includes(d.id)).map((u) => firstName(u)).join(', ') || 'no manager'}</span></div></div>
-        <div className="toggles">${[['files', 'My files & archive'], ['taskboard', 'Task board'], ['tools', 'Tools & manuals'], ['drive', 'Drive'], ['monthend', 'Month end'], ['approvals', 'Approvals'], ['quotes', 'Quote drop box'], ['planner', 'My week'], ['outlook', 'Outlook email']].map(([k, l]) => { const on = k === 'files' ? !filesOff(d) : k === 'taskboard' ? !tboardOff(d) : featureOn(d, k); return html`<button key=${k} className=${'toggle' + (on ? ' on' : '')} style=${{ '--c': d.color }} onClick=${() => flipFeature(d.id, k)} aria-pressed=${on}><i></i>${l}${on ? ' · on' : ' · off'}</button>`; })}</div>
+        <div className="toggles">${[['files', 'My files & archive'], ['taskboard', 'Task board'], ['tools', 'Tools & manuals'], ['drive', 'Drive'], ['monthend', 'Month end'], ['approvals', 'Approvals'], ['quotes', 'Quote drop box'], ['slips', 'Takes expense slips'], ['planner', 'My week'], ['outlook', 'Outlook email']].map(([k, l]) => { const on = k === 'files' ? !filesOff(d) : k === 'taskboard' ? !tboardOff(d) : k === 'slips' ? slipsOn(d) : featureOn(d, k); return html`<button key=${k} className=${'toggle' + (on ? ' on' : '')} style=${{ '--c': d.color }} onClick=${() => flipFeature(d.id, k)} aria-pressed=${on}><i></i>${l}${on ? ' · on' : ' · off'}</button>`; })}</div>
         ${featureOn(d, 'quotes') && html`<div className="dq">
           <label className="qd-to"><span>Drop box for</span><select id=${'dq-for-' + d.id} className="select" value=${d.quoteFor || ''} onChange=${(e) => setQuote(d.id, 'quoteFor', e.target.value)}><option value="">Everyone in ${d.name}</option>${deptMembers(db, d.id).map((id) => userById(db, id)).map((u) => html`<option key=${u.id} value=${u.id}>${u.name}</option>`)}</select></label>
           <label className="qd-to"><span>Quotes go to</span><select id=${'dq-to-' + d.id} className="select" value=${d.quoteTo || ''} onChange=${(e) => setQuote(d.id, 'quoteTo', e.target.value)}><option value="">Whoever sends them picks</option>${db.users.filter((u) => u.active !== false).map((u) => html`<option key=${u.id} value=${u.id}>${u.name}</option>`)}</select></label></div>`}</div>`)}</div>
@@ -8088,6 +8124,118 @@ function useAskBridge() {
   }, []);
 }
 
+/* ---------------- petrol & expense slips: snap the slip, send it to the admin team, watch it print ---------------- */
+// Anyone can send a petrol slip (or parking, tolls, anything they paid for the store) to the team that handles claims:
+// the department with Expense slips on in People & access (the Admin department unless someone changed it). It arrives
+// there as an expense claim to approve, with the photo of the slip, and goes on through Approvals as usual. The person
+// sees their claim print out as a receipt and tear off.
+const SLIP_KINDS = [['petrol', 'Petrol'], ['travel', 'Parking & tolls'], ['other', 'Other expense']];
+const slipsOn = (d) => featureOn(d, 'slips') || (/admin/i.test(d.name) && !(d.features && 'slips' in d.features));
+const slipDept = (db) => db.depts.find(slipsOn);
+const slipApprovers = (db, d) => {
+  const act = db.users.filter((x) => x.active !== false), heads = d ? act.filter((x) => x.manages.includes(d.id)) : [];
+  return (heads.length ? heads : act.filter((x) => x.role === 'admin')).map((x) => x.id);
+};
+const SLIP_REG = 'floorboard.slip.reg.v1';
+// the receipt: a printer card, the slip printing out of its slot line by line, then tearing off
+function ReceiptPrint({ title, lines, total, foot, onAnother, onClose, sentTo }) {
+  const still = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const [phase, setPhase] = useState(still ? 'sent' : 'print');
+  useEffect(() => {
+    if (still) return undefined;
+    const a = setTimeout(() => setPhase('tear'), 2900), b = setTimeout(() => setPhase('sent'), 3900);
+    return () => { clearTimeout(a); clearTimeout(b); };
+  }, []);
+  // drawn on top of the whole page, so the glass card it was opened from can't hold it in
+  return ReactDOM.createPortal(html`<div className="slip-overlay" role="dialog" aria-modal="true" aria-label=${'Sent to ' + sentTo}>
+    <div className="printer">
+      <div className="printer-top"><span>Floorboard</span><span>${sentTo}</span></div>
+      <div className="printer-slot"></div>
+      <div className="rcpt-clip">
+        <div className=${'rcpt rp-' + phase}>
+          <b className="rcpt-h">${title}</b>
+          ${lines.map(([a, b], i) => (a === '-' ? html`<hr key=${i}/>` : html`<div key=${i} className="rcpt-l"><span>${a}</span><span>${b || ''}</span></div>`))}
+          <hr/>
+          <div className="rcpt-l rcpt-total"><span>TOTAL</span><span>${total}</span></div>
+          <div className="rcpt-code" aria-hidden="true"></div>
+          <div className="rcpt-foot">${foot}</div>
+        </div>
+      </div>
+    </div>
+    ${phase === 'sent' && html`<div className="slip-sent">
+      <p><${Icon} n="check" s=${16}/>Sent to ${sentTo} for approval. You’ll hear when it’s approved and paid.</p>
+      <div className="slip-sent-a"><button className="btn" onClick=${onAnother}>Send another</button><button className="btn primary" onClick=${onClose}>Done</button></div>
+    </div>`}
+  </div>`, document.body);
+}
+function SlipModal({ onClose }) {
+  const { db, user, update, toast } = useApp();
+  const team = slipDept(db), myDept = db.depts.find((x) => user.depts.includes(x.id));
+  const blank = () => ({ kind: 'petrol', amount: '', date: dkey(), where: '', litres: '', km: '', reg: lsGet(SLIP_REG) || '', why: '', file: null });
+  const [f, setF] = useState(blank), [busy, setBusy] = useState(false), [printed, setPrinted] = useState(null);
+  const set = (k, v) => setF((x) => ({ ...x, [k]: v }));
+  const pic = useMemo(() => (f.file && f.file.type && f.file.type.startsWith('image/') ? URL.createObjectURL(f.file) : null), [f.file]);
+  useEffect(() => () => { if (pic) URL.revokeObjectURL(pic); }, [pic]);
+  const kindName = (SLIP_KINDS.find(([k]) => k === f.kind) || [, 'Expense'])[1];
+  const send = async (e) => {
+    e.preventDefault();
+    const amount = Number(String(f.amount).replace(/[^0-9.]/g, ''));
+    if (!(amount > 0)) { toast('Put in the amount on the slip', 'warn'); return; }
+    if (!f.file) { toast('Add a photo of the slip', 'warn'); return; }
+    if (!team) { toast('No team takes slips yet: an admin can switch on Expense slips in People & access', 'warn'); return; }
+    setBusy(true);
+    try {
+      if (f.reg) lsSet(SLIP_REG, f.reg);
+      const atts = await storeFiles([{ file: f.file, name: f.file.name || 'slip.jpg', mime: f.file.type || 'image/jpeg', size: f.file.size, kind: kindOf(f.file.type || 'image/jpeg') }]);
+      const party = kindName + (f.where.trim() ? ' · ' + f.where.trim() : '');
+      const body = [f.kind === 'petrol' && [f.litres && f.litres + ' litres', f.km && 'odometer ' + f.km + ' km', f.reg && f.reg].filter(Boolean).join(', '), f.why.trim() && 'For: ' + f.why.trim(), 'Slip from ' + askDay(f.date)].filter(Boolean).join('\n');
+      let no = 0;
+      update((d) => { apCreate(d, { author: user.id, approvers: slipApprovers(d, team), kind: 'Expense claim', party: party.slice(0, 60), amount, ref: '', atts, about: team.id, body }); no = d.counter; });
+      const now = new Date();
+      setPrinted({
+        title: (f.kind === 'petrol' ? 'PETROL SLIP' : kindName.toUpperCase()) + ' · ' + db.store,
+        lines: [[askDay(f.date), hm(now.getTime())], [user.name, myDept ? myDept.name : ''], f.where.trim() && [f.where.trim()],
+          f.kind === 'petrol' && f.litres && ['Litres', f.litres], f.kind === 'petrol' && f.km && ['Odometer', f.km + ' km'], f.kind === 'petrol' && f.reg && ['Vehicle', f.reg],
+          f.why.trim() && ['For', f.why.trim().slice(0, 40)], ['-']].filter(Boolean),
+        total: rand(amount), foot: (no ? '#' + no + ' · ' : '') + 'to ' + team.name + ' for approval',
+      });
+    } catch (x) { toast('That didn’t send: ' + ((x && x.message) || x), 'warn'); } finally { setBusy(false); }
+  };
+  if (printed) return html`<${ReceiptPrint} ...${printed} sentTo=${team.name} onAnother=${() => { setPrinted(null); setF(blank()); }} onClose=${onClose}/>`;
+  return html`<${Modal} title="Send a slip" onClose=${onClose} footer=${html`<button className="btn" onClick=${onClose}>Cancel</button><button className="btn primary" type="submit" form="slip-form" disabled=${busy}>${busy ? 'Sending…' : 'Send to ' + (team ? team.name : 'Admin')}</button>`}>
+    <form id="slip-form" onSubmit=${send} className="slip-form">
+      <div className="seg" role="group" aria-label="What it's for">${SLIP_KINDS.map(([k, l]) => html`<button type="button" key=${k} className=${f.kind === k ? 'on' : ''} aria-pressed=${f.kind === k} onClick=${() => set('kind', k)}>${l}</button>`)}</div>
+      <label className="slip-pic">${pic ? html`<img src=${pic} alt="The slip"/>` : f.file ? html`<span><${Icon} n="doc" s=${20}/>${f.file.name}</span>` : html`<span><${Icon} n="image" s=${22}/>Take a photo of the slip, or pick one</span>`}
+        <input type="file" accept="image/*,application/pdf" capture="environment" onChange=${(e) => set('file', e.target.files[0] || null)} aria-label="Photo of the slip"/></label>
+      <div className="slip-row">
+        <label className="field"><span>Amount (R)</span><input className="input" inputMode="decimal" value=${f.amount} onChange=${(e) => set('amount', e.target.value)} placeholder="650.00" autoFocus/></label>
+        <label className="field"><span>Date on the slip</span><input className="input" type="date" value=${f.date} max=${dkey()} onChange=${(e) => set('date', e.target.value || dkey())}/></label>
+      </div>
+      <label className="field"><span>${f.kind === 'petrol' ? 'Garage' : 'Where'}</span><input className="input" value=${f.where} onChange=${(e) => set('where', e.target.value)} placeholder=${f.kind === 'petrol' ? 'Engen, Main Road' : 'Where you paid'} maxLength="60"/></label>
+      ${f.kind === 'petrol' && html`<div className="slip-row three">
+        <label className="field"><span>Litres</span><input className="input" inputMode="decimal" value=${f.litres} onChange=${(e) => set('litres', e.target.value)} placeholder="42.5" maxLength="8"/></label>
+        <label className="field"><span>Odometer (km)</span><input className="input" inputMode="numeric" value=${f.km} onChange=${(e) => set('km', e.target.value)} placeholder="58214" maxLength="9"/></label>
+        <label className="field"><span>Vehicle</span><input className="input" value=${f.reg} onChange=${(e) => set('reg', e.target.value.toUpperCase())} placeholder="Registration" maxLength="14"/></label>
+      </div>`}
+      <label className="field"><span>What it was for</span><input className="input" value=${f.why} onChange=${(e) => set('why', e.target.value)} placeholder=${f.kind === 'petrol' ? 'Supplier run, bank deposit…' : 'What you paid for'} maxLength="120"/></label>
+      ${!team && html`<p className="err sm" style=${{ margin: 0 }}>No team takes slips yet. An admin can switch on Expense slips for a department in People & access.</p>`}
+    </form>
+  <//>`;
+}
+// the sidebar's card: one tap to send a slip, and how the last one is getting on
+function SlipCard() {
+  const { db, user } = useApp(), [open, setOpen] = useState(false), team = slipDept(db);
+  if (!team) return null;
+  const last = db.posts.find((p) => p.type === 'approval' && p.author === user.id && p.approval && p.approval.kind === 'Expense claim');
+  const st = last ? apState(last) : null;
+  return html`<div className="w-slip glass" id="slips">
+    <span className="slip-ic" aria-hidden="true"><${Icon} n="stamp" s=${16}/></span>
+    <div className="slip-txt"><b>Petrol & expense slips</b><small>${last ? 'Your last: ' + rand(last.approval.amount) + ' · ' + (st === 'paid' ? 'paid' : st === 'approved' ? 'approved, to be paid' : st === 'rejected' ? 'not approved' : st === 'query' ? 'has a question' : 'waiting') : 'Send them to ' + team.name}</small></div>
+    <button className="btn sm primary" onClick=${() => setOpen(true)}><${Icon} n="plus" s=${14}/>Send a slip</button>
+    ${open && html`<${SlipModal} onClose=${() => setOpen(false)}/>`}
+  </div>`;
+}
+
 /* ---------------- Task board: each department's tasks for the week, set by its head ---------------- */
 // The head of a department (whoever manages it, and admins) sets the week's tasks, for the whole team or for one person.
 // Everyone moves their own progress along on theirs; the head sees how far each person is. On for every department
@@ -8823,7 +8971,7 @@ function Shell() {
     <${Rail}/>
     ${drawer && html`<div className="side-scrim" onClick=${() => setDrawer(false)}></div>`}
     ${chatsMode ? html`<main className="stage glass chats-mode"><${ChatsView}/></main>` : html`<main className="stage glass">
-      <aside className="board-col"><${Board} note=${note}/><${AskCard}/><${TaskBoardCard}/><${TodayCard}/><${OutlookSide}/><${QuoteDrop}/><${StickyNotes}/><${Shortcuts}/></aside>
+      <aside className="board-col"><${Board} note=${note}/><${AskCard}/><${TaskBoardCard}/><${SlipCard}/><${TodayCard}/><${OutlookSide}/><${QuoteDrop}/><${StickyNotes}/><${Shortcuts}/></aside>
       <section className="content" key=${view}>${content}</section>
     </main>`}
     <${Dock}/>

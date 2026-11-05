@@ -215,6 +215,14 @@ Switch it on in **People & access**: under Finance, turn on **Month end**. A **M
 - **Ask managers for invoices** sends every manager a task to hand in the month's invoices, so Finance can see who is still outstanding.
 - Before pasting a new month, remove last month's lists with the bin on each list (**By list** view).
 
+## Petrol & expense slips
+
+Anyone can send a petrol slip (or parking and tolls, or anything else they paid for the store) to the team that handles claims: the **Petrol & expense slips** card in the sidebar → **Send a slip**.
+
+- Take a photo of the slip (on a phone it opens the camera) or pick a PDF, then the amount and the date. For petrol, also the garage, litres, odometer and vehicle (the vehicle is remembered for next time), and what it was for.
+- **Send** prints the claim as a receipt that tears off and goes to the team. It arrives there as an **expense claim** for that department's head to approve, with the photo, and goes on through **Approvals** like any other: approve, query, mark paid. The person hears when it's approved and paid, and the card shows how their last slip is getting on.
+- Slips go to the department with **Takes expense slips** on in **People & access**: the Admin department unless an admin picks another.
+
 ## Task board (weekly tasks per department)
 
 On for every department (an admin can switch it off under the department in **People & access**). Open **Task board** in the menu.
