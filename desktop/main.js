@@ -6,7 +6,8 @@ const path = require('path'), fs = require('fs');
 const PAGE = path.join(__dirname, '..', 'index.html');
 const ICON = path.join(__dirname, '..', 'icon-192.png');
 const SIDEBAR_WIDTH = 380;
-const SLIM_WIDTH = 72; // the sidebar folded into its slim rail of icons
+const SLIM_WIDTH = 62; // the sidebar folded into its slim rail of icons
+let slimHeight = 420; // the rail's own height (the page measures it); it sits in the middle of the screen edge
 const SMOKE = process.env.FLOORBOARD_SMOKE === '1'; // load once, print the result, quit (used for testing)
 // Windows can wrongly judge the full window to be covered (with the sidebar kept in front, or some screen tools), and it
 // then stops drawing and stays black. Draw it whenever it's open.
@@ -28,12 +29,14 @@ function openLinksOutside(win) {
 }
 
 // x is where the sidebar sits docked; away is just past the screen edge, where it slides to when it closes.
-// Between slides its bounds stay docked, even while it's hidden.
+// Between slides its bounds stay docked, even while it's hidden. Open it's the full height of the screen; folded into
+// its rail it's only as tall as the rail, in the middle of the edge, clear of window buttons in the corners.
 function docked() {
   const { workArea } = screen.getDisplayMatching(sidebar.getBounds());
   const width = prefs.slim ? SLIM_WIDTH : Math.min(Math.max(prefs.width || SIDEBAR_WIDTH, 320), 520);
+  const height = prefs.slim ? Math.min(slimHeight, workArea.height - 120) : workArea.height;
   const left = prefs.side === 'left';
-  return { workArea, width, x: left ? workArea.x : workArea.x + workArea.width - width, away: left ? workArea.x - width : workArea.x + workArea.width };
+  return { workArea, width, height, y: workArea.y + Math.round((workArea.height - height) / 2), x: left ? workArea.x : workArea.x + workArea.width - width, away: left ? workArea.x - width : workArea.x + workArea.width };
 }
 // The sidebar stays in front of other windows while it's folded into its rail (so it's always to hand), and otherwise
 // only when it's pinned.
@@ -42,30 +45,30 @@ function applyOnTop() { if (sidebar) sidebar.setAlwaysOnTop(prefs.slim || prefs.
 function setSlim(_e, on) {
   on = !!on;
   if (!sidebar || on === prefs.slim) return;
-  const from = sidebar.getBounds().width;
+  const from = sidebar.getBounds();
   prefs.slim = on; savePrefs(); applyOnTop();
+  clearInterval(sizing); sizing = true; // the resizes from here on aren't someone dragging the width
   sidebar.setMinimumSize(on ? SLIM_WIDTH : 320, 200);
-  if (!sidebar.isVisible()) { dock(); return; }
-  clearInterval(sizing);
-  const { workArea, width: to } = docked(), left = prefs.side === 'left', t0 = Date.now(), ms = 200;
+  if (!sidebar.isVisible()) { dock(); setTimeout(() => { sizing = null; }, 100); return; }
+  const to = docked(), left = prefs.side === 'left', t0 = Date.now(), ms = 220;
   sizing = setInterval(() => {
-    const k = Math.min(1, (Date.now() - t0) / ms), w = Math.round(from + (to - from) * (1 - Math.pow(1 - k, 3)));
-    sidebar.setBounds({ x: left ? workArea.x : workArea.x + workArea.width - w, y: workArea.y, width: w, height: workArea.height });
-    placeBubble();
+    const k = Math.min(1, (Date.now() - t0) / ms), e = 1 - Math.pow(1 - k, 3), mix = (a, b) => Math.round(a + (b - a) * e);
+    const w = mix(from.width, to.width), h = mix(from.height, to.height);
+    sidebar.setBounds({ x: left ? to.workArea.x : to.workArea.x + to.workArea.width - w, y: mix(from.y, to.y), width: w, height: h });
     if (k >= 1) { clearInterval(sizing); sizing = null; dock(); }
   }, 15);
 }
 function dock() {
   if (!sidebar || slide) return;
-  const { workArea, width, x } = docked();
-  sidebar.setBounds({ x, y: workArea.y, width, height: workArea.height });
+  const { width, height, x, y } = docked();
+  sidebar.setBounds({ x, y, width, height });
   placeBubble();
 }
 // Slide the sidebar in from the screen edge or back out. The floating button stands in for it while it's closed.
 function slideTo(open, { focus = true } = {}) {
   if (!sidebar) return;
   clearInterval(slide); slide = null;
-  const { workArea, width, x, away } = docked(), y = workArea.y, height = workArea.height;
+  const { width, height, x, y, away } = docked();
   const from = sidebar.isVisible() ? sidebar.getBounds().x : away, to = open ? x : away;
   opened = open; sendBubble();
   if (open) placeBubble();
@@ -173,8 +176,8 @@ function createSidebar() {
   openLinksOutside(sidebar);
   sidebar.on('close', (e) => { if (!app.isQuitting) { e.preventDefault(); hideSidebar(); } });
   sidebar.on('focus', () => { sidebar.flashFrame(false); if (bubble) bubble.moveTop(); });
-  // remember the width someone drags it to (not while it's folded or moving)
-  sidebar.on('resize', () => { if (slide || sizing) return; if (!prefs.slim) { prefs.width = sidebar.getBounds().width; savePrefs(); } placeBubble(); });
+  // remember the width someone drags it to: 'resized' only fires when a person finishes resizing it, not for the app's own moves
+  sidebar.on('resized', () => { if (slide || sizing || prefs.slim) return; prefs.width = sidebar.getBounds().width; savePrefs(); });
   if (SMOKE) {
     sidebar.webContents.on('console-message', (_e, level, message) => { if (level >= 2) console.log('console:', message); });
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -328,6 +331,7 @@ else {
     createBar();
     bubbleIpc();
     ipcMain.on('sidebar-slim', setSlim);
+    ipcMain.on('sidebar-slim-size', (_e, h) => { h = Math.round(Number(h) || 0); if (h < 200 || h > 1200 || h === slimHeight) return; slimHeight = h; if (prefs.slim && !sizing && !slide) dock(); });
     ipcMain.on('bar-state', (_e, state, focus) => { placeBar(state); if (bar && state === 'open' && focus) bar.focus(); });
     if (SMOKE) return;
     buildTray();
