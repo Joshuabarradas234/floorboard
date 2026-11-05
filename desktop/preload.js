@@ -8,6 +8,9 @@ contextBridge.exposeInMainWorld('floorboardDesktop', {
   // fold the sidebar into its slim rail of icons, or open it back to full width
   slim: (on) => ipcRenderer.send('sidebar-slim', !!on),
   slimSize: (height) => ipcRenderer.send('sidebar-slim-size', Number(height) || 0),
+  // the folded rail: open the sidebar on a section; the sidebar hears which one
+  openSidebarAt: (section) => ipcRenderer.send('rail-open', String(section || '')),
+  onSection: (fn) => { const h = (_e, s) => fn(String(s || '')); ipcRenderer.on('sidebar-section', h); return () => ipcRenderer.removeListener('sidebar-section', h); },
   focus: () => ipcRenderer.send('show-sidebar'),
   // the bar at the top of the screen: 'pill' (closed) or 'open'; focus to type a reply
   bar: (state, focus) => ipcRenderer.send('bar-state', state === 'open' ? 'open' : 'pill', !!focus),

@@ -8,8 +8,8 @@ const updates = require('./updates');
 const PAGE = path.join(__dirname, '..', 'index.html');
 const ICON = path.join(__dirname, '..', 'icon-192.png');
 const SIDEBAR_WIDTH = 380;
-const SLIM_WIDTH = 56; // the sidebar folded into its slim rail of icons (the window is the bar)
-let slimHeight = 420; // the rail's own height (the page measures it); it sits in the middle of the screen edge
+const RAIL_W = 80; // the folded sidebar: a rounded rail of icons in its own see-through window, with room for its shadow
+let railHeight = 440; // the rail's window is as tall as the rail (the page measures it)
 const SMOKE = process.env.FLOORBOARD_SMOKE === '1'; // load once, print the result, quit (used for testing)
 // Windows can wrongly judge the full window to be covered (with the sidebar kept in front, or some screen tools), and it
 // then stops drawing and stays black. Draw it whenever it's open.
@@ -18,47 +18,68 @@ const BUBBLE = 80; // the floating button's window: the 56px button and its shad
 // the bar at the top of the screen: its window closed (the pill and its shadow) and open (the chat panel)
 const BAR = { pill: { width: 320, height: 48 }, open: { width: 430, height: 490 } };
 let prefs = { onTop: false, side: 'right', bubble: true, bubbleAt: null, bar: true, slim: false, width: SIDEBAR_WIDTH };
-let sidebar = null, full = null, tray = null, bubble = null, bar = null, barState = 'pill';
-let opened = false, slide = null, sizing = null, need = { count: 0, urgent: false };
+let sidebar = null, full = null, tray = null, bubble = null, bar = null, rail = null, barState = 'pill';
+let opened = false, slide = null, need = { count: 0, urgent: false };
 
 const prefsFile = () => path.join(app.getPath('userData'), 'prefs.json');
 function loadPrefs() { try { prefs = { ...prefs, ...JSON.parse(fs.readFileSync(prefsFile(), 'utf8')) }; } catch (e) { /* first run */ } }
 function savePrefs() { try { fs.writeFileSync(prefsFile(), JSON.stringify(prefs)); } catch (e) { /* not fatal */ } }
 
+// a test run can use the demo store, so there's someone logged in to draw
+const QUERY = { shell: 'desktop', ...(SMOKE && process.env.FLOORBOARD_SMOKE_DEMO ? { demo: '1' } : {}) };
 const webPreferences = { preload: path.join(__dirname, 'preload.js'), contextIsolation: true, sandbox: true };
 function openLinksOutside(win) {
   win.webContents.setWindowOpenHandler(({ url }) => { if (/^https?:/.test(url)) shell.openExternal(url); return { action: 'deny' }; });
 }
 
 // x is where the sidebar sits docked; away is just past the screen edge, where it slides to when it closes.
-// Between slides its bounds stay docked, even while it's hidden. Open it's the full height of the screen; folded into
-// its rail it's only as tall as the rail, in the middle of the edge, clear of window buttons in the corners.
+// Between slides its bounds stay docked, even while it's hidden.
 function docked() {
   const { workArea } = screen.getDisplayMatching(sidebar.getBounds());
-  const width = prefs.slim ? SLIM_WIDTH : Math.min(Math.max(prefs.width || SIDEBAR_WIDTH, 320), 520);
-  const height = prefs.slim ? Math.min(slimHeight, workArea.height - 120) : workArea.height;
+  const width = Math.min(Math.max(prefs.width || SIDEBAR_WIDTH, 320), 520), height = workArea.height;
   const left = prefs.side === 'left';
-  return { workArea, width, height, y: workArea.y + Math.round((workArea.height - height) / 2), x: left ? workArea.x : workArea.x + workArea.width - width, away: left ? workArea.x - width : workArea.x + workArea.width };
+  return { workArea, width, height, y: workArea.y, x: left ? workArea.x : workArea.x + workArea.width - width, away: left ? workArea.x - width : workArea.x + workArea.width };
 }
-// The sidebar stays in front of other windows while it's folded into its rail (so it's always to hand), and otherwise
-// only when it's pinned.
-function applyOnTop() { if (sidebar) sidebar.setAlwaysOnTop(prefs.slim || prefs.onTop, prefs.slim ? 'screen-saver' : 'floating'); if (bubble) bubble.moveTop(); }
-// Fold the sidebar into its slim rail, or open it back to full width, keeping it docked to the screen edge.
+function applyOnTop() { if (sidebar) sidebar.setAlwaysOnTop(prefs.onTop); if (bubble) bubble.moveTop(); }
+
+// Folded, the sidebar is a rounded glass rail of icons in the middle of the screen edge, in its own see-through
+// window (so there's no box around it), always in front. Clicking an icon opens the sidebar on that section.
+function placeRail() {
+  if (!rail) return;
+  const { workArea } = screen.getDisplayMatching(sidebar ? sidebar.getBounds() : screen.getPrimaryDisplay().bounds);
+  const h = Math.min(railHeight, workArea.height - 80), left = prefs.side === 'left';
+  rail.setBounds({ x: left ? workArea.x : workArea.x + workArea.width - RAIL_W, y: workArea.y + Math.round((workArea.height - h) / 2), width: RAIL_W, height: h });
+}
+function createRail() {
+  if (rail) return;
+  rail = new BrowserWindow({
+    width: RAIL_W, height: railHeight, frame: false, transparent: true, backgroundColor: '#00000000', hasShadow: false, resizable: false,
+    movable: false, minimizable: false, maximizable: false, fullscreenable: false, skipTaskbar: true, focusable: false,
+    alwaysOnTop: true, show: false, title: 'Floorboard', webPreferences,
+  });
+  rail.setAlwaysOnTop(true, 'screen-saver');
+  rail.loadFile(PAGE, { hash: 'rail', query: QUERY });
+  openLinksOutside(rail);
+  rail.once('ready-to-show', () => { placeRail(); if (prefs.slim) rail.showInactive(); });
+  rail.on('closed', () => { rail = null; });
+}
 function setSlim(_e, on) {
   on = !!on;
-  if (!sidebar || on === prefs.slim) return;
-  const from = sidebar.getBounds();
-  prefs.slim = on; savePrefs(); applyOnTop();
-  clearInterval(sizing); sizing = true; // the resizes from here on aren't someone dragging the width
-  sidebar.setMinimumSize(on ? SLIM_WIDTH : 320, 200);
-  if (!sidebar.isVisible()) { dock(); setTimeout(() => { sizing = null; }, 100); return; }
-  const to = docked(), left = prefs.side === 'left', t0 = Date.now(), ms = 220;
-  sizing = setInterval(() => {
-    const k = Math.min(1, (Date.now() - t0) / ms), e = 1 - Math.pow(1 - k, 3), mix = (a, b) => Math.round(a + (b - a) * e);
-    const w = mix(from.width, to.width), h = mix(from.height, to.height);
-    sidebar.setBounds({ x: left ? to.workArea.x : to.workArea.x + to.workArea.width - w, y: mix(from.y, to.y), width: w, height: h });
-    if (k >= 1) { clearInterval(sizing); sizing = null; dock(); }
-  }, 15);
+  if (!sidebar) return;
+  prefs.slim = on; savePrefs();
+  if (on) {
+    createRail();
+    if (!rail.webContents.isLoading()) { placeRail(); rail.showInactive(); }
+    if (opened) slideTo(false); else placeBubble();
+  } else {
+    if (rail && rail.isVisible()) rail.hide();
+    slideTo(true);
+  }
+}
+// from the rail: open the sidebar and bring a section into view (or start a new post)
+function openSidebarAt(_e, section) {
+  setSlim(null, false);
+  if (typeof section === 'string' && section) setTimeout(() => { if (sidebar) sidebar.webContents.send('sidebar-section', section); }, 280);
 }
 function dock() {
   if (!sidebar || slide) return;
@@ -88,9 +109,9 @@ function slideTo(open, { focus = true } = {}) {
   slide = setInterval(step, 15);
   step();
 }
-const showSidebar = () => slideTo(true);
+const showSidebar = () => (prefs.slim ? setSlim(null, false) : slideTo(true));
 const hideSidebar = () => slideTo(false);
-const toggleSidebar = () => slideTo(!opened);
+const toggleSidebar = () => (prefs.slim ? setSlim(null, false) : slideTo(!opened));
 
 // The floating button: while the sidebar is closed, one small button floats in front of every window, wherever it was
 // dragged to (bottom right at first). Click it and the whole sidebar opens; while the sidebar is open the button steps aside.
@@ -102,7 +123,7 @@ function bubbleSpot() {
 }
 function placeBubble() {
   if (!bubble) return;
-  if (opened) { if (bubble.isVisible()) bubble.hide(); return; }
+  if (opened || prefs.slim) { if (bubble.isVisible()) bubble.hide(); return; } // the sidebar or its rail is showing
   bubble.setBounds({ ...bubbleSpot(), width: BUBBLE, height: BUBBLE });
   if (!bubble.isVisible()) bubble.showInactive();
 }
@@ -169,17 +190,17 @@ function setBar(on) {
 function createSidebar() {
   const { workArea } = screen.getPrimaryDisplay();
   sidebar = new BrowserWindow({
-    x: workArea.x + workArea.width - SIDEBAR_WIDTH, y: workArea.y, width: prefs.slim ? SLIM_WIDTH : prefs.width || SIDEBAR_WIDTH, height: workArea.height,
-    minWidth: prefs.slim ? SLIM_WIDTH : 320, maxWidth: 520, frame: false, maximizable: false, fullscreenable: false, show: false,
+    x: workArea.x + workArea.width - SIDEBAR_WIDTH, y: workArea.y, width: prefs.width || SIDEBAR_WIDTH, height: workArea.height,
+    minWidth: 320, maxWidth: 520, frame: false, maximizable: false, fullscreenable: false, show: false,
     title: 'Floorboard', icon: ICON, backgroundColor: '#00000000', backgroundMaterial: 'acrylic',
-    alwaysOnTop: prefs.onTop || prefs.slim, webPreferences,
+    alwaysOnTop: prefs.onTop, webPreferences,
   });
-  sidebar.loadFile(PAGE, { hash: 'widget', query: { shell: 'desktop' } });
+  sidebar.loadFile(PAGE, { hash: 'widget', query: QUERY });
   openLinksOutside(sidebar);
   sidebar.on('close', (e) => { if (!app.isQuitting) { e.preventDefault(); hideSidebar(); } });
   sidebar.on('focus', () => { sidebar.flashFrame(false); if (bubble) bubble.moveTop(); });
   // remember the width someone drags it to: 'resized' only fires when a person finishes resizing it, not for the app's own moves
-  sidebar.on('resized', () => { if (slide || sizing || prefs.slim) return; prefs.width = sidebar.getBounds().width; savePrefs(); });
+  sidebar.on('resized', () => { if (slide) return; prefs.width = sidebar.getBounds().width; savePrefs(); });
   if (SMOKE) {
     sidebar.webContents.on('console-message', (_e, level, message) => { if (level >= 2) console.log('console:', message); });
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -196,8 +217,11 @@ function createSidebar() {
         placeBar('open'); console.log('SMOKE bar open', JSON.stringify(bar.getBounds())); placeBar('pill');
       }
       slideTo(true); await wait(400);
-      setSlim(null, true); await wait(400); console.log('SMOKE folded', JSON.stringify(sidebar.getBounds()), sidebar.isAlwaysOnTop() ? 'in front' : 'not in front', 'button at', JSON.stringify(bubble && bubble.getBounds()));
-      setSlim(null, false); await wait(400); console.log('SMOKE opened', JSON.stringify(sidebar.getBounds()), sidebar.isAlwaysOnTop() ? 'in front' : 'not in front');
+      if (process.env.FLOORBOARD_SMOKE_DEMO) await sidebar.webContents.executeJavaScript("localStorage.setItem('floorboard.session.v1', 'u5'); 1");
+      setSlim(null, true); await wait(2500);
+      if (process.env.FLOORBOARD_SMOKE_DEMO && rail) fs.writeFileSync(path.join(app.getPath('temp'), 'floorboard-rail.png'), (await rail.webContents.capturePage()).toPNG()); console.log('SMOKE folded: rail', rail && rail.isVisible() ? 'shown at ' + JSON.stringify(rail.getBounds()) + (rail.isAlwaysOnTop() ? ' in front' : '') : 'not shown', '| sidebar', sidebar.isVisible() ? 'visible' : 'put away', '| button', bubble && bubble.isVisible() ? 'shown' : 'hidden');
+      console.log('SMOKE rail page', await rail.webContents.executeJavaScript(`document.documentElement.className + ' | ' + (document.querySelector('.srail') ? 'rail drawn' : document.body.innerText.slice(0, 80))`));
+      setSlim(null, false); await wait(600); console.log('SMOKE opened: sidebar', sidebar.isVisible() ? 'open at ' + JSON.stringify(sidebar.getBounds()) : 'closed', '| rail', rail && rail.isVisible() ? 'shown' : 'hidden');
       if (process.env.FLOORBOARD_UPDATE_BASE) { // updates through the page's bridge, against a stand-in GitHub
         const U = (js) => sidebar.webContents.executeJavaScript('window.floorboardDesktop.updates.' + js), brief = (s) => JSON.stringify({ ask: s.ask, on: s.on, current: s.current, latest: s.latest, available: s.available, busy: s.busy, error: s.error });
         console.log('SMOKE upd first', brief(await U('state()')));
@@ -221,7 +245,7 @@ function createSidebar() {
       app.isQuitting = true; app.quit();
     }, 1500));
   } else {
-    sidebar.once('ready-to-show', showSidebar);
+    sidebar.once('ready-to-show', () => (prefs.slim ? setSlim(null, true) : showSidebar())); // opens as it was left: folded or open
   }
 }
 
@@ -338,7 +362,7 @@ function buildTray() {
 function attention(_e, { count, urgent }) {
   if (tray) tray.setToolTip(count ? 'Floorboard · ' + count + (count === 1 ? ' thing needs you' : ' things need you') : 'Floorboard · all caught up');
   need = { count, urgent }; sendBubble();
-  if (urgent && sidebar) { if (!opened) slideTo(true, { focus: false }); sidebar.flashFrame(true); }
+  if (urgent && sidebar) { if (!opened && !prefs.slim) slideTo(true, { focus: false }); sidebar.flashFrame(true); } // folded, the rail's badge shows it
 }
 
 app.setAppUserModelId('Floorboard'); // lets Windows show pop-up notifications for the app
@@ -357,12 +381,13 @@ else {
     createBar();
     bubbleIpc();
     ipcMain.on('sidebar-slim', setSlim);
-    ipcMain.on('sidebar-slim-size', (_e, h) => { h = Math.round(Number(h) || 0); if (h < 200 || h > 1200 || h === slimHeight) return; slimHeight = h; if (prefs.slim && !sizing && !slide) dock(); });
+    ipcMain.on('sidebar-slim-size', (_e, h) => { h = Math.round(Number(h) || 0); if (h < 200 || h > 1200 || h === railHeight) return; railHeight = h; placeRail(); });
+    ipcMain.on('rail-open', openSidebarAt);
     ipcMain.on('bar-state', (_e, state, focus) => { placeBar(state); if (bar && state === 'open' && focus) bar.focus(); });
     if (SMOKE) return;
     buildTray();
     globalShortcut.register('Control+Alt+F', toggleSidebar);
-    screen.on('display-metrics-changed', () => { dock(); placeBar(barState); });
+    screen.on('display-metrics-changed', () => { dock(); placeBar(barState); placeRail(); });
     ipcMain.on('open-full', openFull);
     ipcMain.on('hide-sidebar', hideSidebar);
     ipcMain.on('show-sidebar', showSidebar);

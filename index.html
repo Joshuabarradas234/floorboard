@@ -732,10 +732,15 @@ td .fname .ic{color:var(--ink-3);margin-top:1px}
 .srail-sep{width:24px;height:1px;background:var(--glass-line);margin:2px 0 3px}
 .srail-n{position:absolute;top:1px;right:0;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:rgba(255,255,255,.28);color:#fff;font:700 9.5px/16px var(--f-body);box-shadow:0 0 0 2px rgba(30,22,16,.6)}
 .srail-n.r{background:var(--red-dot)}.srail-n.g{background:#2fb36a}
-/* in the Windows app the window itself is the bar: the rail fills it, with no second rounded bar or outline inside */
-.native-glass .widget.slim{padding:0;background:transparent!important}
-.native-glass .srail{width:100%;border-radius:0;border:0;box-shadow:none;background:rgba(255,255,255,.05);-webkit-backdrop-filter:none;backdrop-filter:none;padding:8px 0}
-.native-glass .srail-hl{left:50%;margin-left:-20px}
+/* the rail's own window (Windows app): see-through, so it's just the rounded rail, in the wallpaper's colours */
+html.rail-mode,html.rail-mode body,html.rail-mode #root{background:transparent!important;overflow:hidden}
+.rail-win{display:flex;justify-content:center;padding:12px}
+.rail-win .srail{width:52px;overflow:hidden;isolation:isolate;background:transparent;
+  border:1px solid rgba(255,255,255,.26);box-shadow:inset 0 1px 0 rgba(255,255,255,.3),0 8px 22px rgba(0,0,0,.42);-webkit-backdrop-filter:none;backdrop-filter:none;animation:none}
+/* the wallpaper, blurred, as frosted glass; then a soft sheen on top */
+.rail-win .srail::before{content:"";position:absolute;inset:-40px;z-index:-2;background:var(--scene-bg);background-size:900px 1200px;background-position:center;filter:blur(18px) saturate(115%)}
+.rail-win .srail::after{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.04) 35%,rgba(0,0,0,.18)),rgba(14,10,7,.22)}
+.rail-win .srail-hl{left:6px}
 @media (prefers-reduced-motion:reduce){.srail,.srail-hl{animation:none;transition:none}}
 .w-head button{-webkit-app-region:no-drag}
 .w-head .greet{flex:1}
@@ -2476,14 +2481,14 @@ function SlimRail({ onOpen }) {
   const over = (e) => setHl(e.currentTarget.offsetTop);
   // the Windows app makes its window exactly as tall as the rail, in the middle of the screen edge
   const navRef = useRef(null);
-  useEffect(() => { const el = navRef.current; if (el && desk && desk.slimSize) desk.slimSize(el.offsetHeight + (DESKTOP_SHELL ? 0 : 12)); }, [items.length]);
+  useEffect(() => { const el = navRef.current; if (el && desk && desk.slimSize) desk.slimSize(el.offsetHeight + 24); }, [items.length]);
   return html`<nav ref=${navRef} className="srail glass" aria-label="Floorboard" onMouseLeave=${() => setHl(null)}>
     <span className="srail-hl" style=${{ transform: 'translateY(' + (hl || 0) + 'px)', opacity: hl === null ? 0 : 1 }}></span>
     <button className="srail-i srail-top" onClick=${() => onOpen()} onMouseEnter=${over} title="Open the sidebar" aria-label="Open the sidebar">${BAR_MARK}</button>
     <span className="srail-sep"></span>
     ${items.map(([k, icon, label, n, red, go]) => html`<button key=${k} className="srail-i" onClick=${go} onMouseEnter=${over} title=${label + (n ? ' · ' + n : '')} aria-label=${label + (n ? ', ' + n : '')}>
       <${Icon} n=${icon} s=${19}/>${n > 0 && html`<b className=${'srail-n' + (red ? ' r' : k === 'chats' ? ' g' : k === 'wa' ? ' w' : '')}>${n > 99 ? '99+' : n}</b>`}</button>`)}
-    <button className="srail-i srail-new" onClick=${() => { onOpen(); setTimeout(() => compose(), 260); }} onMouseEnter=${over} title="New post" aria-label="New post"><${Icon} n="plus" s=${19}/></button>
+    <button className="srail-i srail-new" onClick=${() => onOpen('#compose')} onMouseEnter=${over} title="New post" aria-label="New post"><${Icon} n="plus" s=${19}/></button>
         <button className="srail-i srail-me" onClick=${() => onOpen()} onMouseEnter=${over} title=${user.name} aria-label="Open the sidebar"><${Avatar} u=${user} s=${30}/></button>
   </nav>`;
 }
@@ -2495,10 +2500,16 @@ function Widget() {
   const [bar, setBar] = useState(false);
   const closeBar = useCallback(() => setBar(false), []);
   const [slim, setSlimState] = useState(() => lsGet(SLIM_KEY) === '1');
-  const setSlim = (on) => { lsSet(SLIM_KEY, on ? '1' : ''); setSlimState(on); setBar(false); const d = window.floorboardDesktop; if (d && d.slim) d.slim(on); };
-  useEffect(() => { const d = window.floorboardDesktop; if (d && d.slim) d.slim(slim); }, []);
+  // the Windows app folds into its own rail window; elsewhere the rail is drawn here
+  const setSlim = (on) => { const d = window.floorboardDesktop; setBar(false); if (DESKTOP_SHELL && d && d.slim) { d.slim(on); return; } lsSet(SLIM_KEY, on ? '1' : ''); setSlimState(on); };
   // open from the rail, then bring the section that was clicked into view
-  const openOn = (sel) => { setSlim(false); if (sel) setTimeout(() => { const el = document.querySelector(sel); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 280); };
+  const openOn = (sel) => {
+    if (!DESKTOP_SHELL) setSlim(false);
+    if (sel === '#compose') { setTimeout(() => compose(), 260); return; }
+    if (sel) setTimeout(() => { const el = document.querySelector(sel); if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 280);
+  };
+  const openOnRef = useRef(openOn); openOnRef.current = openOn;
+  useEffect(() => { const d = window.floorboardDesktop; return d && d.onSection ? d.onSection((sec) => openOnRef.current(sec)) : undefined; }, []);
   // the desktop sidebar can stay in front of Outlook and everything else, for dragging quotes in
   const [onTop, setOnTop] = useState(null);
   useEffect(() => { const d = window.floorboardDesktop; if (d && d.onTop) d.onTop.get().then((v) => setOnTop(!!v)).catch(() => {}); }, []);
@@ -2509,7 +2520,7 @@ function Widget() {
   const pick = (x) => { setTab('needs'); setF((cur) => { const n = { ...NO_FILTERS, ...x }; return n.type === cur.type && n.level === cur.level ? NO_FILTERS : n; }); };
   const openFull = () => { if (desk && desk.openFull) desk.openFull(); else location.hash = ''; };
   const filtered = f.type !== 'any' || f.level !== 'any';
-  if (slim) return html`<div className="widget slim"><${SlimRail} onOpen=${openOn}/><${ConfirmModal}/></div>`;
+  if (slim && !DESKTOP_SHELL) return html`<div className="widget slim"><${SlimRail} onOpen=${openOn}/><${ConfirmModal}/></div>`;
   return html`<div className="widget">
     <header className="w-head glass">
       <button className=${'icon-btn' + (bar ? ' solid' : '')} onClick=${() => setBar((b) => !b)} title="Chats, Sent, Team, Drive and more" aria-label="Open the menu bar" aria-expanded=${bar}><${Icon} n="grid" s=${17}/></button>
@@ -8023,7 +8034,7 @@ function App() {
   // off: demo store in this browser. checking/loading: connecting. signedout, ready, or offline (showing the last copy, read only).
   const [cloud, setCloud] = useState(CLOUD ? 'checking' : 'off');
   const [syncStatus, setSyncStatus] = useState('ok');
-  const [mode, setMode] = useState(() => (location.hash === '#widget' ? 'widget' : location.hash === '#bar' ? 'bar' : 'full'));
+  const [mode, setMode] = useState(() => (location.hash === '#widget' ? 'widget' : location.hash === '#bar' ? 'bar' : location.hash === '#rail' ? 'rail' : 'full'));
   const [localLook, setLocalLook] = useState(readLocalLook);
   const [lookOpen, setLookOpen] = useState(false);
   const [phoneOpen, setPhoneOpen] = useState(false);
@@ -8123,12 +8134,12 @@ function App() {
         try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { /* the hash just stays */ }
         return;
       }
-      setMode(hs === '#widget' ? 'widget' : hs === '#bar' ? 'bar' : 'full');
+      setMode(hs === '#widget' ? 'widget' : hs === '#bar' ? 'bar' : hs === '#rail' ? 'rail' : 'full');
     };
     if (location.hash.startsWith('#go-')) h();
     window.addEventListener('hashchange', h); return () => window.removeEventListener('hashchange', h);
   }, []);
-  useEffect(() => { document.documentElement.classList.toggle('native-glass', DESKTOP_SHELL && mode === 'widget'); document.documentElement.classList.toggle('bar-mode', mode === 'bar'); }, [mode]);
+  useEffect(() => { document.documentElement.classList.toggle('native-glass', DESKTOP_SHELL && mode === 'widget'); document.documentElement.classList.toggle('bar-mode', mode === 'bar'); document.documentElement.classList.toggle('rail-mode', mode === 'rail'); }, [mode]);
   useEffect(() => { MS.finish(); }, []);
   // a tapped phone alert, when the app was already open in the background: go to what it was about
   useEffect(() => {
@@ -8437,6 +8448,8 @@ function App() {
     resetDemo: async () => { await Blobs.clear(); setDb(seed()); setOpenId(null); setOpenChatId(null); setView('chats'); setFilters(NO_FILTERS); toast('Demo store reset'); },
   };
   // the bar at the top of the screen: just the pill, on a see-through window
+  // the folded sidebar's own window (Windows app): just the rail
+  if (mode === 'rail') return html`<${Ctx.Provider} value=${ctx}>${user && html`<div className="rail-win" data-scene=${look.scene}><${SlimRail} onOpen=${(sec) => { const d = window.floorboardDesktop; if (d && d.openSidebarAt) d.openSidebarAt(sec || ''); }}/></div>`}<//>`;
   if (mode === 'bar') return html`<${Ctx.Provider} value=${ctx}>${user && (!CLOUD || cloud === 'ready' || cloud === 'offline') ? html`<${Bar}/>`
     : html`<div className="fbar"><button className="fbar-pill" onClick=${() => { const d = window.floorboardDesktop; if (d && d.showSidebar) d.showSidebar(); }}>${BAR_MARK}<span className="fbar-peek">${cloud === 'checking' || cloud === 'loading' ? 'Connecting…' : 'Log in to Floorboard'}</span></button></div>`}<//>`;
   return html`<${Ctx.Provider} value=${ctx}>
