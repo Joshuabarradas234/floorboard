@@ -16,6 +16,18 @@ Double-click `desktop/Start Floorboard.cmd`.
 - Right-click the tray icon for: open the full app, keep the sidebar on top, show or hide the floating button, show or hide the bar at the top, dock it on the left, start with Windows.
 - The sidebar, the bar and the full app share the same data and update each other live.
 
+### WhatsApp beside Floorboard (Windows)
+
+Your own WhatsApp chats can show in the bar at the top of the screen and in the sidebar, next to Floorboard's.
+
+1. In the sidebar's **WhatsApp** card (or the bar's **WhatsApp** tab), click **Link WhatsApp**. The first time, Floorboard downloads a small free helper (about 13 MB) and checks it's exactly the published file.
+2. On your phone: WhatsApp → Settings → **Linked devices** → **Link a device**, and point it at the QR code.
+3. That's it. One line per chat: who, what they said, how many are unread. Photos, voice notes and files show as labels. Click a chat to read it and reply; **Enter** sends. A chat only counts as read when you open it (it's marked read on your phone too). The rail has a WhatsApp icon with its count.
+
+- It stays on this computer. The helper only answers this computer, behind a password, and nothing from WhatsApp goes to the store's server. **Unlink** in the WhatsApp card stops it (nothing is deleted from your phone).
+- The helper is GOWA (go-whatsapp-web-multidevice, open source). It links the same way WhatsApp Web does, but it isn't made by WhatsApp. Use it on your own number, not a shared store number: WhatsApp may restrict accounts used for bulk or automatic messages.
+- Windows may ask once whether to let it on the network: it only needs to reach WhatsApp.
+
 ## Phone: app icon on your home screen
 
 The `floorboard-app` folder is an installable web app (a PWA). For a phone to install it, the folder has to be online over https (for example on GitHub Pages or Netlify). Then:

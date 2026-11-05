@@ -2,6 +2,7 @@
 // for chats, a tray icon to show or hide them, and the full app in its own window.
 const { app, BrowserWindow, Tray, Menu, nativeImage, screen, globalShortcut, ipcMain, shell, session, safeStorage } = require('electron');
 const path = require('path'), fs = require('fs');
+const whatsapp = require('./whatsapp');
 
 const PAGE = path.join(__dirname, '..', 'index.html');
 const ICON = path.join(__dirname, '..', 'icon-192.png');
@@ -196,6 +197,20 @@ function createSidebar() {
       slideTo(true); await wait(400);
       setSlim(null, true); await wait(400); console.log('SMOKE folded', JSON.stringify(sidebar.getBounds()), sidebar.isAlwaysOnTop() ? 'in front' : 'not in front', 'button at', JSON.stringify(bubble && bubble.getBounds()));
       setSlim(null, false); await wait(400); console.log('SMOKE opened', JSON.stringify(sidebar.getBounds()), sidebar.isAlwaysOnTop() ? 'in front' : 'not in front');
+      if (process.env.FLOORBOARD_WA_MOCK) { // WhatsApp through the page's bridge, against a stand-in helper
+        const W = (js) => sidebar.webContents.executeJavaScript('window.floorboardDesktop.wa.' + js), sam = '27820000001@s.whatsapp.net';
+        console.log('SMOKE wa state', JSON.stringify(await W('state()')));
+        const q = await W('qr()'); console.log('SMOKE wa qr', q.ok && q.ok.dataUrl ? 'picture, ' + q.ok.dataUrl.length + ' chars, ' + q.ok.seconds + 's' : JSON.stringify(q));
+        await fetch(process.env.FLOORBOARD_WA_MOCK + '/mock/link'); await wait(4500);
+        const list = (c) => JSON.stringify(c.map((x) => [x.name, x.unread, x.last && (x.last.text || x.last.tag)]));
+        console.log('SMOKE wa linked', (await W('state()')).linked, list(await W('chats()')));
+        console.log('SMOKE wa messages', JSON.stringify(((await W(`messages('${sam}')`)).ok || []).map((m) => [m.me ? 'me' : m.who, m.text || m.tag])));
+        console.log('SMOKE wa read', JSON.stringify(await W(`read('${sam}')`)), list(await W('chats()')));
+        console.log('SMOKE wa send', JSON.stringify(await W(`send('${sam}', 'Thanks, gate 2')`)));
+        console.log('SMOKE wa bad send', JSON.stringify(await W(`send('not a chat', 'x')`)));
+        await wait(1500); console.log('SMOKE wa after send', list(await W('chats()')));
+        console.log('SMOKE wa helper saw', JSON.stringify((await (await fetch(process.env.FLOORBOARD_WA_MOCK + '/mock/log')).json()).results.filter((x) => x[0] === 'POST')));
+      }
       app.isQuitting = true; app.quit();
     }, 1500));
   } else {
@@ -325,6 +340,7 @@ else {
   app.on('second-instance', showSidebar);
   app.whenReady().then(() => {
     loadPrefs();
+    whatsapp.init(); // WhatsApp beside Floorboard, once it's been linked
     session.defaultSession.setPermissionRequestHandler((_wc, permission, done) => done(permission === 'media' || permission === 'notifications'));
     createSidebar();
     createBubble();
@@ -348,5 +364,5 @@ else {
     msIpc();
   });
   app.on('window-all-closed', () => { /* keep running in the tray */ });
-  app.on('will-quit', () => globalShortcut.unregisterAll());
+  app.on('will-quit', () => { globalShortcut.unregisterAll(); whatsapp.stop(); });
 }
