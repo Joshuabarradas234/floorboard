@@ -206,6 +206,9 @@ async function main() {
   if (!fs.existsSync(path.join(OUT, 'config.js'))) fs.writeFileSync(path.join(OUT, 'config.js'), CONFIG_TEMPLATE);
   fs.writeFileSync(path.join(OUT, 'index.html'), HEAD + src + TAIL);
   fs.writeFileSync(path.join(OUT, 'manifest.webmanifest'), JSON.stringify(MANIFEST, null, 2));
+  // the build's version, for the Windows app's "a new version is ready": the date and time it was built
+  const d = new Date(), p2 = (n) => String(n).padStart(2, '0');
+  fs.writeFileSync(path.join(OUT, 'version.json'), JSON.stringify({ version: d.getFullYear() + '.' + p2(d.getMonth() + 1) + p2(d.getDate()) + '.' + p2(d.getHours()) + p2(d.getMinutes()) }, null, 2) + '\n');
   fs.writeFileSync(path.join(OUT, 'sw.js'), SW);
   fs.writeFileSync(path.join(OUT, 'icon.svg'), ICON_SVG);
   fs.writeFileSync(path.join(OUT, 'icon-192.png'), drawIcon(192));

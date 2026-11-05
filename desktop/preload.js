@@ -15,6 +15,14 @@ contextBridge.exposeInMainWorld('floorboardDesktop', {
   onTop: { get: () => ipcRenderer.invoke('on-top-get'), set: (on) => ipcRenderer.invoke('on-top-set', !!on) },
   printers: () => ipcRenderer.invoke('printers'),
   print: (html, printer) => ipcRenderer.invoke('print-html', { html: String(html || ''), printer: String(printer || '') }),
+  // new versions from GitHub: asked once, then one click to update and restart
+  updates: {
+    state: () => ipcRenderer.invoke('upd-state'),
+    answer: (yes) => ipcRenderer.invoke('upd-answer', !!yes),
+    check: () => ipcRenderer.invoke('upd-check'),
+    install: () => ipcRenderer.invoke('upd-install'),
+    onState: (fn) => { const h = (_e, s) => fn(s); ipcRenderer.on('upd-state', h); return () => ipcRenderer.removeListener('upd-state', h); },
+  },
   // WhatsApp on this computer (the desktop app runs the helper; messages stay on this computer)
   wa: {
     state: () => ipcRenderer.invoke('wa-state'),

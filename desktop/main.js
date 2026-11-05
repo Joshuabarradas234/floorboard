@@ -3,11 +3,12 @@
 const { app, BrowserWindow, Tray, Menu, nativeImage, screen, globalShortcut, ipcMain, shell, session, safeStorage } = require('electron');
 const path = require('path'), fs = require('fs');
 const whatsapp = require('./whatsapp');
+const updates = require('./updates');
 
 const PAGE = path.join(__dirname, '..', 'index.html');
 const ICON = path.join(__dirname, '..', 'icon-192.png');
 const SIDEBAR_WIDTH = 380;
-const SLIM_WIDTH = 62; // the sidebar folded into its slim rail of icons
+const SLIM_WIDTH = 56; // the sidebar folded into its slim rail of icons (the window is the bar)
 let slimHeight = 420; // the rail's own height (the page measures it); it sits in the middle of the screen edge
 const SMOKE = process.env.FLOORBOARD_SMOKE === '1'; // load once, print the result, quit (used for testing)
 // Windows can wrongly judge the full window to be covered (with the sidebar kept in front, or some screen tools), and it
@@ -197,6 +198,12 @@ function createSidebar() {
       slideTo(true); await wait(400);
       setSlim(null, true); await wait(400); console.log('SMOKE folded', JSON.stringify(sidebar.getBounds()), sidebar.isAlwaysOnTop() ? 'in front' : 'not in front', 'button at', JSON.stringify(bubble && bubble.getBounds()));
       setSlim(null, false); await wait(400); console.log('SMOKE opened', JSON.stringify(sidebar.getBounds()), sidebar.isAlwaysOnTop() ? 'in front' : 'not in front');
+      if (process.env.FLOORBOARD_UPDATE_BASE) { // updates through the page's bridge, against a stand-in GitHub
+        const U = (js) => sidebar.webContents.executeJavaScript('window.floorboardDesktop.updates.' + js), brief = (s) => JSON.stringify({ ask: s.ask, on: s.on, current: s.current, latest: s.latest, available: s.available, busy: s.busy, error: s.error });
+        console.log('SMOKE upd first', brief(await U('state()')));
+        await U('answer(true)'); await wait(1500); console.log('SMOKE upd checked', brief(await U('state()')));
+        console.log('SMOKE upd installed', brief(await U('install()')));
+      }
       if (process.env.FLOORBOARD_WA_MOCK) { // WhatsApp through the page's bridge, against a stand-in helper
         const W = (js) => sidebar.webContents.executeJavaScript('window.floorboardDesktop.wa.' + js), sam = '27820000001@s.whatsapp.net';
         console.log('SMOKE wa state', JSON.stringify(await W('state()')));
@@ -312,6 +319,8 @@ function trayMenu() {
     { label: 'Show the floating button when the sidebar is closed', type: 'checkbox', checked: prefs.bubble, click: (i) => setBubble(i.checked) },
     { label: 'Show the bar at the top of the screen', type: 'checkbox', checked: prefs.bar, click: (i) => setBar(i.checked) },
     { label: 'Dock on the left', type: 'checkbox', checked: prefs.side === 'left', click: (i) => { prefs.side = i.checked ? 'left' : 'right'; savePrefs(); dock(); } },
+    { label: 'Check GitHub for new versions', type: 'checkbox', checked: updates.getState().on, click: (i) => { updates.answer(i.checked); tray.setContextMenu(trayMenu()); } },
+    { label: 'Check for a new version now', enabled: updates.getState().on, click: () => { updates.check().then((st) => { if (st.available) showSidebar(); }); } },
     { label: 'Start with Windows', type: 'checkbox', checked: app.getLoginItemSettings().openAtLogin, click: (i) => app.setLoginItemSettings({ openAtLogin: i.checked }) },
     { type: 'separator' },
     { label: 'Quit Floorboard', click: () => { app.isQuitting = true; app.quit(); } },
@@ -341,6 +350,7 @@ else {
   app.whenReady().then(() => {
     loadPrefs();
     whatsapp.init(); // WhatsApp beside Floorboard, once it's been linked
+    updates.init(); // new versions from GitHub, if the person said it may look
     session.defaultSession.setPermissionRequestHandler((_wc, permission, done) => done(permission === 'media' || permission === 'notifications'));
     createSidebar();
     createBubble();

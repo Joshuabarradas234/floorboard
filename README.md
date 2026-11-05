@@ -16,6 +16,12 @@ Double-click `desktop/Start Floorboard.cmd`.
 - Right-click the tray icon for: open the full app, keep the sidebar on top, show or hide the floating button, show or hide the bar at the top, dock it on the left, start with Windows.
 - The sidebar, the bar and the full app share the same data and update each other live.
 
+### Keeping it up to date (Windows)
+
+The first time, the sidebar asks whether Floorboard may check GitHub for new versions. If you say yes, it looks when it starts and every few hours. When there's a newer version, the sidebar shows **A new version of Floorboard is ready** with **Update now**: one click and it updates, restarts and keeps your settings, logins and WhatsApp link. You can switch the checking on or off, or check straight away, from the tray icon's menu.
+
+New versions only arrive once they've been pushed to GitHub. A copy with changes that aren't on GitHub yet isn't updated, so nothing is lost.
+
 ### WhatsApp beside Floorboard (Windows)
 
 Your own WhatsApp chats can show in the bar at the top of the screen and in the sidebar, next to Floorboard's.

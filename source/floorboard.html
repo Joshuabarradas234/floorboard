@@ -555,6 +555,13 @@ html.bar-mode,html.bar-mode body,html.bar-mode #root{background:transparent!impo
 .fbar-reply button{display:grid;place-items:center;width:34px;height:34px;border:0;border-radius:50%;background:#2fb36a;color:#fff}
 .fbar-reply button:disabled{opacity:.4}
 @media (prefers-reduced-motion:reduce){.fbar-panel{animation:none}}
+/* new version notice (Windows app) */
+.w-upd{flex:none;display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:20px}
+.w-upd>.ic{margin-top:2px;flex:none}
+.w-upd.new{box-shadow:inset 0 0 0 1px rgba(147,235,182,.45),var(--hi)}.w-upd.new>.ic{color:var(--green)}
+.w-upd.bad>.ic{color:var(--red)}
+.w-upd-t{display:grid;gap:3px;min-width:0}.w-upd-t b{font-size:13.5px}.w-upd-t small{font-size:12px;color:var(--ink-2);line-height:1.4}
+.w-upd-a{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
 /* WhatsApp beside Floorboard */
 .fbar-tabs{display:flex;gap:2px;margin:10px 12px 0;background:rgba(255,255,255,.07);border-radius:999px;padding:2px}
 .fbar-tabs button{flex:1;border:0;background:none;color:rgba(244,236,228,.7);font-size:12px;font-weight:700;padding:5px 10px;border-radius:999px}
@@ -709,6 +716,10 @@ td .fname .ic{color:var(--ink-3);margin-top:1px}
 .srail-sep{width:24px;height:1px;background:var(--glass-line);margin:2px 0 3px}
 .srail-n{position:absolute;top:1px;right:0;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:rgba(255,255,255,.28);color:#fff;font:700 9.5px/16px var(--f-body);box-shadow:0 0 0 2px rgba(30,22,16,.6)}
 .srail-n.r{background:var(--red-dot)}.srail-n.g{background:#2fb36a}
+/* in the Windows app the window itself is the bar: the rail fills it, with no second rounded bar or outline inside */
+.native-glass .widget.slim{padding:0;background:transparent!important}
+.native-glass .srail{width:100%;border-radius:0;border:0;box-shadow:none;background:rgba(255,255,255,.05);-webkit-backdrop-filter:none;backdrop-filter:none;padding:8px 0}
+.native-glass .srail-hl{left:50%;margin-left:-20px}
 @media (prefers-reduced-motion:reduce){.srail,.srail-hl{animation:none;transition:none}}
 .w-head button{-webkit-app-region:no-drag}
 .w-head .greet{flex:1}
@@ -2447,7 +2458,7 @@ function SlimRail({ onOpen }) {
   const over = (e) => setHl(e.currentTarget.offsetTop);
   // the Windows app makes its window exactly as tall as the rail, in the middle of the screen edge
   const navRef = useRef(null);
-  useEffect(() => { const el = navRef.current; if (el && desk && desk.slimSize) desk.slimSize(el.offsetHeight + 12); }, [items.length]);
+  useEffect(() => { const el = navRef.current; if (el && desk && desk.slimSize) desk.slimSize(el.offsetHeight + (DESKTOP_SHELL ? 0 : 12)); }, [items.length]);
   return html`<nav ref=${navRef} className="srail glass" aria-label="Floorboard" onMouseLeave=${() => setHl(null)}>
     <span className="srail-hl" style=${{ transform: 'translateY(' + (hl || 0) + 'px)', opacity: hl === null ? 0 : 1 }}></span>
     <button className="srail-i srail-top" onClick=${() => onOpen()} onMouseEnter=${over} title="Open the sidebar" aria-label="Open the sidebar">${BAR_MARK}</button>
@@ -2490,6 +2501,7 @@ function Widget() {
       <button className="icon-btn" onClick=${() => setSlim(true)} title="Fold into a slim bar" aria-label="Fold the sidebar into a slim bar"><${Icon} n="sidebar" s=${17}/></button>
       ${desk && desk.hide && html`<button className="icon-btn" onClick=${() => desk.hide()} title="Hide the sidebar" aria-label="Hide the sidebar"><${Icon} n="close" s=${17}/></button>`}
     </header>
+    <${UpdateNotice}/>
     <${Board} onPick=${pick}/>
     <${NextMeeting}/>
     ${plannerOn(db, user) && html`<div className="w-day glass"><${TodayCard} compact/></div>`}
@@ -2613,6 +2625,23 @@ function Bar() {
           : html`<p className="fbar-empty">${only ? 'Nothing unread. All caught up.' : 'No chats yet.'}</p>`}</div>`}
     </div>`}
   </div>`;
+}
+
+/* ---------------- new versions (Windows app) ---------------- */
+// Asked once whether it may check GitHub; after that, a newer version shows here and is one click to install.
+const UPD = (() => { const d = window.floorboardDesktop; return d && d.updates ? d.updates : null; })();
+function UpdateNotice() {
+  const [st, setSt] = useState(null), [tried, setTried] = useState(false);
+  useEffect(() => { if (!UPD) return undefined; UPD.state().then(setSt).catch(() => {}); return UPD.onState(setSt); }, []);
+  if (!UPD || !st) return null;
+  const go = () => { setTried(true); UPD.install(); };
+  if (st.ask) return html`<div className="w-upd glass"><${Icon} n="refresh" s=${18}/><div className="w-upd-t"><b>Keep Floorboard up to date?</b><small>May it check GitHub for new versions? It looks when it starts and every few hours. Updating is always your click.</small>
+    <div className="w-upd-a"><button className="btn sm primary" onClick=${() => UPD.answer(true)}>Yes, check</button><button className="btn sm ghost" onClick=${() => UPD.answer(false)}>No thanks</button></div></div></div>`;
+  if (st.busy && st.busy !== 'Checking…') return html`<div className="w-upd glass"><${Icon} n="refresh" s=${18}/><div className="w-upd-t"><b>${st.busy}</b><small>Floorboard restarts by itself in a moment. Your settings stay as they are.</small></div></div>`;
+  if (tried && st.error) return html`<div className="w-upd glass bad"><${Icon} n="alert" s=${18}/><div className="w-upd-t"><b>The update didn’t finish</b><small>${st.error}</small><div className="w-upd-a"><button className="btn sm" onClick=${go}>Try again</button><button className="btn sm ghost" onClick=${() => setTried(false)}>Later</button></div></div></div>`;
+  if (st.available) return html`<div className="w-upd glass new"><${Icon} n="refresh" s=${18}/><div className="w-upd-t"><b>A new version of Floorboard is ready</b><small>One click: it updates, restarts and keeps your settings.</small>
+    <div className="w-upd-a"><button className="btn sm primary" onClick=${go}>Update now</button></div></div></div>`;
+  return null;
 }
 
 /* ---------------- WhatsApp on this computer (Windows app) ---------------- */
