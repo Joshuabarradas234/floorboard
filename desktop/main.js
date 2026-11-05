@@ -399,5 +399,12 @@ else {
     msIpc();
   });
   app.on('window-all-closed', () => { /* keep running in the tray */ });
-  app.on('will-quit', () => { globalShortcut.unregisterAll(); coucou.stop(); });
+  // Floorboard's card leaves Coucou's island before Floorboard closes (a moment at most), or it would stay behind
+  let leaving = false;
+  app.on('will-quit', (e) => {
+    globalShortcut.unregisterAll();
+    if (leaving || !coucou.running()) return;
+    leaving = true; e.preventDefault();
+    Promise.race([coucou.stop(), new Promise((ok) => setTimeout(ok, 800))]).then(() => app.quit());
+  });
 }
