@@ -1,12 +1,13 @@
 // Floorboard inside Coucou's island. Coucou (github.com/Louis-CFM/coucou, if the person installed it) lets tools on this
 // computer report to its island through a local named pipe, one JSON line per event, each tool with its own card.
-// Floorboard reports there as "floorboard": the newest thing for you, and how many things need you and chats are unread.
+// Floorboard takes Coucou's main card: your department (or the store), what needs you and chats unread, and the newest
+// thing for you; its department cards sit beside it.
 // It only talks to Coucou on this computer; nothing leaves it. With no Coucou running, this does nothing.
 const net = require('net'), fs = require('fs');
 
 const ROOT = String.raw`\\.\pipe\ `.trim();
-// Coucou keeps a tool's card while it works and takes it away a few seconds after it says Stop (with the "finished"
-// sound), so Floorboard never says Stop: its card is busy while something needs you and rests once you're all caught up.
+// Coucou takes a tool's card away a few seconds after it says Stop (with the "finished" sound), so Floorboard never says
+// Stop: its cards are busy while something needs you and rest once you're all caught up.
 // SessionStart plays Coucou's "work" sound, so it isn't sent either: the first PreToolUse makes the card.
 const SESSION = 'floorboard-' + Date.now().toString(36);
 const AGAIN = 10 * 60 * 1000; // in case Coucou restarted between two looks, the card is said again now and then
@@ -17,10 +18,12 @@ let cards = [];
 const cardsSaid = new Map();
 
 function findPipe() { try { return fs.readdirSync(ROOT).find((n) => /^coucou-S-/i.test(n)) || null; } catch (e) { return null; } }
-// one connection per line, one after the other, so Coucou reads them in order; card: a department card, or Floorboard's own
+// one connection per line, one after the other, so Coucou reads them in order; card: a department card, or Floorboard's own.
+// Floorboard's own goes without an agent name, so it lands on Coucou's main card (the one it keeps for a coding tool,
+// "Claude Code" unless changed), named Floorboard while it's open: the big card is the store, and a small spot is free.
 function send(p, ev, card) {
   return new Promise((done) => {
-    const who = card ? { session_id: SESSION + '-' + card.id, coucou_agent: card.id, cwd: card.title } : { session_id: SESSION, coucou_agent: 'floorboard', cwd: 'Floorboard' };
+    const who = card ? { session_id: SESSION + '-' + card.id, coucou_agent: card.id, cwd: card.title } : { session_id: SESSION, cwd: 'Floorboard' };
     const s = net.connect(ROOT + p, () => s.end(JSON.stringify({ ...who, session_pid: process.pid, ...ev }) + '\n'));
     s.setTimeout(3000, () => s.destroy());
     s.on('error', done); s.on('close', done); // Coucou reads the line and hangs up; a closed or missing pipe just means it isn't listening
@@ -45,9 +48,11 @@ function setCards(list) {
 }
 // what the card says now: Coucou writes out a tool's name in full (a tool it doesn't know gets no more), so that's the line
 function show(step) {
-  post({ hook_event_name: 'PreToolUse', tool_name: step, tool_input: {} });
+  // the same line again so soon would only push the line before it off the card
+  const same = step === lastStep && Date.now() - saidAt < AGAIN;
+  if (!same) post({ hook_event_name: 'PreToolUse', tool_name: step, tool_input: {} });
   if (!last || !(last.count || last.chats)) post({ hook_event_name: 'Interrupt' });
-  lastStep = step; saidAt = Date.now();
+  lastStep = step; if (!same) saidAt = Date.now();
 }
 // look for Coucou every few seconds: it may start or quit at any time
 function check() {

@@ -18,13 +18,13 @@ Double-click `desktop/Start Floorboard.cmd`.
 
 ### Floorboard in Coucou's island (Windows)
 
-If you use [Coucou](https://github.com/Louis-CFM/coucou) (a free app that puts WhatsApp, classic Outlook mail and more in an island at the top of the screen), Floorboard joins it: a blue **floorboard** card shows your department at a glance (its open tasks and how far the team is with this week's task board, and how far you are), or for an admin the whole store (what's overdue and ASAP, and how far everyone is this week), then how many things need you, how many chats are unread and the newest thing for you. It's busy while something needs you and rests once you're all caught up, and it stays in the island for as long as Floorboard is open, without sounds. While Coucou is open, Floorboard's own bar at the top steps aside so there's one island, and it comes back if Coucou is closed. Floorboard only talks to Coucou on this computer.
+If you use [Coucou](https://github.com/Louis-CFM/coucou) (a free app that puts WhatsApp, classic Outlook mail and more in an island at the top of the screen), Floorboard joins it as Coucou's big main card, named **Floorboard** while it's open (Coucou keeps that card for a coding tool, "Claude Code" unless changed, and still labels it so). It shows your department at a glance (its open tasks and how far the team is with this week's task board, and how far you are), or for an admin the whole store (what's overdue and ASAP, and how far everyone is this week), then how many things need you, how many chats are unread and the newest thing for you. It's busy while something needs you and rests once you're all caught up, and it stays in the island for as long as Floorboard is open, without sounds. While Coucou is open, Floorboard's own bar at the top steps aside so there's one island, and it comes back if Coucou is closed. Floorboard only talks to Coucou on this computer.
 
 - Turn it on or off from the tray icon's menu: **Show Floorboard in Coucou's island**.
 - WhatsApp and Outlook live in Coucou's island. WhatsApp: in Coucou, **Settings… → Integrations → WhatsApp**, **Install WhatsApp**, then scan the code with your phone (WhatsApp › Settings › Linked devices › Link a device). Email: sign in to **Outlook (classic)** and leave it open (the new Outlook can't be reached), and have Coucou show its **Mail** card. Coucou 0.5.9 has no switch for that card yet: close Coucou, add `"integration_mail"` to `"activeIntegrations"` in `%APPDATA%\Coucou\settings.json`, and start Coucou again.
-- The island shows four small cards beside the main one: Floorboard, your department's card, Mail and WhatsApp fit exactly. Coucou's services are switched on and off in **Settings… → Integrations**: Mail and WhatsApp suit the store; the developer services (Resend, n8n, Vercel, GitHub and the rest) need their own keys and do nothing without them.
+- The island shows four small cards beside the main one: your department's card, Mail and WhatsApp, with one spot to spare. Coucou's services are switched on and off in **Settings… → Integrations**: Mail and WhatsApp suit the store; the developer services (Resend, n8n, Vercel, GitHub and the rest) need their own keys and do nothing without them.
 
-**Your department's card.** Beside the floorboard card, each person gets one small card for their own work, busy while something wants doing:
+**Your department's card.** Beside Floorboard's main card, each person gets one small card for their own work, busy while something wants doing:
 
 | Who | Card | What it says |
 |---|---|---|
@@ -38,7 +38,7 @@ If you use [Coucou](https://github.com/Louis-CFM/coucou) (a free app that puts W
 
 Floorboard picks the best one for you (the task board first; then for Finance MFS and approvals, for the store manager the store, for everyone else their own team). To pick another, or none: the tray icon's menu → **Your department's card in Coucou's island**. A card you pick shows only itself.
 
-Coucou always keeps one main card for a coding app (Claude Code, Cursor, Codex or Antigravity); it can be swapped in **Settings… → Active pills** but not removed.
+Coucou always keeps one main card for a coding app (Claude Code, Cursor, Codex or Antigravity); Floorboard takes that card over while it's open, and it goes back to the coding app when Floorboard closes. If you also run Claude Code with Coucou's hooks installed, both share that card.
 
 MFS (Finance's card): on a computer that can reach the MFS app, open the tray menu → **Your department's card in Coucou's island → Connect MFS…**, enter the MFS address (`http://localhost:8787` on the MFS computer itself) and the MFS app's Jarvis key (`JARVIS_KEY` in its `.env`; `pnpm jarvis:setup` sets one up). The key stays on that computer, locked with Windows' own encryption. MFS answers its Jarvis questions only on its own computer or network, and only reading: nothing in MFS changes. Until MFS is connected, Finance gets the approvals card.
 
