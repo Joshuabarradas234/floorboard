@@ -10,4 +10,6 @@ window.FLOORBOARD_CONFIG = {
   // the Directory (tenant) ID is filled in. Both are public identifiers, not passwords. Empty msClientId = Outlook stays hidden.
   msClientId: '',
   msTenantId: '5adc1cd1-46ee-4ef1-ae71-56ad62bf8db0',
+  // The name the sort-files function (Sort my files) has in Supabase, when it isn't "sort-files".
+  sortFunction: 'smart-service',
 };

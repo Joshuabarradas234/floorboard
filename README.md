@@ -176,6 +176,7 @@ To have the store's AI read the files too (photos of paperwork, scans with no te
 
 1. **Edge Functions → Deploy a new function → Via editor**: name it `sort-files`, paste all of `supabase/functions/sort-files/index.ts`, and deploy. In its settings, switch **Verify JWT** off.
 2. It uses the same `ANTHROPIC_API_KEY` secret as meeting notes. Sorting a batch of documents costs a few cents.
+3. If Supabase kept a random name for it (functions can't be renamed), put that name in `config.js` as `sortFunction` instead of deploying again.
 
 Without it, sorting still works, by the words in and on the files.
 

@@ -3840,7 +3840,7 @@ async function makeSortPlan(items, existing, onStep) {
           const a = r.x.att, pic = a && r.blob && !r.text && (a.kind === 'image' || /pdf/i.test(a.mime || '')) ? await smallPicture(a, r.blob) : '';
           files.push({ id: r.x.id, title: r.x.title, name: a ? a.name : '', text: r.text, image: pic });
         }
-        const { data, error } = await CLOUD.functions.invoke('sort-files', { body: { folders: options, files } });
+        const { data, error } = await CLOUD.functions.invoke((window.FLOORBOARD_CONFIG || {}).sortFunction || 'sort-files', { body: { folders: options, files } }); // its name in Supabase, if it got another
         if (error || !data || !data.results) throw new Error((data && data.error) || (error && error.message) || 'no answer');
         data.results.forEach((r) => { ai[r.id] = r; });
       }
