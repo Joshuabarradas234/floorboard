@@ -1078,6 +1078,13 @@ td.mono{white-space:nowrap}
 .w-stk:has(.stk-slim){padding:10px 14px}
 .w-stk:has(.stk-bar){padding:7px 10px 7px 12px}
 .stk-bar{display:flex;align-items:center;gap:6px}
+.w-files:has(.stk-bar),.w-wa:has(.stk-bar){padding:7px 10px 7px 12px}
+.w-card-a{display:flex;align-items:center;gap:8px}
+.fold-ic{display:grid;place-items:center;width:20px;height:20px;border-radius:6px;flex:none;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.fold-ic.files{background:#f3efe9;color:#17130f}
+.fold-ic.wa{background:#1fae5b;color:#fff;border-radius:50%}
+.stk-tab em.fold-n{background:rgba(255,255,255,.2);color:#fff}
+.stk-tab em.fold-n.wa{background:#1fae5b}
 .board-col .stk-bar,.inline-board .stk-bar{margin-top:14px;padding:8px 10px 8px 14px;border-radius:var(--r-lg);background:var(--glass);border:1px solid var(--glass-line);border-top-color:rgba(255,255,255,.3)}
 .stk-tab{flex:1;display:flex;align-items:center;gap:9px;border:0;background:none;color:var(--ink);font:inherit;font-size:13.5px;padding:2px 0;cursor:pointer;text-align:left}
 .stk-tab b{flex:1;font-weight:700}
@@ -2793,12 +2800,26 @@ function WaPanel({ wa, limit, compact }) {
   return html`<div className="fbar-list"><${WaRows} chats=${wa.chats} onOpen=${setOpen} limit=${limit}/></div>`;
 }
 // in the sidebar
+// Sidebar cards that fold away to one small bar, like Sticky notes (this device remembers which are folded)
+function useFold(key) {
+  const [open, setOpen] = useState(() => lsGet(key) !== 'folded');
+  return [open, (v) => { setOpen(v); lsSet(key, v ? '' : 'folded'); }];
+}
+function FoldBar({ icon, kind, title, count, hot, onOpen, children }) {
+  return html`<div className="stk-bar">
+    <button className="stk-tab" onClick=${onOpen} aria-expanded="false" title=${'Open ' + title}><span className=${'fold-ic ' + kind} aria-hidden="true"><${Icon} n=${icon} s=${13}/></span><b>${title}</b>
+      ${count > 0 && html`<em className=${'fold-n ' + kind + (hot ? ' hot' : '')}>${count}</em>`}<${Icon} n="chevdown" s=${15}/></button>
+    ${children}
+  </div>`;
+}
+const FoldBtn = ({ onFold, what }) => html`<button className="icon-btn sm stk-fold" onClick=${onFold} title="Fold away" aria-label=${'Fold ' + what + ' away'}><${Icon} n="chevdown" s=${15}/></button>`;
 function WaCard() {
-  const wa = useWa(), { ask, toast } = useApp();
+  const wa = useWa(), { ask, toast } = useApp(), [open, setOpen] = useFold('floorboard.wa.fold.v1');
   if (!wa) return null;
+  if (!open) return html`<div className="w-wa glass"><${FoldBar} icon="chat" kind="wa" title="WhatsApp" count=${wa.unread} onOpen=${() => setOpen(true)}/></div>`;
   const unlink = () => ask({ title: 'Unlink WhatsApp from this computer?', body: 'Your WhatsApp chats stop showing in Floorboard. Nothing is deleted from your phone.', confirm: 'Unlink', danger: true, onConfirm: () => WA.unlink().then(() => toast('WhatsApp unlinked from this computer')) });
   return html`<div className="w-wa glass">
-    <div className="w-files-h"><span className="eyebrow">WhatsApp${wa.unread > 0 ? ' · ' + wa.unread + ' unread' : ''}</span>${wa.st.linked && html`<button className="linkish sm" onClick=${unlink}>Unlink</button>`}</div>
+    <div className="w-files-h"><span className="eyebrow">WhatsApp${wa.unread > 0 ? ' · ' + wa.unread + ' unread' : ''}</span><span className="w-card-a">${wa.st.linked && html`<button className="linkish sm" onClick=${unlink}>Unlink</button>`}<${FoldBtn} what="WhatsApp" onFold=${() => setOpen(false)}/></span></div>
     <div className="w-wa-body"><${WaPanel} wa=${wa} limit=${8} compact/></div>
   </div>`;
 }
@@ -3576,11 +3597,13 @@ function FolderCard({ title, sub, look, dot, papers, onOpen, onAdd }) {
 // Files in the sidebar: the same folders, small. A folder opens in the full app; + adds files right here.
 function FilesCard() {
   const { db, user, jump } = useApp();
-  const [adding, setAdding] = useState(null);
+  const [adding, setAdding] = useState(null), [naming, setNaming] = useState(false), [open, setOpen] = useFold('floorboard.files.fold.v1');
   if (!filesOn(db, user)) return null;
-  const [naming, setNaming] = useState(false);
+  if (!open) return html`<div className="w-files glass"><${FoldBar} icon="folder" kind="files" title="Files" count=${myFilesOf(db, user.id).filter((f) => !f.folder).length} onOpen=${() => setOpen(true)}>
+      <button className="icon-btn sm" onClick=${() => setAdding('me')} title="Add files to My files" aria-label="Add files to My files"><${Icon} n="plus" s=${15}/></button></${FoldBar}>
+    ${adding && html`<${AddFilesModal} where=${adding} onClose=${() => setAdding(null)}/>`}</div>`;
   return html`<div className="w-files glass">
-    <div className="w-files-h"><span className="eyebrow">Files</span><button className="linkish sm" onClick=${() => jump('view:files')}>Open all</button></div>
+    <div className="w-files-h"><span className="eyebrow">Files</span><span className="w-card-a"><button className="linkish sm" onClick=${() => jump('view:files')}>Open all</button><${FoldBtn} what="Files" onFold=${() => setOpen(false)}/></span></div>
     ${FOLDER_CLIP}
     <div className="fdesk mini"><div className="fgrid">
       ${foldersFor(db, user).map((f) => html`<${FolderCard} key=${f.where} look=${f.look} title=${f.short || f.title} sub=${f.sub.replace(' · only you', '')} dot=${f.dot} papers=${f.papers} onOpen=${() => jump('view:files:' + f.where)} onAdd=${() => setAdding(f.where)}/>`)}
