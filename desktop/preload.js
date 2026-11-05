@@ -55,6 +55,8 @@ contextBridge.exposeInMainWorld('floorboardDesktop', {
   outlook: { search: (query, days) => ipcRenderer.invoke('outlook-search', { query: String(query || '').slice(0, 200), days: Number(days) || 30 }) },
   // the department cards this person could have in Coucou's island: [{ id, title, line, busy, mfs }]
   cards: (list) => ipcRenderer.send('island-cards', (Array.isArray(list) ? list : []).slice(0, 12).map((c) => ({ id: String(c.id || ''), title: String(c.title || ''), line: String(c.line || ''), busy: !!c.busy, mfs: !!c.mfs }))),
+  // the few words on Floorboard's own card in Coucou's island: the person's department, or for an admin the whole store
+  islandLine: (line) => ipcRenderer.send('island-line', String(line || '').slice(0, 80)),
   // MFS on this computer, for Finance's card: the address and Jarvis key stay in the desktop app
   mfs: {
     state: () => ipcRenderer.invoke('mfs-state'),

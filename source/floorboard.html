@@ -1127,6 +1127,32 @@ td.mono{white-space:nowrap}
 .w-stk{flex:none;padding:12px 14px;border-radius:22px}
 .w-files{flex:none;padding:12px 12px 14px;border-radius:22px}
 .w-files-h{display:flex;align-items:center;justify-content:space-between;margin:0 2px 8px}
+/* Task board */
+.w-tb{flex:none;padding:12px;border-radius:22px;display:grid;gap:8px}
+.w-tb:has(.stk-bar){padding:7px 10px 7px 12px}
+.w-tb .w-files-h{margin-bottom:0}
+.board-col .w-tb{margin-bottom:14px}
+.fold-ic.tb{background:#e8f5ec;color:#123d22}
+.tb-row{display:grid;gap:4px;padding:8px 10px;border-radius:14px;background:var(--glass);border:1px solid var(--glass-line)}
+.tb-t{font-size:13px;font-weight:600;line-height:1.3}
+.tb-row .slider-row{gap:8px}.tb-row .btn.sm{padding:3px 10px}
+.tb-lead{display:flex;align-items:center;gap:8px;width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer;padding:8px 10px;border-radius:14px;background:var(--glass);border:1px solid var(--glass-line)}
+.tb-lead b{font-size:13px;white-space:nowrap}.tb-lead small{color:var(--ink-3);font-size:11.5px;white-space:nowrap}
+.tb-week{display:flex;align-items:center;gap:4px}.tb-week .linkish{min-width:96px;text-align:center}
+.tb-sec{margin:0 0 18px;display:grid;gap:10px}
+.tb-sec.glass{padding:14px 16px;border-radius:var(--r-lg)}
+.tb-sec h3{margin:0;font:700 15px var(--f-display);display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}.tb-sec h3 small{font:500 12px var(--f-body,inherit);color:var(--ink-3)}
+.tb-people{display:grid;gap:6px}
+.tb-person{display:grid;grid-template-columns:28px minmax(90px,170px) 1fr auto minmax(0,150px);align-items:center;gap:10px}
+.tb-person b{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.tb-person small{color:var(--ink-3);font-size:11.5px}
+.tb-add{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr) minmax(0,1.4fr) auto;gap:8px;align-items:center}
+.tb-task{padding:12px 14px;border-radius:var(--r);display:grid;gap:8px}
+.tb-task-h{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}.tb-task-h b{font-size:14px}.tb-task-h small{flex:1;color:var(--ink-3);font-size:12px}
+.tb-mine{display:grid;gap:6px}
+.tb-who{display:grid;gap:5px}
+.tb-who-r{display:grid;grid-template-columns:minmax(70px,120px) 1fr auto;align-items:center;gap:10px;font-size:12.5px}
+.tb-note{grid-column:1/-1;color:var(--ink-3);font-size:11.5px;margin:-2px 0 2px}
+@media (max-width:700px){.tb-add{grid-template-columns:1fr 1fr}.tb-add .input:first-child{grid-column:1/-1}.tb-person{grid-template-columns:28px 1fr auto;}.tb-person .bar,.tb-person small{grid-column:2/-1}}
 /* Ask Floorboard */
 .w-ask{flex:none;padding:12px;border-radius:22px}
 .w-ask:has(.stk-bar){padding:7px 10px 7px 12px}
@@ -2164,6 +2190,7 @@ function seed() {
   demoFiles(db, T);
   demoUnsorted(db, T);
   db.events = demoEvents(T);
+  db.wtasks = []; demoWeekly(db, T);
   return db;
 }
 function loadDb() {
@@ -2179,6 +2206,7 @@ function loadDb() {
         if (!Object.values(d.pins || {}).some((p) => p && p.myfiles)) { d.pins = d.pins || {}; demoFiles(d); }
         if (!Object.values(d.pins || {}).some((p) => p && (p.myfiles || []).some((f) => /^mf-.*-u\d+$/.test(f.id)))) demoUnsorted(d);
         if (!(d.messages || []).some((m) => m.id === 'm-spot1')) demoSpotted(d);
+        if (!Array.isArray(d.wtasks)) { d.wtasks = []; demoWeekly(d); } // demo stores saved before the task board
         if (!(d.depts || []).some((x) => x.features && 'outlook' in x.features)) (d.depts || []).forEach((x) => { if (x.id === 'finance' || x.id === 'admin') x.features = { ...(x.features || {}), outlook: true }; });
         if (!d.plans) { const f = (d.depts || []).find((x) => x.id === 'finance'); if (f) f.features = { ...(f.features || {}), planner: true }; demoPlanner(d); }
         if (!(d.depts || []).some((x) => x.features && 'quotes' in x.features)) {
@@ -2411,6 +2439,7 @@ function Rail() {
     ${myDepts.map((d) => item('dept:' + d.id, html`<i className="sq" style=${{ '--c': d.color }}></i>`, d.name))}
     ${item('teams', html`<${Icon} n="store"/>`, 'All departments')}
     ${item('calendar', html`<${Icon} n="diary"/>`, 'Calendar')}
+    ${tbDepts(db, user).length > 0 && item('taskboard', html`<${Icon} n="task"/>`, 'Task board')}
     ${canSeePlanner(db, user) && item('week', html`<${Icon} n="list"/>`, 'My week')}
     ${outlookOn(db, user) && item('mail', html`<${Icon} n="at"/>`, 'Outlook')}
     ${canSeeME(db, user) && item('monthend', html`<${Icon} n="calendar"/>`, 'Month end')}
@@ -2499,6 +2528,7 @@ function SlimRail({ onOpen }) {
   const items = [
     ['needs', 'inbox', 'Needs you', c.mine.length, c.mine.some((p) => p.level === 'red'), () => onOpen('.w-list')],
     ['ask', 'spark', 'Ask Floorboard', 0, false, () => onOpen('.w-ask')],
+    tbDepts(db, user).length > 0 && ['tboard', 'task', 'This week', tbDepts(db, user).flatMap((d) => tbWeek(db, d.id, weekOf()).filter((t) => tbWho(db, t).includes(user.id) && tbPct(t, user.id) < 100)).length, false, () => onOpen('.w-tb')],
     ['chats', 'chat', 'Chats', unreadChats, false, () => full('view:chats')],
     plannerOn(db, user) && ['today', 'list', 'Today', 0, false, () => onOpen('.w-day')],
     ['notes', 'edit', 'Sticky notes', notes, false, () => onOpen('.w-stk')],
@@ -2566,6 +2596,7 @@ function Widget() {
     <${UpdateNotice}/>
     <${Board} onPick=${pick}/>
     <${AskCard} compact/>
+    <${TaskBoardCard}/>
     <${NextMeeting}/>
     ${plannerOn(db, user) && html`<div className="w-day glass"><${TodayCard} compact/></div>`}
     ${outlookOn(db, user) && html`<div className="w-mail glass"><${OutlookCard} compact/></div>`}
@@ -4008,7 +4039,7 @@ function PersonModal({ personId, onClose, onAdded }) {
 }
 function AdminView() {
   const { db, user, update, toast, startSeeing } = useApp();
-  const flipFeature = (deptId, key) => update((d) => { const x = d.depts.find((y) => y.id === deptId); x.features = { ...(x.features || {}), [key]: key === 'files' ? filesOff(x) : !featureOn(x, key) }; });
+  const flipFeature = (deptId, key) => update((d) => { const x = d.depts.find((y) => y.id === deptId); x.features = { ...(x.features || {}), [key]: key === 'files' ? filesOff(x) : key === 'taskboard' ? tboardOff(x) : !featureOn(x, key) }; });
   const setQuote = (deptId, k, id) => update((d) => { const x = d.depts.find((y) => y.id === deptId); x[k] = id || null; });
   const [tab, setTab] = useState('people');
   const [edit, setEdit] = useState(null);
@@ -4065,7 +4096,7 @@ function AdminView() {
       <form className="dtool" onSubmit=${addDept}><input id="nd-name" className="input" style=${{ maxWidth: 280 }} value=${nd.name} onChange=${(e) => setNd({ ...nd, name: e.target.value })} placeholder="New department, e.g. Butchery"/><div className="swatches">${TILE_COLORS.map((c) => html`<button type="button" key=${c} className=${nd.color === c ? 'on' : ''} style=${{ '--c': c }} onClick=${() => setNd({ ...nd, color: c })} aria-label=${'Colour ' + c}></button>`)}</div><button className="btn primary">Add department</button></form>
       <p className="feat-note">Every department starts with its group chat, tagging and the “Needs you” board. Switch on the extra tools as each department comes on board.</p>
       <div className="dgrid">${db.depts.map((d) => html`<div key=${d.id} className="dcard"><div className="dcard-h"><span className="dsw" style=${{ '--c': d.color }}></span><div><h3>${d.name}</h3><span className="muted sm">${deptMembers(db, d.id).length} people · ${db.users.filter((u) => u.manages.includes(d.id)).map((u) => firstName(u)).join(', ') || 'no manager'}</span></div></div>
-        <div className="toggles">${[['files', 'My files & archive'], ['tools', 'Tools & manuals'], ['drive', 'Drive'], ['monthend', 'Month end'], ['approvals', 'Approvals'], ['quotes', 'Quote drop box'], ['planner', 'My week'], ['outlook', 'Outlook email']].map(([k, l]) => { const on = k === 'files' ? !filesOff(d) : featureOn(d, k); return html`<button key=${k} className=${'toggle' + (on ? ' on' : '')} style=${{ '--c': d.color }} onClick=${() => flipFeature(d.id, k)} aria-pressed=${on}><i></i>${l}${on ? ' · on' : ' · off'}</button>`; })}</div>
+        <div className="toggles">${[['files', 'My files & archive'], ['taskboard', 'Task board'], ['tools', 'Tools & manuals'], ['drive', 'Drive'], ['monthend', 'Month end'], ['approvals', 'Approvals'], ['quotes', 'Quote drop box'], ['planner', 'My week'], ['outlook', 'Outlook email']].map(([k, l]) => { const on = k === 'files' ? !filesOff(d) : k === 'taskboard' ? !tboardOff(d) : featureOn(d, k); return html`<button key=${k} className=${'toggle' + (on ? ' on' : '')} style=${{ '--c': d.color }} onClick=${() => flipFeature(d.id, k)} aria-pressed=${on}><i></i>${l}${on ? ' · on' : ' · off'}</button>`; })}</div>
         ${featureOn(d, 'quotes') && html`<div className="dq">
           <label className="qd-to"><span>Drop box for</span><select id=${'dq-for-' + d.id} className="select" value=${d.quoteFor || ''} onChange=${(e) => setQuote(d.id, 'quoteFor', e.target.value)}><option value="">Everyone in ${d.name}</option>${deptMembers(db, d.id).map((id) => userById(db, id)).map((u) => html`<option key=${u.id} value=${u.id}>${u.name}</option>`)}</select></label>
           <label className="qd-to"><span>Quotes go to</span><select id=${'dq-to-' + d.id} className="select" value=${d.quoteTo || ''} onChange=${(e) => setQuote(d.id, 'quoteTo', e.target.value)}><option value="">Whoever sends them picks</option>${db.users.filter((u) => u.active !== false).map((u) => html`<option key=${u.id} value=${u.id}>${u.name}</option>`)}</select></label></div>`}</div>`)}</div>
@@ -4658,7 +4689,7 @@ const STAFF_DOMAIN = '@staff.floorboard.app';
 const pinPassword = (pin) => 'fb-' + pin + '-FB';
 const PIN_LEN = CLOUD ? 6 : 4;
 const CACHE_KEY = 'floorboard.cloud.cache.v1', STORE_CODE_KEY = 'floorboard.storecode.v1';
-function emptyDb() { return { v: 2, store: 'Your store', counter: 1000, depts: [], users: [], groups: [], shortcuts: [], drives: [], folders: [], files: [], tiles: [], pins: {}, status: {}, chats: [], messages: [], posts: [], deadlines: [], events: [], marks: {}, plans: {}, ptasks: [], pdone: {} }; }
+function emptyDb() { return { v: 2, store: 'Your store', counter: 1000, depts: [], users: [], groups: [], shortcuts: [], drives: [], folders: [], files: [], tiles: [], pins: {}, status: {}, chats: [], messages: [], posts: [], deadlines: [], events: [], marks: {}, plans: {}, ptasks: [], pdone: {}, wtasks: [] }; }
 
 // Same data, written with sorted keys, so a record that came back from the server compares equal to ours.
 function stable(v) {
@@ -4687,6 +4718,7 @@ function toRecs(db) {
   (db.ptasks || []).forEach((t) => put('ptasks', t.id, t));
   Object.entries(db.pdone || {}).forEach(([k, v]) => put('pdone', k, v));
   (db.deadlines || []).forEach((x) => { const { done, ...rest } = x; put('deadlines', x.id, rest); Object.entries(done || {}).forEach(([k, v]) => put('dltick', x.id + '|' + k, { ...v, dl: x.id, key: k })); });
+  (db.wtasks || []).forEach((t) => { const { progress, ...rest } = t; put('wtasks', t.id, rest); Object.entries(progress || {}).forEach(([who, v]) => put('wprog', t.id + '|' + who, { ...v, task: t.id, user: who })); });
   db.chats.forEach((c) => { const { read, ...rest } = c; put('chats', c.id, rest); Object.entries(read || {}).forEach(([who, at]) => put('read', c.id + '|' + who, { chat: c.id, user: who, at })); });
   db.messages.forEach((m) => { const { reactions, ...rest } = m; put('messages', m.id, rest); Object.entries(reactions || {}).forEach(([who, e]) => put('rx', m.id + '|' + who, { msg: m.id, user: who, e })); });
   db.posts.forEach((p) => {
@@ -4714,6 +4746,8 @@ function fromRecs(list) {
   (by.pdone || []).forEach((r) => { db.pdone[r.id] = r.data; });
   const dls = {}; db.deadlines = of('deadlines').map((x) => (dls[x.id] = { ...x, done: {} }));
   (by.dltick || []).forEach(({ data: x }) => { const t = dls[x.dl]; if (t) { const { dl, key, ...v } = x; t.done[key] = v; } });
+  const wts = {}; db.wtasks = of('wtasks').map((t) => (wts[t.id] = { ...t, progress: {} }));
+  (by.wprog || []).forEach(({ data: x }) => { const t = wts[x.task]; if (t) { const { task, user, ...v } = x; t.progress[user] = v; } });
   const chats = {}; db.chats = of('chats').map((c) => (chats[c.id] = { ...c, read: {} }));
   (by.read || []).forEach(({ data: x }) => { if (chats[x.chat]) chats[x.chat].read[x.user] = x.at; });
   const msgs = {}; db.messages = of('messages').map((m) => (msgs[m.id] = { ...m })).sort((a, b) => a.at - b.at);
@@ -4727,7 +4761,7 @@ function fromRecs(list) {
   db.counter = db.posts.reduce((a, p) => Math.max(a, p.no || 0), 1000);
   return db;
 }
-const PARENT = { rcp: ['posts', 'post'], act: ['posts', 'post'], vote: ['posts', 'post'], rx: ['messages', 'msg'], read: ['chats', 'chat'], dltick: ['deadlines', 'dl'], marks: ['posts', 'post'] };
+const PARENT = { rcp: ['posts', 'post'], act: ['posts', 'post'], vote: ['posts', 'post'], rx: ['messages', 'msg'], read: ['chats', 'chat'], dltick: ['deadlines', 'dl'], marks: ['posts', 'post'], wprog: ['wtasks', 'task'] };
 const parentKey = (r) => (PARENT[r.coll] ? PARENT[r.coll][0] + '|' + r.data[PARENT[r.coll][1]] : null);
 
 const PENDING_KEY = 'floorboard.cloud.pending.v1';
@@ -7789,8 +7823,13 @@ function askTasks(db, u, { query = '', person = '', department = '', status = 'o
   if (dep) list = list.filter((p) => p.about === dep.id || p.toDepts.includes(dep.id) || Object.keys(p.recips).some((id) => { const m = userById(db, id); return m && m.depts.includes(dep.id); }));
   list = list.filter((p) => (status === 'all' ? true : status === 'done' ? allDone(p) : status === 'overdue' ? isOverdue(p) : status === 'stale' ? Object.keys(p.recips).some((id) => isStale(p, id)) : !allDone(p)));
   list.sort((a, b) => isOverdue(b) - isOverdue(a) || (a.due || '9999').localeCompare(b.due || '9999') || b.createdAt - a.createdAt);
+  // the task board's tasks for this week: a head sees everyone's progress, anyone else their own
+  const wk = weekOf(), weekly = tbDepts(db, u).filter((d) => !dep || d.id === dep.id).flatMap((d) => tbWeek(db, d.id, wk)
+    .map((t) => ({ d, t, ids: tbWho(db, t).filter((id) => (tbHead(u, d.id) || id === u.id) && (!who || who.some((x) => x.id === id))) }))
+    .filter((x) => x.ids.length && (!words.length || askScore(x.t.title + ' ' + (x.t.notes || ''), words) > 0)))
+    .map(({ d, t, ids }) => ({ department: d.name, title: t.title, for: t.for === 'team' ? 'whole team' : (userById(db, t.for) || {}).name, people: ids.slice(0, 30).map((id) => ({ name: (userById(db, id) || {}).name || 'Former staff', progress: tbPct(t, id) + '%', note: ((t.progress || {})[id] || {}).note || undefined, quiet_2_days: tbQuiet(t, id) || undefined })) }));
   return {
-    found: list.length,
+    found: list.length, ...(weekly.length ? { this_weeks_task_board: weekly.slice(0, 20) } : {}),
     tasks: list.slice(0, 15).map((p) => {
       const pr = progressOf(p);
       return {
@@ -8031,6 +8070,142 @@ function useAskBridge() {
   }, []);
 }
 
+/* ---------------- Task board: each department's tasks for the week, set by its head ---------------- */
+// The head of a department (whoever manages it, and admins) sets the week's tasks, for the whole team or for one person.
+// Everyone moves their own progress along on theirs; the head sees how far each person is. On for every department
+// unless an admin switches it off in People & access. Kept per week (that Monday's date), each person's progress as its
+// own record, so two people moving theirs at once never clash.
+const tboardOff = (d) => !!(d && d.features && d.features.taskboard === false);
+const weekOf = (k = dkey()) => addDays(k, -((dowOf(k) + 6) % 7)); // that week's Monday
+const tbDepts = (db, u) => db.depts.filter((d) => !tboardOff(d) && (u.role === 'admin' || u.depts.includes(d.id) || u.manages.includes(d.id)));
+const tbHead = (u, deptId) => u.role === 'admin' || u.manages.includes(deptId);
+// the team a head sets tasks for: everyone in the department who doesn't run it
+const tbTeam = (db, deptId) => db.users.filter((x) => x.active !== false && x.depts.includes(deptId) && !x.manages.includes(deptId));
+const tbWho = (db, t) => (t.for === 'team' ? tbTeam(db, t.dept).map((x) => x.id) : [t.for]);
+const tbPct = (t, id) => ((t.progress || {})[id] || {}).pct || 0;
+const tbWeek = (db, deptId, wk) => (db.wtasks || []).filter((t) => t.dept === deptId && t.week === wk).sort((a, b) => (a.at || 0) - (b.at || 0));
+// one person's week in a department: their tasks, how far along overall, how many done, when they last moved one
+function tbPerson(db, deptId, wk, id) {
+  const ts = tbWeek(db, deptId, wk).filter((t) => tbWho(db, t).includes(id));
+  return { ts, pct: ts.length ? Math.round(ts.reduce((a, t) => a + tbPct(t, id), 0) / ts.length) : 0,
+    done: ts.filter((t) => tbPct(t, id) >= 100).length, last: Math.max(0, ...ts.map((t) => ((t.progress || {})[id] || {}).at || 0)) };
+}
+// how far a whole department (or several) is this week: the average of each person with tasks, or null with none
+function tbTeamPct(db, depts, wk = weekOf()) {
+  const ps = [];
+  depts.forEach((d) => tbTeam(db, d.id).forEach((m) => { const s = tbPerson(db, d.id, wk, m.id); if (s.ts.length) ps.push(s.pct); }));
+  return ps.length ? Math.round(ps.reduce((a, b) => a + b, 0) / ps.length) : null;
+}
+const tbWeekName = (wk) => { const now = weekOf(); return wk === now ? 'This week' : wk === addDays(now, -7) ? 'Last week' : wk === addDays(now, 7) ? 'Next week' : 'Week of ' + askDay(wk); };
+const tbQuiet = (t, id) => tbPct(t, id) < 100 && Date.now() - ((((t.progress || {})[id] || {}).at) || t.at || 0) > 2 * DAY;
+
+// moving your own progress on a task: drag, or Done; a note on how it's going
+function TbProgress({ t, compact }) {
+  const { user, update } = useApp(), mine = (t.progress || {})[user.id] || {};
+  const [pct, setPct] = useState(mine.pct || 0), [note, setNote] = useState(mine.note || ''), timer = useRef(null);
+  useEffect(() => { setPct(mine.pct || 0); }, [mine.pct]);
+  const save = (p, n) => update((d) => { const x = (d.wtasks || []).find((y) => y.id === t.id); if (x) x.progress = { ...(x.progress || {}), [user.id]: { pct: p, note: n, at: Date.now() } }; });
+  const slide = (v) => { setPct(v); clearTimeout(timer.current); timer.current = setTimeout(() => save(v, note), 500); };
+  return html`<div className="tb-mine">
+    <div className="slider-row"><input type="range" min="0" max="100" step="10" value=${pct} onChange=${(e) => slide(+e.target.value)} aria-label=${'How far along: ' + t.title}/>
+      <span className=${'pct-pill' + (pct >= 100 ? ' full' : '')}>${pct}%</span>
+      ${pct < 100 && html`<button className="btn sm" onClick=${() => { clearTimeout(timer.current); setPct(100); save(100, note); }}>Done</button>`}</div>
+    ${!compact && html`<input className="input sm" value=${note} onChange=${(e) => setNote(e.target.value)} onBlur=${() => { if (note !== (mine.note || '')) save(pct, note); }} placeholder="How it’s going (optional)" maxLength="140" aria-label=${'Note on ' + t.title}/>`}
+  </div>`;
+}
+function TaskBoardView() {
+  const { db, user, update, toast, ask } = useApp();
+  const depts = tbDepts(db, user);
+  const [deptId, setDeptId] = useState(() => (depts.find((d) => user.manages.includes(d.id)) || depts.find((d) => user.depts.includes(d.id)) || depts[0] || {}).id);
+  const [week, setWeek] = useState(() => weekOf());
+  const [title, setTitle] = useState(''), [forWho, setForWho] = useState('team'), [notes, setNotes] = useState('');
+  if (!depts.length || !deptId) return html`<${Page} title="Task board"><div className="empty"><${Icon} n="task" s=${24}/><h3>No task board for you yet</h3><p>Each department’s head sets the week’s tasks here.</p></div><//>`;
+  const d = deptById(db, deptId), head = tbHead(user, deptId), team = tbTeam(db, deptId), tasks = tbWeek(db, deptId, week);
+  const mine = tasks.filter((t) => tbWho(db, t).includes(user.id)), last = tbWeek(db, deptId, addDays(week, -7)), teamPct = tbTeamPct(db, [d], week);
+  const forName = (t) => (t.for === 'team' ? 'Whole team' : (userById(db, t.for) || {}).name || 'Former staff');
+  const add = (e) => {
+    e.preventDefault();
+    const tt = title.trim(); if (!tt) { toast('Give the task a name', 'warn'); return; }
+    update((x) => { x.wtasks = x.wtasks || []; x.wtasks.push({ id: uid('wt'), dept: deptId, week, title: tt.slice(0, 140), notes: notes.trim().slice(0, 400), for: forWho, by: user.id, at: Date.now(), progress: {} }); });
+    setTitle(''); setNotes(''); toast('Added for ' + (forWho === 'team' ? 'the whole team' : firstName(userById(db, forWho))));
+  };
+  const copyLast = () => { const now = Date.now(); update((x) => { x.wtasks = x.wtasks || []; last.forEach((t, i) => x.wtasks.push({ ...t, id: uid('wt'), week, by: user.id, at: now + i, progress: {} })); }); toast('Last week’s ' + last.length + ' tasks are on this week'); };
+  const remove = (t) => ask({ title: 'Take “' + t.title + '” off the board?', body: 'Everyone’s progress on it goes too.', confirm: 'Take it off', danger: true, onConfirm: () => update((x) => { x.wtasks = (x.wtasks || []).filter((y) => y.id !== t.id); }) });
+  const people = team.map((m) => ({ m, s: tbPerson(db, deptId, week, m.id) }));
+  return html`<${Page} title="Task board" sub=${d.name + ' · ' + tbWeekName(week).toLowerCase() + (week === weekOf() ? '' : '') + (teamPct != null ? ' · the team is ' + teamPct + '% of the way' : '')}
+    actions=${html`${depts.length > 1 && html`<select className="select" style=${{ width: 'auto' }} value=${deptId} onChange=${(e) => setDeptId(e.target.value)} aria-label="Department">${depts.map((x) => html`<option key=${x.id} value=${x.id}>${x.name}</option>`)}</select>`}
+      <div className="tb-week"><button className="icon-btn" onClick=${() => setWeek(addDays(week, -7))} title="The week before" aria-label="The week before"><${Icon} n="back" s=${16}/></button>
+        <button className="linkish" onClick=${() => setWeek(weekOf())} title="Back to this week">${tbWeekName(week)}</button>
+        <button className="icon-btn" onClick=${() => setWeek(addDays(week, 7))} title="The week after" aria-label="The week after"><${Icon} n="chev" s=${16}/></button></div>`}>
+    ${head && html`<section className="tb-sec glass">
+      <h3>The team <small>${people.length ? 'how far each person is with their tasks this week' : ''}</small></h3>
+      ${people.length === 0 ? html`<p className="muted">No one in ${d.name} yet besides its head. Add people in People & access.</p>`
+        : html`<div className="tb-people">${people.map(({ m, s }) => html`<div key=${m.id} className="tb-person">
+          <${Avatar} u=${m} s=${28}/><b>${m.name}</b>
+          <div className="bar"><i className=${s.pct >= 100 ? 'full' : ''} style=${{ width: s.pct + '%' }}></i></div>
+          <span className=${'pct-pill' + (s.pct >= 100 ? ' full' : '')}>${s.pct}%</span>
+          <small>${s.ts.length ? s.done + ' of ' + s.ts.length + ' done' : 'no tasks'}${week === weekOf() && s.ts.some((t) => tbQuiet(t, m.id)) ? ' · quiet 2+ days' : ''}</small>
+        </div>`)}</div>`}
+      <form className="tb-add" onSubmit=${add}>
+        <input className="input" value=${title} onChange=${(e) => setTitle(e.target.value)} placeholder=${'A task for ' + tbWeekName(week).toLowerCase() + '…'} maxLength="140" aria-label="New task"/>
+        <select className="select" value=${forWho} onChange=${(e) => setForWho(e.target.value)} aria-label="Who it's for"><option value="team">Whole team</option>${team.map((m) => html`<option key=${m.id} value=${m.id}>${m.name}</option>`)}</select>
+        <input className="input" value=${notes} onChange=${(e) => setNotes(e.target.value)} placeholder="Notes (optional)" maxLength="400" aria-label="Notes"/>
+        <button className="btn primary" type="submit"><${Icon} n="plus" s=${15}/>Add</button>
+      </form>
+      ${!tasks.length && last.length > 0 && html`<button className="btn sm" onClick=${copyLast}>Copy last week’s ${last.length} tasks</button>`}
+    </section>`}
+    ${mine.length > 0 && html`<section className="tb-sec"><h3>Your tasks <small>move the slider as you go, or press Done</small></h3>
+      ${mine.map((t) => html`<div key=${t.id} className="tb-task glass"><div className="tb-task-h"><b>${t.title}</b><small>${forName(t)}${t.notes ? ' · ' + t.notes : ''}</small></div><${TbProgress} t=${t}/></div>`)}</section>`}
+    ${head ? html`<section className="tb-sec"><h3>${tbWeekName(week)}’s tasks <small>${tasks.length ? tasks.length + (tasks.length === 1 ? ' task' : ' tasks') : ''}</small></h3>
+      ${tasks.length === 0 && html`<p className="muted">Nothing on the board for ${tbWeekName(week).toLowerCase()} yet. Add the first task above.</p>`}
+      ${tasks.map((t) => html`<div key=${t.id} className="tb-task glass">
+        <div className="tb-task-h"><b>${t.title}</b><small>${forName(t)}${t.notes ? ' · ' + t.notes : ''}</small><button className="icon-btn sm" onClick=${() => remove(t)} title="Take it off the board" aria-label=${'Take ' + t.title + ' off the board'}><${Icon} n="trash" s=${14}/></button></div>
+        <div className="tb-who">${tbWho(db, t).map((id) => { const p = tbPct(t, id), n = ((t.progress || {})[id] || {}).note; return html`<div key=${id} className="tb-who-r"><span>${firstName(userById(db, id))}</span><div className="bar"><i className=${p >= 100 ? 'full' : ''} style=${{ width: p + '%' }}></i></div><span className=${'pct-pill' + (p >= 100 ? ' full' : '')}>${p}%</span>${n && html`<small className="tb-note">${n}</small>`}</div>`; })}</div>
+      </div>`)}</section>`
+      : mine.length === 0 && html`<div className="empty"><${Icon} n="task" s=${24}/><h3>No tasks for you ${tbWeekName(week).toLowerCase()}</h3><p>${d.name}’s head sets the week’s tasks here.</p></div>`}
+  <//>`;
+}
+// the sidebar's "This week" card: your own tasks to move along, and for a department head how far the team is
+function TaskBoardCard() {
+  const { db, user, jump } = useApp();
+  const [open, setOpen] = useFold('floorboard.tboard.fold.v1');
+  const wk = weekOf(), depts = tbDepts(db, user);
+  const mine = depts.flatMap((d) => tbWeek(db, d.id, wk).filter((t) => tbWho(db, t).includes(user.id)));
+  const led = depts.filter((d) => user.manages.includes(d.id));
+  if (!mine.length && !led.length) return null;
+  const left = mine.filter((t) => tbPct(t, user.id) < 100).length;
+  if (!open) return html`<div className="w-tb glass" id="tboard"><${FoldBar} icon="task" kind="tb" title="This week" count=${left} onOpen=${() => setOpen(true)}/></div>`;
+  return html`<div className="w-tb glass" id="tboard">
+    <div className="w-files-h"><span className="eyebrow">This week</span><span className="w-card-a"><button className="linkish sm" onClick=${() => jump('view:taskboard')}>Task board</button><${FoldBtn} what="This week" onFold=${() => setOpen(false)}/></span></div>
+    ${led.map((d) => { const ppl = tbTeam(db, d.id).map((m) => ({ m, s: tbPerson(db, d.id, wk, m.id) })).filter((x) => x.s.ts.length), pct = tbTeamPct(db, [d], wk), low = ppl.slice().sort((a, b) => a.s.pct - b.s.pct)[0];
+      return html`<button key=${d.id} className="tb-lead" onClick=${() => jump('view:taskboard')}><b>${d.name}</b>
+        ${pct == null ? html`<small>No tasks set this week</small>` : html`<div className="bar"><i className=${pct >= 100 ? 'full' : ''} style=${{ width: pct + '%' }}></i></div><span className=${'pct-pill' + (pct >= 100 ? ' full' : '')}>${pct}%</span>`}
+        ${low && low.s.pct < 100 && html`<small>${firstName(low.m)} ${low.s.pct}%</small>`}</button>`; })}
+    ${mine.slice(0, 5).map((t) => html`<div key=${t.id} className="tb-row"><span className="tb-t">${t.title}</span><${TbProgress} t=${t} compact/></div>`)}
+    ${mine.length > 5 && html`<button className="linkish sm" onClick=${() => jump('view:taskboard')}>and ${mine.length - 5} more</button>`}
+  </div>`;
+}
+// a few example weeks for the demo store (made up)
+function demoWeekly(db, T = Date.now()) {
+  const wk = weekOf(dkey(T));
+  const plan = {
+    bakery: [['Deep-clean the proving cabinet', 'team', [100, 40]], ['Count flour and yeast for Friday’s order', 0, [60]], ['Show the new packer the bread slicer', 1, [20]]],
+    fv: [['Rotate the banana and avocado stock twice a day', 'team', [70]], ['Fix the price cards on the tomato shelf', 0, [100]]],
+    finance: [['Match October’s supplier statements', 'team', [50]], ['Chase the three missing Coldline invoices', 0, [30]]],
+    deli: [['Write up the new hot-counter menu', 'team', [10]]],
+    receiving: [['Check every delivery against its order', 'team', [80]]],
+  };
+  db.wtasks = db.wtasks || [];
+  Object.entries(plan).forEach(([dept, rows]) => {
+    const team = tbTeam(db, dept), boss = db.users.find((x) => x.manages.includes(dept)); if (!team.length) return;
+    rows.forEach(([title, who, pcts], i) => {
+      const forId = who === 'team' ? 'team' : (team[who] || team[0]).id, ids = forId === 'team' ? team.map((m) => m.id) : [forId], progress = {};
+      pcts.forEach((pct, j) => { if (ids[j]) progress[ids[j]] = { pct, note: '', at: T - (i * 9 + j * 30 + 3) * HOUR }; });
+      db.wtasks.push({ id: 'wt-' + dept + '-' + i, dept, week: wk, title, notes: '', for: forId, by: (boss || db.users[0]).id, at: T - (60 - i) * HOUR, progress });
+    });
+  });
+}
+
 /* ---------------- department cards in Coucou's island (Windows) ---------------- */
 // Beside Floorboard's own card, each person gets one small card for their department's work: Finance its approvals, month
 // end or MFS, managers the store's pulse, Admin its quotes, every other department its team's tasks. These are the cards
@@ -8043,7 +8218,25 @@ function islandCards(db, u) {
   const vis = db.posts.filter((p) => canSee(db, p, u) && !p.closed);
   const finance = db.depts.filter((d) => /financ|account/i.test(d.name) && inDept(d.id)), fin = finance.length > 0;
   const mgmt = (d) => /manage/i.test(d.name), runsStore = u.role === 'admin' || (db.depts.some((d) => mgmt(d) && inDept(d.id)) && !u.manages.some((id) => { const d = db.depts.find((x) => x.id === id); return d && !mgmt(d) && !featureOn(d, 'quotes'); }));
-  // rank: best first for this person. Finance's money first for Finance, the store for whoever runs it, otherwise their own team
+  // rank: best first for this person. The task board first, then Finance's money for Finance, the store for whoever runs it,
+  // otherwise their own team
+  // the task board: your own tasks this week, and for a department head how far the team is
+  const wk = weekOf(), tbs = tbDepts(db, u), led = tbs.filter((d) => u.manages.includes(d.id) || (u.role === 'admin' && u.depts.includes(d.id)));
+  const myWeek = tbs.flatMap((d) => tbWeek(db, d.id, wk).filter((t) => tbWho(db, t).includes(u.id)));
+  if (u.role === 'admin' && tbs.length) {
+    // an admin sees the whole store's week: how far everyone is, and the department furthest behind
+    const all = tbTeamPct(db, tbs, wk), by = tbs.map((d) => ({ d, pct: tbTeamPct(db, [d], wk) })).filter((x) => x.pct != null).sort((a, b) => a.pct - b.pct);
+    out.push({ id: 'task-board', title: 'Task board', rank: -1, busy: by.some((x) => x.pct < 50),
+      line: all == null ? 'No tasks set this week' : cardJoin(['Store ' + all + '%', by[0] && by[0].pct < 100 && by[0].d.name + ' ' + by[0].pct + '%'], 'Store') });
+  } else if (myWeek.length || led.length) {
+    const parts = led.map((d) => {
+      const ppl = tbTeam(db, d.id).map((m) => ({ m, s: tbPerson(db, d.id, wk, m.id) })).filter((x) => x.s.ts.length), pct = tbTeamPct(db, [d], wk), low = ppl.sort((a, b) => a.s.pct - b.s.pct)[0];
+      return pct == null ? d.name + ': nothing set' : d.name + ' ' + pct + '%' + (low && low.s.pct < 100 ? ' (' + firstName(low.m) + ' ' + low.s.pct + '%)' : '');
+    });
+    if (myWeek.length) parts.push((led.length ? 'yours ' : 'This week: ') + myWeek.filter((t) => tbPct(t, u.id) >= 100).length + ' of ' + myWeek.length + ' done');
+    out.push({ id: 'task-board', title: 'Task board', rank: -1, line: cardJoin(parts, 'This week'),
+      busy: myWeek.some((t) => tbPct(t, u.id) < 100) || led.some((d) => tbTeam(db, d.id).some((m) => tbWeek(db, d.id, wk).some((t) => tbWho(db, t).includes(m.id) && tbQuiet(t, m.id)))) });
+  }
   // Finance: MFS's figures (the Windows app reads them from MFS once it's connected there)
   if (fin) out.push({ id: 'mfs', title: 'MFS', line: '', busy: false, mfs: true, rank: 0 });
   // Finance, and anyone who approves: invoices and quotes to approve, and to pay
@@ -8089,13 +8282,31 @@ function islandCards(db, u) {
   });
   return out.sort((a, b) => a.rank - b.rank).map(({ rank, ...c }) => ({ ...c, line: String(c.line).slice(0, 80) }));
 }
-// the sidebar keeps the Windows app up to date with this person's cards
+// what Floorboard's own card says before "needs you": the person's department for staff, the whole store for an admin
+function islandLine(db, u) {
+  const vis = db.posts.filter((p) => canSee(db, p, u) && !p.closed), wk = weekOf();
+  if (u.role === 'admin') {
+    const over = vis.filter((p) => isOverdue(p)).length, asap = vis.filter((p) => p.level === 'red' && Object.values(p.recips).some((r) => r.status !== 'done')).length;
+    const pct = tbTeamPct(db, db.depts.filter((d) => !tboardOff(d)), wk);
+    const bits = [over && over + ' overdue', asap && asap + ' ASAP', pct != null && 'week ' + pct + '%'].filter(Boolean);
+    return bits.length ? 'Store · ' + bits.join(' · ') : 'Store: all on track';
+  }
+  const d = db.depts.find((x) => u.depts.includes(x.id) && !/manage/i.test(x.name)) || db.depts.find((x) => u.depts.includes(x.id) || u.manages.includes(x.id));
+  if (!d) return '';
+  const open = vis.filter((p) => p.type === 'task' && (p.about === d.id || p.toDepts.includes(d.id)) && Object.values(p.recips).some((r) => r.status !== 'done')).length;
+  const pct = tboardOff(d) ? null : tbTeamPct(db, [d], wk), mine = tbPerson(db, d.id, wk, u.id);
+  const bits = [open && open + ' open', pct != null && 'week ' + pct + '%' + (mine.ts.length ? ' (you ' + mine.pct + '%)' : '')].filter(Boolean);
+  return bits.length ? d.name + ' · ' + bits.join(' · ') : d.name + ': all on track';
+}
+// the sidebar keeps the Windows app up to date with this person's cards, and the line on Floorboard's own
 function useIslandCards() {
-  const { db, user } = useApp(), sent = useRef('');
+  const { db, user } = useApp(), sent = useRef(''), sentLine = useRef(null);
   useEffect(() => {
     const d = window.floorboardDesktop; if (!d || !d.cards) return;
     const list = islandCards(db, user), key = JSON.stringify(list);
     if (key !== sent.current) { sent.current = key; d.cards(list); }
+    const line = islandLine(db, user);
+    if (d.islandLine && line !== sentLine.current) { sentLine.current = line; d.islandLine(line); }
   });
 }
 // connecting MFS on this computer, for Finance's card: the MFS app's address and its Jarvis key (it stays on this computer)
@@ -8586,6 +8797,7 @@ function Shell() {
   else if (view === 'approvals') content = html`<${ApprovalsView}/>`;
   else if (view === 'calendar') content = html`<${CalendarView}/>`;
   else if (view === 'week') content = html`<${WeekView}/>`;
+  else if (view === 'taskboard') content = html`<${TaskBoardView}/>`;
   else if (view === 'mail') content = html`<${Page} title="Outlook" sub="Your own work email, read straight from Microsoft on this device. Nothing from your mailbox is kept in Floorboard."><${OutlookCard}/><//>`;
   const note = CLOUD ? html`<p className="board-note">Live: everyone in the store sees changes as they happen.</p>` : html`<p className="board-note">Demo store with example staff. Changes stay on this device. <button onClick=${() => ask({ title: 'Reset the demo store?', body: 'All posts, files, pins and people go back to the example data. Anything you added is removed.', confirm: 'Reset demo', danger: true, onConfirm: resetDemo })}>Reset demo</button></p>`;
   return html`<div className=${'shell' + (openId ? ' has-detail' : '') + (chatsMode && openChatId ? ' chat-open' : '')}>
@@ -8593,7 +8805,7 @@ function Shell() {
     <${Rail}/>
     ${drawer && html`<div className="side-scrim" onClick=${() => setDrawer(false)}></div>`}
     ${chatsMode ? html`<main className="stage glass chats-mode"><${ChatsView}/></main>` : html`<main className="stage glass">
-      <aside className="board-col"><${Board} note=${note}/><${AskCard}/><${TodayCard}/><${OutlookSide}/><${QuoteDrop}/><${StickyNotes}/><${Shortcuts}/></aside>
+      <aside className="board-col"><${Board} note=${note}/><${AskCard}/><${TaskBoardCard}/><${TodayCard}/><${OutlookSide}/><${QuoteDrop}/><${StickyNotes}/><${Shortcuts}/></aside>
       <section className="content" key=${view}>${content}</section>
     </main>`}
     <${Dock}/>

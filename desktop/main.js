@@ -203,7 +203,8 @@ let cardList = [];
 const cardReady = (c) => !c.mfs || !!(mfs.figures() && !mfs.figures().error);
 function chosenCard() {
   if (prefs.card === 'off') return null;
-  const c = cardList.find((x) => x.id === prefs.card && (!x.mfs || mfs.figures())) || cardList.find(cardReady);
+  // a card they picked shows only itself (nothing while it has nothing to say); otherwise the best one that's ready
+  const c = prefs.card && prefs.card !== 'auto' ? cardList.find((x) => x.id === prefs.card && (!x.mfs || mfs.figures())) : cardList.find(cardReady);
   return c ? (c.mfs ? { ...c, ...mfs.figures() } : c) : null;
 }
 function showCard() {
@@ -465,6 +466,7 @@ else {
     ipcMain.handle('outlook-search', (_e, a) => outlook.search(a && a.query, a && a.days));
     mfs.init(prefs.mfs, () => { showCard(); if (tray) tray.setContextMenu(trayMenu()); }); // Finance's MFS card, if MFS is connected here
     ipcMain.on('island-cards', islandCards);
+    ipcMain.on('island-line', (e, line) => { if (sidebar && e.sender === sidebar.webContents) coucou.setLine(line); });
     mfsIpc();
     if (SMOKE) return;
     buildTray();

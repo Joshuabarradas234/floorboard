@@ -57,11 +57,19 @@ function check() {
   if (!shown) { shown = true; if (last) update(last, true); else show('Floorboard is open'); cards.forEach(sayCard); }
   else if (Date.now() - saidAt > AGAIN) { show(lastStep || 'Floorboard is open'); cards.forEach(sayCard); }
 }
+// a few words before "needs you": the person's department, or for an admin the whole store (from the sidebar)
+let lead = '';
+function setLine(line) {
+  line = String(line || '').slice(0, 60);
+  if (line === lead) return;
+  lead = line;
+  if (last) update(last); else if (pipe && shown) show(lead || 'Floorboard is open');
+}
 // what the sidebar knows: { count, urgent, chats, latest: { title, body } }
 function update(info, again) {
   last = info;
   if (!pipe || !shown) return;
-  const step = (info.count ? info.count + (info.count === 1 ? ' thing needs you' : ' things need you') : 'All caught up') + (info.chats ? ' · ' + info.chats + (info.chats === 1 ? ' chat unread' : ' chats unread') : '');
+  const step = [lead, info.count ? info.count + ' need' + (info.count === 1 ? 's' : '') + ' you' : !lead && 'All caught up', info.chats && info.chats + (info.chats === 1 ? ' chat' : ' chats') + ' unread'].filter(Boolean).join(' · ').slice(0, 100) || 'All caught up';
   const text = info.latest ? [info.latest.title, info.latest.body].filter(Boolean).join(': ').slice(0, 160) : '';
   const fresh = !!text && (text !== lastText || !!again);
   if (fresh) { post({ hook_event_name: 'UserPromptSubmit', prompt: text }); lastText = text; }
@@ -80,4 +88,4 @@ function stop() {
   const done = post({ hook_event_name: 'SessionEnd', reason: 'exit' }); pipe = null; shown = false; return done;
 }
 
-module.exports = { init, update, stop, asked, busy, done, setCards, running: () => !!pipe };
+module.exports = { init, update, stop, asked, busy, done, setCards, setLine, running: () => !!pipe };
