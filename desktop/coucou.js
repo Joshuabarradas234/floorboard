@@ -12,17 +12,37 @@ const SESSION = 'floorboard-' + Date.now().toString(36);
 const AGAIN = 10 * 60 * 1000; // in case Coucou restarted between two looks, the card is said again now and then
 let pipe = null, shown = false, lastText = '', lastStep = '', saidAt = 0, timer = null, onChange = () => {}, last = null;
 let queue = Promise.resolve();
+// the department card beside Floorboard's own ({ id, title, line, busy }), and what each card last said
+let cards = [];
+const cardsSaid = new Map();
 
 function findPipe() { try { return fs.readdirSync(ROOT).find((n) => /^coucou-S-/i.test(n)) || null; } catch (e) { return null; } }
-// one connection per line, one after the other, so Coucou reads them in order
-function send(p, ev) {
+// one connection per line, one after the other, so Coucou reads them in order; card: a department card, or Floorboard's own
+function send(p, ev, card) {
   return new Promise((done) => {
-    const s = net.connect(ROOT + p, () => s.end(JSON.stringify({ session_id: SESSION, coucou_agent: 'floorboard', cwd: 'Floorboard', session_pid: process.pid, ...ev }) + '\n'));
+    const who = card ? { session_id: SESSION + '-' + card.id, coucou_agent: card.id, cwd: card.title } : { session_id: SESSION, coucou_agent: 'floorboard', cwd: 'Floorboard' };
+    const s = net.connect(ROOT + p, () => s.end(JSON.stringify({ ...who, session_pid: process.pid, ...ev }) + '\n'));
     s.setTimeout(3000, () => s.destroy());
     s.on('error', done); s.on('close', done); // Coucou reads the line and hangs up; a closed or missing pipe just means it isn't listening
   });
 }
-function post(ev) { const p = pipe; if (p) queue = queue.then(() => send(p, ev)); return queue; }
+function post(ev, card) { const p = pipe; if (p) queue = queue.then(() => send(p, ev, card)); return queue; }
+// a department card says its line, busy or resting, the same way as Floorboard's own
+function sayCard(c) {
+  post({ hook_event_name: 'PreToolUse', tool_name: c.line, tool_input: {} }, c);
+  if (!c.busy) post({ hook_event_name: 'Interrupt' }, c);
+  cardsSaid.set(c.id, c.line + '|' + !!c.busy);
+}
+// the department cards to show now: new ones appear, changed ones say so, ones no longer wanted leave the island
+function setCards(list) {
+  const next = (Array.isArray(list) ? list : []).filter((c) => c && /^[a-z0-9-]{1,24}$/.test(c.id) && c.id !== 'floorboard' && c.line)
+    .map((c) => ({ id: c.id, title: String(c.title || c.id).slice(0, 40), line: String(c.line).slice(0, 80), busy: !!c.busy }));
+  if (pipe && shown) {
+    cards.filter((c) => !next.some((n) => n.id === c.id)).forEach((c) => { post({ hook_event_name: 'SessionEnd', reason: 'other' }, c); cardsSaid.delete(c.id); });
+    next.forEach((c) => { if (cardsSaid.get(c.id) !== c.line + '|' + c.busy) sayCard(c); });
+  }
+  cards = next;
+}
 // what the card says now: Coucou writes out a tool's name in full (a tool it doesn't know gets no more), so that's the line
 function show(step) {
   post({ hook_event_name: 'PreToolUse', tool_name: step, tool_input: {} });
@@ -32,10 +52,10 @@ function show(step) {
 // look for Coucou every few seconds: it may start or quit at any time
 function check() {
   const p = findPipe();
-  if (p !== pipe) { pipe = p; shown = false; lastText = ''; lastStep = ''; onChange(!!p); }
+  if (p !== pipe) { pipe = p; shown = false; lastText = ''; lastStep = ''; cardsSaid.clear(); onChange(!!p); }
   if (!pipe) return;
-  if (!shown) { shown = true; if (last) update(last, true); else show('Floorboard is open'); }
-  else if (Date.now() - saidAt > AGAIN) show(lastStep || 'Floorboard is open');
+  if (!shown) { shown = true; if (last) update(last, true); else show('Floorboard is open'); cards.forEach(sayCard); }
+  else if (Date.now() - saidAt > AGAIN) { show(lastStep || 'Floorboard is open'); cards.forEach(sayCard); }
 }
 // what the sidebar knows: { count, urgent, chats, latest: { title, body } }
 function update(info, again) {
@@ -54,6 +74,10 @@ function busy(text) { if (pipe && shown && text) post({ hook_event_name: 'PreToo
 function done() { if (pipe && shown) show(lastStep || 'Floorboard is open'); }
 function init(cb) { onChange = cb || onChange; if (timer) return; check(); timer = setInterval(check, 5000); }
 // the card leaves Coucou's island (Floorboard quits, or the person switched it off); resolves once Coucou has it
-function stop() { clearInterval(timer); timer = null; const done = post({ hook_event_name: 'SessionEnd', reason: 'exit' }); pipe = null; shown = false; return done; }
+function stop() {
+  clearInterval(timer); timer = null;
+  cards.forEach((c) => post({ hook_event_name: 'SessionEnd', reason: 'exit' }, c)); cardsSaid.clear();
+  const done = post({ hook_event_name: 'SessionEnd', reason: 'exit' }); pipe = null; shown = false; return done;
+}
 
-module.exports = { init, update, stop, asked, busy, done, running: () => !!pipe };
+module.exports = { init, update, stop, asked, busy, done, setCards, running: () => !!pipe };

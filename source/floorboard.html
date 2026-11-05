@@ -2522,6 +2522,10 @@ function SlimRail({ onOpen }) {
 function Widget() {
   const { db, user, openId, composer, closeComposer, compose, toast } = useApp();
   useAskBridge();
+  useIslandCards();
+  // the Windows app's tray menu: connect MFS for Finance's card
+  const [mfsOpen, setMfsOpen] = useState(false);
+  useEffect(() => { const d = window.floorboardDesktop; return d && d.mfs ? d.mfs.onOpen(() => setMfsOpen(true)) : undefined; }, []);
   const c = useCounts();
   const [tab, setTab] = useState('needs');
   const [f, setF] = useState(NO_FILTERS);
@@ -2585,6 +2589,7 @@ function Widget() {
     ${bar && html`<${SideDock} onClose=${closeBar} onNeeds=${() => { setTab('needs'); setF(NO_FILTERS); }}/>`}
     ${openId && html`<aside className="detail" aria-label="Post details"><${PostDetail} key=${openId} id=${openId}/></aside>`}
     ${composer && html`<${Composer} preset=${composer} onClose=${closeComposer}/>`}
+    ${mfsOpen && html`<${MfsModal} onClose=${() => setMfsOpen(false)}/>`}
     <${ConfirmModal}/>
     <${Lightbox}/>
   </div>`;
@@ -7734,7 +7739,6 @@ const ASK_STOP = new Set(('the a an and or of for to in on my me i is are was wh
 const askWords = (q) => String(q || '').toLowerCase().split(/[^a-z0-9@.\-]+/).filter((w) => w.length > 1 && !ASK_STOP.has(w));
 const askScore = (hay, words) => { const h = String(hay || '').toLowerCase(); return words.filter((w) => h.includes(w)).length; };
 const askDay = (k) => { const d = keyToDate(k); return fmtDay(d.getTime(), { weekday: 'short' }) + ' ' + d.getDate() + ' ' + fmtDay(d.getTime(), { month: 'short' }); }; // Tue 4 Nov
-const askRand = (n) => (n == null || n === '' ? '' : 'R ' + Number(n).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
 
 async function askFiles(db, u, { query = '', where = 'all' } = {}) {
   const words = askWords(query), all = [];
@@ -7770,7 +7774,7 @@ async function askFiles(db, u, { query = '', where = 'all' } = {}) {
   return {
     found: hits.length, ...(missing.length && hits.length ? { not_found: missing.join(', '), note: 'No file matches every word; these are the closest.' } : {}),
     files: hits.slice(0, 12).map((x) => ({ title: x.title, file: x.att ? x.att.name : '', where: x.place, kind: x.kind || undefined, from: x.party || undefined, ref: x.ref || undefined,
-      amount: x.amount != null ? askRand(x.amount) : undefined, document_date: x.docDate ? askDay(x.docDate) : undefined, added: x.at ? fmtDay(x.at, { day: 'numeric', month: 'short', year: 'numeric' }) : undefined,
+      amount: rand(x.amount) || undefined, document_date: x.docDate ? askDay(x.docDate) : undefined, added: x.at ? fmtDay(x.at, { day: 'numeric', month: 'short', year: 'numeric' }) : undefined,
       found_by: x.inside ? 'words inside the document' : undefined })),
   };
 }
@@ -8025,6 +8029,96 @@ function useAskBridge() {
       return r.text + (askNote(r) ? '\n\n(' + askNote(r) + ')' : '');
     });
   }, []);
+}
+
+/* ---------------- department cards in Coucou's island (Windows) ---------------- */
+// Beside Floorboard's own card, each person gets one small card for their department's work: Finance its approvals, month
+// end or MFS, managers the store's pulse, Admin its quotes, every other department its team's tasks. These are the cards
+// this person could have, best first; the Windows app shows the first, or the one they picked from its tray menu.
+// line: what the card says; busy: something wants doing (the card's Mochi works rather than rests).
+const cardSlug = (s) => String(s || '').toLowerCase().replace(/&/g, ' ').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 24) || 'team';
+const cardJoin = (parts, quiet) => parts.filter(Boolean).join(' · ') || quiet;
+function islandCards(db, u) {
+  const inDept = (id) => u.depts.includes(id) || u.manages.includes(id), today = dkey(), out = [];
+  const vis = db.posts.filter((p) => canSee(db, p, u) && !p.closed);
+  const finance = db.depts.filter((d) => /financ|account/i.test(d.name) && inDept(d.id)), fin = finance.length > 0;
+  const mgmt = (d) => /manage/i.test(d.name), runsStore = u.role === 'admin' || (db.depts.some((d) => mgmt(d) && inDept(d.id)) && !u.manages.some((id) => { const d = db.depts.find((x) => x.id === id); return d && !mgmt(d) && !featureOn(d, 'quotes'); }));
+  // rank: best first for this person. Finance's money first for Finance, the store for whoever runs it, otherwise their own team
+  // Finance: MFS's figures (the Windows app reads them from MFS once it's connected there)
+  if (fin) out.push({ id: 'mfs', title: 'MFS', line: '', busy: false, mfs: true, rank: 0 });
+  // Finance, and anyone who approves: invoices and quotes to approve, and to pay
+  if (approvalsOn(db) && (canPay(db, u) || fin || vis.some((p) => p.type === 'approval' && p.recips[u.id]))) {
+    const mine = vis.filter((p) => p.type === 'approval' && needsMe(p, u.id)), pay = canPay(db, u) ? vis.filter((p) => p.type === 'approval' && apState(p) === 'approved') : [];
+    const sum = (ps) => ps.reduce((t, p) => t + (Number(p.approval && p.approval.amount) || 0), 0);
+    out.push({ id: 'approvals', title: 'Approvals', busy: mine.length + pay.length > 0, rank: fin ? 1 : mine.length ? 15 : 30,
+      line: cardJoin([mine.length && mine.length + ' to approve' + (sum(mine) ? ' (' + rand(sum(mine)) + ')' : ''), pay.length && pay.length + ' to pay' + (sum(pay) ? ' (' + rand(sum(pay)) + ')' : '')], 'Nothing to approve') });
+  }
+  // Finance's month end: what's late and what's due this week
+  if ((db.deadlines || []).length && (meDepts(db).some((d) => inDept(d.id)) || (db.deadlines || []).some((dl) => dl.owners.includes(u.id)))) {
+    const pm = reminderMap(db), all = meDepts(db).some((d) => inDept(d.id)) || u.role === 'admin', weekEnd = addDays(today, (7 - dowOf(today)) % 7);
+    const open = db.deadlines.filter((dl) => all || dl.owners.includes(u.id)).map((dl) => { const k = occKey(dl, today); return { dl, k, st: meState(dl, k, pm.get(reminderId(dl, k))) }; }).filter((x) => !x.st.done);
+    const late = open.filter((x) => x.k !== 'any' && x.k < today), soon = open.filter((x) => x.k !== 'any' && x.k >= today && x.k <= weekEnd);
+    out.push({ id: 'month-end', title: 'Month end', busy: late.length > 0 || soon.some((x) => x.k === today), rank: fin ? 2 : 35,
+      line: cardJoin([late.length && late.length + ' late', soon.length && soon.length + ' due this week'], open.length ? open.length + ' still open' : 'All done') });
+  }
+  // managers and admins: the whole store at a glance
+  if (u.role === 'admin' || db.depts.some((d) => mgmt(d) && inDept(d.id))) {
+    const over = vis.filter((p) => isOverdue(p)), asap = vis.filter((p) => p.level === 'red' && Object.values(p.recips).some((r) => r.status !== 'done'));
+    const by = {}; over.forEach((p) => { const d = p.about || p.toDepts[0]; if (d && !PSEUDO[d]) by[d] = (by[d] || 0) + 1; });
+    const worst = Object.keys(by).sort((a, b) => by[b] - by[a])[0];
+    out.push({ id: 'store', title: 'Store pulse', busy: over.length + asap.length > 0, rank: runsStore ? 3 : 25,
+      line: cardJoin([over.length && over.length + ' overdue', asap.length && asap.length + ' ASAP', worst && deptById(db, worst).name + ' most behind'], 'Nothing overdue') });
+  }
+  // the quote drop box: quotes sent off, waiting, and back
+  if (canQuoteDrop(db, u)) {
+    const sent = db.posts.filter((p) => p.type === 'approval' && p.author === u.id && !p.closed);
+    const waiting = sent.filter((p) => apOpen(p)), back = sent.filter((p) => apState(p) === 'approved' && !p.approval.paidAt), asked = sent.filter((p) => apState(p) === 'query');
+    out.push({ id: 'quotes', title: 'Quotes', busy: asked.length + back.length > 0, rank: 5,
+      line: cardJoin([asked.length && asked.length + ' with a question', waiting.length - asked.length > 0 && (waiting.length - asked.length) + ' waiting', back.length && back.length + ' approved'], 'No quotes out') });
+  }
+  // every department: its team's tasks, what's overdue and who's gone quiet
+  db.depts.filter((d) => inDept(d.id) && !d.id.startsWith('g-')).forEach((d) => {
+    const members = new Set(deptMembers(db, d.id));
+    const tasks = vis.filter((p) => p.type === 'task' && (p.about === d.id || p.toDepts.includes(d.id) || Object.keys(p.recips).some((id) => members.has(id))) && Object.values(p.recips).some((r) => r.status !== 'done'));
+    const over = tasks.filter((p) => isOverdue(p)), quiet = [];
+    tasks.forEach((p) => Object.keys(p.recips).forEach((id) => { if (members.has(id) && isStale(p, id) && !quiet.includes(id)) quiet.push(id); }));
+    const id = cardSlug(d.name);
+    if (out.some((c) => c.id === id) || id === 'claude') return;
+    out.push({ id, title: d.name, busy: over.length + quiet.length > 0, rank: mgmt(d) ? 40 : u.manages.includes(d.id) ? 10 : 11,
+      line: cardJoin([tasks.length && tasks.length + ' open', over.length && over.length + ' overdue', quiet.length && firstName(userById(db, quiet[0])) + (quiet.length > 1 ? ' and ' + (quiet.length - 1) + ' more' : '') + ' quiet 2+ days'], 'No open tasks') });
+  });
+  return out.sort((a, b) => a.rank - b.rank).map(({ rank, ...c }) => ({ ...c, line: String(c.line).slice(0, 80) }));
+}
+// the sidebar keeps the Windows app up to date with this person's cards
+function useIslandCards() {
+  const { db, user } = useApp(), sent = useRef('');
+  useEffect(() => {
+    const d = window.floorboardDesktop; if (!d || !d.cards) return;
+    const list = islandCards(db, user), key = JSON.stringify(list);
+    if (key !== sent.current) { sent.current = key; d.cards(list); }
+  });
+}
+// connecting MFS on this computer, for Finance's card: the MFS app's address and its Jarvis key (it stays on this computer)
+function MfsModal({ onClose }) {
+  const { toast } = useApp(), desk = window.floorboardDesktop;
+  const [st, setSt] = useState(null), [url, setUrl] = useState('http://localhost:8787'), [key, setKey] = useState(''), [busy, setBusy] = useState(false), [err, setErr] = useState('');
+  useEffect(() => { desk.mfs.state().then((s) => { setSt(s); if (s && s.url) setUrl(s.url); }).catch(() => setSt({})); }, []);
+  const connect = async (e) => {
+    e.preventDefault(); setBusy(true); setErr('');
+    const r = await desk.mfs.connect(url.trim(), key.trim()).catch((x) => ({ error: String((x && x.message) || x) }));
+    setBusy(false);
+    if (r && r.ok) { toast('MFS connected: ' + r.line); onClose(); } else setErr((r && r.error) || 'MFS didn’t answer.');
+  };
+  const disconnect = async () => { await desk.mfs.disconnect(); toast('MFS disconnected on this computer'); onClose(); };
+  return html`<${Modal} title="MFS on this computer" onClose=${onClose} footer=${html`${st && st.connected && html`<button className="btn ghost" onClick=${disconnect}>Disconnect</button>`}<button className="btn" onClick=${onClose}>Cancel</button><button className="btn primary" type="submit" form="mfs-form" disabled=${busy || !url.trim() || (!key.trim() && !(st && st.connected))}>${busy ? 'Checking…' : 'Connect'}</button>`}>
+    <form id="mfs-form" onSubmit=${connect} style=${{ display: 'grid', gap: '12px' }}>
+      <p className="muted sm" style=${{ margin: 0 }}>Finance’s card in Coucou’s island shows what’s waiting for approval in MFS, who owes and anything wrong. ${st && st.connected ? 'Connected: ' + (st.line || 'reading MFS…') : ''}</p>
+      <label className="field"><span>MFS address</span><input className="input" value=${url} onChange=${(e) => setUrl(e.target.value)} placeholder="http://localhost:8787" spellcheck="false"/></label>
+      <label className="field"><span>Jarvis key</span><input className="input" type="password" value=${key} onChange=${(e) => setKey(e.target.value)} placeholder=${st && st.connected ? 'Saved (type a new one to change it)' : 'JARVIS_KEY from the MFS app’s .env'} autocomplete="off" spellcheck="false"/>
+        <small>It stays on this computer, locked to your Windows account. MFS only answers on its own computer or network.</small></label>
+      ${err && html`<p className="err sm" style=${{ margin: 0 }}>${err}</p>`}
+    </form>
+  <//>`;
 }
 
 /* ---------------- my week: each person's daily tasks, the way Finance kept them in a weekly Excel sheet ---------------- */

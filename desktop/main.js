@@ -6,6 +6,7 @@ const updates = require('./updates');
 const coucou = require('./coucou');
 const ask = require('./ask');
 const outlook = require('./outlook');
+const mfs = require('./mfs');
 
 const PAGE = path.join(__dirname, '..', 'index.html');
 const ICON = path.join(__dirname, '..', 'icon-192.png');
@@ -19,7 +20,7 @@ app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
 const BUBBLE = 80; // the floating button's window: the 56px button and its shadow
 // the bar at the top of the screen: its window closed (the pill and its shadow) and open (the chat panel)
 const BAR = { pill: { width: 320, height: 48 }, open: { width: 430, height: 490 } };
-let prefs = { onTop: false, side: 'right', bubble: true, bubbleAt: null, bar: true, slim: false, width: SIDEBAR_WIDTH, coucou: true };
+let prefs = { onTop: false, side: 'right', bubble: true, bubbleAt: null, bar: true, slim: false, width: SIDEBAR_WIDTH, coucou: true, card: 'auto', mfs: null };
 let sidebar = null, full = null, tray = null, bubble = null, bar = null, rail = null, barState = 'pill';
 let opened = false, slide = null, home = null, need = { count: 0, urgent: false }; // home: the work area of the screen the sidebar docks to
 
@@ -195,6 +196,49 @@ function setCoucou(on) {
   coucouChanged();
   if (tray) tray.setContextMenu(trayMenu());
 }
+// The department card beside Floorboard's in Coucou's island. The sidebar lists the ones this person could have, best
+// first; the first that's ready shows, unless they picked another from the tray menu, or none. Finance's MFS card is
+// ready once MFS is connected on this computer and has answered.
+let cardList = [];
+const cardReady = (c) => !c.mfs || !!(mfs.figures() && !mfs.figures().error);
+function chosenCard() {
+  if (prefs.card === 'off') return null;
+  const c = cardList.find((x) => x.id === prefs.card && (!x.mfs || mfs.figures())) || cardList.find(cardReady);
+  return c ? (c.mfs ? { ...c, ...mfs.figures() } : c) : null;
+}
+function showCard() {
+  mfs.want(cardList.some((c) => c.mfs) && (prefs.card === 'auto' || prefs.card === 'mfs'));
+  const c = chosenCard();
+  coucou.setCards(c ? [c] : []);
+}
+function setCard(id) { prefs.card = id; savePrefs(); showCard(); if (tray) tray.setContextMenu(trayMenu()); }
+function islandCards(e, list) {
+  if (!sidebar || e.sender !== sidebar.webContents) return;
+  cardList = (Array.isArray(list) ? list : []).filter((c) => c && /^[a-z0-9-]{1,24}$/.test(c.id)).slice(0, 12)
+    .map((c) => ({ id: c.id, title: String(c.title || c.id).slice(0, 40), line: String(c.line || '').slice(0, 80), busy: !!c.busy, mfs: !!c.mfs }));
+  showCard();
+  if (tray) tray.setContextMenu(trayMenu());
+}
+function cardMenu() {
+  const radio = (label, id) => ({ label, type: 'radio', checked: (prefs.card || 'auto') === id, click: () => setCard(id) });
+  return [
+    radio('Pick for me', 'auto'),
+    ...cardList.filter((c) => !c.mfs || mfs.state().connected).map((c) => radio(c.title, c.id)),
+    radio('None', 'off'),
+    ...(cardList.some((c) => c.mfs) ? [{ type: 'separator' }, { label: mfs.state().connected ? 'MFS: change or disconnect…' : 'Connect MFS…', click: openMfs }] : []),
+  ];
+}
+// connecting MFS happens in the sidebar, where the person can see what they type
+function openMfs() { showSidebar(); if (sidebar) sidebar.webContents.send('mfs-open'); }
+function mfsIpc() {
+  ipcMain.handle('mfs-state', () => mfs.state());
+  ipcMain.handle('mfs-connect', async (_e, a) => {
+    const r = await mfs.connect(a && a.url, a && a.key);
+    if (r.ok) { prefs.mfs = r.saved; savePrefs(); showCard(); if (tray) tray.setContextMenu(trayMenu()); }
+    return r.ok ? { ok: true, line: r.line } : { error: r.error };
+  });
+  ipcMain.handle('mfs-disconnect', () => { mfs.disconnect(); prefs.mfs = null; savePrefs(); showCard(); if (tray) tray.setContextMenu(trayMenu()); return true; });
+}
 function setBar(on) {
   prefs.bar = !!on; savePrefs();
   if (prefs.bar) createBar(); else if (bar) { const b = bar; bar = null; b.destroy(); }
@@ -219,7 +263,7 @@ function createSidebar() {
     sidebar.webContents.on('console-message', (_e, level, message) => { if (level >= 2) console.log('console:', message); });
     const wait = (ms) => new Promise((r) => setTimeout(r, ms));
     const where = () => 'sidebar ' + (sidebar.isVisible() ? 'open at x=' + sidebar.getBounds().x : 'closed') + ', button ' + (bubble && bubble.isVisible() ? 'shown at ' + JSON.stringify(bubble.getBounds()) : 'hidden') + (bubble && bubble.isAlwaysOnTop() ? ' (on top)' : '');
-    sidebar.webContents.on('did-finish-load', () => setTimeout(async () => {
+    sidebar.webContents.once('did-finish-load', () => setTimeout(async () => { // once: the steps below reload the page
       const out = await sidebar.webContents.executeJavaScript(`[!!window.floorboardDesktop, document.documentElement.className, document.querySelector('.login, .widget') ? document.querySelector('.login, .widget').className : document.body.innerText.slice(0, 200)].join(' | ')`);
       console.log('SMOKE', out);
       slideTo(true); await wait(400); console.log('SMOKE', where());
@@ -247,6 +291,21 @@ function createSidebar() {
           const r = await req('POST', '/v1/chat/completions', { model: 'floorboard', stream: true, messages: [{ role: 'system', content: 'You are Coucou.' }, { role: 'user', content: q }] });
           const said = r.text.split('\n').filter((l) => l.startsWith('data: {')).map((l) => { try { const j = JSON.parse(l.slice(6)); return j.error ? '[error: ' + j.error.message + ']' : j.choices[0].delta.content || ''; } catch (e) { return ''; } }).join('');
           console.log('SMOKE ask', JSON.stringify(q), '->', JSON.stringify(said.replace(/<think>[\s\S]*?<\/think>/, '').slice(0, 400)), '| steps:', JSON.stringify((said.match(/<think>([\s\S]*?)<\/think>/) || [])[1] || ''));
+        }
+        // department cards: Thandi's, then Finance's (Ayesha), with MFS against a stand-in when one is given
+        const cards = (who) => console.log('SMOKE cards', who, JSON.stringify(cardList.map((c) => c.id + (c.busy ? '*' : '') + ': ' + (c.line || '(MFS)'))), '| shown:', JSON.stringify(chosenCard()), '| tray:', JSON.stringify(cardMenu().map((m) => m.type === 'separator' ? '--' : (m.checked ? '(x) ' : '') + m.label)));
+        cards('u5');
+        await sidebar.webContents.executeJavaScript("localStorage.setItem('floorboard.session.v1', 'u3'); location.reload(); 1"); await wait(4000);
+        cards('u3');
+        if (process.env.FLOORBOARD_MFS_TEST) {
+          console.log('SMOKE mfs wrong key', JSON.stringify(await mfs.connect(process.env.FLOORBOARD_MFS_TEST, 'not-the-key')));
+          const r = await mfs.connect(process.env.FLOORBOARD_MFS_TEST, process.env.FLOORBOARD_MFS_TEST_KEY);
+          console.log('SMOKE mfs connect', JSON.stringify({ ok: r.ok, line: r.line, error: r.error, keyLocked: !!(r.saved && r.saved.key.startsWith('v1:') && !r.saved.key.includes(process.env.FLOORBOARD_MFS_TEST_KEY)) }));
+          await wait(300); cards('u3 with MFS');
+          setCard('approvals'); cards('u3 picked approvals'); setCard('off'); cards('u3 none'); setCard('auto');
+          openMfs(); await wait(1200); // the tray's "MFS: change or disconnect…" opens this in the sidebar
+          console.log('SMOKE mfs window', JSON.stringify(await sidebar.webContents.executeJavaScript("(() => { const m = document.querySelector('.modal'); return m ? m.innerText.replace(/\\s+/g, ' ').slice(0, 400) : 'no window'; })()")));
+          const shot = await sidebar.webContents.capturePage(); fs.writeFileSync(path.join(app.getPath('temp'), 'floorboard-mfs.png'), shot.toPNG());
         }
       }
       if (process.env.FLOORBOARD_UPDATE_BASE) { // updates through the page's bridge, against a stand-in GitHub
@@ -356,6 +415,7 @@ function trayMenu() {
     { label: 'Show the floating button when the sidebar is closed', type: 'checkbox', checked: prefs.bubble, click: (i) => setBubble(i.checked) },
     { label: 'Show the bar at the top of the screen', type: 'checkbox', checked: prefs.bar, click: (i) => setBar(i.checked) },
     { label: 'Show Floorboard in Coucou’s island (when Coucou is open)', type: 'checkbox', checked: prefs.coucou, click: (i) => setCoucou(i.checked) },
+    { label: 'Your department’s card in Coucou’s island', enabled: prefs.coucou && cardList.length > 0, submenu: cardMenu() },
     { label: 'Dock on the left', type: 'checkbox', checked: prefs.side === 'left', click: (i) => { prefs.side = i.checked ? 'left' : 'right'; savePrefs(); dock(); } },
     { label: 'Check GitHub for new versions', type: 'checkbox', checked: updates.getState().on, click: (i) => { updates.answer(i.checked); tray.setContextMenu(trayMenu()); } },
     { label: 'Check for a new version now', enabled: updates.getState().on, click: () => { updates.check().then((st) => { if (st.available) showSidebar(); }); } },
@@ -393,7 +453,7 @@ else {
     createSidebar();
     createBubble();
     createBar();
-    if (prefs.coucou) coucou.init(coucouChanged); // Floorboard in Coucou's island, if Coucou is installed and running
+    if (prefs.coucou && !SMOKE) coucou.init(coucouChanged); // Floorboard in Coucou's island, if Coucou is installed and running (a test run stays out of it)
     bubbleIpc();
     ipcMain.on('sidebar-slim', setSlim);
     ipcMain.on('sidebar-slim-size', (_e, h) => { h = Math.round(Number(h) || 0); if (h < 200 || h > 1200 || h === railHeight) return; railHeight = h; placeRail(); });
@@ -403,6 +463,9 @@ else {
     ipcMain.handle('on-top-set', (_e, on) => { setOnTop(on); return prefs.onTop; });
     ask.start(() => sidebar); // Ask Floorboard from Coucou's chat
     ipcMain.handle('outlook-search', (_e, a) => outlook.search(a && a.query, a && a.days));
+    mfs.init(prefs.mfs, () => { showCard(); if (tray) tray.setContextMenu(trayMenu()); }); // Finance's MFS card, if MFS is connected here
+    ipcMain.on('island-cards', islandCards);
+    mfsIpc();
     if (SMOKE) return;
     buildTray();
     globalShortcut.register('Control+Alt+F', toggleSidebar);

@@ -53,4 +53,13 @@ contextBridge.exposeInMainWorld('floorboardDesktop', {
   },
   // Outlook (classic) on this computer, for Ask Floorboard's email search
   outlook: { search: (query, days) => ipcRenderer.invoke('outlook-search', { query: String(query || '').slice(0, 200), days: Number(days) || 30 }) },
+  // the department cards this person could have in Coucou's island: [{ id, title, line, busy, mfs }]
+  cards: (list) => ipcRenderer.send('island-cards', (Array.isArray(list) ? list : []).slice(0, 12).map((c) => ({ id: String(c.id || ''), title: String(c.title || ''), line: String(c.line || ''), busy: !!c.busy, mfs: !!c.mfs }))),
+  // MFS on this computer, for Finance's card: the address and Jarvis key stay in the desktop app
+  mfs: {
+    state: () => ipcRenderer.invoke('mfs-state'),
+    connect: (url, key) => ipcRenderer.invoke('mfs-connect', { url: String(url || ''), key: String(key || '') }),
+    disconnect: () => ipcRenderer.invoke('mfs-disconnect'),
+    onOpen: (fn) => { const h = () => fn(); ipcRenderer.on('mfs-open', h); return () => ipcRenderer.removeListener('mfs-open', h); },
+  },
 });

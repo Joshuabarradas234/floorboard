@@ -22,7 +22,22 @@ If you use [Coucou](https://github.com/Louis-CFM/coucou) (a free app that puts W
 
 - Turn it on or off from the tray icon's menu: **Show Floorboard in Coucou's island**.
 - WhatsApp and Outlook live in Coucou's island. WhatsApp: in Coucou, **Settings… → Integrations → WhatsApp**, **Install WhatsApp**, then scan the code with your phone (WhatsApp › Settings › Linked devices › Link a device). Email: sign in to **Outlook (classic)** and leave it open (the new Outlook can't be reached), and have Coucou show its **Mail** card. Coucou 0.5.9 has no switch for that card yet: close Coucou, add `"integration_mail"` to `"activeIntegrations"` in `%APPDATA%\Coucou\settings.json`, and start Coucou again.
-- The island shows four small cards beside the main one, and Floorboard takes one while it's open. Coucou's services are switched on and off in **Settings… → Integrations**: Mail and WhatsApp suit the store; the developer services (Resend, n8n, Vercel, GitHub and the rest) need their own keys and do nothing without them.
+- The island shows four small cards beside the main one: Floorboard, your department's card, Mail and WhatsApp fit exactly. Coucou's services are switched on and off in **Settings… → Integrations**: Mail and WhatsApp suit the store; the developer services (Resend, n8n, Vercel, GitHub and the rest) need their own keys and do nothing without them.
+
+**Your department's card.** Beside the floorboard card, each person gets one small card for their own work, busy while something wants doing:
+
+| Who | Card | What it says |
+|---|---|---|
+| Finance | **mfs** | what's waiting for approval in MFS, who owes (and how much is late), anything wrong |
+| Finance, and anyone who approves | **approvals** | invoices and quotes to approve and to pay, with the amounts |
+| Finance | **month-end** | what's late and what's due this week |
+| The store manager and admins | **store** | what's overdue and ASAP, and which department is most behind |
+| Whoever has the quote drop box | **quotes** | quotes waiting, with a question, or approved |
+| Every department | its name (**bakery**, **fruit-veg**…) | the team's open and overdue tasks, and who's gone quiet for 2 days |
+
+Floorboard picks the best one for you (Finance: MFS, then approvals; the store manager: the store; everyone else: their own team). To pick another, or none: the tray icon's menu → **Your department's card in Coucou's island**.
+
+MFS (Finance's card): on a computer that can reach the MFS app, open the tray menu → **Your department's card in Coucou's island → Connect MFS…**, enter the MFS address (`http://localhost:8787` on the MFS computer itself) and the MFS app's Jarvis key (`JARVIS_KEY` in its `.env`; `pnpm jarvis:setup` sets one up). The key stays on that computer, locked with Windows' own encryption. MFS answers its Jarvis questions only on its own computer or network, and only reading: nothing in MFS changes. Until MFS is connected, Finance gets the approvals card.
 
 ### Keeping it up to date (Windows)
 
