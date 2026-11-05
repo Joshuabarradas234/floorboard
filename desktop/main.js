@@ -190,7 +190,11 @@ function createBar() {
 }
 // With Coucou running and Floorboard showing in its island, Floorboard's own bar steps aside: one island, not two.
 const inCoucou = () => prefs.coucou && coucou.running();
-function coucouChanged() { if (!bar) return; if (inCoucou()) bar.hide(); else if (prefs.bar) { placeBar(barState); bar.showInactive(); } }
+function coucouChanged() {
+  // the pages hear it too: with Coucou's island there, Ask Floorboard is its chat, so the sidebar doesn't show its own
+  BrowserWindow.getAllWindows().forEach((w) => { if (!w.isDestroyed()) w.webContents.send('coucou-state', inCoucou()); });
+  if (!bar) return; if (inCoucou()) bar.hide(); else if (prefs.bar) { placeBar(barState); bar.showInactive(); }
+}
 function setCoucou(on) {
   prefs.coucou = !!on; savePrefs();
   if (prefs.coucou) coucou.init(coucouChanged); else coucou.stop();
@@ -468,6 +472,7 @@ else {
     mfs.init(prefs.mfs, () => { showCard(); if (tray) tray.setContextMenu(trayMenu()); }); // Finance's MFS card, if MFS is connected here
     ipcMain.on('island-cards', islandCards);
     ipcMain.on('island-line', (e, line) => { if (sidebar && e.sender === sidebar.webContents) coucou.setLine(line); });
+    ipcMain.handle('coucou-state', () => inCoucou());
     mfsIpc();
     if (SMOKE) return;
     buildTray();

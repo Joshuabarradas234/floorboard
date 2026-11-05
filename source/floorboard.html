@@ -2555,14 +2555,14 @@ function SideDock({ onClose, onNeeds }) {
 const SLIM_KEY = 'floorboard.slim.v1';
 function SlimRail({ onOpen }) {
   const { db, user, compose } = useApp();
-  const c = useCounts(), desk = window.floorboardDesktop;
+  const c = useCounts(), desk = window.floorboardDesktop, inCoucou = useInCoucou();
   const [hl, setHl] = useState(null);
   const unreadChats = myChats(db, user.id).filter((ch) => unreadIn(db, ch, user.id) > 0).length;
   const notes = stickiesOf(db, user.id).filter((n) => !n.done).length;
   const full = (t) => (desk && desk.openFull ? desk.openFull(t) : (location.hash = 'go-' + t));
   const items = [
     ['needs', 'inbox', 'Needs you', c.mine.length, c.mine.some((p) => p.level === 'red'), () => onOpen('.w-list')],
-    ['ask', 'spark', 'Ask Floorboard', 0, false, () => onOpen('.w-ask')],
+    !inCoucou && ['ask', 'spark', 'Ask Floorboard', 0, false, () => onOpen('.w-ask')],
     tbDepts(db, user).length > 0 && ['tboard', 'task', 'This week', tbDepts(db, user).flatMap((d) => tbWeek(db, d.id, weekOf()).filter((t) => tbWho(db, t).includes(user.id) && tbPct(t, user.id) < 100)).length, false, () => onOpen('.w-tb')],
     ['chats', 'chat', 'Chats', unreadChats, false, () => full('view:chats')],
     plannerOn(db, user) && ['today', 'list', 'Today', 0, false, () => onOpen('.w-day')],
@@ -8043,10 +8043,20 @@ const askNote = (r) => (r.how !== 'quick' || r.why === 'demo' ? ''
   : r.why === 'offline' ? 'A quick answer from what’s on this device: there’s no signal right now.'
   : r.why === 'off' ? 'A quick answer by keyword: the store’s AI assistant isn’t switched on yet.'
   : 'A quick answer by keyword: the AI assistant didn’t answer' + (r.detail ? ' (' + String(r.detail).slice(0, 120) + ')' : '') + '.');
+// In the Windows app with Coucou's island there, Ask Floorboard is the island's chat, so the sidebar doesn't show it twice
+function useInCoucou() {
+  const [on, setOn] = useState(false);
+  useEffect(() => {
+    const d = window.floorboardDesktop; if (!d || !d.coucou) return undefined;
+    d.coucou.state().then((v) => setOn(!!v)).catch(() => {});
+    return d.coucou.onState((v) => setOn(!!v));
+  }, []);
+  return on;
+}
 const ASK_IDEAS = ['Find the last Highveld invoice', 'How far is everyone with their tasks?', 'What needs me today?', 'Any emails about quotes this week?'];
 function AskCard({ compact }) {
   const { db, user } = useApp();
-  const [open, setOpen] = useFold('floorboard.ask.fold.v1');
+  const [open, setOpen] = useFold('floorboard.ask.fold.v1'), inCoucou = useInCoucou();
   const [q, setQ] = useState(''), [turns, setTurns] = useState([]), [busy, setBusy] = useState('');
   const convo = useRef(null), live = useRef(null), thread = useRef(null), box = useRef(null);
   live.current = { db, user };
@@ -8067,6 +8077,7 @@ function AskCard({ compact }) {
     finally { setBusy(''); }
   };
   const fresh = () => { convo.current = null; setTurns([]); setQ(''); };
+  if (inCoucou) return null;
   if (!open) return html`<div className="w-ask glass" id="ask"><${FoldBar} icon="spark" kind="ask" title="Ask Floorboard" onOpen=${() => setOpen(true)}/></div>`;
   return html`<div className=${'w-ask glass' + (compact ? ' compact' : '')} id="ask">
     <div className="w-files-h"><span className="eyebrow ask-eb"><${Icon} n="spark" s=${14}/>Ask Floorboard</span><span className="w-card-a">
