@@ -4,6 +4,7 @@ const { app, BrowserWindow, Tray, Menu, nativeImage, screen, globalShortcut, ipc
 const path = require('path'), fs = require('fs');
 const whatsapp = require('./whatsapp');
 const updates = require('./updates');
+const coucou = require('./coucou');
 
 const PAGE = path.join(__dirname, '..', 'index.html');
 const ICON = path.join(__dirname, '..', 'icon-192.png');
@@ -17,7 +18,7 @@ app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
 const BUBBLE = 80; // the floating button's window: the 56px button and its shadow
 // the bar at the top of the screen: its window closed (the pill and its shadow) and open (the chat panel)
 const BAR = { pill: { width: 320, height: 48 }, open: { width: 430, height: 490 } };
-let prefs = { onTop: false, side: 'right', bubble: true, bubbleAt: null, bar: true, slim: false, width: SIDEBAR_WIDTH };
+let prefs = { onTop: false, side: 'right', bubble: true, bubbleAt: null, bar: true, slim: false, width: SIDEBAR_WIDTH, coucou: true };
 let sidebar = null, full = null, tray = null, bubble = null, bar = null, rail = null, barState = 'pill';
 let opened = false, slide = null, need = { count: 0, urgent: false };
 
@@ -177,9 +178,18 @@ function createBar() {
   bar.setAlwaysOnTop(true, 'screen-saver');
   bar.loadFile(PAGE, { hash: 'bar', query: { shell: 'desktop' } });
   openLinksOutside(bar);
-  bar.once('ready-to-show', () => { placeBar('pill'); bar.showInactive(); });
+  bar.once('ready-to-show', () => { placeBar('pill'); if (!inCoucou()) bar.showInactive(); });
   bar.on('close', (e) => { if (!app.isQuitting) { e.preventDefault(); setBar(false); } });
   bar.on('closed', () => { bar = null; });
+}
+// With Coucou running and Floorboard showing in its island, Floorboard's own bar steps aside: one island, not two.
+const inCoucou = () => prefs.coucou && coucou.running();
+function coucouChanged() { if (!bar) return; if (inCoucou()) bar.hide(); else if (prefs.bar) bar.showInactive(); }
+function setCoucou(on) {
+  prefs.coucou = !!on; savePrefs();
+  if (prefs.coucou) coucou.init(coucouChanged); else coucou.stop();
+  coucouChanged();
+  if (tray) tray.setContextMenu(trayMenu());
 }
 function setBar(on) {
   prefs.bar = !!on; savePrefs();
@@ -342,6 +352,7 @@ function trayMenu() {
     { label: 'Keep the sidebar on top', type: 'checkbox', checked: prefs.onTop, click: (i) => setOnTop(i.checked) },
     { label: 'Show the floating button when the sidebar is closed', type: 'checkbox', checked: prefs.bubble, click: (i) => setBubble(i.checked) },
     { label: 'Show the bar at the top of the screen', type: 'checkbox', checked: prefs.bar, click: (i) => setBar(i.checked) },
+    { label: 'Show Floorboard in Coucou’s island (when Coucou is open)', type: 'checkbox', checked: prefs.coucou, click: (i) => setCoucou(i.checked) },
     { label: 'Dock on the left', type: 'checkbox', checked: prefs.side === 'left', click: (i) => { prefs.side = i.checked ? 'left' : 'right'; savePrefs(); dock(); } },
     { label: 'Check GitHub for new versions', type: 'checkbox', checked: updates.getState().on, click: (i) => { updates.answer(i.checked); tray.setContextMenu(trayMenu()); } },
     { label: 'Check for a new version now', enabled: updates.getState().on, click: () => { updates.check().then((st) => { if (st.available) showSidebar(); }); } },
@@ -359,7 +370,8 @@ function buildTray() {
 
 // Red items slide the sidebar into view without stealing focus and flash it on the taskbar;
 // the tray tooltip always shows how many things need you.
-function attention(_e, { count, urgent }) {
+function attention(_e, { count, urgent, chats, latest }) {
+  coucou.update({ count, urgent, chats, latest });
   if (tray) tray.setToolTip(count ? 'Floorboard · ' + count + (count === 1 ? ' thing needs you' : ' things need you') : 'Floorboard · all caught up');
   need = { count, urgent }; sendBubble();
   if (urgent && sidebar) { if (!opened && !prefs.slim) slideTo(true, { focus: false }); sidebar.flashFrame(true); } // folded, the rail's badge shows it
@@ -379,6 +391,7 @@ else {
     createSidebar();
     createBubble();
     createBar();
+    if (prefs.coucou) coucou.init(coucouChanged); // Floorboard in Coucou's island, if Coucou is installed and running
     bubbleIpc();
     ipcMain.on('sidebar-slim', setSlim);
     ipcMain.on('sidebar-slim-size', (_e, h) => { h = Math.round(Number(h) || 0); if (h < 200 || h > 1200 || h === railHeight) return; railHeight = h; placeRail(); });
@@ -399,5 +412,5 @@ else {
     msIpc();
   });
   app.on('window-all-closed', () => { /* keep running in the tray */ });
-  app.on('will-quit', () => { globalShortcut.unregisterAll(); whatsapp.stop(); });
+  app.on('will-quit', () => { globalShortcut.unregisterAll(); whatsapp.stop(); coucou.stop(); });
 }

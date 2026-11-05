@@ -16,6 +16,13 @@ Double-click `desktop/Start Floorboard.cmd`.
 - Right-click the tray icon for: open the full app, keep the sidebar on top, show or hide the floating button, show or hide the bar at the top, dock it on the left, start with Windows.
 - The sidebar, the bar and the full app share the same data and update each other live.
 
+### Floorboard in Coucou's island (Windows)
+
+If you use [Coucou](https://github.com/Louis-CFM/coucou) (a free app that puts WhatsApp, classic Outlook mail and more in an island at the top of the screen), Floorboard joins it: a **floorboard** card shows the newest thing for you, how many things need you and how many chats are unread. While Coucou is open, Floorboard's own bar at the top steps aside so there's one island, and it comes back if Coucou is closed. Floorboard only talks to Coucou on this computer.
+
+- Turn it on or off from the tray icon's menu: **Show Floorboard in Coucou's island**.
+- WhatsApp and Outlook are Coucou's own: link WhatsApp in Coucou (Settings → Integrations → Install WhatsApp) and keep classic Outlook signed in. Floorboard's own WhatsApp link isn't needed then.
+
 ### Keeping it up to date (Windows)
 
 The first time, the sidebar asks whether Floorboard may check GitHub for new versions. If you say yes, it looks when it starts and every few hours. When there's a newer version, the sidebar shows **A new version of Floorboard is ready** with **Update now**: one click and it updates, restarts and keeps your settings, logins and WhatsApp link. You can switch the checking on or off, or check straight away, from the tray icon's menu.

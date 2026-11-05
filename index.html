@@ -8218,15 +8218,17 @@ function App() {
   const openAlertRef = useRef(openAlert); openAlertRef.current = openAlert;
   useEffect(() => { known.current = null; setAlerts([]); }, [me]);
   useEffect(() => {
-    if (!self || mode === 'bar') return; // the sidebar already alerts; the bar doesn't repeat it
+    if (!self || mode === 'bar' || mode === 'rail') return; // the sidebar already alerts; the bar and the rail don't repeat it
     const desk = window.floorboardDesktop;
     const items = alertItems(db, self.id);
-    const count = db.posts.filter((p) => needsMe(p, self.id)).length;
-    if (!known.current) { known.current = new Set(items.map((i) => i.key)); if (desk && desk.attention) desk.attention({ count, urgent: false }); return; }
+    const count = db.posts.filter((p) => needsMe(p, self.id)).length, chats = myChats(db, self.id).filter((c) => unreadIn(db, c, self.id) > 0).length;
+    // the newest thing for this person, for the Windows app (and Coucou's island, if it's there)
+    const latestOf = (i) => (i ? { title: i.title, body: i.body || '' } : null);
+    if (!known.current) { known.current = new Set(items.map((i) => i.key)); if (desk && desk.attention) desk.attention({ count, chats, urgent: false, latest: latestOf(items[items.length - 1]) }); return; }
     const fresh = items.filter((i) => !known.current.has(i.key));
     fresh.forEach((i) => known.current.add(i.key));
     const quiet = !isOnShift(db, self.id);
-    if (desk && desk.attention) desk.attention({ count, urgent: !quiet && fresh.some((i) => i.level === 'red') });
+    if (desk && desk.attention) desk.attention({ count, chats, urgent: !quiet && fresh.some((i) => i.level === 'red'), latest: latestOf(fresh[fresh.length - 1]) });
     if (!fresh.length || quiet) return; // off shift: it all waits on the board, with no pop-ups or sound
     fresh.slice(-3).forEach((i) => {
       const a = { ...i, id: uid('al') };
@@ -8245,7 +8247,7 @@ function App() {
   const stickySig = self ? stickiesOf(db, self.id).map((n) => n.id + ':' + (n.remindAt || 0) + ':' + (n.firedAt || 0) + ':' + (n.done ? 1 : 0)).join('|') : '';
   const [stickyWake, setStickyWake] = useState(0);
   useEffect(() => {
-    if (!self || (CLOUD && cloud !== 'ready') || mode === 'bar') return;
+    if (!self || (CLOUD && cloud !== 'ready') || mode === 'bar' || mode === 'rail') return;
     const now = Date.now(), waiting = stickiesOf(dbRef.current, self.id).filter((n) => !n.done && n.remindAt && !n.firedAt);
     const due = waiting.filter((n) => n.remindAt <= now + 1000);
     if (due.length) {

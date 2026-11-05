@@ -14,7 +14,10 @@ contextBridge.exposeInMainWorld('floorboardDesktop', {
   focus: () => ipcRenderer.send('show-sidebar'),
   // the bar at the top of the screen: 'pill' (closed) or 'open'; focus to type a reply
   bar: (state, focus) => ipcRenderer.send('bar-state', state === 'open' ? 'open' : 'pill', !!focus),
-  attention: (info) => ipcRenderer.send('attention', { count: Number(info && info.count) || 0, urgent: !!(info && info.urgent) }),
+  attention: (info) => {
+    const t = (v) => String(v || '').slice(0, 200), l = info && info.latest;
+    ipcRenderer.send('attention', { count: Number(info && info.count) || 0, urgent: !!(info && info.urgent), chats: Number(info && info.chats) || 0, latest: l ? { title: t(l.title), body: t(l.body) } : null });
+  },
   onTop: { get: () => ipcRenderer.invoke('on-top-get'), set: (on) => ipcRenderer.invoke('on-top-set', !!on) },
   printers: () => ipcRenderer.invoke('printers'),
   print: (html, printer) => ipcRenderer.invoke('print-html', { html: String(html || ''), printer: String(printer || '') }),
