@@ -6,6 +6,7 @@ const http = require('http');
 const { ipcMain } = require('electron');
 const coucou = require('./coucou');
 const jarvis = require('./jarvis');
+const whatsapp = require('./whatsapp');
 
 const PORT = Number(process.env.FLOORBOARD_ASK_PORT) || 47831; // another port only for testing beside a running Floorboard
 let server = null, sidebar = () => null, ready = false, seq = 0;
@@ -83,6 +84,12 @@ function onRequest(req, res) {
   // only programs on this computer, never a web page: browsers always say which site they come from
   if (req.headers.origin || !/^(127\.0\.0\.1|localhost)(:\d+)?$/.test(String(req.headers.host || ''))) { res.writeHead(403); return res.end(); }
   const path = String(req.url || '').split('?')[0].replace(/\/+$/, '');
+  // the WhatsApp gateway on this computer telling the island of a message or a call (with the key Floorboard gave it)
+  if (req.method === 'POST' && path === '/wa-hook') {
+    readBody(req).then((t) => { let b = null; try { b = JSON.parse(t); } catch (e) { /* not JSON */ } const ok = whatsapp.webhook(new URL(req.url, 'http://x').searchParams.get('k') || '', b); res.writeHead(ok ? 200 : 403); res.end(); })
+      .catch(() => { res.writeHead(400); res.end(); });
+    return;
+  }
   if (req.method === 'GET' && /^(\/v1)?\/models$/.test(path)) return sendJson(res, 200, { object: 'list', data: [{ id: 'floorboard', object: 'model', created: 0, owned_by: 'floorboard' }, ...(jarvis.mine() ? [{ id: 'jarvis', object: 'model', created: 0, owned_by: 'jarvis' }] : [])] });
   if (req.method === 'POST' && /^(\/v1)?\/chat\/completions$/.test(path)) { chat(req, res).catch(() => { try { res.end(); } catch (e) { } }); return; }
   sendJson(res, 404, { error: { message: 'Floorboard answers questions at /v1/chat/completions.' } });

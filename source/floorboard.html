@@ -510,6 +510,157 @@ input[type=checkbox],input[type=radio]{accent-color:#fff}
 /* the bar at the top of the screen (Windows app): a dark pill hanging from the top edge that opens into a chat panel */
 html.bar-mode,html.bar-mode body,html.bar-mode #root{background:transparent!important;overflow:hidden}
 .fbar{position:fixed;left:50%;top:0;transform:translateX(-50%);display:flex;justify-content:center;font:13px/1.35 var(--f-body)}
+/* Floorboard's island (Windows app): in the same spot as Coucou's, black, hanging from the top of the screen */
+.isl{position:fixed;left:50%;top:0;transform:translateX(-50%);font:13px/1.35 var(--f-body);color:#e9ebee;display:flex;justify-content:center}
+.isl-pill{display:flex;align-items:center;gap:10px;height:32px;min-width:288px;max-width:310px;padding:0 10px 0 8px;border:0;border-radius:0 0 18px 18px;background:#000;color:#e9ebee;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.isl-peek{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;color:rgba(233,235,238,.68);text-align:center}
+.isl-peek b{color:#fff;font-weight:700}
+.isl-mini{display:grid;grid-template-columns:repeat(2,12px);gap:2px 3px;flex:none}
+.isl-panel{width:640px;box-sizing:border-box;background:#000;border-radius:0 0 30px 30px;padding:8px 10px 10px;box-shadow:0 14px 40px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:8px}
+.isl.tall .isl-panel{height:384px}
+.isl-head{display:flex;align-items:center;gap:4px;height:28px;flex:none}
+.isl-tab,.isl-btn{display:grid;place-items:center;width:32px;height:28px;border:0;border-radius:14px;background:none;color:rgba(233,235,238,.72);cursor:pointer}
+.isl-tab.on{background:rgba(255,255,255,.13);color:#fff}
+.isl-tab:hover,.isl-btn:hover{background:rgba(255,255,255,.09);color:#fff}
+.isl-btn.sm{width:24px;height:22px}
+.isl-sp{flex:1}
+.isl-home{display:grid;grid-template-columns:1fr 1fr;gap:10px;height:124px;flex:none}
+.isl-home.big{grid-template-columns:1fr;flex:1;height:auto;min-height:0}
+.isl-left{display:flex;gap:14px;align-items:center;background:#16181c;border:1px solid rgba(255,255,255,.06);border-radius:20px;padding:10px 14px 10px 12px;min-width:0;overflow:hidden}
+.isl-home.big .isl-left{align-items:flex-start}
+.isl-me{flex:none;display:grid;place-items:center;align-self:center}
+.isl-home.big .isl-me{align-self:flex-start;margin-top:2px}
+.isl-grid{display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:6px;background:#16181c;border:1px solid rgba(255,255,255,.06);border-radius:20px;padding:10px}
+.isl-pick{display:flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.03);border-radius:14px;color:rgba(233,235,238,.8);font:12px var(--f-body);padding:0 10px 0 6px;cursor:pointer;min-width:0}
+.isl-pick span:last-child{flex:1;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.isl-pick:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.18)}
+/* the characters */
+.isl-ch{--ex:0;--ey:0;position:relative;display:block;flex:none;transition:transform .3s cubic-bezier(.3,1.6,.5,1)}
+.isl-svg{display:block;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 1.5px 2px rgba(0,0,0,.35))}
+.isl-bod{transform-box:fill-box;transform-origin:50% 95%;transform:rotate(calc(var(--ex) * 4deg));transition:transform .25s ease-out}
+.isl-look{transform:translate(calc(var(--ex) * 3.2px), calc(var(--ey) * 3px));transition:transform .12s linear}
+.isl-ch.slime .isl-look{transform:translate(calc(var(--ex) * 3.8px), calc(var(--ey) * 2.6px))}
+.isl-lid{transform-box:fill-box;transform-origin:50% 55%;animation:isl-blink 5.6s infinite;animation-delay:var(--bd,0s);transition:transform .2s}
+/* faces: a smile most of the time */
+.isl-ch .x-shut,.isl-ch .x-o,.isl-ch .x-grin{display:none}
+/* surprised: something came in, or a call rings */
+.isl-ch.wig .x-smile,.isl-ch.ring .x-smile{display:none}
+.isl-ch.wig .x-o,.isl-ch.ring .x-o{display:inline}
+.isl-ch.wig .isl-lid,.isl-ch.ring .isl-lid{animation:none;transform:scale(1.14)}
+/* a grin when pointed at */
+.isl-pick:hover .isl-ch:not(.wig):not(.ring) .x-smile,.isl-me:hover .isl-ch:not(.wig):not(.ring) .x-smile,.isl-pill:hover .isl-ch:not(.wig):not(.ring) .x-smile{display:none}
+.isl-pick:hover .isl-ch:not(.wig):not(.ring) .x-grin,.isl-me:hover .isl-ch:not(.wig):not(.ring) .x-grin,.isl-pill:hover .isl-ch:not(.wig):not(.ring) .x-grin{display:inline}
+/* eyes shut when everything has been still a while */
+html.isl-sleepy .isl-ch:not(.wig):not(.ring) .x-open{display:none}
+html.isl-sleepy .isl-ch:not(.wig):not(.ring) .x-shut{display:inline}
+html.isl-sleepy .isl-ch:not(.wig):not(.ring) .isl-svg{animation:isl-snooze 3.4s ease-in-out infinite}
+/* moving: ghosts float, busy ones bob, news shakes, a call keeps shaking */
+.isl-ch.ghost .isl-svg{animation:isl-float 3.8s ease-in-out infinite;animation-delay:var(--bd,0s)}
+.isl-ch.busy .isl-svg{animation:isl-bob 2.2s ease-in-out infinite}
+.isl-ch.wig{animation:isl-shake .75s ease-in-out}
+.isl-ch.ring{animation:isl-ring 1.1s ease-in-out infinite}
+.isl-pick:hover .isl-ch,.isl-pill:hover .isl-ch:first-child{transform:translateY(-2px) rotate(-4deg)}
+.isl.open .isl-me .isl-ch{animation:isl-hop .55s ease-out}
+@keyframes isl-blink{0%,93%,100%{transform:scaleY(1)}95.5%{transform:scaleY(.08)}}
+@keyframes isl-float{50%{transform:translateY(-1.6px)}}
+@keyframes isl-bob{50%{transform:translateY(-1.5px) scale(1.04,.97)}}
+@keyframes isl-snooze{50%{transform:scale(1.03,.97)}}
+@keyframes isl-shake{12%{transform:translateY(-5px) rotate(-12deg)}30%{transform:translateY(-2px) rotate(11deg)}48%{transform:rotate(-8deg)}66%{transform:rotate(6deg)}84%{transform:rotate(-3deg)}}
+@keyframes isl-ring{0%,100%{transform:rotate(0)}10%{transform:translateY(-3px) rotate(-14deg)}20%{transform:rotate(14deg)}30%{transform:rotate(-12deg)}40%{transform:rotate(12deg)}50%{transform:rotate(-6deg)}60%{transform:rotate(0)}}
+@keyframes isl-hop{40%{transform:translateY(-6px) scale(1.05,.95)}70%{transform:translateY(0) scale(.96,1.04)}}
+@media (prefers-reduced-motion:reduce){.isl-ch,.isl-ch .isl-svg,.isl-ch.wig,.isl-ch.ring,.isl.open .isl-me .isl-ch,.isl-lid{animation:none!important;transition:none}.isl-look,.isl-bod{transform:none}}
+.isl-n{position:absolute;top:-5px;right:-7px;min-width:16px;height:16px;padding:0 4px;box-sizing:border-box;border-radius:8px;background:#ff3b30;color:#fff;font:700 10px/16px var(--f-body);text-align:center;box-shadow:0 0 0 2px #000}
+.isl-ch.tiny .isl-n{top:-3px;right:-3px;min-width:6px;width:6px;height:6px;padding:0;font-size:0;border-radius:3px;box-shadow:0 0 0 1px #000}
+/* the big card */
+.isl-big{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;min-height:0;align-self:stretch;justify-content:center}
+.isl-big.tall{height:100%;justify-content:flex-start}
+.isl-ch-row{display:flex;align-items:center;gap:6px;font-size:13px;min-width:0;flex:none}
+.isl-ch-row b{white-space:nowrap}
+.isl-ell{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.isl-dot{width:7px;height:7px;border-radius:50%;flex:none}
+.isl-sub{color:rgba(233,235,238,.5);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.isl-count{color:rgba(233,235,238,.5);font-size:12px;white-space:nowrap}
+.isl-jump{display:grid;place-items:center;width:22px;height:22px;border:0;border-radius:11px;background:rgba(255,255,255,.08);color:rgba(233,235,238,.7);cursor:pointer;flex:none}
+.isl-jump:hover{background:rgba(255,255,255,.16);color:#fff}
+.isl-search{display:flex;align-items:center;gap:6px;height:30px;padding:0 6px 0 10px;border-radius:15px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.08);color:rgba(233,235,238,.6);flex:none}
+.isl-search:focus-within{border-color:rgba(255,255,255,.28);background:rgba(255,255,255,.1)}
+.isl-search input{flex:1;min-width:0;border:0;background:none;outline:none;color:#fff;font:inherit;font-size:12.5px;height:100%}
+.isl-search input::placeholder{color:rgba(233,235,238,.45)}
+.isl-x{border:0;background:none;color:inherit;cursor:pointer;display:grid;place-items:center;width:20px;height:20px}
+.isl-line{display:flex;align-items:center;gap:6px;margin:0;font-size:13px;color:#e9ebee;min-width:0}
+.isl-line span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.isl-prev{font-size:12px;color:rgba(233,235,238,.45);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.isl-lines{display:grid;gap:4px;border:0;background:none;color:inherit;text-align:left;padding:0;cursor:pointer;min-width:0;font:inherit}
+.isl-list{display:grid;gap:2px;overflow-y:auto;min-height:0;align-content:start}
+.isl-list.short{overflow:hidden}
+.isl-row{display:flex;align-items:center;gap:8px;width:100%;border:0;background:none;color:inherit;text-align:left;padding:4px 6px;border-radius:10px;cursor:pointer;min-width:0;font:inherit}
+.isl-row:hover{background:rgba(255,255,255,.07)}
+.isl-row.static{cursor:default}.isl-row.static:hover{background:none}
+.isl-row>span{flex:1;min-width:0;display:grid}
+.isl-row b{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.isl-row small{font-size:11.5px;color:rgba(233,235,238,.55);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.isl-row em{font-style:normal;font-size:11px;color:rgba(233,235,238,.45);flex:none}
+.isl-row.warn>svg{color:#ffcf85;flex:none}
+.isl-unread{width:6px;height:6px;border-radius:50%;flex:none}
+.isl-row.new .isl-unread{background:#60A5FA}
+.isl-row.new b{color:#fff}
+.isl-wa-av{display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:rgba(74,222,128,.18);color:#4ADE80;font-weight:700;font-size:11px;flex:none}
+.isl-wa-n{min-width:18px;height:18px;box-sizing:border-box;border-radius:9px;background:#25D366;color:#03140a;font:700 10.5px/18px var(--f-body);text-align:center;padding:0 5px;flex:none}
+.isl-empty{margin:6px 2px;color:rgba(233,235,238,.55);font-size:12px}
+.isl-more{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#e9ebee;border-radius:999px;padding:5px 12px;font:600 12px var(--f-body);cursor:pointer;justify-self:start}
+.isl-more:hover{background:rgba(255,255,255,.12)}
+.isl-more.primary{background:#fff;color:#0d0f12;border-color:#fff}
+.isl-more:disabled{opacity:.6}
+.isl-acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+.isl-closed{display:grid;gap:8px;align-content:start}.isl-closed p{margin:0;color:rgba(233,235,238,.6);font-size:12.5px}
+.isl-read{flex:1;min-height:0;overflow-y:auto;display:grid;gap:6px;align-content:start;padding-right:4px}
+.isl-meta{margin:0;font-size:12px;color:rgba(233,235,238,.6);display:flex;flex-wrap:wrap;gap:4px}.isl-meta b{color:#fff}
+.isl-body{white-space:pre-wrap;font-size:12.5px;line-height:1.55;color:#e9ebee}
+.isl-brief{display:grid;gap:4px;padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.05)}.isl-brief p{margin:0;white-space:pre-wrap;font-size:12px;color:rgba(233,235,238,.8)}
+.isl-task{display:grid;gap:2px;padding:6px 8px;border-radius:10px;background:rgba(255,255,255,.04)}.isl-task b{font-size:12.5px}
+.isl .jv-run{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.06)}
+.isl-err{margin:0 12px;color:#ff9c8c;font-size:12px}
+.isl .fbar-thread{height:100%;flex:1;min-height:0}
+.isl-big.tall>.fbar-thread{margin:-4px -6px}
+/* 💬 */
+.isl-ask{display:flex;flex-direction:column;flex:1;min-height:0;background:#16181c;border-radius:20px;border:1px solid rgba(255,255,255,.06);overflow:hidden}
+.isl-ask-msgs{flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.isl-q{align-self:flex-end;max-width:80%;background:#2a2d33;border-radius:14px 14px 4px 14px;padding:6px 10px;font-size:12.5px}
+.isl-a{align-self:flex-start;max-width:94%;font-size:12.5px;line-height:1.5}
+.isl-a.busy{color:rgba(233,235,238,.55)}.isl-a.err{color:#ff9c8c}
+.isl-ask-in{display:flex;gap:6px;padding:8px;border-top:1px solid rgba(255,255,255,.06)}
+.isl-ask-in input{flex:1;min-width:0;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.06);border-radius:16px;padding:0 12px;height:32px;color:#fff;outline:none;font:inherit}
+.isl-ask-in button{width:32px;height:32px;border-radius:16px;border:0;background:#fff;color:#0d0f12;display:grid;place-items:center;cursor:pointer}
+.isl-ask-in button:disabled{opacity:.4}
+.isl-who{background:rgba(255,255,255,.06);color:#fff;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:0 8px;height:32px}
+/* ➕ */
+.isl-drop{display:flex;align-items:center;gap:26px;height:124px;box-sizing:border-box;border:1.5px dashed rgba(74,222,128,.45);border-radius:20px;padding:0 34px;background:radial-gradient(ellipse at 50% 130%,rgba(74,222,128,.16),transparent 70%),#0b0d0e;cursor:pointer;flex:none}
+.isl-drop.over{border-color:#4ADE80;background:radial-gradient(ellipse at 50% 110%,rgba(74,222,128,.3),transparent 70%),#0b0d0e}
+.isl-drop.over .isl-ch{transform:scale(1.08) rotate(-4deg)}
+.isl-drop-t{margin:0 0 6px;font-size:13.5px}
+.isl-tags{display:flex;gap:6px;margin:0}.isl-tags span{padding:3px 10px;border-radius:999px;background:rgba(255,255,255,.08);font-size:11.5px;color:rgba(233,235,238,.75)}
+.isl-drop-card{display:flex;align-items:center;gap:18px;height:124px;box-sizing:border-box;border-radius:20px;padding:0 24px;background:#16181c;border:1px solid rgba(255,255,255,.06);flex:none}
+.isl-drop-card .isl-sub{margin:0}
+/* a message: the island opens a little; a call: WhatsApp rings */
+.isl-peekbar{display:flex;align-items:center;gap:12px;width:440px;height:80px;box-sizing:border-box;padding:0 18px 0 14px;border:0;border-radius:0 0 26px 26px;background:#000;color:#e9ebee;cursor:pointer;text-align:left;box-shadow:0 10px 28px rgba(0,0,0,.45);animation:isl-drop .35s cubic-bezier(.3,1.5,.5,1)}
+.isl-peek-t{flex:1;min-width:0;display:grid;gap:2px}
+.isl-peek-t b{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.isl-peek-t small{font-size:12.5px;color:rgba(233,235,238,.75);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.35}
+.isl-peek-n{font-size:11px;color:#4ADE80;font-weight:700;align-self:flex-start;margin-top:14px}
+@keyframes isl-drop{from{transform:translateY(-14px) scale(.96);opacity:.4}}
+@media (prefers-reduced-motion:reduce){.isl-peekbar{animation:none}}
+.isl-ring-who{margin:2px 0 0;font-size:15px}.isl-ring-who b{color:#fff}
+.isl-more.call{display:inline-flex;align-items:center;gap:6px;background:#25D366;border-color:#25D366;color:#03140a}
+.isl-ringc .isl-acts{flex-wrap:nowrap;gap:6px}.isl-ringc .isl-more{padding:5px 10px;white-space:nowrap}
+/* ⚙ */
+.isl-set{display:grid;gap:8px;padding:12px 16px;background:#16181c;border-radius:20px;border:1px solid rgba(255,255,255,.06);font-size:12.5px;overflow:auto;flex:1;min-height:0;align-content:start}
+.isl-set b{font-size:11px;color:rgba(233,235,238,.5);text-transform:uppercase;letter-spacing:.05em}
+.isl-tog{display:flex;gap:8px;align-items:center;cursor:pointer}
+.isl-set-cards{display:flex;flex-wrap:wrap;gap:4px 18px}
+.isl-looks{display:flex;gap:10px}
+.isl-lookpick{flex:1;display:grid;justify-items:center;gap:6px;padding:10px 8px 8px;border-radius:14px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);color:rgba(233,235,238,.8);font:600 12px var(--f-body);cursor:pointer}
+.isl-lookpick.on{border-color:#fff;background:rgba(255,255,255,.1);color:#fff}
+.isl-lookrow{display:flex;gap:6px}
 .fbar-pill{display:flex;align-items:center;gap:8px;height:34px;max-width:300px;padding:0 10px 0 8px;border:0;border-radius:0 0 18px 18px;color:#f4ece4;
   background:linear-gradient(180deg,#0d0b0a,#1c1714);box-shadow:0 8px 20px rgba(0,0,0,.35),inset 0 -1px 0 rgba(255,255,255,.08)}
 .fbar-mark{width:22px;height:22px;flex:none}
@@ -1603,6 +1754,7 @@ const ICONS = {
   flower: '<circle cx="12" cy="12" r="2.2"/><path d="M12 9.8c-1.6-2.6-1-5.3 0-6.3 1 1 1.6 3.7 0 6.3zM14.2 12c2.6-1.6 5.3-1 6.3 0-1 1-3.7 1.6-6.3 0zM12 14.2c1.6 2.6 1 5.3 0 6.3-1-1-1.6-3.7 0-6.3zM9.8 12c-2.6 1.6-5.3 1-6.3 0 1-1 3.7-1.6 6.3 0z"/>',
   leaf: '<path d="M5 19c0-8 5-14 15-14 0 10-6 15-14 15"/><path d="M5 19l8-8"/>',
   snow: '<path d="M12 2.5v19M3.8 7.2l16.4 9.6M3.8 16.8l16.4-9.6"/><path d="M9.5 4.5 12 7l2.5-2.5M9.5 19.5 12 17l2.5 2.5"/>',
+  gear: '<circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.4M12 18.8v2.4M21.2 12h-2.4M5.2 12H2.8M18.5 5.5l-1.7 1.7M7.2 16.8l-1.7 1.7M18.5 18.5l-1.7-1.7M7.2 7.2 5.5 5.5"/>',
   sound: '<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11"/>',
   mute: '<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/>',
   share: '<path d="M12 15V3.5M7.5 8 12 3.5 16.5 8"/><path d="M5 12.5V19a1.5 1.5 0 0 0 1.5 1.5h11A1.5 1.5 0 0 0 19 19v-6.5"/>',
@@ -2793,6 +2945,477 @@ function Bar() {
             ${n > 0 && html`<b className="fbar-n g">${n}</b>`}</button>`; })
           : html`<p className="fbar-empty">${only ? 'Nothing unread. All caught up.' : 'No chats yet.'}</p>`}</div>`}
     </div>`}
+  </div>`;
+}
+
+/* ---------------- Floorboard's island: at the top of the screen, laid out and working like Coucou's ---------------- */
+// The bar grown into an island (Windows app), in the same spot and working the same way as Coucou's island: closed, a
+// small black island in the top middle with the cards' characters, each with a count of what came in since that card
+// was last opened (it wiggles when it grows); open, the Home tab has the chosen card big on the left and the others in a
+// grid on the right (click one to bring it big), 💬 is Ask Floorboard (or JARVIS), and ➕ takes files dropped on it. A
+// chat, an email, a search or a list makes the island taller. Layout and behaviour follow Coucou's island
+// (github.com/Louis-CFM/coucou, MIT licence); its name, characters, icon and sounds are Coucou's own, so these are
+// Floorboard's.
+// color: the card's dot; fur: its character's colour (the five pastels of Joshua's ghosts and slimes)
+const ISL = { floorboard: { name: 'Floorboard', color: '#F5F6F8', fur: '#E6E5F8', icon: 'logo' }, taskboard: { name: 'This week', color: '#EAB308', fur: '#F8C5B0', icon: 'task' },
+  jarvis: { name: 'JARVIS', color: '#E879F9', fur: '#D3C2F4', icon: 'spark' }, mail: { name: 'Mail', color: '#60A5FA', fur: '#BCDDF7', icon: 'inbox' }, whatsapp: { name: 'WhatsApp', color: '#4ADE80', fur: '#C3EBCF', icon: 'chat' } };
+const ISL_ORDER = ['floorboard', 'taskboard', 'jarvis', 'mail', 'whatsapp'];
+const islGet = (k, d) => { try { return JSON.parse(lsGet('floorboard.island.' + k) || 'null') ?? d; } catch (e) { return d; } };
+const islSet = (k, v) => lsSet('floorboard.island.' + k, JSON.stringify(v));
+// a short rising note when something comes in (Floorboard's own, made here: no sound files)
+function islBlip() {
+  try {
+    const A = window.AudioContext || window.webkitAudioContext, a = new A(), o = a.createOscillator(), g = a.createGain(), t = a.currentTime;
+    o.type = 'sine'; o.frequency.setValueAtTime(740, t); o.frequency.exponentialRampToValueAtTime(1180, t + 0.1);
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.06, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.24);
+    o.connect(g); g.connect(a.destination); o.start(t); o.stop(t + 0.26); setTimeout(() => a.close(), 500);
+  } catch (e) { /* no sound here */ }
+}
+// A card's character, one of the two kinds Joshua chose (picked in the island's ⚙): soft pastel ghosts or glossy slimes,
+// one colour per card. Their eyes follow the pointer anywhere on the screen, and their faces change the way Coucou's
+// characters' do: a smile most of the time, surprised (an O) when something comes in or a call rings, eyes shut when
+// everything's been still a while, and a grin when pointed at. They blink, lean towards the pointer, bob while busy, and
+// hop and shake for news (and keep shaking while a call rings).
+const ISL_BLINK = {};
+let ISL_LOOK = (islGet('opts', {}) || {}).look || 'ghost';
+let islGid = 0;
+function IslChar({ id, s = 44, busy, n, wig, ring, look }) {
+  const c = ISL[id], gid = useRef('islg' + (++islGid)).current, lk = look || ISL_LOOK;
+  if (!(id in ISL_BLINK)) ISL_BLINK[id] = (Math.random() * 4).toFixed(2) + 's'; // each blinks in its own time
+  const rim = 'color-mix(in srgb, var(--f), #3b2f5c 22%)', shade = html`<defs><radialGradient id=${gid} cx="36%" cy="22%" r="85%"><stop offset="0" stop-color="#fff" stop-opacity=".75"/><stop offset=".45" stop-color="#fff" stop-opacity=".12"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>`;
+  const ghost = () => {
+    const body = 'M13 50C13 25 29 9 50 9S87 25 87 50V82Q87 89 81 89Q76 89 74 84Q71 79 66.5 84Q62 89 57 89Q52 89 50 84Q47 79 43 84Q39 89 34 89Q29 89 26.5 84Q24 79 19 84Q13 90 13 82Z';
+    const eye = (x, y) => html`<g className="isl-lid"><ellipse cx=${x} cy=${y + 1} rx="11" ry="12" fill="#000" opacity=".08"/><ellipse cx=${x} cy=${y} rx="10.6" ry="11.6" fill="#fff"/>
+      <g className="isl-look"><ellipse cx=${x + 2.4} cy=${y + 1.2} rx="6.2" ry="7.4" fill="#16151c"/><circle cx=${x + 4.2} cy=${y - 2.2} r="2.1" fill="#fff"/></g></g>`;
+    return html`<path d=${body} fill="var(--f)" stroke=${rim} strokeWidth="1.2"/><path d=${body} fill=${'url(#' + gid + ')'}/>
+      <g className="x-open">${eye(36, 45)}${eye(62, 43)}</g>
+      <g className="x-shut" stroke="#16151c" strokeWidth="3" strokeLinecap="round" fill="none"><path d="M27 46Q36 51 45 46"/><path d="M53 44Q62 49 71 44"/></g>
+      <path className="x-smile" d="M46 65Q52.5 70 58 62.5" stroke="#16151c" strokeWidth="3.2" strokeLinecap="round" fill="none"/>
+      <ellipse className="x-o" cx="52" cy="66" rx="3.6" ry="4.6" fill="#16151c"/>
+      <path className="x-grin" d="M43 62Q51 74 60 61Q51 66 43 62Z" fill="#16151c"/>`;
+  };
+  const slime = () => {
+    const body = 'M7 76C7 38 27 14 50 14S93 38 93 76C93 87 79 90 50 90S7 87 7 76Z';
+    const eye = (x) => html`<g className="isl-lid"><g className="isl-look"><ellipse cx=${x} cy="54" rx="7.6" ry="8.8" fill="#3a2016"/><circle cx=${x + 2.6} cy="50.6" r="2.7" fill="#fff"/><circle cx=${x - 2.3} cy="57.8" r="1.1" fill="#fff" opacity=".8"/></g></g>`;
+    return html`<path d=${body} fill="var(--f)" stroke=${rim} strokeWidth="1.2"/><path d=${body} fill=${'url(#' + gid + ')'}/>
+      <ellipse cx="32" cy="31" rx="13" ry="5.5" fill="#fff" opacity=".8" transform="rotate(-32 32 31)"/>
+      <ellipse cx="23" cy="66" rx="6.8" ry="4" fill="#F7A3B4" opacity=".7"/><ellipse cx="77" cy="66" rx="6.8" ry="4" fill="#F7A3B4" opacity=".7"/>
+      <g className="x-open">${eye(35)}${eye(65)}</g>
+      <g className="x-shut" stroke="#3a2016" strokeWidth="3" strokeLinecap="round" fill="none"><path d="M28 55Q35 59 42 55"/><path d="M58 55Q65 59 72 55"/></g>
+      <g className="x-smile"><path d="M42 63.5Q50 65.5 58 63.5Q57 75.5 50 75.5Q43 75.5 42 63.5Z" fill="#C8504D"/><path d="M45 71Q50 68.5 55 71Q53 75.5 50 75.5Q47 75.5 45 71Z" fill="#F08C88"/></g>
+      <ellipse className="x-o" cx="50" cy="68" rx="4.6" ry="5.6" fill="#C8504D"/>
+      <g className="x-grin"><path d="M39 62Q50 65 61 62Q60 79 50 79Q40 79 39 62Z" fill="#C8504D"/><path d="M44 73Q50 70 56 73Q54 79 50 79Q46 79 44 73Z" fill="#F08C88"/></g>`;
+  };
+  return html`<span className=${'isl-ch ' + lk + (s < 20 ? ' tiny' : '') + (busy ? ' busy' : '') + (wig ? ' wig' : '') + (ring ? ' ring' : '')} style=${{ '--f': c.fur, width: s + 'px', height: s + 'px', '--s': s + 'px', '--bd': ISL_BLINK[id] }} aria-hidden="true">
+    <svg viewBox="0 0 100 100" className="isl-svg">${shade}<g className="isl-bod">${lk === 'slime' ? slime() : ghost()}</g></svg>
+    ${n > 0 && html`<b className="isl-n">${n > 99 ? '99+' : n}</b>`}</span>`;
+}
+// Where the pointer is, in the island window's own coordinates: the Windows app sends it from anywhere on the screen,
+// and every character's eyes turn to it (or to somewhere of their own when it rests). Still with reduced motion.
+const ISL_PTR = { x: -1, y: -1, at: Date.now() };
+function useIslandEyes() {
+  useEffect(() => {
+    const d = window.floorboardDesktop, still = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const set = (x, y) => { if (x !== ISL_PTR.x || y !== ISL_PTR.y) { ISL_PTR.x = x; ISL_PTR.y = y; ISL_PTR.at = Date.now(); } };
+    const mm = (e) => set(e.clientX, e.clientY);
+    window.addEventListener('mousemove', mm);
+    const off = d && d.island && d.island.onCursor ? d.island.onCursor((p) => set(p.x, p.y)) : null;
+    let raf = 0, last = 0, wander = { x: 0, y: 0, next: 0 };
+    const tick = (t) => {
+      raf = requestAnimationFrame(tick);
+      if (t - last < 33) return; last = t; // 30 looks a second is plenty
+      const now = Date.now(), idle = now - ISL_PTR.at;
+      document.documentElement.classList.toggle('isl-sleepy', idle > 2 * 60 * 1000);
+      let tx = ISL_PTR.x, ty = ISL_PTR.y;
+      if (idle > 8000) { if (now > wander.next) wander = { x: Math.random() * innerWidth, y: 20 + Math.random() * 260, next: now + 2000 + Math.random() * 4000 }; tx = wander.x; ty = wander.y; }
+      document.querySelectorAll('.isl-ch').forEach((el) => {
+        const r = el.getBoundingClientRect(), dx = tx - (r.left + r.width / 2), dy = ty - (r.top + r.height * 0.38), dist = Math.hypot(dx, dy) || 1, k = still ? 0 : Math.min(1, dist / 90);
+        el.style.setProperty('--ex', (dx / dist * k).toFixed(2)); el.style.setProperty('--ey', (dy / dist * k).toFixed(2));
+      });
+    };
+    raf = requestAnimationFrame(tick);
+    return () => { cancelAnimationFrame(raf); window.removeEventListener('mousemove', mm); if (off) off(); };
+  }, []);
+}
+function useIslandData() {
+  const d = window.floorboardDesktop, [st, setSt] = useState({});
+  useEffect(() => { if (!d || !d.island) return undefined; d.island.state().then(setSt).catch(() => {}); return d.island.onState(setSt); }, []);
+  return st;
+}
+// posts, documents, people and chats matching every word: the island's quick search (Enter opens the full search)
+function islFind(db, user, q) {
+  const words = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
+  if (!words.length) return null;
+  const has = (s) => words.every((w) => String(s || '').toLowerCase().includes(w));
+  const posts = db.posts.filter((p) => canSee(db, p, user) && has([p.title, p.body, '#' + p.no, (userById(db, p.author) || {}).name, deptById(db, p.about).name, ...p.attachments.map((a) => a.name)].join(' '))).sort((a, b) => b.createdAt - a.createdAt).slice(0, 5);
+  const okDrives = db.drives.filter((d) => driveOn(db, d) && canDrive(user, d)).map((d) => d.id);
+  const files = [...db.files.filter((f) => okDrives.includes(f.drive) && fileMatches(db, f, words.join(' '))).map((f) => ({ id: f.id, name: f.name, where: (db.drives.find((d) => d.id === f.drive) || {}).name || 'Drive' })),
+    ...(((db.pins[user.id] || {}).myfiles) || []).filter((f) => has(f.title)).map((f) => ({ id: f.id, name: f.title, where: 'My files' }))].slice(0, 5);
+  const people = db.users.filter((u) => u.active !== false && has(u.name + ' ' + u.title)).slice(0, 4);
+  const chats = myChats(db, user.id).filter((c) => has(chatName(db, c, user.id))).slice(0, 4);
+  return { posts, files, people, chats, total: posts.length + files.length + people.length + chats.length };
+}
+function IslHead({ tab, setTab, onGear, mute, setMute, onClose, ask }) {
+  const b = (k, icon, label) => html`<button className=${'isl-tab' + (tab === k ? ' on' : '')} onClick=${() => setTab(k)} title=${label} aria-label=${label} aria-pressed=${tab === k}><${Icon} n=${icon} s=${16}/></button>`;
+  return html`<div className="isl-head">
+    ${b('home', 'store', 'Home')}${ask && b('chat', 'chat', 'Ask Floorboard')}${b('drop', 'plus', 'Drop files')}
+    <span className="isl-sp"></span>
+    <button className="isl-btn" onClick=${onGear} title="Island settings" aria-label="Island settings"><${Icon} n="gear" s=${16}/></button>
+    <button className="isl-btn" onClick=${() => setMute(!mute)} title=${mute ? 'Sounds off' : 'Sounds on'} aria-label=${mute ? 'Turn sounds on' : 'Turn sounds off'}><${Icon} n=${mute ? 'mute' : 'sound'} s=${16}/></button>
+    <button className="isl-btn" onClick=${onClose} title="Close" aria-label="Close the island"><${Icon} n="close" s=${16}/></button>
+  </div>`;
+}
+// the big card's top line: the character, the card's name, what kind of card, and ↗ where it opens in full
+function IslCardHead({ id, sub, count, onOpen, children }) {
+  return html`<div className="isl-ch-row"><i className="isl-dot" style=${{ background: ISL[id].color }}></i><b>${ISL[id].name}</b>${sub && html`<span className="isl-sub">${sub}</span>`}
+    ${children}<span className="isl-sp"></span>${count && html`<span className="isl-count">${count}</span>`}
+    ${onOpen && html`<button className="isl-jump" onClick=${onOpen} title="Open" aria-label=${'Open ' + ISL[id].name}><${Icon} n="expand" s=${12}/></button>`}</div>`;
+}
+
+/* the Floorboard card: a real search bar, and what needs you */
+function IslFloorboard({ big, setBig }) {
+  const { db, user } = useApp(), desk = window.floorboardDesktop, [q, setQ] = useState(''), [chatId, setChatId] = useState(null);
+  const needs = db.posts.filter((p) => needsMe(p, user.id)), unread = myChats(db, user.id).reduce((a, c) => a + unreadIn(db, c, user.id), 0);
+  const line = [islandLine(db, user), needs.length && needs.length + (needs.length === 1 ? ' needs you' : ' need you'), unread && unread + ' unread'].filter(Boolean).join(' · ') || 'All caught up';
+  const hits = islFind(db, user, q);
+  useEffect(() => { setBig(!!(hits && q.trim()) || !!chatId); }, [!!(hits && q.trim()), !!chatId]);
+  const full = (t) => (desk && desk.openFull ? desk.openFull(t) : (location.hash = 'go-' + t));
+  const c = chatId && db.chats.find((x) => x.id === chatId);
+  if (c) return html`<div className="isl-big tall"><${BarThread} c=${c} onBack=${() => setChatId(null)}/></div>`;
+  return html`<div className=${'isl-big' + (big ? ' tall' : '')}>
+    <${IslCardHead} id="floorboard" sub=${db.store} onOpen=${() => desk && desk.showSidebar && desk.showSidebar()}/>
+    <form className="isl-search" role="search" onSubmit=${(e) => { e.preventDefault(); if (q.trim()) { full('search:' + q.trim()); setQ(''); } }}>
+      <${Icon} n="search" s=${14}/><input id="isl-q" value=${q} onChange=${(e) => setQ(e.target.value)} placeholder="Search Floorboard: posts, files, @people, #1047…" aria-label="Search Floorboard" autoComplete="off"/>
+      ${q && html`<button type="button" className="isl-x" onClick=${() => setQ('')} aria-label="Clear the search"><${Icon} n="close" s=${12}/></button>`}</form>
+    ${hits && q.trim() ? html`<div className="isl-list">
+      ${!hits.total && html`<p className="isl-empty">Nothing matches “${q}”. Enter searches everything in Floorboard.</p>`}
+      ${hits.posts.map((p) => html`<button key=${p.id} className="isl-row" onClick=${() => full('post:' + p.id)}><${Icon} n="list" s=${14}/><span><b>#${p.no} ${p.title}</b><small>${TYPES[p.type].label} · ${deptById(db, p.about).name}</small></span></button>`)}
+      ${hits.files.map((f) => html`<button key=${f.id} className="isl-row" onClick=${() => full('search:' + q.trim())}><${Icon} n="doc" s=${14}/><span><b>${f.name}</b><small>${f.where}</small></span></button>`)}
+      ${hits.chats.map((x) => html`<button key=${x.id} className="isl-row" onClick=${() => { setChatId(x.id); setQ(''); }}><${Icon} n="chat" s=${14}/><span><b>${chatName(db, x, user.id)}</b><small>Chat</small></span></button>`)}
+      ${hits.people.map((u) => html`<button key=${u.id} className="isl-row" onClick=${() => full('search:' + u.name)}><${Avatar} u=${u} s=${18}/><span><b>${u.name}</b><small>${u.title}</small></span></button>`)}
+      ${hits.total > 0 && html`<button className="isl-more" onClick=${() => { full('search:' + q.trim()); setQ(''); }}>Search everything for “${q.trim()}” ↵</button>`}
+    </div>` : html`<p className="isl-line"><${Icon} n="chev" s=${11}/><span>${line}</span></p>`}
+  </div>`;
+}
+
+/* this week's task board: yours to move along, and how far each team you run is */
+function IslTaskboard({ big, setBig }) {
+  const { db, user } = useApp(), desk = window.floorboardDesktop;
+  const wk = weekOf(), depts = tbDepts(db, user), mine = depts.flatMap((d) => tbWeek(db, d.id, wk).filter((t) => tbWho(db, t).includes(user.id)));
+  const led = depts.filter((d) => user.manages.includes(d.id)), done = mine.filter((t) => tbPct(t, user.id) >= 100).length, next = mine.find((t) => tbPct(t, user.id) < 100);
+  const full = () => (desk && desk.openFull ? desk.openFull('view:taskboard') : (location.hash = 'go-view:taskboard'));
+  return html`<div className=${'isl-big' + (big ? ' tall' : '')}>
+    <${IslCardHead} id="taskboard" sub="Task board" count=${mine.length ? done + '/' + mine.length : ''} onOpen=${full}/>
+    ${big ? html`<div className="isl-list">
+      ${led.map((d) => { const pct = tbTeamPct(db, [d], wk); return html`<div key=${d.id} className="isl-row static"><${Icon} n="team" s=${14}/><span><b>${d.name}</b><small>${pct == null ? 'No tasks set this week' : 'The team is ' + pct + '% of the way'}</small></span></div>`; })}
+      ${mine.map((t) => html`<div key=${t.id} className="isl-task"><b>${t.title}</b><${TbProgress} t=${t} compact/></div>`)}
+      ${!mine.length && !led.length && html`<p className="isl-empty">No tasks for you this week.</p>`}
+      <button className="isl-more" onClick=${() => setBig(false)}>Less</button></div>`
+    : html`<button className="isl-lines" onClick=${() => setBig(true)}>
+      <span className="isl-prev">${mine.length ? done + ' of ' + mine.length + ' done this week' : 'This week'}</span>
+      <span className="isl-line"><${Icon} n="chev" s=${11}/><span>${next ? 'Next: ' + next.title : led.length ? led.map((d) => d.name + ' ' + (tbTeamPct(db, [d], wk) ?? 0) + '%').join(' · ') : 'Nothing left this week'}</span></span></button>`}
+  </div>`;
+}
+
+/* JARVIS: what needs you, the jobs, the Tower and the brief, in turn; all of it when opened */
+function IslJarvis({ big, setBig, j }) {
+  const desk = window.floorboardDesktop, { ask, toast } = useApp(), [i, setI] = useState(0);
+  const runs = (j && j.runs) || [], need = (j && j.attention) || [], active = runs.filter((r) => JV_ACTIVE.includes(r.status));
+  const turns = !j || !j.found ? [['JARVIS', j && j.seen ? 'Closed · open JARVIS' : 'Not connected · open JARVIS']] : [
+    ...active.slice(0, 3).map((r) => [r.title, r.progress + '%' + (r.step ? ' · ' + r.step : '')]),
+    ...need.slice(0, 4).map((a) => [a.title, a.detail || a.kind || 'needs you']),
+    ...(need.length > 4 ? [['JARVIS', 'and ' + (need.length - 4) + ' more in JARVIS']] : []),
+    ...(!active.length ? [['Tower', runs.find((r) => r.status === 'done') ? 'Last done: ' + runs.find((r) => r.status === 'done').title : 'Nothing in the last two days']] : []),
+    ...(j.brief ? [[j.brief.title + (j.brief.at ? ' · ' + jvTime(j.brief.at) : ''), String(j.brief.text || '').split('\n').map((l) => l.replace(/^[#>*\-\s]+/, '').trim()).filter(Boolean)[0] || '']] : []),
+  ];
+  useEffect(() => { if (big || turns.length < 2) return undefined; const t = setInterval(() => setI((x) => x + 1), 6000); return () => clearInterval(t); }, [big, turns.length]);
+  const tu = turns[i % turns.length] || ['JARVIS', ''];
+  const carryOn = (r) => ask({ title: 'Continue “' + r.title + '”?', body: 'JARVIS carries on where it stopped. It can cost money, so JARVIS may ask you to approve it first.', confirm: 'Continue',
+    onConfirm: async () => { const x = await desk.jarvis.carryOn(r.id); toast(x && x.ok ? 'JARVIS is carrying on with it' : (x && (x.message || x.error)) || 'JARVIS didn’t answer'); } });
+  const send = () => desk && desk.openSidebarAt && desk.openSidebarAt('.w-jv');
+  return html`<div className=${'isl-big' + (big ? ' tall' : '')}>
+    <${IslCardHead} id="jarvis" sub="Agent" count=${turns.length > 1 && !big ? ((i % turns.length) + 1) + '/' + turns.length : ''} onOpen=${send}/>
+    ${big ? html`<div className="isl-list">
+      ${need.map((a, k) => html`<div key=${'a' + k} className="isl-row static warn"><${Icon} n="alert" s=${14}/><span><b>${a.title}</b>${a.detail && html`<small>${a.detail}</small>`}</span></div>`)}
+      ${runs.map((r) => html`<${JvRun} key=${r.id} r=${r} onCarryOn=${carryOn}/>`)}
+      ${j && j.found && !runs.length && html`<p className="isl-empty">Nothing in the Tower in the last two days.</p>`}
+      ${j && j.brief && html`<div className="isl-brief"><b>${j.brief.title}${j.brief.at ? ' · ' + jvTime(j.brief.at) : ''}</b><p>${j.brief.text}</p></div>`}
+      <div className="isl-acts"><button className="isl-more" onClick=${send}>Send work to JARVIS</button><button className="isl-more" onClick=${() => setBig(false)}>Less</button></div></div>`
+    : html`<button className="isl-lines" onClick=${() => setBig(true)}><span className="isl-prev">${tu[0]}</span><span className="isl-line"><${Icon} n="chev" s=${11}/><span>${tu[1]}</span></span></button>`}
+  </div>`;
+}
+
+/* Mail: Outlook (classic)'s inbox, an email to read, a search */
+function IslMail({ big, setBig, st }) {
+  const desk = window.floorboardDesktop, m = st.mail || {}, [q, setQ] = useState(''), [found, setFound] = useState(null), [one, setOne] = useState(null), [finding, setFinding] = useState(false);
+  useEffect(() => { setBig(!!one || finding); }, [!!one, finding]);
+  useEffect(() => {
+    if (!finding || !q.trim()) { setFound(null); return undefined; }
+    const t = setTimeout(() => desk.island.mail.list(q).then((r) => setFound(r.emails || [])).catch(() => setFound([])), 400); return () => clearTimeout(t);
+  }, [q, finding]);
+  const read = async (e) => { setOne({ e, loading: true }); const r = await desk.island.mail.read(e.id, e.store).catch(() => ({ error: 'Outlook didn’t answer.' })); setOne({ e, r }); };
+  const when = (s) => { const t = Date.parse(s); return t ? shortTime(t) : ''; };
+  const list = found || m.emails || [];
+  if (one) return html`<div className="isl-big tall"><div className="isl-ch-row"><button className="isl-btn" onClick=${() => setOne(null)} aria-label="Back to the inbox"><${Icon} n="back" s=${14}/></button><b className="isl-ell">${one.e.subject || '(no subject)'}</b></div>
+    <div className="isl-read">${one.loading ? html`<p className="isl-empty">Opening…</p>` : one.r.error ? html`<p className="isl-empty">${one.r.error}</p>` : html`
+      <p className="isl-meta"><b>${one.r.from}</b> ${one.r.address && html`<span>${'<' + one.r.address + '>'}</span>`}<br/><span>${when(one.r.received)}${one.r.to ? ' · to ' + one.r.to : ''}</span></p>
+      ${(one.r.files || []).length > 0 && html`<p className="isl-meta">${one.r.files.map((f) => html`<span key=${f} className="fbar-tag sm"><${Icon} n="clip" s=${11}/>${f}</span>`)}</p>`}
+      <div className="isl-body">${one.r.body}</div>`}</div></div>`;
+  return html`<div className=${'isl-big' + (big ? ' tall' : '')}>
+    <${IslCardHead} id="mail" sub="Inbox" count=${m.count ? m.count + ' new' : ''}>
+      ${!m.closed && html`<button className="isl-btn sm" onClick=${() => { setFinding(!finding); setQ(''); }} title="Search your mail" aria-label="Search your mail"><${Icon} n=${finding ? 'close' : 'search'} s=${13}/></button>`}<//>
+    ${m.closed ? html`<div className="isl-closed"><p>Open Outlook (the classic one) to see your mail here.</p><button className="isl-more" onClick=${() => desk.island.mail.openOutlook()}>Open Outlook</button></div>` : html`
+      ${finding && html`<label className="isl-search"><${Icon} n="search" s=${14}/><input autoFocus value=${q} onChange=${(e) => setQ(e.target.value)} placeholder="Search your mail: who, or words in the subject" aria-label="Search your mail" autoComplete="off"/></label>`}
+      <div className=${'isl-list' + (big ? '' : ' short')}>${list.slice(0, big ? 30 : 3).map((e) => html`<button key=${e.id} className=${'isl-row' + (e.unread ? ' new' : '')} onClick=${() => read(e)}>
+        <i className="isl-unread"></i><span><b>${e.from || e.address || 'Someone'}</b><small>${e.subject || '(no subject)'}</small></span><em>${when(e.received)}</em></button>`)}
+        ${!list.length && html`<p className="isl-empty">${finding && q.trim() ? (found ? 'No email matches.' : 'Looking…') : m.error || 'Nothing in the inbox.'}</p>`}</div>`}
+  </div>`;
+}
+
+/* WhatsApp: the chats with what's new, a chat big enough to read and answer, and finding someone */
+function IslWhatsApp({ big, setBig, st, openJid }) {
+  const desk = window.floorboardDesktop, w = st.whatsapp || {}, [cur, setCur] = useState(() => (openJid && (w.chats || []).find((c) => c.jid === openJid)) || null), [finding, setFinding] = useState(false), [q, setQ] = useState(''), [found, setFound] = useState(null);
+  useEffect(() => { setBig(!!cur || finding); }, [!!cur, finding]);
+  useEffect(() => {
+    if (!finding || !q.trim()) { setFound(null); return undefined; }
+    const t = setTimeout(() => desk.island.wa.find(q).then((r) => setFound(r.results || [])).catch(() => setFound([])), 250); return () => clearTimeout(t);
+  }, [q, finding]);
+  if (cur) return html`<div className="isl-big tall"><${IslWaThread} c=${cur} onBack=${() => setCur(null)}/></div>`;
+  return html`<div className=${'isl-big' + (big ? ' tall' : '')}>
+    <${IslCardHead} id="whatsapp" sub=${w.count ? w.count + ' new' : w.connected ? '' : 'Not connected'} onOpen=${() => desk.island.wa.open('')}>
+      ${w.connected && html`<button className="isl-btn sm" onClick=${() => { setFinding(!finding); setQ(''); }} title="Find someone" aria-label="Find someone"><${Icon} n=${finding ? 'close' : 'search'} s=${13}/></button>`}<//>
+    ${!w.connected ? html`<div className="isl-closed"><p>${w.error || 'WhatsApp isn’t connected on this computer.'}</p></div>` : html`
+      ${finding && html`<label className="isl-search"><${Icon} n="search" s=${14}/><input autoFocus value=${q} onChange=${(e) => setQ(e.target.value)} placeholder="Find someone: a name or a number" aria-label="Find someone on WhatsApp" autoComplete="off"/></label>`}
+      <div className=${'isl-list' + (big ? '' : ' short')}>${(finding && q.trim() ? (found || []) : (w.chats || []).slice(0, big ? 30 : 3)).map((c) => html`<button key=${c.jid} className=${'isl-row' + (c.unread ? ' new' : '')} onClick=${() => { setCur(c); setFinding(false); setQ(''); }}>
+        <span className="isl-wa-av">${(c.name || '?').replace(/[^\p{L}\p{N}]/gu, '').slice(0, 1).toUpperCase() || '#'}</span><span><b>${c.name}</b><small>${finding ? (c.chat ? 'Chat' : 'Contact') : c.group ? 'Group' : c.at ? shortTime(c.at) : ''}</small></span>${c.unread > 0 && html`<b className="isl-wa-n">${c.unread}</b>`}</button>`)}
+        ${finding && q.trim() && found && !found.length && html`<p className="isl-empty">No one by that name or number in your chats or contacts.</p>`}</div>`}
+  </div>`;
+}
+function IslWaThread({ c, onBack }) {
+  const desk = window.floorboardDesktop, [msgs, setMsgs] = useState(null), [err, setErr] = useState(''), [text, setText] = useState(''), [busy, setBusy] = useState(false), box = useRef(null);
+  const load = () => desk.island.wa.messages(c.jid).then((r) => { if (r.error && !/recent chats/.test(r.error)) setErr(r.error); setMsgs(r.messages || []); }).catch(() => setMsgs([]));
+  useEffect(() => { load(); const t = setInterval(load, 8000); return () => clearInterval(t); }, [c.jid]);
+  useEffect(() => { const el = box.current; if (el) el.scrollTop = el.scrollHeight; }, [msgs && msgs.length]);
+  const send = async (e) => {
+    e.preventDefault(); const t = text.trim(); if (!t || busy) return;
+    setBusy(true); setErr('');
+    const r = await desk.island.wa.send(c.jid, t).catch((x) => ({ error: String((x && x.message) || x) }));
+    setBusy(false);
+    if (r && r.ok) { setText(''); setTimeout(load, 1200); } else setErr((r && r.error) || 'It didn’t send.');
+  };
+  return html`<div className="fbar-thread isl-wa">
+    <div className="fbar-th"><button className="fbar-ic" onClick=${onBack} aria-label="Back to the chats"><${Icon} n="back" s=${16}/></button>
+      <span className="isl-wa-av">${(c.name || '?').replace(/[^\p{L}\p{N}]/gu, '').slice(0, 1).toUpperCase() || '#'}</span><b>${c.name}</b>
+      <button className="fbar-ic" style=${{ marginLeft: 'auto' }} onClick=${() => desk.island.wa.open(c.jid)} title="Open in WhatsApp" aria-label="Open this chat in WhatsApp"><${Icon} n="expand" s=${15}/></button></div>
+    <div className="fbar-msgs" ref=${box}>
+      ${msgs === null && html`<p className="fbar-empty">Opening…</p>`}
+      ${msgs && !msgs.length && html`<p className="fbar-empty">No messages here yet.</p>`}
+      ${(msgs || []).map((m) => html`<div key=${m.id} className=${'fbar-m' + (m.fromMe ? ' mine' : '')}>
+        ${c.group && !m.fromMe && html`<small>${m.who}</small>`}
+        ${m.media && html`<span className="fbar-tag"><${Icon} n=${m.media === 'image' ? 'image' : m.media === 'audio' ? 'mic' : 'clip'} s=${12}/>${m.media === 'image' ? 'Photo' : m.media === 'audio' ? 'Voice note' : m.file || 'File'}</span>`}
+        ${m.text && html`<span>${m.text}</span>`}<i>${m.at ? hm(m.at) : ''}</i></div>`)}</div>
+    ${err && html`<p className="isl-err">${err}</p>`}
+    <form className="fbar-reply" onSubmit=${send}><input value=${text} onChange=${(e) => setText(e.target.value)} placeholder=${'Message ' + c.name} aria-label="Message" autoComplete="off" disabled=${busy}/><button aria-label="Send" disabled=${busy || !text.trim()}><${Icon} n="send" s=${15}/></button></form>
+  </div>`;
+}
+
+/* 💬: Ask Floorboard (or JARVIS), right in the island */
+function IslAsk({ j }) {
+  const { db, user } = useApp(), desk = window.floorboardDesktop;
+  const [who, setWho] = useState('floorboard'), [turns, setTurns] = useState([]), [text, setText] = useState(''), [busy, setBusy] = useState(''), convo = useRef(null), live = useRef({ db, user }), box = useRef(null);
+  live.current = { db, user };
+  useEffect(() => { const el = box.current; if (el) el.scrollTop = el.scrollHeight; }, [turns.length, busy]);
+  const go = async (e) => {
+    e.preventDefault(); const q = text.trim(); if (!q || busy) return;
+    setText(''); setTurns((t) => [...t, { me: true, text: q }]); setBusy('Thinking…');
+    try {
+      if (who === 'jarvis') { const a = await desk.jarvis.ask(q, turns.filter((t) => t.who === 'jarvis' || t.me).slice(-8).map((t) => ({ role: t.me ? 'user' : 'assistant', text: t.text }))); setTurns((t) => [...t, { who: 'jarvis', text: a }]); }
+      else {
+        if (!convo.current || Date.now() - convo.current.at > 30 * MIN) convo.current = await newConvo(db, user);
+        const r = await askFloorboard(convo.current, q, setBusy, () => live.current); setTurns((t) => [...t, { ...r, who: 'floorboard' }]);
+      }
+    } catch (x) { setTurns((t) => [...t, { who, text: String((x && x.message) || x), err: true }]); }
+    setBusy('');
+  };
+  return html`<div className="isl-ask">
+    <div className="isl-ask-msgs" ref=${box}>
+      ${!turns.length && html`<p className="isl-empty">${who === 'jarvis' ? 'Ask JARVIS how far it is with something, what needs you, or for the morning brief.' : 'Ask Floorboard: find a document, see how far a team is with its tasks, what’s on tomorrow, or what needs you.'}</p>`}
+      ${turns.map((t, k) => html`<div key=${k} className=${t.me ? 'isl-q' : 'isl-a' + (t.err ? ' err' : '')}>${t.me ? t.text : html`<${AskText} text=${t.text}/>`}</div>`)}
+      ${busy && html`<div className="isl-a busy">${busy}</div>`}</div>
+    <form className="isl-ask-in" onSubmit=${go}>
+      ${j && j.mine && html`<select className="isl-who" value=${who} onChange=${(e) => setWho(e.target.value)} aria-label="Who to ask"><option value="floorboard">Floorboard</option><option value="jarvis">JARVIS</option></select>`}
+      <input autoFocus value=${text} onChange=${(e) => setText(e.target.value)} placeholder=${who === 'jarvis' ? 'Ask JARVIS…' : 'Ask Floorboard…'} aria-label="Your question" autoComplete="off"/>
+      <button aria-label="Ask" disabled=${!!busy || !text.trim()}><${Icon} n="send" s=${15}/></button></form>
+  </div>`;
+}
+
+/* ➕: files dropped on the island — to My files, or to JARVIS */
+function IslDrop({ j, files, setFiles }) {
+  const { db, user, update } = useApp(), desk = window.floorboardDesktop, [over, setOver] = useState(false), [done, setDone] = useState(''), [busy, setBusy] = useState(false), pick = useRef(null);
+  const take = (list) => { setDone(''); setFiles([...(list || [])].filter((f) => f.size <= 100 * 1048576).slice(0, 20)); };
+  const toMine = async () => {
+    setBusy(true);
+    const list = files.map((f) => { const mime = f.type || 'application/octet-stream'; return { file: f, name: f.name, mime, size: f.size, kind: kindOf(mime), title: titleOf(f.name) }; });
+    try {
+      const atts = await storeFiles(list, 'me/' + user.id + '/'), now = Date.now();
+      update((d) => { const p = d.pins[user.id] = d.pins[user.id] || { posts: [], notes: [] }; p.myfiles = [...list.map((f, i) => ({ id: uid('mf'), title: f.title, att: atts[i], at: now, folder: null })), ...(p.myfiles || [])]; });
+      setDone((files.length === 1 ? '“' + files[0].name + '” is' : files.length + ' files are') + ' in My files.'); setFiles([]);
+    } catch (e) { setDone('It didn’t save: ' + ((e && e.message) || e)); }
+    setBusy(false);
+  };
+  const toJarvis = () => { const paths = files.map((f) => desk.jarvis.pathOf(f)).filter(Boolean); if (!paths.length) { setDone('Drop files from File Explorer or the desktop for JARVIS.'); return; } desk.jarvis.prefill(paths); setFiles([]); setDone('Sent to JARVIS in the sidebar: pick the suit, the client and what to do.'); };
+  const isF = (e) => [...(e.dataTransfer.types || [])].includes('Files');
+  if (files.length) return html`<div className="isl-drop-card"><${IslChar} id="floorboard" s=${56} wig=${true}/><div>
+    <p className="isl-drop-t"><b>${files.length === 1 ? files[0].name : files.length + ' files'}</b> ${files.length === 1 ? 'is' : 'are'} ready.</p><p className="isl-sub">What do you want to do with ${files.length === 1 ? 'it' : 'them'}?</p>
+    <div className="isl-acts"><button className="isl-more primary" disabled=${busy} onClick=${toMine}>${busy ? 'Saving…' : 'Save to My files'}</button>
+      ${j && j.mine && j.found && html`<button className="isl-more" onClick=${toJarvis}>Send to JARVIS</button>`}<button className="isl-more" onClick=${() => setFiles([])}>Cancel</button></div></div></div>`;
+  return html`<div className=${'isl-drop' + (over ? ' over' : '')} role="button" tabIndex="0" onClick=${() => pick.current && pick.current.click()}
+    onDragEnter=${(e) => { if (isF(e)) { e.preventDefault(); setOver(true); } }} onDragOver=${(e) => { if (isF(e)) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; } }}
+    onDragLeave=${(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setOver(false); }} onDrop=${(e) => { e.preventDefault(); setOver(false); take(e.dataTransfer.files); }}>
+    <${IslChar} id="floorboard" s=${56}/>
+    <div><p className="isl-drop-t"><b>${done || 'Drop your files here'}</b></p>${!done && html`<p className="isl-tags"><span>PDF</span><span>Images</span><span>Docs</span><span>Spreadsheets</span></p>`}</div>
+    <input ref=${pick} type="file" multiple hidden onChange=${(e) => { take(e.target.files); e.target.value = ''; }}/>
+  </div>`;
+}
+
+/* ⚙: which cards, open on hover */
+// a character drawn as one kind or the other whatever is chosen now (for the choice in ⚙)
+function IslCharAs({ look, id }) { return html`<${IslChar} id=${id} s=${28} look=${look}/>`; }
+function IslSettings({ opts, setOpts, avail, onDone }) {
+  const flip = (k) => setOpts({ ...opts, [k]: !opts[k] }), hide = opts.hide || {};
+  const look = opts.look || 'ghost';
+  return html`<div className="isl-set">
+    <b>Characters</b>
+    <div className="isl-looks">${[['ghost', 'Ghosts'], ['slime', 'Slimes']].map(([k, l]) => html`<button key=${k} className=${'isl-lookpick' + (look === k ? ' on' : '')} onClick=${() => setOpts({ ...opts, look: k })} aria-pressed=${look === k}>
+      <span className="isl-lookrow">${ISL_ORDER.map((id) => html`<${IslCharAs} key=${id} look=${k} id=${id}/>`)}</span><span>${l}</span></button>`)}</div>
+    <b>Island</b>
+    <label className="isl-tog"><input type="checkbox" checked=${!!opts.hover} onChange=${() => flip('hover')}/>Open when the pointer is over it</label>
+    <label className="isl-tog"><input type="checkbox" checked=${!opts.quiet} onChange=${() => flip('quiet')}/>A sound when something comes in</label>
+    <b>Cards</b>
+    <div className="isl-set-cards">${ISL_ORDER.filter((id) => id !== 'floorboard' && avail[id]).map((id) => html`<label key=${id} className="isl-tog"><input type="checkbox" checked=${!hide[id]} onChange=${() => setOpts({ ...opts, hide: { ...hide, [id]: !hide[id] } })}/>${ISL[id].name}</label>`)}</div>
+    <button className="isl-more" onClick=${onDone}>Done</button>
+  </div>`;
+}
+
+// a call ringing: WhatsApp big and shaking, who's calling, and answer it in WhatsApp (the island can't take calls)
+function IslRing({ r }) {
+  const desk = window.floorboardDesktop;
+  return html`<div className="isl-big isl-ringc">
+    <${IslCardHead} id="whatsapp" sub="Incoming call"/>
+    <p className="isl-ring-who"><b>${r.name}</b> is calling you</p>
+    <div className="isl-acts"><button className="isl-more call" onClick=${() => { desk.island.wa.open(r.jid); desk.island.wa.endCall(); }}><${Icon} n="phone" s=${13}/>Answer in WhatsApp</button>
+      <button className="isl-more" onClick=${() => desk.island.wa.endCall()}>Not now</button></div>
+  </div>`;
+}
+// a ringing tone, two short notes (Floorboard's own, made here)
+function islRing() {
+  try {
+    const A = window.AudioContext || window.webkitAudioContext, a = new A(), t = a.currentTime;
+    [[660, 0], [880, 0.18], [660, 0.5], [880, 0.68]].forEach(([f, d]) => { const o = a.createOscillator(), g = a.createGain(); o.type = 'triangle'; o.frequency.value = f; g.gain.setValueAtTime(0.0001, t + d); g.gain.exponentialRampToValueAtTime(0.07, t + d + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + d + 0.16); o.connect(g); g.connect(a.destination); o.start(t + d); o.stop(t + d + 0.18); });
+    setTimeout(() => a.close(), 1200);
+  } catch (e) { /* no sound here */ }
+}
+function Island() {
+  const { db, user } = useApp(), desk = window.floorboardDesktop, st = useIslandData(), j = useJarvis();
+  useIslandEyes();
+  const [open, setOpen] = useState(false), [tab, setTabS] = useState('home'), [gear, setGear] = useState(false), [big, setBig] = useState(false), [files, setFiles] = useState([]);
+  const [focus, setFocusS] = useState(() => islGet('focus', 'floorboard')), [opts, setOptsS] = useState(() => islGet('opts', {})), [seen, setSeen] = useState(() => islGet('seen', {}));
+  const [wig, setWig] = useState({}), prev = useRef(null), leave = useRef(null);
+  const setOpts = (o) => { setOptsS(o); islSet('opts', o); };
+  ISL_LOOK = opts.look || 'ghost'; // ghosts or slimes, as chosen in ⚙
+  const mark = (id) => {
+    if (id === 'mail' || id === 'whatsapp') { if (desk && desk.island) desk.island.opened(id); return; }
+    setSeen((s) => { const n = { ...s, [id]: Date.now() }; islSet('seen', n); return n; });
+  };
+  // which cards this person has here
+  const tb = tbDepts(db, user).length > 0;
+  const avail = { floorboard: true, taskboard: tb, jarvis: !!(j && j.mine && (j.found || j.installed)),
+    mail: !!(st.mail && (user.role === 'admin' || outlookOn(db, user) || (st.mail.emails || []).length > 0)), whatsapp: !!(st.whatsapp && (st.whatsapp.connected || (st.whatsapp.chats || []).length > 0)) };
+  const cards = ISL_ORDER.filter((id) => avail[id] && !(opts.hide || {})[id] || id === 'floorboard');
+  const fo = cards.includes(focus) ? focus : 'floorboard';
+  // what came in since each card was last opened
+  const since = (id) => seen[id] || 0;
+  const wk = weekOf(), myTasks = tb ? tbDepts(db, user).flatMap((d) => tbWeek(db, d.id, wk).filter((t) => tbWho(db, t).includes(user.id))) : [];
+  const counts = {
+    floorboard: db.posts.filter((p) => needsMe(p, user.id) && p.createdAt > since('floorboard')).length
+      + myChats(db, user.id).reduce((a, c) => { const t = Math.max((c.read || {})[user.id] || 0, since('floorboard')); return a + db.messages.filter((m) => m.chat === c.id && m.at > t && m.user !== user.id && m.kind !== 'system').length; }, 0),
+    taskboard: myTasks.filter((t) => (t.at || 0) > since('taskboard')).length,
+    jarvis: j && j.found ? (j.attention || []).filter((a) => a.at > since('jarvis')).length + (j.runs || []).filter((r) => r.finishedAt > since('jarvis')).length : 0,
+    mail: (st.mail && st.mail.count) || 0, whatsapp: (st.whatsapp && st.whatsapp.count) || 0,
+  };
+  const busy = { jarvis: !!(j && (j.runs || []).some((r) => JV_ACTIVE.includes(r.status))), whatsapp: counts.whatsapp > 0, mail: counts.mail > 0 };
+  // a count that grows wiggles its character once, with a sound unless they're off
+  useEffect(() => {
+    const p = prev.current; prev.current = counts;
+    if (!p) return;
+    const up = cards.filter((id) => counts[id] > (p[id] || 0));
+    if (!up.length) return;
+    setWig((w) => { const n = { ...w }; up.forEach((id) => { n[id] = Date.now(); }); return n; });
+    if (!opts.quiet) islBlip();
+    setTimeout(() => setWig({}), 900);
+  });
+  // Getting attention. A WhatsApp message opens the island a little with who it's from and what they said, and its
+  // character shakes; a call opens it on WhatsApp with the character shaking until it stops ringing (or is answered in
+  // WhatsApp, or put away). Neither takes the keyboard from whatever is being typed in.
+  const w = st.whatsapp || {}, ringing = w.ringing || null;
+  const [peek, setPeek] = useState(null), [waOpen, setWaOpen] = useState(''), lastMsg = useRef(null), byRing = useRef(false), peekT = useRef(null);
+  useEffect(() => {
+    const at = w.latest ? w.latest.at : 0;
+    if (lastMsg.current === null) { lastMsg.current = at; return; } // what was there before the island started isn't news
+    if (!at || at <= lastMsg.current) return;
+    lastMsg.current = at;
+    if (!open) { setPeek(w.latest); clearTimeout(peekT.current); peekT.current = setTimeout(() => setPeek(null), 7000); }
+  }, [w.latest && w.latest.at]);
+  useEffect(() => {
+    if (!ringing) { if (byRing.current) { byRing.current = false; setOpen(false); setTabS('home'); } return undefined; }
+    setPeek(null);
+    if (!open) { byRing.current = true; setOpen(true); }
+    setTabS('home'); setGear(false); setBig(false);
+    if (opts.quiet) return undefined;
+    islRing(); const t = setInterval(islRing, 2200); return () => clearInterval(t);
+  }, [ringing && ringing.at]);
+  const tall = open && !ringing && (gear || tab === 'chat' || (tab === 'home' && big));
+  useEffect(() => { if (desk && desk.bar) desk.bar(open ? (tall ? 'tall' : 'open') : peek ? 'peek' : 'pill', open && !byRing.current); }, [open, tall, !!peek]);
+  const show = (on) => { clearTimeout(leave.current); byRing.current = false; setPeek(null); setOpen(on); if (on) mark(fo); else { setGear(false); setBig(false); setTabS('home'); setWaOpen(''); } };
+  const setFocus = (id) => { setFocusS(id); islSet('focus', id); setBig(false); mark(id); };
+  const setTab = (t) => { setTabS(t); setGear(false); };
+  useEffect(() => {
+    const blur = () => { if (!files.length) show(false); }, key = (e) => { if (e.key === 'Escape') show(false); };
+    window.addEventListener('blur', blur); window.addEventListener('keydown', key);
+    return () => { window.removeEventListener('blur', blur); window.removeEventListener('keydown', key); };
+  }, [files.length]);
+  // files dragged over the closed island open it on ➕, as Coucou does
+  const dragIn = (e) => { if ([...(e.dataTransfer.types || [])].includes('Files') && (!open || tab !== 'drop')) { e.preventDefault(); setOpen(true); setTabS('drop'); } };
+  const others = cards.filter((id) => id !== fo).slice(0, 4);
+  const peekText = (() => {
+    const id = cards.find((x) => x !== 'floorboard' && counts[x] > 0);
+    if (id) return html`<b>${ISL[id].name}</b> ${counts[id]} new`;
+    return islandLine(db, user) || 'All caught up';
+  })();
+  const main = ringing ? 'whatsapp' : fo, Big = ringing ? IslRing : { floorboard: IslFloorboard, taskboard: IslTaskboard, jarvis: IslJarvis, mail: IslMail, whatsapp: IslWhatsApp }[fo];
+  const openChat = (jid) => { setFocusS('whatsapp'); islSet('focus', 'whatsapp'); setWaOpen(jid); show(true); mark('whatsapp'); };
+  return html`<div className=${'isl' + (open ? ' open' : '') + (tall ? ' tall' : '') + (peek && !open ? ' peeking' : '')} onDragEnter=${dragIn}
+    onMouseEnter=${() => { clearTimeout(leave.current); clearTimeout(peekT.current); if (!open && opts.hover) show(true); }} onMouseLeave=${() => { if (peek && !open) peekT.current = setTimeout(() => setPeek(null), 2500); if (open && opts.hover && !big && tab === 'home' && !ringing) leave.current = setTimeout(() => show(false), 600); }}>
+    ${!open && peek ? html`<button className="isl-peekbar" onClick=${() => openChat(peek.jid)} aria-label=${'WhatsApp from ' + peek.name + ': open the chat'}>
+        <${IslChar} id="whatsapp" s=${46} wig=${true}/>
+        <span className="isl-peek-t"><b>${peek.name}</b><small>${peek.who ? peek.who + ': ' : ''}${peek.text || 'New message'}</small></span>
+        <span className="isl-peek-n">WhatsApp</span></button>`
+    : !open ? html`<button className="isl-pill" onClick=${() => show(true)} aria-label="Open Floorboard’s island">
+        <${IslChar} id=${fo} s=${22} n=${counts[fo]} wig=${wig[fo]} busy=${busy[fo]}/>
+        <span className="isl-peek">${peekText}</span>
+        <span className="isl-mini">${others.map((id) => html`<${IslChar} key=${id} id=${id} s=${12} n=${counts[id]} wig=${wig[id]} busy=${busy[id]}/>`)}</span></button>`
+    : html`<div className="isl-panel">
+      <${IslHead} tab=${tab} setTab=${setTab} onGear=${() => setGear(!gear)} mute=${!!opts.quiet} setMute=${(m) => setOpts({ ...opts, quiet: m })} onClose=${() => show(false)} ask=${true}/>
+      ${gear ? html`<${IslSettings} opts=${opts} setOpts=${setOpts} avail=${avail} onDone=${() => setGear(false)}/>`
+      : tab === 'chat' ? html`<${IslAsk} j=${j}/>`
+      : tab === 'drop' ? html`<${IslDrop} j=${j} files=${files} setFiles=${setFiles}/>`
+      : html`<div className=${'isl-home' + (big ? ' big' : '')}>
+        <div className="isl-left"><span className="isl-me"><${IslChar} id=${main} s=${big ? 36 : 54} busy=${busy[main]} ring=${!!ringing}/></span><${Big} key=${ringing ? 'ring' : fo} big=${big} setBig=${setBig} st=${st} j=${j} r=${ringing} openJid=${fo === 'whatsapp' ? waOpen : ''}/></div>
+        ${!big && html`<div className="isl-grid">${(ringing ? cards.filter((id) => id !== 'whatsapp').slice(0, 4) : others).map((id) => html`<button key=${id} className="isl-pick" onClick=${() => setFocus(id)} title=${ISL[id].name}>
+          <${IslChar} id=${id} s=${26} n=${counts[id]} wig=${wig[id]} busy=${busy[id]}/><span>${ISL[id].name}</span></button>`)}</div>`}
+      </div>`}
+    </div>`}
+    <${ConfirmModal}/>
   </div>`;
 }
 
@@ -8565,6 +9188,8 @@ function JvRun({ r, onCarryOn }) {
 }
 function JarvisCard() {
   const { toast, ask, seeing } = useApp(), j = useJarvis(), d = window.floorboardDesktop;
+  const [prefill, setPrefill] = useState([]);
+  useEffect(() => { const d = window.floorboardDesktop; return d && d.jarvis && d.jarvis.onPrefill ? d.jarvis.onPrefill((p) => { setPrefill(p); setOpen(true); setSend(true); }) : undefined; }, []);
   const [open, setOpen] = useFold('floorboard.jarvis.fold.v1'), [send, setSend] = useState(false), [brief, setBrief] = useState(false), [all, setAll] = useState(false);
   if (!j || !(j.found || j.installed) || seeing) return null;
   if (!j.mine) {
@@ -8596,14 +9221,14 @@ function JarvisCard() {
     ${j.connected && !runs.length && html`<p className="muted sm" style=${{ margin: 0 }}>Nothing in the Tower in the last two days. Send it some work.</p>`}
     ${j.brief && html`<div className="jv-brief"><button className="linkish sm" onClick=${() => setBrief(!brief)} aria-expanded=${brief}><${Icon} n="sun" s=${13}/>${j.brief.title}${j.brief.at ? ' · ' + jvTime(j.brief.at) : ''}</button>
       ${brief && html`<div className="jv-brief-t">${j.brief.text}</div>`}</div>`}
-    ${send && html`<${JarvisSend} j=${j} onClose=${() => setSend(false)}/>`}
+    ${send && html`<${JarvisSend} j=${j} initial=${prefill} onClose=${() => { setSend(false); setPrefill([]); }}/>`}
   </div>`;
 }
 // a new job for JARVIS: the files (dropped in or picked), the suit and its client, the floor, and what to do with them.
 // JARVIS first says what it will do (and what it may cost); it starts only after Start it.
-function JarvisSend({ j, onClose }) {
+function JarvisSend({ j, onClose, initial }) {
   const { toast } = useApp(), d = window.floorboardDesktop.jarvis, floors = j.floors || [];
-  const [suits, setSuits] = useState(null), [err, setErr] = useState(''), [files, setFiles] = useState([]), [over, setOver] = useState(false), [more, setMore] = useState(false);
+  const [suits, setSuits] = useState(null), [err, setErr] = useState(''), [files, setFiles] = useState(() => (initial || []).map((p) => ({ key: uid('jf'), name: String(p).split(/[\\/]/).pop(), size: 0, path: p, url: /\.(png|jpe?g|gif|webp)$/i.test(p) ? 'file:///' + String(p).replace(/\\/g, '/') : '' }))), [over, setOver] = useState(false), [more, setMore] = useState(false);
   const [check, setCheck] = useState(null), [busy, setBusy] = useState(false), pick = useRef(null), urls = useRef([]);
   const firstFloor = () => { const k = lsGet('floorboard.jarvis.floor'), i = floors.findIndex((x) => x.tower + '|' + x.floor === k); return String(i >= 0 ? i : Math.max(0, floors.findIndex((x) => /market/i.test(x.name)))); };
   const [f, setF] = useState(() => ({ suit: lsGet('floorboard.jarvis.suit') || '', client: '', floor: firstFloor(), task: '', outcome: '', audience: '', constraints: '', finished: '' }));
@@ -9591,7 +10216,7 @@ function App() {
   // the bar at the top of the screen: just the pill, on a see-through window
   // the folded sidebar's own window (Windows app): just the rail
   if (mode === 'rail') return html`<${Ctx.Provider} value=${ctx}>${user && html`<div className="rail-win" data-scene=${look.scene}><${SlimRail} onOpen=${(sec) => { const d = window.floorboardDesktop; if (d && d.openSidebarAt) d.openSidebarAt(sec || ''); }}/></div>`}<//>`;
-  if (mode === 'bar') return html`<${Ctx.Provider} value=${ctx}>${user && (!CLOUD || cloud === 'ready' || cloud === 'offline') ? html`<${Bar}/>`
+  if (mode === 'bar') return html`<${Ctx.Provider} value=${ctx}>${user && (!CLOUD || cloud === 'ready' || cloud === 'offline') ? html`<${Island}/>`
     : html`<div className="fbar"><button className="fbar-pill" onClick=${() => { const d = window.floorboardDesktop; if (d && d.showSidebar) d.showSidebar(); }}>${BAR_MARK}<span className="fbar-peek">${cloud === 'checking' || cloud === 'loading' ? 'Connecting…' : 'Log in to Floorboard'}</span></button></div>`}<//>`;
   return html`<${Ctx.Provider} value=${ctx}>
     <${Scene} look=${look}/>

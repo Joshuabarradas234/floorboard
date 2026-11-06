@@ -13,7 +13,7 @@ contextBridge.exposeInMainWorld('floorboardDesktop', {
   onSection: (fn) => { const h = (_e, s) => fn(String(s || '')); ipcRenderer.on('sidebar-section', h); return () => ipcRenderer.removeListener('sidebar-section', h); },
   focus: () => ipcRenderer.send('show-sidebar'),
   // the bar at the top of the screen: 'pill' (closed) or 'open'; focus to type a reply
-  bar: (state, focus) => ipcRenderer.send('bar-state', state === 'open' ? 'open' : 'pill', !!focus),
+  bar: (state, focus) => ipcRenderer.send('bar-state', ['open', 'tall', 'peek'].includes(state) ? state : 'pill', !!focus),
   attention: (info) => {
     const t = (v) => String(v || '').slice(0, 200), l = info && info.latest;
     ipcRenderer.send('attention', { count: Number(info && info.count) || 0, urgent: !!(info && info.urgent), chats: Number(info && info.chats) || 0, latest: l ? { title: t(l.title), body: t(l.body) } : null });
@@ -69,6 +69,26 @@ contextBridge.exposeInMainWorld('floorboardDesktop', {
     disconnect: () => ipcRenderer.invoke('mfs-disconnect'),
     onOpen: (fn) => { const h = () => fn(); ipcRenderer.on('mfs-open', h); return () => ipcRenderer.removeListener('mfs-open', h); },
   },
+  // Floorboard's own island at the top: WhatsApp (through the WhatsApp gateway on this computer) and Mail (Outlook classic)
+  island: {
+    state: () => ipcRenderer.invoke('island-state'),
+    onState: (fn) => { const h = (_e, s) => fn(s || {}); ipcRenderer.on('island-state', h); return () => ipcRenderer.removeListener('island-state', h); },
+    opened: (card) => ipcRenderer.invoke('island-opened', String(card || '')),
+    // the pointer, anywhere on the screen, in the island window's coordinates (for the characters' eyes)
+    onCursor: (fn) => { const h = (_e, p) => fn({ x: Number(p && p.x) || 0, y: Number(p && p.y) || 0 }); ipcRenderer.on('island-cursor', h); return () => ipcRenderer.removeListener('island-cursor', h); },
+    wa: {
+      messages: (jid) => ipcRenderer.invoke('wa-messages', String(jid || '')),
+      find: (q) => ipcRenderer.invoke('wa-find', String(q || '')),
+      send: (jid, text) => ipcRenderer.invoke('wa-send', { jid: String(jid || ''), text: String(text || '') }),
+      open: (jid) => ipcRenderer.invoke('wa-open', String(jid || '')),
+      endCall: () => ipcRenderer.invoke('wa-end-call'),
+    },
+    mail: {
+      list: (q) => ipcRenderer.invoke('mail-list', String(q || '')),
+      read: (id, store) => ipcRenderer.invoke('mail-read', { id: String(id || ''), store: String(store || '') }),
+      openOutlook: () => ipcRenderer.invoke('mail-open-outlook'),
+    },
+  },
   // JARVIS on this computer, for the one account it's linked to: what it's doing, and jobs sent to it (files go by their place on disk)
   jarvis: {
     who: (u) => ipcRenderer.send('jarvis-who', { id: String((u && u.id) || ''), admin: !!(u && u.admin) }),
@@ -79,6 +99,10 @@ contextBridge.exposeInMainWorld('floorboardDesktop', {
     suits: () => ipcRenderer.invoke('jarvis-suits'),
     run: (job, confirm) => ipcRenderer.invoke('jarvis-run', { job: JSON.parse(JSON.stringify(job || {})), confirm: !!confirm }),
     carryOn: (runId) => ipcRenderer.invoke('jarvis-continue', String(runId || '')),
+    ask: (q, history) => ipcRenderer.invoke('jarvis-ask', { q: String(q || ''), history: JSON.parse(JSON.stringify(Array.isArray(history) ? history : [])) }),
+    // files dropped on the island, to the sidebar's Send work
+    prefill: (paths) => ipcRenderer.send('jarvis-prefill', (Array.isArray(paths) ? paths : []).map(String)),
+    onPrefill: (fn) => { const h = (_e, p) => fn(Array.isArray(p) ? p : []); ipcRenderer.on('jarvis-prefill', h); return () => ipcRenderer.removeListener('jarvis-prefill', h); },
     // where a dropped or picked file is on this computer ('' for one that isn't a file on disk)
     pathOf: (file) => { try { return webUtils.getPathForFile(file) || ''; } catch (e) { return ''; } },
   },

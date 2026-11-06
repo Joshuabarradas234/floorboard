@@ -8,6 +8,7 @@ const ask = require('./ask');
 const outlook = require('./outlook');
 const mfs = require('./mfs');
 const jarvis = require('./jarvis');
+const whatsapp = require('./whatsapp');
 
 const PAGE = path.join(__dirname, '..', 'index.html');
 const ICON = path.join(__dirname, '..', 'icon-192.png');
@@ -20,8 +21,13 @@ const SMOKE = process.env.FLOORBOARD_SMOKE === '1'; // load once, print the resu
 app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
 const BUBBLE = 80; // the floating button's window: the 56px button and its shadow
 // the bar at the top of the screen: its window closed (the pill and its shadow) and open (the chat panel)
-const BAR = { pill: { width: 320, height: 48 }, open: { width: 430, height: 490 } };
-let prefs = { onTop: false, side: 'right', bubble: true, bubbleAt: null, bar: true, slim: false, width: SIDEBAR_WIDTH, coucou: true, card: 'auto', mfs: null, jarvisUser: '', jarvisCard: true, jarvisNotify: true };
+// Floorboard's island, in the same spot as Coucou's: closed a small black island, open 640 wide, and taller to read
+// (peek: opened a little, when a message comes in)
+const BAR = { pill: { width: 320, height: 52 }, peek: { width: 460, height: 104 }, open: { width: 660, height: 204 }, tall: { width: 660, height: 404 } };
+// the WhatsApp gateway's key for telling the island of messages and calls: made fresh each time Floorboard starts
+const WA_KEY = require('crypto').randomBytes(16).toString('hex');
+const waHook = () => (prefs.island ? 'http://127.0.0.1:' + ask.PORT + '/wa-hook?k=' + WA_KEY : '');
+let prefs = { onTop: false, side: 'right', bubble: true, bubbleAt: null, bar: true, slim: false, width: SIDEBAR_WIDTH, coucou: true, card: 'auto', mfs: null, jarvisUser: '', jarvisCard: true, jarvisNotify: true, island: false };
 let sidebar = null, full = null, tray = null, bubble = null, bar = null, rail = null, barState = 'pill';
 let opened = false, slide = null, home = null, need = { count: 0, urgent: false }; // home: the work area of the screen the sidebar docks to
 
@@ -171,7 +177,7 @@ function bubbleIpc() {
 // (#bar): a pill showing the newest unread chat, which opens into a list of chats to read and answer.
 function placeBar(state) {
   if (!bar) return;
-  barState = state === 'open' ? 'open' : 'pill';
+  barState = state === 'open' || state === 'tall' || state === 'peek' ? state : 'pill';
   const { bounds } = screen.getPrimaryDisplay(), size = BAR[barState];
   bar.setBounds({ x: Math.round(bounds.x + (bounds.width - size.width) / 2), y: bounds.y, ...size });
 }
@@ -182,15 +188,17 @@ function createBar() {
     minimizable: false, maximizable: false, fullscreenable: false, skipTaskbar: true, alwaysOnTop: true, show: false, title: 'Floorboard bar', webPreferences,
   });
   bar.setAlwaysOnTop(true, 'screen-saver');
+  if (SMOKE) bar.webContents.on('console-message', (_e, level, message) => { if (level >= 2 && !/Security Warning/.test(message)) console.log('console: [island] ' + message); });
   placeBar('pill'); // in its spot from the start, even if it stays hidden for now
-  bar.loadFile(PAGE, { hash: 'bar', query: { shell: 'desktop' } });
+  bar.loadFile(PAGE, { hash: 'bar', query: QUERY });
   openLinksOutside(bar);
   bar.once('ready-to-show', () => { placeBar('pill'); if (!inCoucou()) bar.showInactive(); });
   bar.on('close', (e) => { if (!app.isQuitting) { e.preventDefault(); setBar(false); } });
   bar.on('closed', () => { bar = null; });
 }
 // With Coucou running and Floorboard showing in its island, Floorboard's own bar steps aside: one island, not two.
-const inCoucou = () => prefs.coucou && coucou.running();
+// With Floorboard's own island chosen, Coucou is left out: no cards go there, and the island never steps aside for it.
+const inCoucou = () => !prefs.island && prefs.coucou && coucou.running();
 function coucouChanged() {
   // the pages hear it too: with Coucou's island there, Ask Floorboard is its chat, so the sidebar doesn't show its own
   BrowserWindow.getAllWindows().forEach((w) => { if (!w.isDestroyed()) w.webContents.send('coucou-state', inCoucou()); });
@@ -252,11 +260,11 @@ let jarvisWas = '';
 function jarvisChanged() {
   showCard();
   const st = jarvis.state(), key = JSON.stringify(st);
-  if (key !== jarvisWas) { jarvisWas = key; [sidebar, full].forEach((w) => { if (w && !w.isDestroyed()) w.webContents.send('jarvis-state', st); }); }
+  if (key !== jarvisWas) { jarvisWas = key; [sidebar, full, bar].forEach((w) => { if (w && !w.isDestroyed()) w.webContents.send('jarvis-state', st); }); }
   if (tray && st.mine !== jarvisMenuWas) { jarvisMenuWas = st.mine; tray.setContextMenu(trayMenu()); }
 }
 let jarvisMenuWas = false;
-const ours = (e) => [sidebar, full].some((w) => w && !w.isDestroyed() && e.sender === w.webContents);
+const ours = (e) => [sidebar, full, bar].some((w) => w && !w.isDestroyed() && e.sender === w.webContents);
 function jarvisIpc() {
   ipcMain.on('jarvis-who', (e, w) => { if (ours(e)) jarvis.setWho(w); });
   ipcMain.handle('jarvis-state', (e) => (ours(e) ? jarvis.state() : {}));
@@ -265,6 +273,13 @@ function jarvisIpc() {
   ipcMain.handle('jarvis-suits', async (e) => { if (!ours(e) || !jarvis.ready()) return { error: 'JARVIS isn’t open on this computer.' }; try { return { suits: await jarvis.suits() }; } catch (x) { return { error: x.message }; } });
   ipcMain.handle('jarvis-run', (e, a) => (ours(e) ? jarvis.run(a && a.job, !!(a && a.confirm)) : { error: 'no' }));
   ipcMain.handle('jarvis-continue', (e, id) => (ours(e) ? jarvis.carryOn(id) : { error: 'no' }));
+  // the island's 💬 asking JARVIS, and files dropped on the island going to the sidebar's Send work
+  ipcMain.handle('jarvis-ask', (e, a) => (ours(e) ? jarvis.answer(String((a && a.q) || '').slice(0, 4000), Array.isArray(a && a.history) ? a.history.slice(-12) : [], () => {}) : ''));
+  ipcMain.on('jarvis-prefill', (e, paths) => {
+    if (!ours(e) || !Array.isArray(paths)) return;
+    openSidebarAt(null, '.w-jv');
+    setTimeout(() => { if (sidebar) sidebar.webContents.send('jarvis-prefill', paths.filter((p) => typeof p === 'string').slice(0, 20)); }, 500);
+  });
 }
 function jarvisMenu() {
   return [
@@ -272,6 +287,62 @@ function jarvisMenu() {
     { label: 'Pop-ups when its work is done, or the morning brief is in', type: 'checkbox', checked: prefs.jarvisNotify !== false, click: (i) => { prefs.jarvisNotify = i.checked; savePrefs(); } },
     { label: 'Open JARVIS in the sidebar', click: () => openSidebarAt(null, '.w-jv') },
   ];
+}
+// Floorboard's own island: the bar at the top grown into cards (Floorboard with its search, the week's tasks, JARVIS,
+// Mail, WhatsApp), in place of Coucou's. Chosen from the tray; with it on, nothing goes to Coucou.
+function setIsland(on) {
+  prefs.island = !!on; savePrefs();
+  if (prefs.island) { coucou.stop(); if (!prefs.bar) setBar(true); } else if (prefs.coucou) coucou.init(coucouChanged);
+  whatsapp.setHook(waHook());
+  coucouChanged(); islandSend();
+  if (tray) tray.setContextMenu(trayMenu());
+}
+// What the island's cards get from here: WhatsApp's chats and counts, and Mail's newest and how many came in since the
+// card was last opened (Outlook is asked every minute; it answers only while it's open).
+let mail = { closed: true, emails: [], count: 0, error: '' }, mailSeen = 0, mailTimer = null;
+const mailSeenFile = () => path.join(app.getPath('userData'), 'mail-seen.json');
+async function mailPoll() {
+  const r = await outlook.list('', 30);
+  if (r.error) mail = { closed: !!r.closed, emails: r.closed ? [] : mail.emails, count: r.closed ? 0 : mail.count, error: r.error };
+  else {
+    if (!mailSeen) { mailSeen = Date.now(); try { fs.writeFileSync(mailSeenFile(), String(mailSeen)); } catch (e) { /* for now only */ } }
+    mail = { closed: false, emails: r.emails, error: '', count: r.emails.filter((m) => m.unread && Date.parse(m.received) > mailSeen).length };
+  }
+  islandSend();
+}
+function islandState() { return { island: !!prefs.island, whatsapp: whatsapp.summary(), mail: { closed: mail.closed, error: mail.error, count: mail.count, emails: mail.emails.slice(0, 30) } }; }
+function islandSend() { if (bar && !bar.isDestroyed()) bar.webContents.send('island-state', islandState()); }
+function islandIpc() {
+  try { mailSeen = Number(fs.readFileSync(mailSeenFile(), 'utf8')) || 0; } catch (e) { /* first look */ }
+  ipcMain.handle('island-state', (e) => (ours(e) ? islandState() : {}));
+  ipcMain.handle('island-opened', (e, card) => {
+    if (!ours(e)) return false;
+    if (card === 'whatsapp') whatsapp.opened();
+    if (card === 'mail') { mailSeen = Date.now(); mail.count = 0; try { fs.writeFileSync(mailSeenFile(), String(mailSeen)); } catch (x) { /* for now only */ } islandSend(); }
+    return true;
+  });
+  ipcMain.handle('wa-messages', (e, jid) => (ours(e) ? whatsapp.messages(String(jid || '')) : {}));
+  ipcMain.handle('wa-find', (e, q) => (ours(e) ? whatsapp.find(String(q || '').slice(0, 80)) : {}));
+  ipcMain.handle('wa-send', (e, a) => (ours(e) ? whatsapp.send(String((a && a.jid) || ''), String((a && a.text) || '')) : { error: 'no' }));
+  ipcMain.handle('wa-open', (e, jid) => (ours(e) ? whatsapp.openApp(String(jid || '')) : {}));
+  ipcMain.handle('wa-end-call', (e) => { if (ours(e)) whatsapp.endCall(); return true; });
+  ipcMain.handle('mail-list', async (e, q) => {
+    if (!ours(e)) return {};
+    if (!String(q || '').trim()) { await mailPoll(); return { emails: mail.emails, error: mail.error, closed: mail.closed }; }
+    return outlook.list(String(q).slice(0, 120), 30);
+  });
+  ipcMain.handle('mail-read', (e, a) => (ours(e) ? outlook.read(a && a.id, a && a.store) : {}));
+  ipcMain.handle('mail-open-outlook', (e) => (ours(e) ? outlook.openOutlook() : {}));
+  // where the pointer is, for the characters' eyes: sent to the island while it shows, only when it moved
+  let ptr = '';
+  setInterval(() => {
+    if (!bar || bar.isDestroyed() || !bar.isVisible()) return;
+    const p = screen.getCursorScreenPoint(), b = bar.getBounds(), k = (p.x - b.x) + ',' + (p.y - b.y);
+    if (k !== ptr) { ptr = k; bar.webContents.send('island-cursor', { x: p.x - b.x, y: p.y - b.y }); }
+  }, 50);
+  // a test run reads WhatsApp and Outlook only from stand-ins it's given, never this computer's own
+  if (!SMOKE || process.env.FLOORBOARD_WA_URL) { whatsapp.init(islandSend); whatsapp.setHook(waHook()); }
+  if (!SMOKE || process.env.FLOORBOARD_SMOKE_MAIL) { mailPoll(); mailTimer = setInterval(mailPoll, 60 * 1000); }
 }
 function setBar(on) {
   prefs.bar = !!on; savePrefs();
@@ -380,6 +451,53 @@ function createSidebar() {
           await shot('floorboard-jarvis-send.png');
           await js("(() => { const s = document.querySelector('#jv-form select'); s.value = 'oracle'; s.dispatchEvent(new Event('change', { bubbles: true })); return 1; })()"); await wait(300);
           console.log('SMOKE jarvis unreachable suit', JSON.stringify(await js("[...document.querySelectorAll('#jv-form .err, #jv-form select')].map((x) => x.tagName === 'SELECT' ? x.options[x.selectedIndex].text : x.innerText).join(' | ')")));
+          if (bar && process.env.FLOORBOARD_WA_URL) { // Floorboard's island, signed in as u1 with JARVIS linked, against a stand-in WhatsApp
+            const B = (x) => bar.webContents.executeJavaScript(x), bshot = async (name) => fs.writeFileSync(path.join(app.getPath('temp'), name), (await bar.webContents.capturePage()).toPNG());
+            const typeIn = (sel, v) => B(`(() => { const i = document.querySelector(${JSON.stringify(sel)}); if (!i) return 'no ' + ${JSON.stringify(sel)}; Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(i, ${JSON.stringify(v)}); i.dispatchEvent(new Event('input', { bubbles: true })); return 'typed'; })()`);
+            const pick = (name) => B(`(() => { const b = [...document.querySelectorAll('.isl-pick')].find((x) => x.title === ${JSON.stringify(name)}); if (b) b.click(); return !!b; })()`);
+            const text = (sel) => B(`(() => { const e = document.querySelector(${JSON.stringify(sel)}); return e ? e.innerText.replace(/\\n+/g, ' | ').slice(0, 400) : 'none'; })()`);
+            setIsland(true); // the island chosen over Coucou: the stand-in gateway is told where to send messages and calls
+            bar.webContents.reload(); await wait(5000);
+            console.log('SMOKE island page', JSON.stringify(await B("document.documentElement.className + ' | ' + document.body.innerText.replace(/\s+/g, ' ').slice(0, 200)")));
+            console.log('SMOKE island pill', JSON.stringify(await text('.isl-pill')), JSON.stringify(bar.getBounds())); await bshot('fb-island-1-pill.png');
+            await B("document.querySelector('.isl-pill').click(); 1"); await wait(1000);
+            console.log('SMOKE island home', JSON.stringify(bar.getBounds()), JSON.stringify(await text('.isl-grid')), '||', JSON.stringify(await text('.isl-left')));
+            console.log('SMOKE island eyes', await B("[...document.querySelectorAll('.isl-ch')].slice(0, 3).map((e) => e.style.getPropertyValue('--ex') + ',' + e.style.getPropertyValue('--ey')).join(' ')"));
+            await bshot('fb-island-2-home.png');
+            console.log('SMOKE island search', await typeIn('#isl-q', 'bakery')); await wait(700);
+            console.log('SMOKE island search results', JSON.stringify(bar.getBounds()), JSON.stringify(await text('.isl-list'))); await bshot('fb-island-3-search.png');
+            await typeIn('#isl-q', ''); await wait(400);
+            console.log('SMOKE island whatsapp', await pick('WhatsApp')); await wait(900);
+            console.log('SMOKE island whatsapp card', JSON.stringify(await text('.isl-left'))); await bshot('fb-island-4-whatsapp.png');
+            await B("document.querySelector('.isl-left .isl-row').click(); 1"); await wait(1200);
+            console.log('SMOKE island whatsapp chat', JSON.stringify(bar.getBounds()), JSON.stringify(await text('.isl-wa'))); await bshot('fb-island-5-wachat.png');
+            await typeIn('.isl-wa .fbar-reply input', 'Test from the island'); await B("document.querySelector('.isl-wa .fbar-reply').requestSubmit(); 1"); await wait(1500);
+            const sentWa = await fetch(process.env.FLOORBOARD_WA_URL + '/test/sent').then((r) => r.json()).catch(() => []);
+            console.log('SMOKE island whatsapp sent', JSON.stringify(sentWa));
+            await B("document.querySelector('.isl-wa .fbar-ic').click(); 1"); await wait(500);
+            await B("document.querySelector('.isl-left .isl-btn.sm').click(); 1"); await wait(300); await typeIn('.isl-left .isl-search input', 'zoe'); await wait(1200);
+            console.log('SMOKE island whatsapp find', JSON.stringify(await text('.isl-left .isl-list'))); await bshot('fb-island-6-wafind.png');
+            await B("document.querySelector('.isl-left .isl-btn.sm').click(); 1"); await wait(300);
+            console.log('SMOKE island mail', await pick('Mail')); await wait(700); console.log('SMOKE island mail card', JSON.stringify(await text('.isl-left'))); await bshot('fb-island-7-mail.png');
+            console.log('SMOKE island jarvis', await pick('JARVIS')); await wait(700); console.log('SMOKE island jarvis card', JSON.stringify(await text('.isl-left'))); await bshot('fb-island-8-jarvis.png');
+            await B("document.querySelector('.isl-left .isl-lines').click(); 1"); await wait(700); console.log('SMOKE island jarvis all', JSON.stringify(await text('.isl-left'))); await bshot('fb-island-9-jarvis-all.png');
+            await B("[...document.querySelectorAll('.isl-more')].find((b) => b.innerText === 'Less').click(); 1"); await wait(300);
+            console.log('SMOKE island taskboard', await pick('This week')); await wait(700); console.log('SMOKE island taskboard card', JSON.stringify(await text('.isl-left'))); await bshot('fb-island-10-week.png');
+            await B("document.querySelector('.isl-tab[aria-label=\"Ask Floorboard\"]').click(); 1"); await wait(600); await typeIn('.isl-ask-in input', 'What needs me?'); await B("document.querySelector('.isl-ask-in').requestSubmit(); 1"); await wait(3500);
+            console.log('SMOKE island ask', JSON.stringify(bar.getBounds()), JSON.stringify(await text('.isl-ask-msgs'))); await bshot('fb-island-11-ask.png');
+            await B("document.querySelector('.isl-tab[aria-label=\"Drop files\"]').click(); 1"); await wait(500); console.log('SMOKE island drop', JSON.stringify(await text('.isl-drop'))); await bshot('fb-island-12-drop.png');
+            await B("document.querySelector('.isl-btn[aria-label=\"Island settings\"]').click(); 1"); await wait(500); console.log('SMOKE island settings', JSON.stringify(await text('.isl-set'))); await bshot('fb-island-13-settings.png');
+            await B("document.querySelector('.isl-btn[aria-label=\"Close the island\"]').click(); 1"); await wait(600);
+            console.log('SMOKE island webhook', JSON.stringify(await fetch(process.env.FLOORBOARD_WA_URL + '/test/hook').then((r) => r.json()).catch(() => ({}))).replace(/k=[0-9a-f]+/, 'k=…'));
+            await fetch(process.env.FLOORBOARD_WA_URL + '/test/new').catch(() => {}); await wait(2500);
+            console.log('SMOKE island message peek', JSON.stringify(bar.getBounds()), JSON.stringify(await text('.isl-peekbar'))); await bshot('fb-island-14-peek.png');
+            await wait(6000);
+            console.log('SMOKE island pill after the peek', JSON.stringify(await text('.isl-pill')), JSON.stringify(bar.getBounds()), await B("[...document.querySelectorAll('.isl-pill .isl-n')].length")); await bshot('fb-island-15-pill-new.png');
+            await fetch(process.env.FLOORBOARD_WA_URL + '/test/call').catch(() => {}); await wait(1500);
+            console.log('SMOKE island call', JSON.stringify(bar.getBounds()), JSON.stringify(await text('.isl-left')), await B("!!document.querySelector('.isl-me .isl-ch.ring')")); await bshot('fb-island-16-call.png');
+            await B("[...document.querySelectorAll('.isl-more')].find((b) => b.innerText === 'Not now').click(); 1"); await wait(1200);
+            console.log('SMOKE island after the call', JSON.stringify(bar.getBounds()), JSON.stringify(await text('.isl-pill')));
+          }
           await js("document.querySelector('.modal .icon-btn').click(); localStorage.setItem('floorboard.session.v1', 'u5'); location.reload(); 1"); await wait(4500);
           console.log('SMOKE search bar', JSON.stringify(await js("(document.querySelector('#side-search') || {}).placeholder || 'none'")));
           openFull(null, 'search:invoice highveld'); await wait(4000);
@@ -507,7 +625,8 @@ function trayMenu() {
     { label: 'Keep the sidebar on top', type: 'checkbox', checked: prefs.onTop, click: (i) => setOnTop(i.checked) },
     { label: 'Show the floating button when the sidebar is closed', type: 'checkbox', checked: prefs.bubble, click: (i) => setBubble(i.checked) },
     { label: 'Show the bar at the top of the screen', type: 'checkbox', checked: prefs.bar, click: (i) => setBar(i.checked) },
-    { label: 'Show Floorboard in Coucou’s island (when Coucou is open)', type: 'checkbox', checked: prefs.coucou, click: (i) => setCoucou(i.checked) },
+    { label: 'Floorboard’s own island at the top (instead of Coucou)', type: 'checkbox', checked: !!prefs.island, click: (i) => setIsland(i.checked) },
+    { label: 'Show Floorboard in Coucou’s island (when Coucou is open)', type: 'checkbox', checked: prefs.coucou, enabled: !prefs.island, click: (i) => setCoucou(i.checked) },
     { label: 'Your department’s card in Coucou’s island', enabled: prefs.coucou && cardList.length > 0, submenu: cardMenu() },
     ...(jarvis.mine() ? [{ label: 'JARVIS', submenu: jarvisMenu() }] : []),
     { label: 'Dock on the left', type: 'checkbox', checked: prefs.side === 'left', click: (i) => { prefs.side = i.checked ? 'left' : 'right'; savePrefs(); dock(); } },
@@ -548,12 +667,12 @@ else {
     createSidebar();
     createBubble();
     createBar();
-    if (prefs.coucou && !SMOKE) coucou.init(coucouChanged); // Floorboard in Coucou's island, if Coucou is installed and running (a test run stays out of it)
+    if (prefs.coucou && !prefs.island && !SMOKE) coucou.init(coucouChanged); // Floorboard in Coucou's island, if Coucou is installed and running (a test run stays out of it)
     bubbleIpc();
     ipcMain.on('sidebar-slim', setSlim);
     ipcMain.on('sidebar-slim-size', (_e, h) => { h = Math.round(Number(h) || 0); if (h < 200 || h > 1200 || h === railHeight) return; railHeight = h; placeRail(); });
     ipcMain.on('rail-open', openSidebarAt);
-    ipcMain.on('bar-state', (_e, state, focus) => { placeBar(state); if (bar && state === 'open' && focus) bar.focus(); });
+    ipcMain.on('bar-state', (_e, state, focus) => { placeBar(state); if (bar && state !== 'pill' && focus) bar.focus(); });
     ipcMain.handle('on-top-get', () => !!prefs.onTop);
     ipcMain.handle('on-top-set', (_e, on) => { setOnTop(on); return prefs.onTop; });
     ask.start(() => sidebar); // Ask Floorboard from Coucou's chat
@@ -567,6 +686,7 @@ else {
     jarvis.init({ owner: prefs.jarvisUser, icon: ICON, notify: () => !SMOKE && prefs.jarvisNotify !== false, onChange: jarvisChanged, onOpen: () => openSidebarAt(null, '.w-jv'),
       saveOwner: (id) => { prefs.jarvisUser = id; savePrefs(); }, seen: prefs.jarvisSeen, saveSeen: (v) => { prefs.jarvisSeen = v; savePrefs(); } });
     jarvisIpc();
+    islandIpc();
     if (SMOKE) return;
     buildTray();
     startupFlag(process.argv);
@@ -585,7 +705,7 @@ else {
   let leaving = false;
   app.on('will-quit', (e) => {
     globalShortcut.unregisterAll();
-    jarvis.stop();
+    jarvis.stop(); whatsapp.stop(); clearInterval(mailTimer);
     if (leaving || !coucou.running()) return;
     leaving = true; e.preventDefault();
     Promise.race([coucou.stop(), new Promise((ok) => setTimeout(ok, 800))]).then(() => app.quit());
