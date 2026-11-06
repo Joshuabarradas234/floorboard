@@ -9,18 +9,33 @@ const { app, shell } = require('electron');
 
 const BASE = (process.env.FLOORBOARD_WA_URL || 'http://127.0.0.1:3000').replace(/\/+$/, '');
 // The gateway already linked to the person's WhatsApp on this computer: Coucou installed it (checked against its
-// release's checksum) and starts it from its folder, which also holds the link (storages/whatsapp.db). When nothing is
-// answering, Floorboard starts that same gateway the same way, so WhatsApp stays linked without Coucou running and
-// without scanning the code again. It stops it again when Floorboard quits.
-const GOWA_DIR = process.env.FLOORBOARD_GOWA_DIR || path.join(process.env.LOCALAPPDATA || '', 'Coucou', 'GOWA');
+// release's checksum) in its folder, which also holds the link (storages/whatsapp.db). When nothing is answering,
+// Floorboard starts that gateway itself, the same way. The first time, it copies the gateway and the link into its own
+// folder and runs it from there, so WhatsApp stays linked even with Coucou removed, without scanning the code again.
+// (It only copies while the gateway is stopped, so the link is copied whole.) It stops the gateway when Floorboard quits.
+const COUCOU_GOWA = path.join(process.env.LOCALAPPDATA || '', 'Coucou', 'GOWA');
+const ownGowa = () => path.join(app.getPath('userData'), 'whatsapp-gateway');
+const linked = (dir) => fs.existsSync(path.join(dir, 'gowa.exe')) && fs.existsSync(path.join(dir, 'storages', 'whatsapp.db'));
+function gowaDir() {
+  if (process.env.FLOORBOARD_GOWA_DIR) return process.env.FLOORBOARD_GOWA_DIR;
+  const own = ownGowa();
+  if (linked(own)) return own;
+  if (!linked(COUCOU_GOWA)) return '';
+  try { // Floorboard's own copy: the program and the link (not the downloaded pictures and files)
+    fs.mkdirSync(own, { recursive: true });
+    fs.copyFileSync(path.join(COUCOU_GOWA, 'gowa.exe'), path.join(own, 'gowa.exe'));
+    fs.cpSync(path.join(COUCOU_GOWA, 'storages'), path.join(own, 'storages'), { recursive: true });
+    return own;
+  } catch (e) { return COUCOU_GOWA; }
+}
 let gateway = null, gatewayAt = 0;
 function startGateway() {
   if (gateway || process.env.FLOORBOARD_WA_URL || Date.now() - gatewayAt < 60 * 1000) return;
-  const exe = path.join(GOWA_DIR, 'gowa.exe');
-  if (!fs.existsSync(exe) || !fs.existsSync(path.join(GOWA_DIR, 'storages'))) return;
   gatewayAt = Date.now();
+  const dir = gowaDir(); if (!dir) return;
+  const exe = path.join(dir, 'gowa.exe');
   try {
-    gateway = spawn(exe, ['rest', '--host=127.0.0.1', '--port=3000', '--auto-download-media=false'], { cwd: GOWA_DIR, windowsHide: true, stdio: 'ignore' });
+    gateway = spawn(exe, ['rest', '--host=127.0.0.1', '--port=3000', '--auto-download-media=false'], { cwd: dir, windowsHide: true, stdio: 'ignore' });
     gateway.on('exit', () => { gateway = null; });
     gateway.on('error', () => { gateway = null; });
   } catch (e) { gateway = null; }
@@ -30,8 +45,12 @@ const seenFile = () => path.join(app.getPath('userData'), 'whatsapp-seen.json');
 
 let device = '', me = '', timer = null, changed = () => {}, state = { connected: false, error: '' };
 let chats = [];               // [{ jid, name, at, group }] newest first
-let seen = { card: 0, chats: {} }; // when the card, and each chat, were last opened (what came before isn't counted)
-const unread = new Map();     // jid → messages from others since that chat (or the card) was last opened
+let seen = { card: 0, chats: {} }; // when each chat was last opened here
+// jid → { at: the chat's last message time when counted, unread: messages from others since the person last wrote there
+// or opened it here }. The gateway doesn't keep WhatsApp's own unread marks, so this is the count: what's come in that
+// hasn't been answered or read here.
+const unread = new Map();
+const startAt = Date.now();   // messages from before Floorboard started don't pop the island open
 let book = null, bookAt = 0;  // the address book, kept 10 minutes while the search is in use
 const sent = [];              // when the last messages went, for the rate limit
 let latest = null;            // the newest message from someone else, for the island to show: { jid, name, text, at }
@@ -74,22 +93,26 @@ function cleanMsg(m) {
     text: str(m.content, 4000), at: when(m.timestamp), media: str(m.media_type, 20), file: str(m.filename, 120) };
 }
 
-// every few seconds: the chats, and how many new messages each has since it (or the card) was last opened
+// a chat's unread: its messages from others since the person last wrote there or opened it here
+function count(c, ms) {
+  const lastMine = Math.max(0, ...ms.filter((m) => m.fromMe).map((m) => m.at)), since = Math.max(lastMine, seen.chats[c.jid] || 0);
+  const fresh = ms.filter((m) => !m.fromMe && m.at > since);
+  unread.set(c.jid, { at: c.at, unread: fresh.length });
+  const top = fresh.sort((a, b) => b.at - a.at)[0];
+  if (top && top.at > startAt && (!latest || top.at > latest.at)) latest = { jid: c.jid, name: c.name, who: c.group ? top.who : '', text: top.text || (top.media === 'image' ? 'Photo' : top.media === 'audio' ? 'Voice note' : top.media ? top.file || 'File' : ''), at: top.at };
+}
+// every few seconds: the chats, and how many unread each has (a chat is looked into again only when it moved)
 async function poll() {
   try {
     if (!device) await findDevice();
     const list = ((await call('GET', '/chats', { limit: '30' })).data || []).map(cleanChat).filter((c) => c.jid);
-    const before = new Map(chats.map((c) => [c.jid, c.at]));
     chats = list.sort((a, b) => b.at - a.at);
-    // a chat that moved: count its messages from others since it was last looked at (the start doesn't count)
-    for (const c of chats.slice(0, 12)) {
-      const since = Math.max(seen.chats[c.jid] || 0, seen.card || 0);
-      if (c.at <= since || before.get(c.jid) === c.at) continue;
-      const ms = ((await call('GET', '/chat/' + encodeURIComponent(c.jid) + '/messages', { limit: '20' })).data || []).map(cleanMsg);
-      const fresh = ms.filter((m) => !m.fromMe && m.at > since);
-      unread.set(c.jid, fresh.length);
-      const top = fresh.sort((a, b) => b.at - a.at)[0];
-      if (top && (!latest || top.at > latest.at)) latest = { jid: c.jid, name: c.name, who: c.group ? top.who : '', text: top.text || (top.media === 'image' ? 'Photo' : top.media === 'audio' ? 'Voice note' : top.media ? top.file || 'File' : ''), at: top.at };
+    const week = Date.now() - 7 * 24 * 3600 * 1000;
+    for (const c of chats.slice(0, 15)) {
+      if (c.at < week) { unread.delete(c.jid); continue; }
+      const had = unread.get(c.jid);
+      if (had && had.at === c.at) continue;
+      count(c, ((await call('GET', '/chat/' + encodeURIComponent(c.jid) + '/messages', { limit: '20' })).data || []).map(cleanMsg));
     }
     if (hookUrl && hookFor !== device + hookUrl) {
       try { await call('PATCH', '/devices/' + encodeURIComponent(device) + '/webhook', null, { webhook_url: hookUrl, webhook_secret: hookUrl.split('k=')[1] || '', webhook_events: 'message,call.offer' }); hookFor = device + hookUrl; } catch (e) { /* polling still finds new messages */ }
@@ -104,7 +127,7 @@ async function poll() {
 }
 
 function summary() {
-  const rows = chats.slice(0, 30).map((c) => ({ ...c, unread: unread.get(c.jid) || 0 }));
+  const rows = chats.slice(0, 30).map((c) => ({ ...c, unread: (unread.get(c.jid) || {}).unread || 0 }));
   return { ...state, chats: rows, count: rows.reduce((a, c) => a + c.unread, 0), latest, ringing };
 }
 
@@ -125,14 +148,19 @@ function webhook(key, body) {
 function setHook(url) { hookUrl = url || ''; hookFor = ''; if (hookUrl) poll(); }
 function endCall() { ringing = null; changed(); }
 
-// the card was opened: what came before doesn't count any more
-function opened() { seen.card = Date.now(); unread.clear(); save(); changed(); }
+// the card was opened (the counts stay until each chat is read or answered)
+function opened() { seen.card = Date.now(); save(); }
 
-async function messages(jid) {
+// a chat opened in the island: its count clears, and (unless switched off in ⚙) WhatsApp marks it read on the phone
+// too, as Coucou did with "mark read on open"
+async function messages(jid, markRead) {
   const c = chats.find((x) => x.jid === jid); if (!c) return { error: 'That chat isn’t in your recent chats.' };
   try {
     const ms = ((await call('GET', '/chat/' + encodeURIComponent(jid) + '/messages', { limit: '60' })).data || []).map(cleanMsg).sort((a, b) => a.at - b.at);
-    seen.chats[jid] = Date.now(); unread.delete(jid); save(); changed();
+    const had = (unread.get(jid) || {}).unread || 0;
+    seen.chats[jid] = Date.now(); unread.set(jid, { at: c.at, unread: 0 }); save(); changed();
+    const last = ms.filter((m) => !m.fromMe).pop();
+    if (markRead && had && last) call('POST', '/message/' + encodeURIComponent(last.id) + '/read', null, { phone: jid }).catch(() => {});
     return { chat: c, messages: ms };
   } catch (e) { return { error: e.message }; }
 }

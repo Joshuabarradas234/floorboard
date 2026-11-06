@@ -20,7 +20,9 @@ $words = @(([string]$env:FB_Q).ToLower().Split(' ', [StringSplitOptions]::Remove
 $since = (Get-Date).AddDays(-[int]$env:FB_DAYS)
 $max = [int]$env:FB_N
 $out = New-Object System.Collections.ArrayList
+$unread = 0
 foreach ($store in $o.GetNamespace('MAPI').Stores) {
+  try { $unread += [int]$store.GetDefaultFolder(6).UnReadItemCount } catch {}
   try { $items = $store.GetDefaultFolder(6).Items; $items.Sort('[ReceivedTime]', $true) } catch { continue }
   $n = 0
   foreach ($m in $items) {
@@ -39,7 +41,7 @@ foreach ($store in $o.GetNamespace('MAPI').Stores) {
     } catch { continue }
   }
 }
-ConvertTo-Json -InputObject @{ emails = @($out) } -Depth 3 -Compress
+ConvertTo-Json -InputObject @{ emails = @($out); unread = $unread } -Depth 3 -Compress
 `;
 
 const READ = HEAD + `
@@ -75,7 +77,8 @@ function search(query, days) {
 function list(query, n) {
   return new Promise((done) => run(LIST, { FB_Q: String(query || '').slice(0, 200), FB_DAYS: '90', FB_N: String(Math.min(60, Math.max(1, Number(n) || 30))), FB_CUT: '160' }, (r) => {
     if (r.error) return done(r);
-    done({ emails: (Array.isArray(r.emails) ? r.emails : []).sort((a, b) => String(b.received).localeCompare(String(a.received))) });
+    // unread: Outlook's own count for the inbox (every account in it)
+    done({ emails: (Array.isArray(r.emails) ? r.emails : []).sort((a, b) => String(b.received).localeCompare(String(a.received))), unread: Number(r.unread) || 0 });
   }));
 }
 

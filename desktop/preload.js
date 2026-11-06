@@ -77,7 +77,8 @@ contextBridge.exposeInMainWorld('floorboardDesktop', {
     // the pointer, anywhere on the screen, in the island window's coordinates (for the characters' eyes)
     onCursor: (fn) => { const h = (_e, p) => fn({ x: Number(p && p.x) || 0, y: Number(p && p.y) || 0 }); ipcRenderer.on('island-cursor', h); return () => ipcRenderer.removeListener('island-cursor', h); },
     wa: {
-      messages: (jid) => ipcRenderer.invoke('wa-messages', String(jid || '')),
+      // read: mark it read on the phone too
+      messages: (jid, read) => ipcRenderer.invoke('wa-messages', { jid: String(jid || ''), read: !!read }),
       find: (q) => ipcRenderer.invoke('wa-find', String(q || '')),
       send: (jid, text) => ipcRenderer.invoke('wa-send', { jid: String(jid || ''), text: String(text || '') }),
       open: (jid) => ipcRenderer.invoke('wa-open', String(jid || '')),

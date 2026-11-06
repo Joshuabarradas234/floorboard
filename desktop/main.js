@@ -306,7 +306,7 @@ async function mailPoll() {
   if (r.error) mail = { closed: !!r.closed, emails: r.closed ? [] : mail.emails, count: r.closed ? 0 : mail.count, error: r.error };
   else {
     if (!mailSeen) { mailSeen = Date.now(); try { fs.writeFileSync(mailSeenFile(), String(mailSeen)); } catch (e) { /* for now only */ } }
-    mail = { closed: false, emails: r.emails, error: '', count: r.emails.filter((m) => m.unread && Date.parse(m.received) > mailSeen).length };
+    mail = { closed: false, emails: r.emails, error: '', count: r.unread }; // Outlook's own count of unread emails in the inbox
   }
   islandSend();
 }
@@ -321,7 +321,7 @@ function islandIpc() {
     if (card === 'mail') { mailSeen = Date.now(); mail.count = 0; try { fs.writeFileSync(mailSeenFile(), String(mailSeen)); } catch (x) { /* for now only */ } islandSend(); }
     return true;
   });
-  ipcMain.handle('wa-messages', (e, jid) => (ours(e) ? whatsapp.messages(String(jid || '')) : {}));
+  ipcMain.handle('wa-messages', (e, a) => (ours(e) ? whatsapp.messages(String((a && a.jid) || ''), !!(a && a.read)) : {}));
   ipcMain.handle('wa-find', (e, q) => (ours(e) ? whatsapp.find(String(q || '').slice(0, 80)) : {}));
   ipcMain.handle('wa-send', (e, a) => (ours(e) ? whatsapp.send(String((a && a.jid) || ''), String((a && a.text) || '')) : { error: 'no' }));
   ipcMain.handle('wa-open', (e, jid) => (ours(e) ? whatsapp.openApp(String(jid || '')) : {}));
