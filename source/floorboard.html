@@ -520,6 +520,7 @@ html.bar-mode,html.bar-mode body,html.bar-mode #root{background:transparent!impo
 @keyframes isl-arrive{0%{transform:perspective(160px) rotateY(-300deg) scale(.4);opacity:0}60%{opacity:1}100%{transform:perspective(160px) rotateY(0) scale(1)}}
 @keyframes isl-fadein{from{opacity:0;transform:translateY(-3px)}}
 @media (prefers-reduced-motion:reduce){.isl-arrive,.isl-pill .isl-peek{animation:none}}
+.isl-need{display:block;font-size:10.5px;font-weight:700;color:#ffcf85;margin-top:1px}.isl-need.off{color:rgba(233,235,238,.45);font-weight:600}
 .isl-mini{display:grid;grid-template-columns:repeat(2,12px);gap:2px 3px;flex:none}
 .isl-mini-b{display:block;width:12px;height:12px;padding:0;border:0;background:none;cursor:pointer}.isl-mini-b .isl-ch{transition:transform .2s}.isl-mini-b:hover .isl-ch{transform:scale(1.35)}
 .isl-panel{width:640px;box-sizing:border-box;background:var(--isl-bg,#000);border-radius:0 0 30px 30px;padding:8px 10px 10px;box-shadow:0 14px 40px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:8px}
@@ -3666,7 +3667,15 @@ function Island() {
   const news = (id) => id !== 'floorboard' && cards.includes(id) && counts[id] > 0;
   const pillId = news(recent) ? recent : ['whatsapp', 'mail', 'teams', 'taskboard', 'jarvis'].find(news) || fo;
   const say = { whatsapp: 'new', mail: 'new', teams: 'for you', taskboard: 'to do', jarvis: 'need you' };
-  const peekText = news(pillId) ? html`<b>${ISL[pillId].name}</b> ${counts[pillId]} ${say[pillId]}` : islandLine(db, user) || 'All caught up';
+  // what still needs signing in here (after logging in to Floorboard on a new computer): each card's ghost opens it
+  const tState = teamsState(db, user), wst = st.whatsapp || {}, mst = st.mail || {};
+  const signin = dm ? {} : {
+    whatsapp: !wst.connected && wst.need ? 'Link' : '',
+    mail: mst.closed && !(gm && gm.graph) ? (mst.classic ? 'Open Outlook' : MS.on ? 'Sign in' : '') : '',
+    teams: tState.status !== 'ok' && !tState.off && MS.on ? 'Connect' : '',
+  };
+  const toSign = cards.filter((id) => signin[id]);
+  const peekText = news(pillId) ? html`<b>${ISL[pillId].name}</b> ${counts[pillId]} ${say[pillId]}` : toSign.length ? html`Sign in: <b>${toSign.map((id) => ISL[id].name).join(', ')}</b>` : islandLine(db, user) || 'All caught up';
   const pillOthers = cards.filter((id) => id !== pillId).slice(0, 4);
   const main = ringing ? 'whatsapp' : fo, Big = ringing ? IslRing : { floorboard: IslFloorboard, taskboard: IslTaskboard, teams: IslTeams, jarvis: IslJarvis, mail: IslMail, whatsapp: IslWhatsApp }[fo];
   const openChat = (jid) => { setFocusS('whatsapp'); islSet('focus', 'whatsapp'); setWaOpen(jid); show(true); mark('whatsapp'); };
@@ -3688,7 +3697,7 @@ function Island() {
       : html`<div className=${'isl-home' + (big ? ' big' : '')}>
         <div className="isl-left"><span className="isl-me"><${IslChar} id=${main} s=${big ? 36 : 54} busy=${busy[main]} ring=${!!ringing}/></span><${Big} key=${ringing ? 'ring' : fo} big=${big} setBig=${setBig} st=${st} gm=${gm} j=${j} r=${ringing} demo=${dm} openJid=${fo === 'whatsapp' ? waOpen : ''}/></div>
         ${!big && html`<div className="isl-grid">${(ringing ? cards.filter((id) => id !== 'whatsapp').slice(0, 4) : others).map((id) => html`<button key=${id} className="isl-pick" onClick=${() => setFocus(id)} title=${ISL[id].name}>
-          <${IslChar} id=${id} s=${26} n=${counts[id]} wig=${wig[id]} busy=${busy[id]}/><span>${ISL[id].name}</span></button>`)}</div>`}
+          <${IslChar} id=${id} s=${26} n=${counts[id]} wig=${wig[id]} busy=${busy[id]}/><span>${ISL[id].name}${signin[id] && html`<small className="isl-need">${signin[id]}</small>`}${!signin[id] && id === 'teams' && !dm && !MS.on && html`<small className="isl-need off">Needs setup</small>`}</span></button>`)}</div>`}
       </div>`}
     </div>`}
     <${ConfirmModal}/>
