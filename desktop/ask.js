@@ -89,12 +89,19 @@ function onRequest(req, res) {
 }
 
 // getSidebar: the sidebar window, which holds the person's data and sign-in
+// The port can still be held for a moment by a Floorboard that just closed (a restart), or by something else: keep trying,
+// every few seconds at first and then every half minute, rather than leaving Coucou's chat with nothing to talk to.
+let tries = 0;
+function listen() {
+  const s = http.createServer(onRequest);
+  s.on('error', () => { if (server === s) server = null; setTimeout(() => { if (!server) listen(); }, ++tries < 20 ? 3000 : 30000); });
+  s.on('listening', () => { tries = 0; });
+  server = s;
+  s.listen(PORT, '127.0.0.1');
+}
 function start(getSidebar) {
   sidebar = getSidebar;
-  if (server) return;
-  server = http.createServer(onRequest);
-  server.on('error', () => { server = null; }); // the port is taken: Coucou's chat just can't reach Floorboard
-  server.listen(PORT, '127.0.0.1');
+  if (!server) listen();
 }
 
 module.exports = { start, PORT, url: 'http://127.0.0.1:' + PORT };

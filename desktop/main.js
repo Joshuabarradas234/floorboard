@@ -381,6 +381,9 @@ function createSidebar() {
           await js("(() => { const s = document.querySelector('#jv-form select'); s.value = 'oracle'; s.dispatchEvent(new Event('change', { bubbles: true })); return 1; })()"); await wait(300);
           console.log('SMOKE jarvis unreachable suit', JSON.stringify(await js("[...document.querySelectorAll('#jv-form .err, #jv-form select')].map((x) => x.tagName === 'SELECT' ? x.options[x.selectedIndex].text : x.innerText).join(' | ')")));
           await js("document.querySelector('.modal .icon-btn').click(); localStorage.setItem('floorboard.session.v1', 'u5'); location.reload(); 1"); await wait(4500);
+          console.log('SMOKE search bar', JSON.stringify(await js("(document.querySelector('#side-search') || {}).placeholder || 'none'")));
+          openFull(null, 'search:invoice highveld'); await wait(4000);
+          console.log('SMOKE search in full app', JSON.stringify(await full.webContents.executeJavaScript("[(document.querySelector('#big-search') || {}).value, (document.querySelector('.tabs') || {}).innerText].join(' | ')")));
           console.log('SMOKE jarvis u5 (someone else)', st(), '| slips card:', await js("!!document.querySelector('.w-slip:not(.w-jv-offer)')"), '| on the page:', await js("!!document.querySelector('.w-jv,.w-jv-offer')"), '| models', (await req('GET', '/v1/models')).text, '| chat:', JSON.stringify(await chat('jarvis', 'what are you working on')));
         }
       }
@@ -399,13 +402,15 @@ function createSidebar() {
 
 // target (from a sidebar shortcut) names what to open, e.g. chat:c-bakery or view:drive
 function openFull(_e, target) {
-  const hash = typeof target === 'string' && /^(chat|view|post):[\w:.-]+$/.test(target) ? 'go-' + target : undefined;
+  // or search:<words>, for the full app's search with the words in it
+  const hash = typeof target !== 'string' ? undefined : /^(chat|view|post):[\w:.-]+$/.test(target) ? 'go-' + target
+    : /^search:[^\r\n]{1,200}$/.test(target) ? 'go-search:' + encodeURIComponent(target.slice(7)) : undefined;
   if (full && !full.isDestroyed()) {
-    if (hash) full.loadFile(PAGE, { query: { shell: 'desktop' }, hash });
+    if (hash) full.loadFile(PAGE, { query: QUERY, hash });
     full.show(); full.focus(); return;
   }
   full = new BrowserWindow({ width: 1320, height: 860, minWidth: 380, minHeight: 560, title: 'Floorboard', icon: ICON, backgroundColor: '#2b2018', autoHideMenuBar: true, webPreferences });
-  full.loadFile(PAGE, { query: { shell: 'desktop' }, hash });
+  full.loadFile(PAGE, { query: QUERY, hash });
   openLinksOutside(full);
 }
 

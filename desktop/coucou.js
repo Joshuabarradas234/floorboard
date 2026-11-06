@@ -58,10 +58,13 @@ function setCards(list) {
   cards = next;
 }
 // what the card says now: Coucou writes out a tool's name in full (a tool it doesn't know gets no more), so that's the line
+// Coucou's card can't hold a search box, but the island's own chat (the 💬 at its top) is Ask Floorboard: files, posts,
+// people, chats, the calendar. The line above what the card says points there.
+const HINT = 'Search or ask: 💬 above';
 function show(step) {
   // the same line again so soon would only push the line before it off the card
   const same = step === lastStep && Date.now() - saidAt < AGAIN;
-  if (!same) post({ hook_event_name: 'PreToolUse', tool_name: step, tool_input: {} });
+  if (!same) { post({ hook_event_name: 'PreToolUse', tool_name: HINT, tool_input: {} }); post({ hook_event_name: 'PreToolUse', tool_name: step, tool_input: {} }); }
   if (!last || !(last.count || last.chats)) post({ hook_event_name: 'Interrupt' });
   lastStep = step; if (!same) saidAt = Date.now();
 }

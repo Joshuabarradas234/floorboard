@@ -178,6 +178,7 @@ input[type=checkbox],input[type=radio]{accent-color:#fff}
 .greet small{display:block;font-size:12px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tsearch{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.10);border:1px solid var(--glass-line);border-radius:999px;padding:0 14px;height:40px;width:min(440px,100%);color:var(--ink-3);margin:0 auto}
 .tsearch input{border:0;background:transparent;outline:none;flex:1;min-width:0;color:var(--ink);height:100%}
+.w-search{flex:none;width:auto;margin:0;height:38px;padding:0 6px 0 14px}
 .tsearch:focus-within{border-color:var(--glass-line-2);background:rgba(255,255,255,.16)}
 .menu-btn,.search-btn{display:none}
 .badge{position:absolute;top:1px;right:0;min-width:18px;height:18px;padding:0 4px;border-radius:99px;background:var(--red-dot);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center;font-family:var(--f-mono);box-shadow:0 0 0 2px rgba(40,28,20,.6)}
@@ -2615,6 +2616,15 @@ function SlimRail({ onOpen }) {
         <button className="srail-i srail-me" onClick=${() => onOpen()} onMouseEnter=${over} title=${user.name} aria-label="Open the sidebar"><${Avatar} u=${user} s=${30}/></button>
   </nav>`;
 }
+// the sidebar's search bar: posts, messages, documents and people, in the full app's search (Enter opens it there)
+function SideSearch() {
+  const [q, setQ] = useState(''), desk = window.floorboardDesktop;
+  const go = (e) => { e.preventDefault(); const w = q.trim().slice(0, 200); if (!w) return; if (desk && desk.openFull) desk.openFull('search:' + w); else location.hash = 'go-search:' + encodeURIComponent(w); setQ(''); };
+  return html`<form className="tsearch w-search" role="search" onSubmit=${go}>
+    <${Icon} n="search" s=${15}/><input id="side-search" value=${q} onChange=${(e) => setQ(e.target.value)} placeholder="Search posts, files, @people, #1047…" aria-label="Search Floorboard" enterKeyHint="search"/>
+    ${q && html`<button type="submit" className="icon-btn sm" aria-label="Search"><${Icon} n="chev" s=${14}/></button>`}
+  </form>`;
+}
 function Widget() {
   const { db, user, openId, composer, closeComposer, compose, toast } = useApp();
   useAskBridge();
@@ -2660,6 +2670,7 @@ function Widget() {
       ${desk && desk.hide && html`<button className="icon-btn" onClick=${() => desk.hide()} title="Hide the sidebar" aria-label="Hide the sidebar"><${Icon} n="close" s=${17}/></button>`}
     </header>
     <${UpdateNotice}/>
+    <${SideSearch}/>
     <${Board} onPick=${pick}/>
     <${AskCard} compact/>
     <${TaskBoardCard}/>
@@ -9255,6 +9266,7 @@ function App() {
         const t = decodeURIComponent(hs.slice(4));
         setMode('full');
         if (t.startsWith('chat:')) { setOpenChatId(t.slice(5)); setView('chats'); } else if (t.startsWith('view:')) setView(t.slice(5)); else if (t.startsWith('post:')) setOpenId(t.slice(5));
+        else if (t.startsWith('search:')) { setSearchQ(t.slice(7)); setView('search'); }
         else if (t.startsWith('rec:')) { const [id, day] = t.slice(4).split(':'); setRecordAsk({ id, k: day }); setView('calendar'); }
         try { history.replaceState(null, '', location.pathname + location.search); } catch (e) { /* the hash just stays */ }
         return;
@@ -9504,6 +9516,7 @@ function App() {
       if (mode === 'widget') { const desk = window.floorboardDesktop; if (desk && desk.openFull) desk.openFull(t); else location.hash = 'go-' + t; return; }
       setOpenId(null); setDrawer(false);
       if (t.startsWith('chat:')) { setOpenChatId(t.slice(5)); setView('chats'); } else if (t.startsWith('view:')) setView(t.slice(5)); else if (t.startsWith('post:')) setOpenId(t.slice(5));
+        else if (t.startsWith('search:')) { setSearchQ(t.slice(7)); setView('search'); }
     },
     openChat: (id) => { setOpenChatId(id); setView('chats'); setOpenId(null); setDrawer(false); },
     closeChat: () => setOpenChatId(null),
