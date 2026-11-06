@@ -521,6 +521,7 @@ html.bar-mode,html.bar-mode body,html.bar-mode #root{background:transparent!impo
 @keyframes isl-fadein{from{opacity:0;transform:translateY(-3px)}}
 @media (prefers-reduced-motion:reduce){.isl-arrive,.isl-pill .isl-peek{animation:none}}
 .isl-mini{display:grid;grid-template-columns:repeat(2,12px);gap:2px 3px;flex:none}
+.isl-mini-b{display:block;width:12px;height:12px;padding:0;border:0;background:none;cursor:pointer}.isl-mini-b .isl-ch{transition:transform .2s}.isl-mini-b:hover .isl-ch{transform:scale(1.35)}
 .isl-panel{width:640px;box-sizing:border-box;background:var(--isl-bg,#000);border-radius:0 0 30px 30px;padding:8px 10px 10px;box-shadow:0 14px 40px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:8px}
 .isl.tall .isl-panel{height:384px}
 .isl-head{display:flex;align-items:center;gap:4px;height:28px;flex:none}
@@ -634,11 +635,6 @@ html.isl-sleepy .isl-ch:not(.wig):not(.ring) .isl-svg{animation:isl-snooze 3.4s 
 .isl-qr img{width:100%;height:100%;image-rendering:pixelated}.isl-qr span{color:#555;font-size:12px}
 .isl-link-t{min-width:0;display:grid;gap:6px;font-size:12.5px}.isl-link-t ol{margin:0;padding-left:18px;display:grid;gap:3px;color:rgba(233,235,238,.8)}
 .isl-err{color:#ffb4a8;font-size:11.5px}.isl-note{color:rgba(233,235,238,.5);font-size:11px;line-height:1.35}.isl-btns{display:flex;gap:6px;flex-wrap:wrap}
-.w-acc{flex:none;padding:12px;border-radius:22px;display:grid;gap:8px}.w-acc .w-files-h{margin-bottom:0}
-.acc-row{display:flex;align-items:center;gap:10px;min-width:0}.acc-row>.acc-t{flex:1;min-width:0;display:grid}.acc-row b{font-size:13.5px}
-.acc-row small{font-size:11.5px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.acc-more{padding:4px 0 6px}.acc-more .isl-link{flex-direction:column;align-items:flex-start}.acc-more .isl-closed,.acc-more .isl-link-t{color:var(--ink);font-size:12.5px}
-.acc-more .isl-link-t ol{color:var(--ink-2)}.acc-more .isl-note{color:var(--ink-3)}.acc-more .isl-more{color:inherit;background:rgba(127,127,127,.16);border-color:rgba(127,127,127,.3)}.acc-more .isl-more.primary{background:#fff;color:#0d0f12;border-color:#fff}
 .isl-cnt{min-width:20px;height:20px;box-sizing:border-box;border-radius:10px;color:#2a2230;font:700 11px/20px var(--f-body);text-align:center;padding:0 6px;flex:none}
 .isl-who-row b{font-size:13px}
 /* on the small card three names fit one under another (or two and "and N more") */
@@ -2873,7 +2869,6 @@ function Widget() {
     <${UpdateNotice}/>
     <${SideSearch}/>
     <${Board} onPick=${pick}/>
-    <${AccountsCard}/>
     <${AskCard} compact/>
     <${TaskBoardCard}/>
     <${SlipCard}/>
@@ -3413,7 +3408,7 @@ function IslWhatsApp({ big, setBig, st, openJid }) {
   return html`<div className=${'isl-big' + (big ? ' tall' : '')}>
     <${IslCardHead} id="whatsapp" sub=${w.connected ? (w.count ? w.count + ' unread' : 'All read') : w.need ? 'Not linked yet' : 'Not connected'} onOpen=${() => desk.island.wa.open('')}>
       ${w.connected && html`<button className="isl-btn sm" onClick=${() => { setFinding(!finding); setQ(''); }} title="Find someone" aria-label="Find someone"><${Icon} n=${finding ? 'close' : 'search'} s=${13}/></button>`}<//>
-    ${!w.connected ? html`<${IslWaLink} w=${w} setBig=${setBig}/>` : html`
+    ${!w.connected ? html`<${IslWaLink} w=${w} setBig=${setBig} auto=${w.need === 'link'}/>` : html`
       ${finding && html`<label className="isl-search"><${Icon} n="search" s=${14}/><input autoFocus value=${q} onChange=${(e) => setQ(e.target.value)} placeholder="Find someone: a name or a number" aria-label="Find someone on WhatsApp" autoComplete="off"/></label>`}
       <div className=${'isl-list' + (big ? '' : ' short')}>${(finding && q.trim() ? (found || []) : (w.chats || []).slice(0, big ? 30 : 3)).map((c) => html`<button key=${c.jid} className=${'isl-row' + (c.unread ? ' new' : '')} onClick=${() => { setCur(c); setFinding(false); setQ(''); }}>
         <span className="isl-wa-av">${(c.name || '?').replace(/[^\p{L}\p{N}]/gu, '').slice(0, 1).toUpperCase() || '#'}</span><span><b>${c.name}</b><small>${finding ? (c.chat ? 'Chat' : 'Contact') : c.group ? 'Group' : c.at ? shortTime(c.at) : ''}</small></span>${c.unread > 0 && html`<b className="isl-wa-n">${c.unread}</b>`}</button>`)}
@@ -3656,6 +3651,8 @@ function Island() {
   const leaveWa = () => { if (fo === 'whatsapp' && desk && desk.island) desk.island.opened('whatsapp'); };
   const show = (on) => { clearTimeout(leave.current); byRing.current = false; setPeek(null); if (!on && open) leaveWa(); setOpen(on); if (on) mark(fo); else { setGear(false); setBig(false); setTabS('home'); setWaOpen(''); } };
   const setFocus = (id) => { if (id !== fo) leaveWa(); setFocusS(id); islSet('focus', id); setBig(false); mark(id); };
+  // a ghost on the closed island: open the island on that card
+  const openCard = (id) => { setFocus(id); setTabS('home'); show(true); };
   const setTab = (t) => { setTabS(t); setGear(false); };
   useEffect(() => {
     const blur = () => { if (!files.length) show(false); }, key = (e) => { if (e.key === 'Escape') show(false); };
@@ -3679,10 +3676,10 @@ function Island() {
         <${IslChar} id="whatsapp" s=${46} wig=${true}/>
         <span className="isl-peek-t"><b>${peek.name}</b><small>${peek.who ? peek.who + ': ' : ''}${peek.text || 'New message'}</small></span>
         <span className="isl-peek-n">WhatsApp</span></button>`
-    : !open ? html`<button className="isl-pill" onClick=${() => show(true)} aria-label="Open Floorboard’s island">
+    : !open ? html`<div className="isl-pill" role="button" tabIndex="0" onClick=${() => openCard(pillId)} onKeyDown=${(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openCard(pillId); } }} aria-label=${'Open Floorboard’s island on ' + ISL[pillId].name}>
         <span className="isl-arrive" key=${pillId}><${IslChar} id=${pillId} s=${22} wig=${wig[pillId]} busy=${busy[pillId]}/></span>
         <span className="isl-peek" key=${'t' + pillId}>${peekText}</span>
-        <span className="isl-mini">${pillOthers.map((id) => html`<${IslChar} key=${id} id=${id} s=${12} n=${counts[id]} wig=${wig[id]} busy=${busy[id]}/>`)}</span></button>`
+        <span className="isl-mini">${pillOthers.map((id) => html`<button key=${id} className="isl-mini-b" title=${ISL[id].name} aria-label=${'Open ' + ISL[id].name} onClick=${(e) => { e.stopPropagation(); openCard(id); }} onKeyDown=${(e) => e.stopPropagation()}><${IslChar} id=${id} s=${12} n=${counts[id]} wig=${wig[id]} busy=${busy[id]}/></button>`)}</span></div>`
     : html`<div className="isl-panel">
       <${IslHead} tab=${tab} setTab=${setTab} onGear=${() => setGear(!gear)} mute=${!!opts.quiet} setMute=${(m) => setOpts({ ...opts, quiet: m })} onClose=${() => show(false)} ask=${true}/>
       ${gear ? html`<${IslSettings} opts=${opts} setOpts=${setOpts} avail=${avail} onDone=${() => setGear(false)}/>`
@@ -9679,30 +9676,6 @@ function JvRun({ r, onCarryOn }) {
     ${act && html`<div className="slider-row"><div className="bar"><i style=${{ width: r.progress + '%' }}></i></div><span className="pct-pill">${r.progress}%</span></div>`}
     ${meta && html`<small>${meta}</small>`}
     ${JV_CONT.includes(r.status) && html`<button className="btn sm" onClick=${() => onCarryOn(r)}>Continue where it stopped</button>`}
-  </div>`;
-}
-/* The sidebar (Windows app): link WhatsApp, sign in to your email and connect Teams here as well as on the island's cards.
-   Each line says how it stands; what isn't connected has its button. */
-function AccountsCard() {
-  const { db, user, update, toast } = useApp(), desk = window.floorboardDesktop, has = !!(desk && desk.island && desk.island.wa && desk.island.wa.qr);
-  const [st, setSt] = useState(null), [row, setRow] = useState(''), [busy, setBusy] = useState(''), live = useRef(null);
-  live.current = { db, user };
-  useEffect(() => { if (!has) return undefined; const get = () => desk.island.state().then(setSt).catch(() => { }); get(); const t = setInterval(get, 4000); return () => clearInterval(t); }, []);
-  const comMail = !!(st && st.mail && !st.mail.closed), gm = useGraphMail(has && !!st && !comMail);
-  if (!has || !st || !user) return null;
-  const w = st.whatsapp || {}, mail = comMail ? st.mail : gm && gm.graph ? gm : null, t = teamsState(db, user), asked = teamsNeeds(db, user).length;
-  const ok = { wa: !!w.connected, mail: !!mail, teams: t.status === 'ok' && !t.off };
-  const flip = (k) => setRow(row === k ? '' : k);
-  const connectTeams = async () => { setBusy('teams'); try { await teamsConnect(() => live.current, update); toast('Teams is connected. What people ask of you there comes onto Needs you.'); } catch (e) { toast(String((e && e.message) || e), 'warn'); } setBusy(''); };
-  const line = (id, name, state, action) => html`<div className="acc-row"><${IslChar} id=${id} s=${26}/><span className="acc-t"><b>${name}</b><small>${state}</small></span>${action || ''}</div>`;
-  const btn = (label, fn, primary, off) => html`<button className=${'btn sm' + (primary ? ' primary' : ' ghost')} onClick=${fn} disabled=${!!off}>${label}</button>`;
-  return html`<div className="w-acc glass">
-    <div className="w-files-h"><span className="eyebrow">Your accounts</span></div>
-    ${line('whatsapp', 'WhatsApp', ok.wa ? 'Linked' + (w.count ? ' · ' + w.count + ' unread' : '') : w.need ? 'Not linked yet' : (w.error || 'Not connected'), !ok.wa && w.need && btn(row === 'wa' ? 'Not now' : 'Link', () => flip('wa'), row !== 'wa'))}
-    ${row === 'wa' && !ok.wa && html`<div className="acc-more"><${IslWaLink} w=${w} setBig=${() => { }} auto/></div>`}
-    ${line('mail', 'Email', ok.mail ? (mail.graph ? 'Signed in' : 'Outlook') + ' · ' + (mail.count || 0) + ' unread' : 'Not signed in', !ok.mail && btn(row === 'mail' ? 'Close' : 'Sign in', () => flip('mail'), row !== 'mail'))}
-    ${row === 'mail' && !ok.mail && html`<div className="acc-more"><${IslMailSignIn} m=${st.mail || { closed: true }} gm=${gm}/></div>`}
-    ${line('teams', 'Teams', ok.teams ? 'Connected' + (asked ? ' · ' + asked + ' for you' : '') : !MS.on ? 'Needs Microsoft 365 set up for the store first' : t.status === 'error' ? t.err : 'Not connected', !ok.teams && MS.on && btn(busy === 'teams' ? 'Connecting…' : 'Connect', connectTeams, true, busy === 'teams'))}
   </div>`;
 }
 function JarvisCard() {
