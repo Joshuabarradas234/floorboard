@@ -13,9 +13,10 @@ const BASE = (process.env.FLOORBOARD_WA_URL || 'http://127.0.0.1:3000').replace(
 // Floorboard starts that gateway itself, the same way. The first time, it copies the gateway and the link into its own
 // folder and runs it from there, so WhatsApp stays linked even with Coucou removed, without scanning the code again.
 // (It only copies while the gateway is stopped, so the link is copied whole.) It stops the gateway when Floorboard quits.
-const COUCOU_GOWA = path.join(process.env.LOCALAPPDATA || '', 'Coucou', 'GOWA');
+// (a separate profile, as on a new computer, doesn't take it)
+const COUCOU_GOWA = process.env.FLOORBOARD_PROFILE ? '' : path.join(process.env.LOCALAPPDATA || '', 'Coucou', 'GOWA');
 const ownGowa = () => path.join(app.getPath('userData'), 'whatsapp-gateway');
-const linked = (dir) => fs.existsSync(path.join(dir, 'gowa.exe')) && fs.existsSync(path.join(dir, 'storages', 'whatsapp.db'));
+const linked = (dir) => !!dir && fs.existsSync(path.join(dir, 'gowa.exe')) && fs.existsSync(path.join(dir, 'storages', 'whatsapp.db'));
 function gowaDir() {
   if (process.env.FLOORBOARD_GOWA_DIR) return process.env.FLOORBOARD_GOWA_DIR;
   const own = ownGowa();

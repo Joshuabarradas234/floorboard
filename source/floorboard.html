@@ -634,6 +634,11 @@ html.isl-sleepy .isl-ch:not(.wig):not(.ring) .isl-svg{animation:isl-snooze 3.4s 
 .isl-qr img{width:100%;height:100%;image-rendering:pixelated}.isl-qr span{color:#555;font-size:12px}
 .isl-link-t{min-width:0;display:grid;gap:6px;font-size:12.5px}.isl-link-t ol{margin:0;padding-left:18px;display:grid;gap:3px;color:rgba(233,235,238,.8)}
 .isl-err{color:#ffb4a8;font-size:11.5px}.isl-note{color:rgba(233,235,238,.5);font-size:11px;line-height:1.35}.isl-btns{display:flex;gap:6px;flex-wrap:wrap}
+.w-acc{flex:none;padding:12px;border-radius:22px;display:grid;gap:8px}.w-acc .w-files-h{margin-bottom:0}
+.acc-row{display:flex;align-items:center;gap:10px;min-width:0}.acc-row>.acc-t{flex:1;min-width:0;display:grid}.acc-row b{font-size:13.5px}
+.acc-row small{font-size:11.5px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acc-more{padding:4px 0 6px}.acc-more .isl-link{flex-direction:column;align-items:flex-start}.acc-more .isl-closed,.acc-more .isl-link-t{color:var(--ink);font-size:12.5px}
+.acc-more .isl-link-t ol{color:var(--ink-2)}.acc-more .isl-note{color:var(--ink-3)}.acc-more .isl-more{color:inherit;background:rgba(127,127,127,.16);border-color:rgba(127,127,127,.3)}.acc-more .isl-more.primary{background:#fff;color:#0d0f12;border-color:#fff}
 .isl-cnt{min-width:20px;height:20px;box-sizing:border-box;border-radius:10px;color:#2a2230;font:700 11px/20px var(--f-body);text-align:center;padding:0 6px;flex:none}
 .isl-who-row b{font-size:13px}
 /* on the small card three names fit one under another (or two and "and N more") */
@@ -2868,6 +2873,7 @@ function Widget() {
     <${UpdateNotice}/>
     <${SideSearch}/>
     <${Board} onPick=${pick}/>
+    <${AccountsCard}/>
     <${AskCard} compact/>
     <${TaskBoardCard}/>
     <${SlipCard}/>
@@ -3321,10 +3327,11 @@ function IslMail({ big, setBig, st, gm }) {
 
 // Linking WhatsApp on this computer from the island: its gateway (fetched and checked the first time), then the QR code
 // to scan with the phone, a new one as each runs out, until the phone has linked
-function IslWaLink({ w, setBig }) {
+function IslWaLink({ w, setBig, auto }) {
   const desk = window.floorboardDesktop, can = !!(desk && desk.island && desk.island.wa.qr), [step, setStep] = useState(''), [qr, setQr] = useState(''), [err, setErr] = useState('');
   useEffect(() => { setBig(step === 'qr'); }, [step]);
   useEffect(() => () => setBig(false), []);
+  useEffect(() => { if (auto && can && (w.need === 'install' || w.need === 'link')) start(); }, []);
   const start = async () => {
     setErr('');
     if (w.need === 'install') { setStep('getting'); const r = await desk.island.wa.install(); if (r && r.error) { setErr(r.error); setStep(''); return; } }
@@ -8851,7 +8858,7 @@ function TeamsItem({ p, full }) {
 function TeamsHint() {
   const { db, user, update, toast } = useApp(), t = teamsState(db, user), [busy, setBusy] = useState(false), live = useRef(null);
   live.current = { db, user };
-  if (!MS.on || !user || t.off || t.status === 'ok') return null;
+  if (!MS.on || !user || t.off || t.status === 'ok' || (window.floorboardDesktop && window.floorboardDesktop.island)) return null;
   const go = async () => { setBusy(true); try { await teamsConnect(() => live.current, update); toast('Teams is connected. What people ask of you there comes onto Needs you.'); } catch (e) { toast(String((e && e.message) || e), 'warn'); } setBusy(false); };
   return html`<div className="tm-hint"><${Icon} n="chat" s=${14}/><span>${t.status === 'error' ? 'Teams: ' + t.err : 'Get what people ask of you in Teams here too'}</span>
     <button className="btn sm" disabled=${busy} onClick=${go}>${busy ? 'Connecting…' : t.status === 'error' ? 'Try again' : 'Connect Teams'}</button></div>`;
@@ -9674,6 +9681,30 @@ function JvRun({ r, onCarryOn }) {
     ${JV_CONT.includes(r.status) && html`<button className="btn sm" onClick=${() => onCarryOn(r)}>Continue where it stopped</button>`}
   </div>`;
 }
+/* The sidebar (Windows app): link WhatsApp, sign in to your email and connect Teams here as well as on the island's cards.
+   Each line says how it stands; what isn't connected has its button. */
+function AccountsCard() {
+  const { db, user, update, toast } = useApp(), desk = window.floorboardDesktop, has = !!(desk && desk.island && desk.island.wa && desk.island.wa.qr);
+  const [st, setSt] = useState(null), [row, setRow] = useState(''), [busy, setBusy] = useState(''), live = useRef(null);
+  live.current = { db, user };
+  useEffect(() => { if (!has) return undefined; const get = () => desk.island.state().then(setSt).catch(() => { }); get(); const t = setInterval(get, 4000); return () => clearInterval(t); }, []);
+  const comMail = !!(st && st.mail && !st.mail.closed), gm = useGraphMail(has && !!st && !comMail);
+  if (!has || !st || !user) return null;
+  const w = st.whatsapp || {}, mail = comMail ? st.mail : gm && gm.graph ? gm : null, t = teamsState(db, user), asked = teamsNeeds(db, user).length;
+  const ok = { wa: !!w.connected, mail: !!mail, teams: t.status === 'ok' && !t.off };
+  const flip = (k) => setRow(row === k ? '' : k);
+  const connectTeams = async () => { setBusy('teams'); try { await teamsConnect(() => live.current, update); toast('Teams is connected. What people ask of you there comes onto Needs you.'); } catch (e) { toast(String((e && e.message) || e), 'warn'); } setBusy(''); };
+  const line = (id, name, state, action) => html`<div className="acc-row"><${IslChar} id=${id} s=${26}/><span className="acc-t"><b>${name}</b><small>${state}</small></span>${action || ''}</div>`;
+  const btn = (label, fn, primary, off) => html`<button className=${'btn sm' + (primary ? ' primary' : ' ghost')} onClick=${fn} disabled=${!!off}>${label}</button>`;
+  return html`<div className="w-acc glass">
+    <div className="w-files-h"><span className="eyebrow">Your accounts</span></div>
+    ${line('whatsapp', 'WhatsApp', ok.wa ? 'Linked' + (w.count ? ' · ' + w.count + ' unread' : '') : w.need ? 'Not linked yet' : (w.error || 'Not connected'), !ok.wa && w.need && btn(row === 'wa' ? 'Not now' : 'Link', () => flip('wa'), row !== 'wa'))}
+    ${row === 'wa' && !ok.wa && html`<div className="acc-more"><${IslWaLink} w=${w} setBig=${() => { }} auto/></div>`}
+    ${line('mail', 'Email', ok.mail ? (mail.graph ? 'Signed in' : 'Outlook') + ' · ' + (mail.count || 0) + ' unread' : 'Not signed in', !ok.mail && btn(row === 'mail' ? 'Close' : 'Sign in', () => flip('mail'), row !== 'mail'))}
+    ${row === 'mail' && !ok.mail && html`<div className="acc-more"><${IslMailSignIn} m=${st.mail || { closed: true }} gm=${gm}/></div>`}
+    ${line('teams', 'Teams', ok.teams ? 'Connected' + (asked ? ' · ' + asked + ' for you' : '') : !MS.on ? 'Needs Microsoft 365 set up for the store first' : t.status === 'error' ? t.err : 'Not connected', !ok.teams && MS.on && btn(busy === 'teams' ? 'Connecting…' : 'Connect', connectTeams, true, busy === 'teams'))}
+  </div>`;
+}
 function JarvisCard() {
   const { toast, ask, seeing } = useApp(), j = useJarvis(), d = window.floorboardDesktop;
   const [prefill, setPrefill] = useState([]);
@@ -10360,11 +10391,14 @@ function App() {
     return () => { Sync.listeners.delete(onDb); Sync.statusListeners.delete(setSyncStatus); sub.subscription.unsubscribe(); window.removeEventListener('online', retry); clearInterval(t); };
   }, []);
   const cloudRef = useRef(cloud); cloudRef.current = cloud;
+  const resuming = useRef(false);
   // The desktop sidebar, the full app and other tabs share this storage: follow their changes live.
   useEffect(() => {
     const h = (e) => {
       if (e.key === LS_KEY && e.newValue) { try { setDb(JSON.parse(e.newValue)); } catch (x) { } }
       if (e.key === SESSION_KEY) setMe(e.newValue || null);
+      // logged in in another window (the sidebar, say): pick the login up here too
+      if (CLOUD && e.key === 'floorboard.auth' && e.newValue && cloudRef.current !== 'ready' && !resuming.current) { resuming.current = true; Promise.resolve(resume()).finally(() => { resuming.current = false; }); }
       if (e.key === SEEAS_KEY) { setSeeAs(e.newValue || ''); setOpenId(null); setOpenChatId(null); setComposer(null); }
       if (e.key === SEASON_KEY && SEASONS[e.newValue]) setSeasonState(e.newValue);
       if (e.key === LOOK_KEY && e.newValue) { try { setLocalLook({ ...DEFAULT_LOOK, ...JSON.parse(e.newValue) }); } catch (x) { } }

@@ -27,7 +27,7 @@ const BAR = { pill: { width: 320, height: 52 }, peek: { width: 460, height: 104 
 // the WhatsApp gateway's key for telling the island of messages and calls: made fresh each time Floorboard starts
 const WA_KEY = require('crypto').randomBytes(16).toString('hex');
 const waHook = () => (prefs.island ? 'http://127.0.0.1:' + ask.PORT + '/wa-hook?k=' + WA_KEY : '');
-let prefs = { onTop: false, side: 'right', bubble: true, bubbleAt: null, bar: true, slim: false, width: SIDEBAR_WIDTH, coucou: true, card: 'auto', mfs: null, jarvisUser: '', jarvisCard: true, jarvisNotify: true, island: false };
+let prefs = { onTop: false, side: 'right', bubble: true, bubbleAt: null, bar: true, slim: false, width: SIDEBAR_WIDTH, coucou: true, card: 'auto', mfs: null, jarvisUser: '', jarvisCard: true, jarvisNotify: true, island: true }; // (a new install gets Floorboard's own island; Coucou only when chosen in the tray menu)
 let sidebar = null, full = null, tray = null, bubble = null, bar = null, rail = null, barState = 'pill';
 let opened = false, slide = null, home = null, need = { count: 0, urgent: false }; // home: the work area of the screen the sidebar docks to
 
@@ -715,6 +715,8 @@ function attention(_e, { count, urgent, chats, latest }) {
 app.setAppUserModelId('Floorboard'); // lets Windows show pop-up notifications for the app
 // a test run keeps its own settings and runs beside an open Floorboard instead of handing over to it
 if (SMOKE) app.setPath('userData', path.join(app.getPath('temp'), 'floorboard-smoke'));
+// FLOORBOARD_PROFILE=<folder>: a separate Floorboard with its own settings and sign-ins, as on a new computer (for trying it out)
+else if (process.env.FLOORBOARD_PROFILE) app.setPath('userData', path.resolve(process.env.FLOORBOARD_PROFILE));
 if (!SMOKE && !app.requestSingleInstanceLock()) app.quit();
 else {
   // starting it again shows the sidebar; with --quit it closes the running Floorboard properly (its cards leave Coucou's island)
