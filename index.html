@@ -638,6 +638,9 @@ html.isl-sleepy .isl-ch:not(.wig):not(.ring) .isl-svg{animation:isl-snooze 3.4s 
 .isl-row>.isl-wa-av,.isl-wa-av{flex:none;display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:rgba(74,222,128,.18);color:#4ADE80;font-weight:700;font-size:11px;flex:none}
 .isl-wa-n{min-width:18px;height:18px;box-sizing:border-box;border-radius:9px;background:#25D366;color:#03140a;font:700 10.5px/18px var(--f-body);text-align:center;padding:0 5px;flex:none}
 .isl-empty{margin:6px 2px;color:rgba(233,235,238,.55);font-size:12px}
+.isl-gh{margin:6px 6px 2px;font-size:11.5px;font-weight:700;color:rgba(233,235,238,.6)}
+.isl-group{display:grid;gap:1px}
+.isl-from{margin:0 2px;font-size:12px;color:rgba(233,235,238,.75);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:none}
 .isl-more{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#e9ebee;border-radius:999px;padding:5px 12px;font:600 12px var(--f-body);cursor:pointer;justify-self:start}
 .isl-more:hover{background:rgba(255,255,255,.12)}
 .isl-more.primary{background:#fff;color:#0d0f12;border-color:#fff}
@@ -3138,29 +3141,67 @@ function IslFloorboard({ big, setBig }) {
   </div>`;
 }
 
-/* tasks still to do: this week's task-board tasks not finished, and tasks people sent that aren't done */
+/* Demo (⚙): sample tasks, emails and WhatsApps for showing the island, on this computer only. Nothing is saved or sent.
+   The names are the demo store's. A WhatsApp comes in after 5 seconds (time to close the island and watch), an email after 10 and a task after 15. */
+function islDemo(stage, t0) {
+  const M = 60000, H = 60 * M, iso = (t) => new Date(t).toISOString().slice(0, 19);
+  const task = (no, title, who, ago, extra) => ({ id: 'demo-t' + no, no, title, who, createdAt: t0 - ago, demo: true, ...(extra || {}) });
+  const tasks = [task(2101, 'Count the bakery stock before close', 'Thandi', 20 * M, { level: 'red' }), task(2098, 'Send the cold-room temperature log', 'Thandi', 2 * H, { due: dkey() }),
+    task(2095, 'Check the new shelf labels on aisle 4', 'Thandi', 5 * H), task(2091, 'Approve the cleaning roster', 'Pieter', 3 * H), task(2088, 'Call Coldline about the walk-in fridge', 'Pieter', 26 * H)];
+  if (stage >= 3) tasks.unshift(task(2104, 'Sign off the Friday promo signs', 'Johan', 0, { level: 'red' }));
+  const tally = {}; tasks.forEach((p) => { tally[p.who] = (tally[p.who] || 0) + 1; });
+  const msg = (id, who, text, ago, mine) => ({ id, who: mine ? 'You' : who, fromMe: !!mine, text, at: t0 - ago, media: '' });
+  const chats = [
+    { jid: 'demo-thandi', name: 'Thandi', at: t0 - 4 * M, unread: 2, demo: true, msgs: [msg('a1', 'Thandi', 'Morning! Did the bread delivery come in?', 50 * M, false), msg('a2', '', 'Yes, all checked in', 40 * M, true), msg('a3', 'Thandi', 'Great. Can you send me the count?', 6 * M, false), msg('a4', 'Thandi', 'Before 4 please', 4 * M, false)] },
+    { jid: 'demo-managers', name: 'Store managers', group: true, at: t0 - 30 * M, unread: 1, demo: true, msgs: [msg('b1', 'Pieter', 'Stock take moved to Thursday', 30 * M, false)] },
+    { jid: 'demo-pieter', name: 'Pieter', at: t0 - 2 * H, unread: 0, demo: true, msgs: [msg('c1', 'Pieter', 'Thanks for sorting the roster', 2 * H, false), msg('c2', '', 'Pleasure', 2 * H - M, true)] },
+  ];
+  let latest = null;
+  if (stage >= 1) {
+    const a = { jid: 'demo-ayesha', name: 'Ayesha', at: t0 + 5000, unread: 1, demo: true, msgs: [msg('d1', 'Ayesha', 'Can you check the Sasko invoice before 3?', -5000, false)] };
+    chats.unshift(a); latest = { jid: a.jid, name: 'Ayesha', who: '', text: 'Can you check the Sasko invoice before 3?', at: t0 + 5000 };
+  }
+  const mail = (id, from, subject, ago, unread) => ({ id: 'demo-m' + id, store: 'demo', from, subject, received: iso(t0 - ago), unread, demo: true });
+  const emails = [mail(1, 'Coldline Services', 'Quote for the walk-in fridge service', 15 * M, true), mail(2, 'Coldline Services', 'Re: Fridge part on back-order', H, true), mail(3, 'Highveld Meats', 'Delivery note HM-2214', 2 * H, true),
+    mail(4, 'Coldline Services', 'Invoice INV-2231', 5 * H, true), mail(5, 'Pieter van Wyk', 'Cleaning roster for next week', 6 * H, true), mail(6, 'SunPack', 'New price list from 1 December', 26 * H, false)];
+  if (stage >= 2) emails.unshift(mail(7, 'Highveld Meats', 'Price change on beef from Monday', -8000, true));
+  const from = {}; emails.filter((e) => e.unread).forEach((e) => { from[e.from] = (from[e.from] || 0) + 1; });
+  return {
+    whatsapp: { connected: true, error: '', chats, count: chats.reduce((a, c) => a + c.unread, 0), latest, ringing: null },
+    mail: { closed: false, error: '', emails, count: emails.filter((e) => e.unread).length, from: Object.entries(from).sort((a, b) => b[1] - a[1]).map(([name, n]) => ({ name, n })) },
+    tasks: { board: [], todo: [], sent: tasks, by: Object.entries(tally).sort((a, b) => b[1] - a[1]), left: tasks.length, demo: true },
+  };
+}
+const demoBody = (e) => 'Hi,\n\nThis is a sample email for showing Floorboard\'s island: "' + e.subject + '".\n\nNothing here is real, and nothing is sent.\n\nKind regards,\n' + e.from;
+/* Tasks: the same as the sidebar's Needs you → Tasks (tasks people sent that still need you), with who they're from;
+   this week's task board below them when opened */
+const fromLine = (by) => by.slice(0, 3).map(([n, k], i) => k + (i === 0 ? (k === 1 ? ' from ' : ' from ') : ' from ') + n).join(' · ') + (by.length > 3 ? ' · and others' : '');
 function islTasks(db, user) {
   const wk = weekOf(), board = tbDepts(db, user).flatMap((d) => tbWeek(db, d.id, wk).filter((t) => tbWho(db, t).includes(user.id)));
-  const sent = db.posts.filter((p) => p.type === 'task' && !p.closed && p.recips[user.id] && p.recips[user.id].status !== 'done');
-  return { board, todo: board.filter((t) => tbPct(t, user.id) < 100), sent, left: board.filter((t) => tbPct(t, user.id) < 100).length + sent.length };
+  const sent = db.posts.filter((p) => p.type === 'task' && canSee(db, p, user) && needsMe(p, user.id)).sort((a, b) => b.createdAt - a.createdAt);
+  const tally = {}; sent.forEach((p) => { const n = firstName(userById(db, p.author)) || 'Someone'; tally[n] = (tally[n] || 0) + 1; });
+  const by = Object.entries(tally).sort((a, b) => b[1] - a[1]);
+  return { board, todo: board.filter((t) => tbPct(t, user.id) < 100), sent, by, left: sent.length };
 }
-/* the tasks card: how many are still to do, this week's to move along, and how far each team you run is */
-function IslTaskboard({ big, setBig }) {
+function IslTaskboard({ big, setBig, demo }) {
   const { db, user } = useApp(), desk = window.floorboardDesktop;
-  const wk = weekOf(), depts = tbDepts(db, user), tk = islTasks(db, user), mine = tk.board;
-  const led = depts.filter((d) => user.manages.includes(d.id)), next = tk.todo[0] || tk.sent[0];
-  const full = () => (desk && desk.openFull ? desk.openFull('view:taskboard') : (location.hash = 'go-view:taskboard'));
+  const wk = weekOf(), depts = tbDepts(db, user), tk = demo ? demo.tasks : islTasks(db, user), mine = tk.board;
+  const led = depts.filter((d) => user.manages.includes(d.id));
+  const full = (t) => (desk && desk.openFull ? desk.openFull(t) : (location.hash = 'go-' + t));
+  const who = (p) => p.who || firstName(userById(db, p.author)) || 'Someone';
+  const row = (p) => html`<button key=${p.id} className="isl-row" onClick=${() => { if (!p.demo) full('post:' + p.id); }}><${Icon} n="task" s=${14}/><span><b>#${p.no} ${p.title}</b><small>${[p.due ? 'due ' + fmtKey(p.due) : '', p.level === 'red' ? 'ASAP' : '', p.recips && p.recips[user.id] && p.recips[user.id].pct ? p.recips[user.id].pct + '% done' : ''].filter(Boolean).join(' · ') || shortTime(p.createdAt)}</small></span></button>`;
   return html`<div className=${'isl-big' + (big ? ' tall' : '')}>
-    <${IslCardHead} id="taskboard" sub="Tasks" count=${tk.left ? tk.left + ' to do' : 'All done'} onOpen=${full}/>
+    <${IslCardHead} id="taskboard" sub="Tasks" count=${tk.left ? tk.left + ' to do' : 'All done'} onOpen=${() => full('view:taskboard')}/>
     ${big ? html`<div className="isl-list">
+      ${tk.by.map(([n, k]) => html`<div key=${n} className="isl-group"><p className="isl-gh">${k} ${k === 1 ? 'task' : 'tasks'} from ${n}</p>${tk.sent.filter((p) => who(p) === n).map(row)}</div>`)}
+      ${!tk.sent.length && html`<p className="isl-empty">No tasks waiting on you.</p>`}
+      ${(mine.length > 0 || led.length > 0) && html`<p className="isl-gh">This week’s task board</p>`}
       ${led.map((d) => { const pct = tbTeamPct(db, [d], wk); return html`<div key=${d.id} className="isl-row static"><${Icon} n="team" s=${14}/><span><b>${d.name}</b><small>${pct == null ? 'No tasks set this week' : 'The team is ' + pct + '% of the way'}</small></span></div>`; })}
-      ${tk.sent.map((p) => html`<button key=${p.id} className="isl-row" onClick=${() => (desk && desk.openFull ? desk.openFull('post:' + p.id) : (location.hash = 'go-post:' + p.id))}><${Icon} n="task" s=${14}/><span><b>#${p.no} ${p.title}</b><small>${[firstName(userById(db, p.author)), p.due ? 'due ' + fmtKey(p.due) : '', p.recips[user.id].pct ? p.recips[user.id].pct + '% done' : ''].filter(Boolean).join(' · ')}</small></span></button>`)}
       ${mine.map((t) => html`<div key=${t.id} className="isl-task"><b>${t.title}</b><${TbProgress} t=${t} compact/></div>`)}
-      ${!mine.length && !led.length && !tk.sent.length && html`<p className="isl-empty">No tasks for you right now.</p>`}
       <button className="isl-more" onClick=${() => setBig(false)}>Less</button></div>`
     : html`<button className="isl-lines" onClick=${() => setBig(true)}>
-      <span className="isl-prev">${tk.left ? tk.left + (tk.left === 1 ? ' task' : ' tasks') + ' still to do' : 'All your tasks are done'}</span>
-      <span className="isl-line"><${Icon} n="chev" s=${11}/><span>${next ? 'Next: ' + next.title : led.length ? led.map((d) => d.name + ' ' + (tbTeamPct(db, [d], wk) ?? 0) + '%').join(' · ') : 'Nothing left this week'}</span></span></button>`}
+      <span className="isl-prev">${tk.left ? tk.left + (tk.left === 1 ? ' task needs' : ' tasks need') + ' you' : 'No tasks waiting on you'}</span>
+      <span className="isl-line"><${Icon} n="chev" s=${11}/><span>${tk.left ? fromLine(tk.by) : tk.todo.length ? tk.todo.length + ' left on this week’s board' : 'Nothing left this week'}</span></span></button>`}
   </div>`;
 }
 
@@ -3200,7 +3241,7 @@ function IslMail({ big, setBig, st }) {
     if (!finding || !q.trim()) { setFound(null); return undefined; }
     const t = setTimeout(() => desk.island.mail.list(q).then((r) => setFound(r.emails || [])).catch(() => setFound([])), 400); return () => clearTimeout(t);
   }, [q, finding]);
-  const read = async (e) => { setOne({ e, loading: true }); const r = await desk.island.mail.read(e.id, e.store).catch(() => ({ error: 'Outlook didn’t answer.' })); setOne({ e, r }); };
+  const read = async (e) => { if (e.demo) { setOne({ e, r: { subject: e.subject, from: e.from, address: '', to: '', received: e.received, body: demoBody(e), files: [] } }); return; } setOne({ e, loading: true }); const r = await desk.island.mail.read(e.id, e.store).catch(() => ({ error: 'Outlook didn’t answer.' })); setOne({ e, r }); };
   const when = (s) => { const t = Date.parse(s); return t ? shortTime(t) : ''; };
   const list = found || m.emails || [];
   if (one) return html`<div className="isl-big tall"><div className="isl-ch-row"><button className="isl-btn" onClick=${() => setOne(null)} aria-label="Back to the inbox"><${Icon} n="back" s=${14}/></button><b className="isl-ell">${one.e.subject || '(no subject)'}</b></div>
@@ -3213,7 +3254,8 @@ function IslMail({ big, setBig, st }) {
       ${!m.closed && html`<button className="isl-btn sm" onClick=${() => { setFinding(!finding); setQ(''); }} title="Search your mail" aria-label="Search your mail"><${Icon} n=${finding ? 'close' : 'search'} s=${13}/></button>`}<//>
     ${m.closed ? html`<div className="isl-closed"><p>Open Outlook (the classic one) to see your mail here.</p><button className="isl-more" onClick=${() => desk.island.mail.openOutlook()}>Open Outlook</button></div>` : html`
       ${finding && html`<label className="isl-search"><${Icon} n="search" s=${14}/><input autoFocus value=${q} onChange=${(e) => setQ(e.target.value)} placeholder="Search your mail: who, or words in the subject" aria-label="Search your mail" autoComplete="off"/></label>`}
-      <div className=${'isl-list' + (big ? '' : ' short')}>${list.slice(0, big ? 30 : 3).map((e) => html`<button key=${e.id} className=${'isl-row' + (e.unread ? ' new' : '')} onClick=${() => read(e)}>
+      ${!finding && (m.from || []).length > 0 && html`<p className="isl-from">${fromLine((m.from || []).map((x) => [x.name, x.n]))}</p>`}
+      <div className=${'isl-list' + (big ? '' : ' short')}>${list.slice(0, big ? 30 : 2).map((e) => html`<button key=${e.id} className=${'isl-row' + (e.unread ? ' new' : '')} onClick=${() => read(e)}>
         <i className="isl-unread"></i><span><b>${e.from || e.address || 'Someone'}</b><small>${e.subject || '(no subject)'}</small></span><em>${when(e.received)}</em></button>`)}
         ${!list.length && html`<p className="isl-empty">${finding && q.trim() ? (found ? 'No email matches.' : 'Looking…') : m.error || 'Nothing in the inbox.'}</p>`}</div>`}
   </div>`;
@@ -3240,11 +3282,12 @@ function IslWhatsApp({ big, setBig, st, openJid }) {
 }
 function IslWaThread({ c, onBack }) {
   const desk = window.floorboardDesktop, [msgs, setMsgs] = useState(null), [err, setErr] = useState(''), [text, setText] = useState(''), [busy, setBusy] = useState(false), box = useRef(null);
-  const load = () => desk.island.wa.messages(c.jid, (islGet("opts", {}) || {}).waRead !== false).then((r) => { if (r.error && !/recent chats/.test(r.error)) setErr(r.error); setMsgs(r.messages || []); }).catch(() => setMsgs([]));
+  const load = () => c.demo ? Promise.resolve(setMsgs((c.msgs || []).slice().sort((a, b) => a.at - b.at))) : desk.island.wa.messages(c.jid, (islGet("opts", {}) || {}).waRead !== false).then((r) => { if (r.error && !/recent chats/.test(r.error)) setErr(r.error); setMsgs(r.messages || []); }).catch(() => setMsgs([]));
   useEffect(() => { load(); const t = setInterval(load, 8000); return () => clearInterval(t); }, [c.jid]);
   useEffect(() => { const el = box.current; if (el) el.scrollTop = el.scrollHeight; }, [msgs && msgs.length]);
   const send = async (e) => {
     e.preventDefault(); const t = text.trim(); if (!t || busy) return;
+    if (c.demo) { setMsgs((m) => [...(m || []), { id: 'me' + Date.now(), who: 'You', fromMe: true, text: t, at: Date.now(), media: '' }]); setText(''); setErr('Demo: nothing was sent.'); return; }
     setBusy(true); setErr('');
     const r = await desk.island.wa.send(c.jid, t).catch((x) => ({ error: String((x && x.message) || x) }));
     setBusy(false);
@@ -3338,6 +3381,7 @@ function IslSettings({ opts, setOpts, avail, onDone }) {
     <b>Island</b>
     <label className="isl-tog"><input type="checkbox" checked=${!!opts.hover} onChange=${() => flip('hover')}/>Open when the pointer is over it</label>
     <label className="isl-tog"><input type="checkbox" checked=${!opts.quiet} onChange=${() => flip('quiet')}/>A sound when something comes in</label>
+    <label className="isl-tog"><input type="checkbox" checked=${!!opts.demo} onChange=${() => flip('demo')}/>Demo: sample tasks, emails and WhatsApps for showing (on this computer only; nothing is saved or sent)</label>
     <b>Cards</b>
     <div className="isl-set-cards">${ISL_ORDER.filter((id) => id !== 'floorboard' && avail[id]).map((id) => html`<label key=${id} className="isl-tog"><input type="checkbox" checked=${!hide[id]} onChange=${() => setOpts({ ...opts, hide: { ...hide, [id]: !hide[id] } })}/>${ISL[id].name}</label>`)}</div>
     <button className="isl-more" onClick=${onDone}>Done</button>
@@ -3389,9 +3433,9 @@ function islRing() {
   } catch (e) { /* no sound here */ }
 }
 function Island() {
-  const { db, user, look } = useApp(), desk = window.floorboardDesktop, st = useIslandData(), j = useJarvis();
+  const { db, user, look } = useApp(), desk = window.floorboardDesktop, stReal = useIslandData(), j = useJarvis();
   useIslandEyes();
-  const photoTone = useAvgColor(useAttUrlMaybe(look && look.photo)), tint = islTint(look || DEFAULT_LOOK, photoTone, st.wall);
+  const photoTone = useAvgColor(useAttUrlMaybe(look && look.photo)), tint = islTint(look || DEFAULT_LOOK, photoTone, stReal.wall);
   const [open, setOpen] = useState(false), [tab, setTabS] = useState('home'), [gear, setGear] = useState(false), [big, setBig] = useState(false), [files, setFiles] = useState([]);
   const [focus, setFocusS] = useState(() => islGet('focus', 'floorboard')), [opts, setOptsS] = useState(() => islGet('opts', {})), [seen, setSeen] = useState(() => islGet('seen', {}));
   const [wig, setWig] = useState({}), prev = useRef(null), leave = useRef(null);
@@ -3399,12 +3443,16 @@ function Island() {
   const [recent, setRecent] = useState(() => islGet('recent', ''));
   const setOpts = (o) => { setOptsS(o); islSet('opts', o); };
   ISL_LOOK = opts.look || 'ghost'; // ghosts or slimes, as chosen in ⚙
+  // the Demo (⚙): sample news arriving a few seconds apart
+  const [demo, setDemo] = useState({ stage: 0, t0: Date.now() });
+  useEffect(() => { if (!opts.demo) return undefined; setDemo({ stage: 0, t0: Date.now() }); const ts = [5000, 10000, 15000].map((ms, i) => setTimeout(() => setDemo((d) => ({ ...d, stage: i + 1 })), ms)); return () => ts.forEach(clearTimeout); }, [!!opts.demo]);
+  const dm = opts.demo ? islDemo(demo.stage, demo.t0) : null, st = dm ? { ...stReal, whatsapp: dm.whatsapp, mail: dm.mail } : stReal;
   const mark = (id) => {
     if (id === 'mail' || id === 'whatsapp') return; // WhatsApp's count clears when you move on from its card (leaveWa); Mail's is Outlook's own
     setSeen((s) => { const n = { ...s, [id]: Date.now() }; islSet('seen', n); return n; });
   };
   // which cards this person has here
-  const tk = islTasks(db, user), tb = tbDepts(db, user).length > 0 || tk.sent.length > 0;
+  const tk = dm ? dm.tasks : islTasks(db, user), tb = !!dm || tbDepts(db, user).length > 0 || tk.sent.length > 0;
   const avail = { floorboard: true, taskboard: tb, jarvis: !!(j && j.mine && (j.found || j.installed)),
     mail: !!(st.mail && (user.role === 'admin' || outlookOn(db, user) || (st.mail.emails || []).length > 0)), whatsapp: !!(st.whatsapp && (st.whatsapp.connected || (st.whatsapp.chats || []).length > 0)) };
   const cards = ISL_ORDER.filter((id) => avail[id] && !(opts.hide || {})[id] || id === 'floorboard');
@@ -3489,7 +3537,7 @@ function Island() {
       : tab === 'chat' ? html`<${IslAsk} j=${j}/>`
       : tab === 'drop' ? html`<${IslDrop} j=${j} files=${files} setFiles=${setFiles}/>`
       : html`<div className=${'isl-home' + (big ? ' big' : '')}>
-        <div className="isl-left"><span className="isl-me"><${IslChar} id=${main} s=${big ? 36 : 54} busy=${busy[main]} ring=${!!ringing}/></span><${Big} key=${ringing ? 'ring' : fo} big=${big} setBig=${setBig} st=${st} j=${j} r=${ringing} openJid=${fo === 'whatsapp' ? waOpen : ''}/></div>
+        <div className="isl-left"><span className="isl-me"><${IslChar} id=${main} s=${big ? 36 : 54} busy=${busy[main]} ring=${!!ringing}/></span><${Big} key=${ringing ? 'ring' : fo} big=${big} setBig=${setBig} st=${st} j=${j} r=${ringing} demo=${dm} openJid=${fo === 'whatsapp' ? waOpen : ''}/></div>
         ${!big && html`<div className="isl-grid">${(ringing ? cards.filter((id) => id !== 'whatsapp').slice(0, 4) : others).map((id) => html`<button key=${id} className="isl-pick" onClick=${() => setFocus(id)} title=${ISL[id].name}>
           <${IslChar} id=${id} s=${26} n=${counts[id]} wig=${wig[id]} busy=${busy[id]}/><span>${ISL[id].name}</span></button>`)}</div>`}
       </div>`}

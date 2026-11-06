@@ -21,8 +21,11 @@ $since = (Get-Date).AddDays(-[int]$env:FB_DAYS)
 $max = [int]$env:FB_N
 $out = New-Object System.Collections.ArrayList
 $unread = 0
+$senders = @{}
 foreach ($store in $o.GetNamespace('MAPI').Stores) {
   try { $unread += [int]$store.GetDefaultFolder(6).UnReadItemCount } catch {}
+  # who the unread ones are from (the first 300 of them)
+  if ($env:FB_FROM -eq '1') { try { $k = 0; foreach ($m in $store.GetDefaultFolder(6).Items.Restrict('[UnRead] = True')) { if (++$k -gt 300) { break }; try { $nm = [string]$m.SenderName; if (-not $nm) { $nm = [string]$m.SenderEmailAddress }; if ($nm) { if ($senders.ContainsKey($nm)) { $senders[$nm]++ } else { $senders[$nm] = 1 } } } catch {} } } catch {} }
   try { $items = $store.GetDefaultFolder(6).Items; $items.Sort('[ReceivedTime]', $true) } catch { continue }
   $n = 0
   foreach ($m in $items) {
@@ -41,7 +44,8 @@ foreach ($store in $o.GetNamespace('MAPI').Stores) {
     } catch { continue }
   }
 }
-ConvertTo-Json -InputObject @{ emails = @($out); unread = $unread } -Depth 3 -Compress
+$by = @($senders.GetEnumerator() | Sort-Object Value -Descending | Select-Object -First 8 | ForEach-Object { [ordered]@{ name = [string]$_.Key; n = [int]$_.Value } })
+ConvertTo-Json -InputObject @{ emails = @($out); unread = $unread; from = $by } -Depth 3 -Compress
 `;
 
 const READ = HEAD + `
@@ -75,10 +79,11 @@ function search(query, days) {
 
 // for the Mail card: the newest emails in the inbox (or those matching the words), newest first
 function list(query, n) {
-  return new Promise((done) => run(LIST, { FB_Q: String(query || '').slice(0, 200), FB_DAYS: '90', FB_N: String(Math.min(60, Math.max(1, Number(n) || 30))), FB_CUT: '160' }, (r) => {
+  return new Promise((done) => run(LIST, { FB_Q: String(query || '').slice(0, 200), FB_DAYS: '90', FB_N: String(Math.min(60, Math.max(1, Number(n) || 30))), FB_CUT: '160', FB_FROM: query ? '0' : '1' }, (r) => {
     if (r.error) return done(r);
     // unread: Outlook's own count for the inbox (every account in it)
-    done({ emails: (Array.isArray(r.emails) ? r.emails : []).sort((a, b) => String(b.received).localeCompare(String(a.received))), unread: Number(r.unread) || 0 });
+    const from = (Array.isArray(r.from) ? r.from : r.from ? [r.from] : []).map((x) => ({ name: String((x && x.name) || '').slice(0, 60), n: Number(x && x.n) || 0 })).filter((x) => x.name && x.n);
+    done({ emails: (Array.isArray(r.emails) ? r.emails : []).sort((a, b) => String(b.received).localeCompare(String(a.received))), unread: Number(r.unread) || 0, from });
   }));
 }
 

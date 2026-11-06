@@ -306,7 +306,7 @@ async function mailPoll() {
   if (r.error) mail = { closed: !!r.closed, emails: r.closed ? [] : mail.emails, count: r.closed ? 0 : mail.count, error: r.error };
   else {
     if (!mailSeen) { mailSeen = Date.now(); try { fs.writeFileSync(mailSeenFile(), String(mailSeen)); } catch (e) { /* for now only */ } }
-    mail = { closed: false, emails: r.emails, error: '', count: r.unread }; // Outlook's own count of unread emails in the inbox
+    mail = { closed: false, emails: r.emails, error: '', count: r.unread, from: r.from }; // Outlook's own count of unread emails in the inbox, and who they're from
   }
   islandSend();
 }
@@ -327,7 +327,7 @@ function wallpaperColor() {
   } catch (e) { /* keeps the last one */ }
   return wallColor;
 }
-function islandState() { return { island: !!prefs.island, wall: wallpaperColor(), whatsapp: whatsapp.summary(), mail: { closed: mail.closed, error: mail.error, count: mail.count, emails: mail.emails.slice(0, 30) } }; }
+function islandState() { return { island: !!prefs.island, wall: wallpaperColor(), whatsapp: whatsapp.summary(), mail: { closed: mail.closed, error: mail.error, count: mail.count, from: mail.from || [], emails: mail.emails.slice(0, 30) } }; }
 function islandSend() { if (bar && !bar.isDestroyed()) bar.webContents.send('island-state', islandState()); }
 function islandIpc() {
   try { mailSeen = Number(fs.readFileSync(mailSeenFile(), 'utf8')) || 0; } catch (e) { /* first look */ }
