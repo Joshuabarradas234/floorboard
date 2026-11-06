@@ -310,7 +310,24 @@ async function mailPoll() {
   }
   islandSend();
 }
-function islandState() { return { island: !!prefs.island, whatsapp: whatsapp.summary(), mail: { closed: mail.closed, error: mail.error, count: mail.count, emails: mail.emails.slice(0, 30) } }; }
+// the Windows wallpaper's average colour: with the sidebar see-through, that's the colour it shows, so the island takes it
+let wallColor = '', wallAt = 0;
+function wallpaperColor() {
+  if (Date.now() - wallAt < 10 * 60 * 1000) return wallColor;
+  wallAt = Date.now();
+  try {
+    let file = '';
+    try { file = String(require('child_process').execFileSync('reg', ['query', 'HKCU\\Control Panel\\Desktop', '/v', 'WallPaper'], { encoding: 'utf8', windowsHide: true })).split(/REG_SZ\s+/)[1].trim(); } catch (e) { /* none set */ }
+    let img = file && fs.existsSync(file) ? nativeImage.createFromPath(file) : null;
+    if (!img || img.isEmpty()) { // the copy Windows keeps, which has no extension
+      const t = path.join(app.getPath('appData'), 'Microsoft', 'Windows', 'Themes', 'TranscodedWallpaper'), tmp = path.join(app.getPath('temp'), 'floorboard-wallpaper.jpg');
+      if (fs.existsSync(t)) { fs.copyFileSync(t, tmp); img = nativeImage.createFromPath(tmp); }
+    }
+    if (img && !img.isEmpty()) { const b = img.resize({ width: 1, height: 1, quality: 'good' }).toBitmap(); wallColor = '#' + [b[2], b[1], b[0]].map((v) => v.toString(16).padStart(2, '0')).join(''); }
+  } catch (e) { /* keeps the last one */ }
+  return wallColor;
+}
+function islandState() { return { island: !!prefs.island, wall: wallpaperColor(), whatsapp: whatsapp.summary(), mail: { closed: mail.closed, error: mail.error, count: mail.count, emails: mail.emails.slice(0, 30) } }; }
 function islandSend() { if (bar && !bar.isDestroyed()) bar.webContents.send('island-state', islandState()); }
 function islandIpc() {
   try { mailSeen = Number(fs.readFileSync(mailSeenFile(), 'utf8')) || 0; } catch (e) { /* first look */ }

@@ -512,11 +512,16 @@ html.bar-mode,html.bar-mode body,html.bar-mode #root{background:transparent!impo
 .fbar{position:fixed;left:50%;top:0;transform:translateX(-50%);display:flex;justify-content:center;font:13px/1.35 var(--f-body)}
 /* Floorboard's island (Windows app): in the same spot as Coucou's, black, hanging from the top of the screen */
 .isl{position:fixed;left:50%;top:0;transform:translateX(-50%);font:13px/1.35 var(--f-body);color:#e9ebee;display:flex;justify-content:center}
-.isl-pill{display:flex;align-items:center;gap:10px;height:32px;min-width:288px;max-width:310px;padding:0 10px 0 8px;border:0;border-radius:0 0 18px 18px;background:#000;color:#e9ebee;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.isl-pill{display:flex;align-items:center;gap:10px;height:32px;min-width:288px;max-width:310px;padding:0 10px 0 8px;border:0;border-radius:0 0 18px 18px;background:var(--isl-bg,#000);color:#e9ebee;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.35)}
 .isl-peek{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12px;color:rgba(233,235,238,.68);text-align:center}
 .isl-peek b{color:#fff;font-weight:700}
+.isl-arrive{display:block;flex:none;animation:isl-arrive .75s cubic-bezier(.3,1.35,.5,1)}
+.isl-pill .isl-peek{animation:isl-fadein .45s ease-out}
+@keyframes isl-arrive{0%{transform:perspective(160px) rotateY(-300deg) scale(.4);opacity:0}60%{opacity:1}100%{transform:perspective(160px) rotateY(0) scale(1)}}
+@keyframes isl-fadein{from{opacity:0;transform:translateY(-3px)}}
+@media (prefers-reduced-motion:reduce){.isl-arrive,.isl-pill .isl-peek{animation:none}}
 .isl-mini{display:grid;grid-template-columns:repeat(2,12px);gap:2px 3px;flex:none}
-.isl-panel{width:640px;box-sizing:border-box;background:#000;border-radius:0 0 30px 30px;padding:8px 10px 10px;box-shadow:0 14px 40px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:8px}
+.isl-panel{width:640px;box-sizing:border-box;background:var(--isl-bg,#000);border-radius:0 0 30px 30px;padding:8px 10px 10px;box-shadow:0 14px 40px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:8px}
 .isl.tall .isl-panel{height:384px}
 .isl-head{display:flex;align-items:center;gap:4px;height:28px;flex:none}
 .isl-tab,.isl-btn{display:grid;place-items:center;width:32px;height:28px;border:0;border-radius:14px;background:none;color:rgba(233,235,238,.72);cursor:pointer}
@@ -526,11 +531,11 @@ html.bar-mode,html.bar-mode body,html.bar-mode #root{background:transparent!impo
 .isl-sp{flex:1}
 .isl-home{display:grid;grid-template-columns:1fr 1fr;gap:10px;height:124px;flex:none}
 .isl-home.big{grid-template-columns:1fr;flex:1;height:auto;min-height:0}
-.isl-left{display:flex;gap:14px;align-items:center;background:#16181c;border:1px solid rgba(255,255,255,.06);border-radius:20px;padding:10px 14px 10px 12px;min-width:0;overflow:hidden}
+.isl-left{display:flex;gap:14px;align-items:center;background:var(--isl-card,#16181c);border:1px solid rgba(255,255,255,.06);border-radius:20px;padding:10px 14px 10px 12px;min-width:0;overflow:hidden}
 .isl-home.big .isl-left{align-items:flex-start}
 .isl-me{flex:none;display:grid;place-items:center;align-self:center}
 .isl-home.big .isl-me{align-self:flex-start;margin-top:2px}
-.isl-grid{display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:6px;background:#16181c;border:1px solid rgba(255,255,255,.06);border-radius:20px;padding:10px}
+.isl-grid{display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:6px;background:var(--isl-card,#16181c);border:1px solid rgba(255,255,255,.06);border-radius:20px;padding:10px}
 .isl-pick{display:flex;align-items:center;gap:8px;border:1px solid rgba(255,255,255,.07);background:rgba(255,255,255,.03);border-radius:14px;color:rgba(233,235,238,.8);font:12px var(--f-body);padding:0 10px 0 6px;cursor:pointer;min-width:0}
 .isl-pick span:last-child{flex:1;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .isl-pick:hover{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.18)}
@@ -579,7 +584,7 @@ html.isl-sleepy .isl-ch:not(.wig):not(.ring) .isl-svg{animation:isl-snooze 3.4s 
 @keyframes isl-ring{0%,100%{transform:rotate(0)}10%{transform:translateY(-3px) rotate(-14deg)}20%{transform:rotate(14deg)}30%{transform:rotate(-12deg)}40%{transform:rotate(12deg)}50%{transform:rotate(-6deg)}60%{transform:rotate(0)}}
 @keyframes isl-hop{40%{transform:translateY(-6px) scale(1.05,.95)}70%{transform:translateY(0) scale(.96,1.04)}}
 @media (prefers-reduced-motion:reduce){.isl-ch,.isl-ch .isl-svg,.isl-ch.wig,.isl-ch.ring,.isl.open .isl-me .isl-ch,.isl-lid{animation:none!important;transition:none}.isl-look,.isl-bod{transform:none}}
-.isl-n{position:absolute;top:-5px;right:-7px;min-width:16px;height:16px;padding:0 4px;box-sizing:border-box;border-radius:8px;background:#ff3b30;color:#fff;font:700 10px/16px var(--f-body);text-align:center;box-shadow:0 0 0 2px #000}
+.isl-n{position:absolute;top:-5px;right:-7px;min-width:16px;height:16px;padding:0 4px;box-sizing:border-box;border-radius:8px;background:#ff3b30;color:#fff;font:700 10px/16px var(--f-body);text-align:center;box-shadow:0 0 0 2px var(--isl-bg,#000)}
 .isl-ch.tiny .isl-n{top:-3px;right:-3px;min-width:6px;width:6px;height:6px;padding:0;font-size:0;border-radius:3px;box-shadow:0 0 0 1px #000}
 /* the big card */
 .isl-big{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;min-height:0;align-self:stretch;justify-content:center}
@@ -633,7 +638,7 @@ html.isl-sleepy .isl-ch:not(.wig):not(.ring) .isl-svg{animation:isl-snooze 3.4s 
 .isl .fbar-thread{height:100%;flex:1;min-height:0}
 .isl-big.tall>.fbar-thread{margin:-4px -6px}
 /* 💬 */
-.isl-ask{display:flex;flex-direction:column;flex:1;min-height:0;background:#16181c;border-radius:20px;border:1px solid rgba(255,255,255,.06);overflow:hidden}
+.isl-ask{display:flex;flex-direction:column;flex:1;min-height:0;background:var(--isl-card,#16181c);border-radius:20px;border:1px solid rgba(255,255,255,.06);overflow:hidden}
 .isl-ask-msgs{flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
 .isl-q{align-self:flex-end;max-width:80%;background:#2a2d33;border-radius:14px 14px 4px 14px;padding:6px 10px;font-size:12.5px}
 .isl-a{align-self:flex-start;max-width:94%;font-size:12.5px;line-height:1.5}
@@ -645,14 +650,14 @@ html.isl-sleepy .isl-ch:not(.wig):not(.ring) .isl-svg{animation:isl-snooze 3.4s 
 .isl-who{background:rgba(255,255,255,.06);color:#fff;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:0 8px;height:32px}
 /* ➕ */
 .isl-drop{display:flex;align-items:center;gap:26px;height:124px;box-sizing:border-box;border:1.5px dashed rgba(74,222,128,.45);border-radius:20px;padding:0 34px;background:radial-gradient(ellipse at 50% 130%,rgba(74,222,128,.16),transparent 70%),#0b0d0e;cursor:pointer;flex:none}
-.isl-drop.over{border-color:#4ADE80;background:radial-gradient(ellipse at 50% 110%,rgba(74,222,128,.3),transparent 70%),#0b0d0e}
+.isl-drop.over{border-color:#4ADE80;background:radial-gradient(ellipse at 50% 110%,rgba(74,222,128,.3),transparent 70%),var(--isl-bg,#0b0d0e)}
 .isl-drop.over .isl-ch{transform:scale(1.08) rotate(-4deg)}
 .isl-drop-t{margin:0 0 6px;font-size:13.5px}
 .isl-tags{display:flex;gap:6px;margin:0}.isl-tags span{padding:3px 10px;border-radius:999px;background:rgba(255,255,255,.08);font-size:11.5px;color:rgba(233,235,238,.75)}
-.isl-drop-card{display:flex;align-items:center;gap:18px;height:124px;box-sizing:border-box;border-radius:20px;padding:0 24px;background:#16181c;border:1px solid rgba(255,255,255,.06);flex:none}
+.isl-drop-card{display:flex;align-items:center;gap:18px;height:124px;box-sizing:border-box;border-radius:20px;padding:0 24px;background:var(--isl-card,#16181c);border:1px solid rgba(255,255,255,.06);flex:none}
 .isl-drop-card .isl-sub{margin:0}
 /* a message: the island opens a little; a call: WhatsApp rings */
-.isl-peekbar{display:flex;align-items:center;gap:12px;width:440px;height:80px;box-sizing:border-box;padding:0 18px 0 14px;border:0;border-radius:0 0 26px 26px;background:#000;color:#e9ebee;cursor:pointer;text-align:left;box-shadow:0 10px 28px rgba(0,0,0,.45);animation:isl-drop .35s cubic-bezier(.3,1.5,.5,1)}
+.isl-peekbar{display:flex;align-items:center;gap:12px;width:440px;height:80px;box-sizing:border-box;padding:0 18px 0 14px;border:0;border-radius:0 0 26px 26px;background:var(--isl-bg,#000);color:#e9ebee;cursor:pointer;text-align:left;box-shadow:0 10px 28px rgba(0,0,0,.45);animation:isl-drop .35s cubic-bezier(.3,1.5,.5,1)}
 .isl-peek-t{flex:1;min-width:0;display:grid;gap:2px}
 .isl-peek-t b{font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .isl-peek-t small{font-size:12.5px;color:rgba(233,235,238,.75);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;line-height:1.35}
@@ -663,7 +668,7 @@ html.isl-sleepy .isl-ch:not(.wig):not(.ring) .isl-svg{animation:isl-snooze 3.4s 
 .isl-more.call{display:inline-flex;align-items:center;gap:6px;background:#25D366;border-color:#25D366;color:#03140a}
 .isl-ringc .isl-acts{flex-wrap:nowrap;gap:6px}.isl-ringc .isl-more{padding:5px 10px;white-space:nowrap}
 /* ⚙ */
-.isl-set{display:grid;gap:8px;padding:12px 16px;background:#16181c;border-radius:20px;border:1px solid rgba(255,255,255,.06);font-size:12.5px;overflow:auto;flex:1;min-height:0;align-content:start}
+.isl-set{display:grid;gap:8px;padding:12px 16px;background:var(--isl-card,#16181c);border-radius:20px;border:1px solid rgba(255,255,255,.06);font-size:12.5px;overflow:auto;flex:1;min-height:0;align-content:start}
 .isl-set b{font-size:11px;color:rgba(233,235,238,.5);text-transform:uppercase;letter-spacing:.05em}
 .isl-tog{display:flex;gap:8px;align-items:center;cursor:pointer}
 .isl-set-cards{display:flex;flex-wrap:wrap;gap:4px 18px}
@@ -3321,6 +3326,32 @@ function IslSettings({ opts, setOpts, avail, onDone }) {
   </div>`;
 }
 
+// The island's colour follows the sidebar's (Wallpaper & glass): the tone of its wallpaper scene, your photo's average
+// colour, or with the sidebar see-through the Windows wallpaper's, darkened as the sidebar darkens it (and enough to
+// read on); the cards get the same glass on top as the sidebar's cards (clear, frosted or solid).
+const SCENE_TONE = { warm: '#7d5d42', see: '#7d5d42', night: '#1b2140', fresh: '#3b6236', ocean: '#123d63', sunset: '#9c3f6e', blossom: '#a85682', graphite: '#3a4047', aurora: '#0e1a2e' };
+const rgbOf = (h) => (/^#[0-9a-f]{6}$/i.test(h || '') ? [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)) : [125, 93, 66]);
+const mixRgb = (a, b, t) => a.map((v, i) => Math.round(v + (b[i] - v) * t));
+function islTint(look, photo, wall) {
+  let base = rgbOf(look.photo && photo ? photo : look.scene === 'see' && wall ? wall : SCENE_TONE[look.scene]);
+  if (look.scene === 'see' && !look.photo) base = mixRgb(base, [30, 22, 17], 0.3); // the sidebar's own tint over the see-through desktop
+  let bg = mixRgb(base, [14, 10, 7], Math.max(0.35, Number(look.dim) || 0));
+  const lum = (c) => (0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]) / 255;
+  for (let k = 0; k < 8 && lum(bg) > 0.2; k++) bg = mixRgb(bg, [0, 0, 0], 0.2); // white writing stays easy to read
+  const card = look.glass === 'solid' ? mixRgb(bg, [34, 26, 20], 0.66) : mixRgb(bg, [255, 255, 255], look.glass === 'clear' ? 0.05 : 0.09);
+  return { '--isl-bg': 'rgb(' + bg.join(',') + ')', '--isl-card': 'rgb(' + card.join(',') + ')' };
+}
+// a photo's average colour (for the island's tint when the wallpaper is your own photo)
+function useAvgColor(url) {
+  const [c, setC] = useState(null);
+  useEffect(() => {
+    if (!url) { setC(null); return; }
+    const i = new Image();
+    i.onload = () => { try { const cv = document.createElement('canvas'); cv.width = cv.height = 1; const g = cv.getContext('2d'); g.drawImage(i, 0, 0, 1, 1); const d = g.getImageData(0, 0, 1, 1).data; setC('#' + [d[0], d[1], d[2]].map((v) => v.toString(16).padStart(2, '0')).join('')); } catch (e) { /* stays the scene's */ } };
+    i.src = url;
+  }, [url]);
+  return c;
+}
 // a call ringing: WhatsApp big and shaking, who's calling, and answer it in WhatsApp (the island can't take calls)
 function IslRing({ r }) {
   const desk = window.floorboardDesktop;
@@ -3340,15 +3371,18 @@ function islRing() {
   } catch (e) { /* no sound here */ }
 }
 function Island() {
-  const { db, user } = useApp(), desk = window.floorboardDesktop, st = useIslandData(), j = useJarvis();
+  const { db, user, look } = useApp(), desk = window.floorboardDesktop, st = useIslandData(), j = useJarvis();
   useIslandEyes();
+  const photoTone = useAvgColor(useAttUrlMaybe(look && look.photo)), tint = islTint(look || DEFAULT_LOOK, photoTone, st.wall);
   const [open, setOpen] = useState(false), [tab, setTabS] = useState('home'), [gear, setGear] = useState(false), [big, setBig] = useState(false), [files, setFiles] = useState([]);
   const [focus, setFocusS] = useState(() => islGet('focus', 'floorboard')), [opts, setOptsS] = useState(() => islGet('opts', {})), [seen, setSeen] = useState(() => islGet('seen', {}));
   const [wig, setWig] = useState({}), prev = useRef(null), leave = useRef(null);
+  // the card with the latest news: the closed island shows it (and switches, with a spin, when news comes elsewhere)
+  const [recent, setRecent] = useState(() => islGet('recent', ''));
   const setOpts = (o) => { setOptsS(o); islSet('opts', o); };
   ISL_LOOK = opts.look || 'ghost'; // ghosts or slimes, as chosen in ⚙
   const mark = (id) => {
-    if (id === 'mail' || id === 'whatsapp') { if (desk && desk.island) desk.island.opened(id); return; }
+    if (id === 'mail' || id === 'whatsapp') return; // WhatsApp's count clears when you move on from its card (leaveWa); Mail's is Outlook's own
     setSeen((s) => { const n = { ...s, [id]: Date.now() }; islSet('seen', n); return n; });
   };
   // which cards this person has here
@@ -3375,6 +3409,7 @@ function Island() {
     const up = cards.filter((id) => counts[id] > (p[id] || 0) || (id === 'jarvis' && p.jv && jvNews && jvNews !== p.jv));
     if (!up.length) return;
     setWig((w) => { const n = { ...w }; up.forEach((id) => { n[id] = Date.now(); }); return n; });
+    const r = ['whatsapp', 'mail', 'taskboard', 'jarvis', 'floorboard'].find((x) => up.includes(x)); if (r) { setRecent(r); islSet('recent', r); }
     if (!opts.quiet) islBlip();
     setTimeout(() => setWig({}), 900);
   });
@@ -3400,8 +3435,9 @@ function Island() {
   }, [ringing && ringing.at]);
   const tall = open && !ringing && (gear || tab === 'chat' || (tab === 'home' && big));
   useEffect(() => { if (desk && desk.bar) desk.bar(open ? (tall ? 'tall' : 'open') : peek ? 'peek' : 'pill', open && !byRing.current); }, [open, tall, !!peek]);
-  const show = (on) => { clearTimeout(leave.current); byRing.current = false; setPeek(null); setOpen(on); if (on) mark(fo); else { setGear(false); setBig(false); setTabS('home'); setWaOpen(''); } };
-  const setFocus = (id) => { setFocusS(id); islSet('focus', id); setBig(false); mark(id); };
+  const leaveWa = () => { if (fo === 'whatsapp' && desk && desk.island) desk.island.opened('whatsapp'); };
+  const show = (on) => { clearTimeout(leave.current); byRing.current = false; setPeek(null); if (!on && open) leaveWa(); setOpen(on); if (on) mark(fo); else { setGear(false); setBig(false); setTabS('home'); setWaOpen(''); } };
+  const setFocus = (id) => { if (id !== fo) leaveWa(); setFocusS(id); islSet('focus', id); setBig(false); mark(id); };
   const setTab = (t) => { setTabS(t); setGear(false); };
   useEffect(() => {
     const blur = () => { if (!files.length) show(false); }, key = (e) => { if (e.key === 'Escape') show(false); };
@@ -3411,23 +3447,24 @@ function Island() {
   // files dragged over the closed island open it on ➕, as Coucou does
   const dragIn = (e) => { if ([...(e.dataTransfer.types || [])].includes('Files') && (!open || tab !== 'drop')) { e.preventDefault(); setOpen(true); setTabS('drop'); } };
   const others = cards.filter((id) => id !== fo).slice(0, 4);
-  const peekText = (() => {
-    const id = cards.find((x) => x !== 'floorboard' && counts[x] > 0);
-    if (id) return html`<b>${ISL[id].name}</b> ${counts[id]} new`;
-    return islandLine(db, user) || 'All caught up';
-  })();
+  // closed: the card with the latest news and its number ("WhatsApp 3 new", "Mail 2 new", "Tasks 4 to do"), the others small
+  const news = (id) => id !== 'floorboard' && cards.includes(id) && counts[id] > 0;
+  const pillId = news(recent) ? recent : ['whatsapp', 'mail', 'taskboard', 'jarvis'].find(news) || fo;
+  const say = { whatsapp: 'new', mail: 'new', taskboard: 'to do', jarvis: 'need you' };
+  const peekText = news(pillId) ? html`<b>${ISL[pillId].name}</b> ${counts[pillId]} ${say[pillId]}` : islandLine(db, user) || 'All caught up';
+  const pillOthers = cards.filter((id) => id !== pillId).slice(0, 4);
   const main = ringing ? 'whatsapp' : fo, Big = ringing ? IslRing : { floorboard: IslFloorboard, taskboard: IslTaskboard, jarvis: IslJarvis, mail: IslMail, whatsapp: IslWhatsApp }[fo];
   const openChat = (jid) => { setFocusS('whatsapp'); islSet('focus', 'whatsapp'); setWaOpen(jid); show(true); mark('whatsapp'); };
-  return html`<div className=${'isl' + (open ? ' open' : '') + (tall ? ' tall' : '') + (peek && !open ? ' peeking' : '')} onDragEnter=${dragIn}
+  return html`<div className=${'isl' + (open ? ' open' : '') + (tall ? ' tall' : '') + (peek && !open ? ' peeking' : '')} style=${tint} onDragEnter=${dragIn}
     onMouseEnter=${() => { clearTimeout(leave.current); clearTimeout(peekT.current); if (!open && opts.hover) show(true); }} onMouseLeave=${() => { if (peek && !open) peekT.current = setTimeout(() => setPeek(null), 2500); if (open && opts.hover && !big && tab === 'home' && !ringing) leave.current = setTimeout(() => show(false), 600); }}>
     ${!open && peek ? html`<button className="isl-peekbar" onClick=${() => openChat(peek.jid)} aria-label=${'WhatsApp from ' + peek.name + ': open the chat'}>
         <${IslChar} id="whatsapp" s=${46} wig=${true}/>
         <span className="isl-peek-t"><b>${peek.name}</b><small>${peek.who ? peek.who + ': ' : ''}${peek.text || 'New message'}</small></span>
         <span className="isl-peek-n">WhatsApp</span></button>`
     : !open ? html`<button className="isl-pill" onClick=${() => show(true)} aria-label="Open Floorboard’s island">
-        <${IslChar} id=${fo} s=${22} n=${counts[fo]} wig=${wig[fo]} busy=${busy[fo]}/>
-        <span className="isl-peek">${peekText}</span>
-        <span className="isl-mini">${others.map((id) => html`<${IslChar} key=${id} id=${id} s=${12} n=${counts[id]} wig=${wig[id]} busy=${busy[id]}/>`)}</span></button>`
+        <span className="isl-arrive" key=${pillId}><${IslChar} id=${pillId} s=${22} wig=${wig[pillId]} busy=${busy[pillId]}/></span>
+        <span className="isl-peek" key=${'t' + pillId}>${peekText}</span>
+        <span className="isl-mini">${pillOthers.map((id) => html`<${IslChar} key=${id} id=${id} s=${12} n=${counts[id]} wig=${wig[id]} busy=${busy[id]}/>`)}</span></button>`
     : html`<div className="isl-panel">
       <${IslHead} tab=${tab} setTab=${setTab} onGear=${() => setGear(!gear)} mute=${!!opts.quiet} setMute=${(m) => setOpts({ ...opts, quiet: m })} onClose=${() => show(false)} ask=${true}/>
       ${gear ? html`<${IslSettings} opts=${opts} setOpts=${setOpts} avail=${avail} onDone=${() => setGear(false)}/>`

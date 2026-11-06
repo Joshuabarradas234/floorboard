@@ -93,11 +93,13 @@ function cleanMsg(m) {
     text: str(m.content, 4000), at: when(m.timestamp), media: str(m.media_type, 20), file: str(m.filename, 120) };
 }
 
-// a chat's unread: its messages from others since the person last wrote there or opened it here
+// A chat's unread: its messages from others since the person last looked at WhatsApp in the island, wrote in that chat,
+// or opened it here (and in the last day at most). A linked device isn't told what was read on the phone, so this is
+// what's new since the island last showed it, as Coucou's card counted.
 function count(c, ms) {
-  const lastMine = Math.max(0, ...ms.filter((m) => m.fromMe).map((m) => m.at)), since = Math.max(lastMine, seen.chats[c.jid] || 0);
+  const lastMine = Math.max(0, ...ms.filter((m) => m.fromMe).map((m) => m.at)), since = Math.max(lastMine, seen.chats[c.jid] || 0, seen.card || 0, Date.now() - 24 * 3600 * 1000);
   const fresh = ms.filter((m) => !m.fromMe && m.at > since);
-  unread.set(c.jid, { at: c.at, unread: fresh.length });
+  unread.set(c.jid, { at: c.at, unread: fresh.length, checked: Date.now() });
   const top = fresh.sort((a, b) => b.at - a.at)[0];
   if (top && top.at > startAt && (!latest || top.at > latest.at)) latest = { jid: c.jid, name: c.name, who: c.group ? top.who : '', text: top.text || (top.media === 'image' ? 'Photo' : top.media === 'audio' ? 'Voice note' : top.media ? top.file || 'File' : ''), at: top.at };
 }
@@ -107,11 +109,11 @@ async function poll() {
     if (!device) await findDevice();
     const list = ((await call('GET', '/chats', { limit: '30' })).data || []).map(cleanChat).filter((c) => c.jid);
     chats = list.sort((a, b) => b.at - a.at);
-    const week = Date.now() - 7 * 24 * 3600 * 1000;
+    const day = Date.now() - 24 * 3600 * 1000;
     for (const c of chats.slice(0, 15)) {
-      if (c.at < week) { unread.delete(c.jid); continue; }
+      if (c.at < day) { unread.delete(c.jid); continue; }
       const had = unread.get(c.jid);
-      if (had && had.at === c.at) continue;
+      if (had && had.at === c.at && Date.now() - (had.checked || 0) < 10 * 60 * 1000) continue; // looked again now and then, as messages age out
       count(c, ((await call('GET', '/chat/' + encodeURIComponent(c.jid) + '/messages', { limit: '20' })).data || []).map(cleanMsg));
     }
     if (hookUrl && hookFor !== device + hookUrl) {
@@ -148,8 +150,8 @@ function webhook(key, body) {
 function setHook(url) { hookUrl = url || ''; hookFor = ''; if (hookUrl) poll(); }
 function endCall() { ringing = null; changed(); }
 
-// the card was opened (the counts stay until each chat is read or answered)
-function opened() { seen.card = Date.now(); save(); }
+// the person looked at WhatsApp in the island and moved on: what was there is no longer new
+function opened() { seen.card = Date.now(); unread.forEach((v) => { v.unread = 0; }); save(); changed(); }
 
 // a chat opened in the island: its count clears, and (unless switched off in ⚙) WhatsApp marks it read on the phone
 // too, as Coucou did with "mark read on open"
