@@ -8585,7 +8585,7 @@ function JarvisCard() {
   }
   if (!j.found) return html`<div className="w-slip w-jv-offer glass" id="jarvis">
       <span className="jv-ic" aria-hidden="true">J</span>
-      <div className="slip-txt"><b>JARVIS isn’t connected</b><small>Open JARVIS on this computer. It needs version 1.107 or later to talk to Floorboard.</small></div>
+      <div className="slip-txt"><b>${j.seen ? 'JARVIS is closed' : 'JARVIS isn’t connected yet'}</b><small>${j.seen ? 'Open JARVIS on this computer to follow its work here.' : 'Open JARVIS on this computer. If it still doesn’t connect, update JARVIS (1.107 or later talks to Floorboard).'}</small></div>
     </div>`;
   const runs = j.runs || [], active = runs.filter((r) => JV_ACTIVE.includes(r.status)), need = j.attention || [];
   if (!open) return html`<div className="w-jv glass" id="jarvis"><${FoldBar} icon="spark" kind="jv" title="JARVIS" count=${active.length + need.length} hot=${need.length > 0} onOpen=${() => setOpen(true)}/></div>`;

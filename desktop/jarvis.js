@@ -20,8 +20,8 @@ const MAX_FILE = 20 * 1024 * 1024, MAX_FILES = 20;
 
 let deck = null, deckKey = '', events = null, timer = null, lastLoad = 0, loading = null;
 let runs = [], floors = [], attention = [], brief = null, error = '', loaded = false, note = '';
-let owner = '', who = { id: '', admin: false };
-let opts = { onChange: () => {}, onOpen: () => {}, notify: () => true, icon: undefined, saveOwner: () => {} };
+let owner = '', who = { id: '', admin: false }, seen = ''; // seen: the JARVIS version last seen talking to Floorboard here
+let opts = { onChange: () => {}, onOpen: () => {}, notify: () => true, icon: undefined, saveOwner: () => {}, saveSeen: () => {} };
 const told = new Map(); // run id → the status it was last known to have (to tell each change once)
 const onScreen = new Set(); // notifications showing (kept so they're still there to be clicked)
 
@@ -35,6 +35,8 @@ const installed = () => !!deck || fs.existsSync(path.dirname(deckFile()));
 function readDeck() {
   let d; try { d = JSON.parse(fs.readFileSync(deckFile(), 'utf8')); } catch (e) { return null; }
   const port = Number(d && d.port), token = String((d && d.token) || '');
+  // only a JARVIS that can talk to Floorboard writes the file, so even one left behind says it's installed
+  const v = str(d && d.version, 20); if (v && v !== seen) { seen = v; opts.saveSeen(v); setImmediate(() => opts.onChange()); }
   if (!Number.isInteger(port) || port < 1 || port > 65535 || token.length < 8 || token.length > 400 || /[\r\n]/.test(token)) return null;
   if (d.pid) { try { process.kill(Number(d.pid), 0); } catch (e) { if (e.code === 'ESRCH') return null; } }
   return { port, token, version: str(d.version, 20) };
@@ -171,7 +173,7 @@ function tick() {
 
 // o: { owner (the linked account's id), notify() (notifications on?), icon, onChange(), onOpen(), saveOwner(id) }
 function init(o) {
-  opts = { ...opts, ...o }; owner = String(o.owner || '');
+  opts = { ...opts, ...o }; owner = String(o.owner || ''); seen = String(o.seen || '');
   try { const b = JSON.parse(fs.readFileSync(briefFile(), 'utf8')); if (b && b.text) brief = { title: str(b.title, 80) || 'Morning brief', text: String(b.text).slice(0, 12000), at: when(b.at) }; } catch (e) { /* no brief yet */ }
   if (timer) return;
   tick(); timer = setInterval(tick, 5000);
@@ -196,7 +198,7 @@ function unlink() { if (!mine()) return { error: 'Only the account it’s linked
 
 // what the sidebar sees: nothing at all unless JARVIS is on this computer; JARVIS's work only for the account it's linked to
 function state() {
-  const found = !!deck, base = { found, installed: installed(), linked: !!owner, mine: mine(), canLink: installed() && !owner && who.admin };
+  const found = !!deck, base = { found, installed: installed(), seen: !!seen, linked: !!owner, mine: mine(), canLink: installed() && !owner && who.admin };
   if (!found || !mine()) return base;
   return { ...base, connected: loaded && !error, loading: !loaded, error, version: deck.version, runs, floors, attention, brief };
 }
@@ -206,7 +208,7 @@ const ready = () => !!deck && mine();
 // account whether JARVIS is open or not (and asks an admin to link it, on a computer with JARVIS and nothing linked yet).
 function card() {
   if (!mine()) return !owner && who.admin && installed() ? { id: 'jarvis', title: 'JARVIS', line: 'Link me in Floorboard’s sidebar', busy: false, note } : null;
-  if (!deck) return { id: 'jarvis', title: 'JARVIS', line: 'Not connected · open JARVIS', busy: false, note };
+  if (!deck) return { id: 'jarvis', title: 'JARVIS', line: seen ? 'Closed · open JARVIS' : 'Not connected · open JARVIS', busy: false, note };
   if (!loaded) return { id: 'jarvis', title: 'JARVIS', line: 'Connecting…', busy: false, note };
   if (error) return { id: 'jarvis', title: 'JARVIS', line: str('JARVIS: ' + error.replace(/\.$/, ''), 80), busy: false, note };
   const active = runs.filter((r) => ACTIVE.has(r.status)), need = attention.length, top = active[0];

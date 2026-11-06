@@ -560,7 +560,7 @@ else {
     mfsIpc();
     // JARVIS on this computer, for the account it's linked to (a test run pops nothing up)
     jarvis.init({ owner: prefs.jarvisUser, icon: ICON, notify: () => !SMOKE && prefs.jarvisNotify !== false, onChange: jarvisChanged, onOpen: () => openSidebarAt(null, '.w-jv'),
-      saveOwner: (id) => { prefs.jarvisUser = id; savePrefs(); } });
+      saveOwner: (id) => { prefs.jarvisUser = id; savePrefs(); }, seen: prefs.jarvisSeen, saveSeen: (v) => { prefs.jarvisSeen = v; savePrefs(); } });
     jarvisIpc();
     if (SMOKE) return;
     buildTray();
