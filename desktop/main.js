@@ -327,10 +327,25 @@ function wallpaperColor() {
   } catch (e) { /* keeps the last one */ }
   return wallColor;
 }
-function islandState() { return { island: !!prefs.island, wall: wallpaperColor(), whatsapp: whatsapp.summary(), mail: { closed: mail.closed, error: mail.error, count: mail.count, from: mail.from || [], emails: mail.emails.slice(0, 30) } }; }
+// The sidebar's own colour, as it's drawn: its picture made small, averaged over what isn't see-through. The island
+// takes exactly that. Looked at again every few seconds while the sidebar shows, so a new wallpaper or glass carries over.
+let sideColor = prefs.sideColor || '';
+async function sampleSidebar() {
+  try {
+    if (!sidebar || sidebar.isDestroyed() || !sidebar.isVisible() || sidebar.isMinimized()) return;
+    const img = (await sidebar.webContents.capturePage()).resize({ width: 12, height: 32, quality: 'good' }), b = img.toBitmap();
+    let r = 0, g = 0, bl = 0, n = 0;
+    for (let i = 0; i < b.length; i += 4) if (b[i + 3] > 200) { bl += b[i]; g += b[i + 1]; r += b[i + 2]; n++; }
+    if (n < (b.length / 4) * 0.5) return; // mostly see-through: the island keeps working it out from the wallpaper
+    const c = '#' + [r, g, bl].map((v) => Math.round(v / n).toString(16).padStart(2, '0')).join('');
+    if (c !== sideColor) { sideColor = c; prefs.sideColor = c; savePrefs(); islandSend(); }
+  } catch (e) { /* keeps the last one */ }
+}
+function islandState() { return { island: !!prefs.island, side: sideColor, wall: wallpaperColor(), whatsapp: whatsapp.summary(), mail: { closed: mail.closed, error: mail.error, count: mail.count, from: mail.from || [], emails: mail.emails.slice(0, 30) } }; }
 function islandSend() { if (bar && !bar.isDestroyed()) bar.webContents.send('island-state', islandState()); }
 function islandIpc() {
   try { mailSeen = Number(fs.readFileSync(mailSeenFile(), 'utf8')) || 0; } catch (e) { /* first look */ }
+  sideColor = prefs.sideColor || sideColor; // the sidebar's colour last time, until it's looked at again
   ipcMain.handle('island-state', (e) => (ours(e) ? islandState() : {}));
   ipcMain.handle('island-opened', (e, card) => {
     if (!ours(e)) return false;
@@ -350,6 +365,8 @@ function islandIpc() {
   });
   ipcMain.handle('mail-read', (e, a) => (ours(e) ? outlook.read(a && a.id, a && a.store) : {}));
   ipcMain.handle('mail-open-outlook', (e) => (ours(e) ? outlook.openOutlook() : {}));
+  // the sidebar's colour for the island: soon after it loads, then every few seconds
+  setTimeout(sampleSidebar, 4000); setInterval(sampleSidebar, 6000);
   // where the pointer is, for the characters' eyes: sent to the island while it shows, only when it moved
   let ptr = '';
   setInterval(() => {

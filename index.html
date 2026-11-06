@@ -3403,6 +3403,12 @@ function islTint(look, photo, wall) {
   const card = look.glass === 'solid' ? mixRgb(bg, [34, 26, 20], 0.66) : mixRgb(bg, [255, 255, 255], look.glass === 'clear' ? 0.05 : 0.09);
   return { '--isl-bg': 'rgb(' + bg.join(',') + ')', '--isl-card': 'rgb(' + card.join(',') + ')' };
 }
+// the sidebar's own colour, as the Windows app sees it drawn: the island's background is exactly that, its cards that with
+// the sidebar's glass on top
+function islSideTint(side, glass) {
+  const bg = rgbOf(side), card = glass === 'solid' ? mixRgb(bg, [34, 26, 20], 0.5) : mixRgb(bg, [255, 255, 255], glass === 'clear' ? 0.06 : 0.1);
+  return { '--isl-bg': 'rgb(' + bg.join(',') + ')', '--isl-card': 'rgb(' + card.join(',') + ')' };
+}
 // a photo's average colour (for the island's tint when the wallpaper is your own photo)
 function useAvgColor(url) {
   const [c, setC] = useState(null);
@@ -3435,7 +3441,7 @@ function islRing() {
 function Island() {
   const { db, user, look } = useApp(), desk = window.floorboardDesktop, stReal = useIslandData(), j = useJarvis();
   useIslandEyes();
-  const photoTone = useAvgColor(useAttUrlMaybe(look && look.photo)), tint = islTint(look || DEFAULT_LOOK, photoTone, stReal.wall);
+  const photoTone = useAvgColor(useAttUrlMaybe(look && look.photo)), tint = stReal.side ? islSideTint(stReal.side, (look || DEFAULT_LOOK).glass) : islTint(look || DEFAULT_LOOK, photoTone, stReal.wall);
   const [open, setOpen] = useState(false), [tab, setTabS] = useState('home'), [gear, setGear] = useState(false), [big, setBig] = useState(false), [files, setFiles] = useState([]);
   const [focus, setFocusS] = useState(() => islGet('focus', 'floorboard')), [opts, setOptsS] = useState(() => islGet('opts', {})), [seen, setSeen] = useState(() => islGet('seen', {}));
   const [wig, setWig] = useState({}), prev = useRef(null), leave = useRef(null);
