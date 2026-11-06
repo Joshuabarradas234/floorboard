@@ -48,7 +48,9 @@ function sayCard(c) {
 // the department cards to show now: new ones appear, changed ones say so, ones no longer wanted leave the island
 function setCards(list) {
   const next = (Array.isArray(list) ? list : []).filter((c) => c && /^[a-z0-9-]{1,24}$/.test(c.id) && c.id !== 'floorboard' && c.line)
-    .map((c) => ({ id: c.id, title: String(c.title || c.id).slice(0, 40), line: String(c.line).slice(0, 80), busy: !!c.busy, note: String(c.note || '').slice(0, 160) }));
+    .map((c) => ({ id: c.id, title: String(c.title || c.id).slice(0, 40), line: String(c.line).slice(0, 80), busy: !!c.busy, note: String(c.note || '').slice(0, 160),
+      turns: (Array.isArray(c.turns) ? c.turns : []).slice(0, 12).map((x) => [String((x && x[0]) || '').slice(0, 80), String((x && x[1]) || '').slice(0, 80)]).filter((x) => x[0]) }));
+  next.forEach((c) => { const was = cards.find((x) => x.id === c.id); if (!was || JSON.stringify(was.turns) !== JSON.stringify(c.turns)) turnAt.set(c.id, 0); });
   if (pipe && shown) {
     cards.filter((c) => !next.some((n) => n.id === c.id)).forEach((c) => { post({ hook_event_name: 'SessionEnd', reason: 'other' }, c); cardsSaid.delete(c.id); notesSaid.delete(c.id); });
     next.forEach((c) => { if (cardsSaid.get(c.id) !== said(c)) sayCard(c); });
@@ -95,10 +97,24 @@ function update(info, again) {
 function asked(question) { if (pipe && shown) post({ hook_event_name: 'UserPromptSubmit', prompt: String(question || '').slice(0, 160) }); }
 function busy(text) { if (pipe && shown && text) post({ hook_event_name: 'PreToolUse', tool_name: String(text).slice(0, 80), tool_input: {} }); }
 function done() { if (pipe && shown) show(lastStep || 'Floorboard is open'); }
-function init(cb) { onChange = cb || onChange; if (timer) return; check(); timer = setInterval(check, 1000); }
+// A busy card can go through several things in turn (JARVIS's card: what needs you, the jobs running, the Tower, the
+// brief, as the sidebar shows them). Coucou shows a card's last two lines and nothing earlier, so each thing goes as two:
+// its name, then what it says, a few seconds each. Only while the card is busy: a resting card would twitch at every line.
+const TURN = 7000, turnAt = new Map();
+let turner = null;
+function turn() {
+  if (!pipe || !shown) return;
+  cards.forEach((c) => {
+    if (!c.busy || c.turns.length < 2) return;
+    const i = (turnAt.get(c.id) || 0) % c.turns.length; turnAt.set(c.id, i + 1);
+    post({ hook_event_name: 'PreToolUse', tool_name: c.turns[i][0], tool_input: {} }, c);
+    if (c.turns[i][1]) post({ hook_event_name: 'PreToolUse', tool_name: c.turns[i][1], tool_input: {} }, c);
+  });
+}
+function init(cb) { onChange = cb || onChange; if (timer) return; check(); timer = setInterval(check, 1000); turner = setInterval(turn, TURN); }
 // the card leaves Coucou's island (Floorboard quits, or the person switched it off); resolves once Coucou has it
 function stop() {
-  clearInterval(timer); timer = null;
+  clearInterval(timer); timer = null; clearInterval(turner); turner = null;
   cards.forEach((c) => post({ hook_event_name: 'SessionEnd', reason: 'exit' }, c)); cardsSaid.clear(); notesSaid.clear();
   const done = post({ hook_event_name: 'SessionEnd', reason: 'exit' }); pipe = null; shown = false; return done;
 }

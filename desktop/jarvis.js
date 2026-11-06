@@ -215,7 +215,16 @@ function card() {
   const bits = [need && need + (need === 1 ? ' needs you' : ' need you')];
   if (top) bits.push(active.length > 1 && active.length + ' working', str(top.title, 44) + ' ' + top.progress + '%');
   else { const fin = runs.find((r) => r.status === 'done' && Date.now() - (r.finishedAt || r.updatedAt) < 12 * HOUR); bits.push(fin ? 'Done: ' + str(fin.title, 60) : !need && 'All quiet'); }
-  return { id: 'jarvis', title: 'JARVIS', line: bits.filter(Boolean).join(' · ').slice(0, 80), busy: active.length > 0 || need > 0, note };
+  const line = bits.filter(Boolean).join(' · ').slice(0, 80);
+  // what the card goes through in turn, as the sidebar's card shows it: each a name, then what it says
+  const turns = [];
+  active.slice(0, 3).forEach((r) => turns.push([r.title, r.progress + '%' + (r.step ? ' · ' + r.step : '')]));
+  attention.slice(0, 4).forEach((a) => turns.push([a.title, a.detail || a.kind || 'needs you']));
+  if (need > 4) turns.push(['JARVIS', 'and ' + (need - 4) + ' more in JARVIS']);
+  if (!active.length) { const fin = runs.find((r) => r.status === 'done'); turns.push(['Tower', fin ? 'Last done: ' + fin.title : 'Nothing in the last two days']); }
+  if (brief) turns.push([brief.title + (brief.at ? ' · ' + clock(brief.at) : ''), brief.text.split('\n').map((l) => l.replace(/^[#>*\-\s]+/, '').trim()).filter(Boolean)[0] || '']);
+  turns.push(['JARVIS', line]);
+  return { id: 'jarvis', title: 'JARVIS', line, busy: active.length > 0 || need > 0, note, turns };
 }
 
 /* ---------- asking JARVIS from Coucou's chat ---------- */
