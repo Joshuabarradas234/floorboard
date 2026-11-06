@@ -1,14 +1,18 @@
 // Floorboard "ask" function: the brain of Ask Floorboard. It sends the person's question to Claude (Anthropic) with the
 // list of things Floorboard can look up (files, tasks, posts, chats, meetings, people, email) and returns Claude's reply.
 // The looking up itself happens in the app, on the person's own device, so Claude only ever sees what that person can see
-// in Floorboard; the app sends the results back here and Claude answers. Only signed-in members can use it, nothing is
-// stored here.
+// in Floorboard; the app sends the results back here and Claude answers. Only signed-in members can use it.
+// It is also each person's work assistant, fitted to their job (their title, departments and the "what they do" line an
+// admin sets in People & access). Each new question also gets a quick check by a small model; one that clearly isn't
+// about work is noted in the ask_flags table, which only the store's admins can read (supabase/ask-flags.sql). Staff are
+// told so in the app. Nothing else is stored.
 // Deploy: Supabase -> Edge Functions -> Deploy a new function -> Via editor -> name it "ask" -> paste -> Deploy.
 // In the function's settings, switch Verify JWT off (the function checks who is calling itself).
 // Secret needed: ANTHROPIC_API_KEY (the same one the meeting-notes and sort-files functions use).
 import Anthropic from 'npm:@anthropic-ai/sdk';
 
 const MODEL = 'claude-opus-5-5';
+const CHECK_MODEL = 'claude-haiku-5-5'; // the quick "is this about work?" check
 const cors = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -27,6 +31,35 @@ async function rest(path: string): Promise<any> {
   const res = await fetch(Deno.env.get('SUPABASE_URL') + '/rest/v1/' + path, { headers: auth });
   if (!res.ok) throw new Error('database ' + res.status + ' ' + (await res.text()).slice(0, 200));
   return res.json();
+}
+async function restAdd(table: string, row: Record<string, unknown>): Promise<void> {
+  const key = serviceKey();
+  const auth: Record<string, string> = key.startsWith('sb_') ? { apikey: key } : { apikey: key, Authorization: 'Bearer ' + key };
+  const res = await fetch(Deno.env.get('SUPABASE_URL') + '/rest/v1/' + table, { method: 'POST', headers: { ...auth, 'Content-Type': 'application/json', Prefer: 'return=minimal' }, body: JSON.stringify(row) });
+  if (!res.ok) throw new Error('database ' + res.status + ' ' + (await res.text()).slice(0, 200));
+}
+
+// The newest question, when this request starts a turn (not when it brings back the results of look-ups)
+function newQuestion(messages: any[]): string {
+  const last = messages[messages.length - 1];
+  if (!last || last.role !== 'user') return '';
+  if (typeof last.content === 'string') return last.content;
+  if (!Array.isArray(last.content) || last.content.some((b: any) => b && b.type === 'tool_result')) return '';
+  return last.content.filter((b: any) => b && b.type === 'text').map((b: any) => b.text).join('\n');
+}
+// Is it about work? A quick check; anything that could be work counts as work. Only a clear "no" is noted for admins.
+async function checkWork(client: Anthropic, question: string, who: string): Promise<{ work: boolean; why: string }> {
+  const r = await client.messages.create({
+    model: CHECK_MODEL, max_tokens: 120,
+    system: 'You check questions people ask the work assistant in their store\'s staff app. Work includes anything about their job, the store, colleagues, customers, suppliers, '
+      + 'writing for work, learning their field (laws, regulations, practice, skills), and general questions that plausibly help at work. Not work: clearly personal or '
+      + 'leisure things (dating, gaming, gambling, celebrity gossip, school homework, personal shopping, entertainment). When unsure, it is work. '
+      + 'Reply with JSON only: {"work": true or false, "why": "a few words"}.',
+    messages: [{ role: 'user', content: 'Asked by ' + who + ':\n\n' + question.slice(0, 2000) }],
+  });
+  const text = r.content.map((b: any) => (b.type === 'text' ? b.text : '')).join('');
+  try { const j = JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1)); return { work: j.work !== false, why: String(j.why || '').slice(0, 200) }; }
+  catch { return { work: true, why: '' }; }
 }
 
 // What Floorboard can look up. The app runs these and answers with JSON.
@@ -118,7 +151,16 @@ const SYSTEM = 'You are Ask Floorboard, the assistant inside Floorboard, the app
   + 'Answer in plain, friendly English, short: a sentence or two, then a short list when there are several things. '
   + 'Name files by their title and say where they are (My files, a folder, or a department archive). Use people\'s first names. '
   + 'Amounts are in rand (R). Dates like "Tue 4 Nov". Do not use tables or headings. '
-  + 'You can\'t change anything in Floorboard: if they ask you to, tell them where to do it in the app.';
+  + 'You can\'t change anything in Floorboard: if they ask you to, tell them where to do it in the app. '
+  + 'You are also their work assistant, like a knowledgeable colleague in their field. Answer questions about their job and their field from your own knowledge, '
+  + 'fitted to their title, departments and what they do (for example, someone in property gets South African answers about leases, the Rental Housing Act, the '
+  + 'Consumer Protection Act, sectional title, municipal rates, deposits, inspections and tenant matters, with examples from managing retail space; someone in '
+  + 'finance gets South African bookkeeping, VAT and payroll answers; someone on the shop floor gets food safety, stock and customer service help). '
+  + 'Give practical examples from their kind of work. When it helps, make practice questions, quizzes, checklists, short guides or drafts (an email, a notice, a '
+  + 'reply to a tenant or supplier). Say when something depends on the facts or needs a professional (an attorney, accountant or the relevant authority), and '
+  + 'never invent laws, section numbers, rates or figures you are not sure of. For longer explanations, use short paragraphs and lists. '
+  + 'This assistant is for work. If a question is clearly not about work (personal matters, entertainment, gambling, dating, school homework and the like), '
+  + 'answer in one friendly sentence that you are here to help with their work, and offer something useful for their job instead.';
 
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors });
@@ -148,14 +190,21 @@ Deno.serve(async (req) => {
     // tied to everything before it, this included.
     const c = body.context || {};
     const about = 'The person asking: ' + String(c.name || 'a staff member').slice(0, 80)
+      + (c.title ? ' (' + String(c.title).slice(0, 60) + ')' : '')
       + (c.role ? ', ' + String(c.role).slice(0, 20) : '')
       + (c.departments ? ', in ' + String(c.departments).slice(0, 200) : '')
       + (c.manages ? ', manages ' + String(c.manages).slice(0, 200) : '') + '.'
+      + (c.job ? ' What they do: ' + String(c.job).slice(0, 400) + '.' : '')
       + ' Now: ' + String(c.now || new Date().toISOString()).slice(0, 40) + ' (South Africa).'
       + (c.email ? '' : ' Their email is not connected on this device, so search_email will not find anything.');
 
     stage = 'asking Claude';
     const client = new Anthropic({ apiKey });
+    // a new question gets the quick work check alongside the answer; one that clearly isn't about work is noted for admins
+    const q = newQuestion(messages).trim();
+    const checked = q ? checkWork(client, q, String(c.name || 'a staff member').slice(0, 80) + (c.title ? ' (' + String(c.title).slice(0, 60) + ')' : ''))
+      .then((r) => (r.work ? null : restAdd('ask_flags', { staff_id: mem.staff_id, name: String(c.name || '').slice(0, 80), title: String(c.title || '').slice(0, 60), question: q.slice(0, 1000), why: r.why })))
+      .catch((e) => console.log('work check: ' + (e?.message || e))) : Promise.resolve();
     const response = await client.beta.messages.create({
       model: MODEL,
       max_tokens: 16000,
@@ -166,6 +215,7 @@ Deno.serve(async (req) => {
       tools: TOOLS,
       messages,
     });
+    await checked;
     // the app adds this to the conversation as it is and sends it back with the results of any look-ups
     return json({ content: response.content, stop_reason: response.stop_reason, model: response.model, usage: response.usage });
   } catch (e: any) {

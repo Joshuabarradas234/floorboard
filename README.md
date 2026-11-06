@@ -228,6 +228,10 @@ It only sees what you can see in Floorboard. The looking up happens on your own 
 
 Until it's set up (and with no signal), Ask Floorboard still gives a quick answer by keyword from the same look-ups, and says so under the answer.
 
+**A work assistant for each person.** Ask Floorboard also answers questions about each person's job and field, like a colleague who knows it well, and makes practice questions, checklists and drafts. It goes by their job title, their departments and a line about what they do: in **People & access**, edit the person and fill in **What they do** (for example "Looks after the centre's tenants and leases: renewals, rentals, deposits and maintenance requests"; they then get South African property answers with examples from that kind of work). It says when something needs an attorney, accountant or the authority, and doesn't make up laws or figures.
+
+It's for work. Each new question gets a quick check by a small model (Claude Haiku), and one that clearly isn't about work (sport results, homework, dating and the like) is noted for the admins; Ask Floorboard answers it by steering back to work. Staff see a line under Ask Floorboard saying so. Admins see the noted questions in **People & access → Ask Floorboard**, and clear them once seen. To switch this on for a store that's already set up, run `supabase/ask-flags.sql` once in the SQL Editor (new stores get it from `setup.sql`), then deploy the `ask` function again.
+
 **In Coucou's chat (Windows).** The Windows app also answers Coucou's chat, so you can ask from the island at the top of the screen: in Coucou, **Settings… → Chat → Local models → OpenAI-compatible**, enter `http://127.0.0.1:47831`, click **Connect**, then **Use in chat**. Ask in the island's 💬 tab (or Ctrl+Alt+Space); Floorboard's blue card shows what it's looking up while it works. Only programs on this computer can reach that address, and Floorboard has to be open and signed in.
 
 ## Works with no signal

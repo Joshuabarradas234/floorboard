@@ -516,7 +516,7 @@ function createSidebar() {
             console.log('SMOKE island jarvis', await pick('JARVIS')); await wait(700); console.log('SMOKE island jarvis card', JSON.stringify(await text('.isl-left'))); await bshot('fb-island-8-jarvis.png');
             await B("document.querySelector('.isl-left .isl-lines').click(); 1"); await wait(700); console.log('SMOKE island jarvis all', JSON.stringify(await text('.isl-left'))); await bshot('fb-island-9-jarvis-all.png');
             await B("[...document.querySelectorAll('.isl-more')].find((b) => b.innerText === 'Less').click(); 1"); await wait(300);
-            console.log('SMOKE island taskboard', await pick('This week')); await wait(700); console.log('SMOKE island taskboard card', JSON.stringify(await text('.isl-left'))); await bshot('fb-island-10-week.png');
+            console.log('SMOKE island taskboard', await pick('Tasks')); await wait(700); console.log('SMOKE island taskboard card', JSON.stringify(await text('.isl-left'))); await bshot('fb-island-10-week.png');
             await B("document.querySelector('.isl-tab[aria-label=\"Ask Floorboard\"]').click(); 1"); await wait(600); await typeIn('.isl-ask-in input', 'What needs me?'); await B("document.querySelector('.isl-ask-in').requestSubmit(); 1"); await wait(3500);
             console.log('SMOKE island ask', JSON.stringify(bar.getBounds()), JSON.stringify(await text('.isl-ask-msgs'))); await bshot('fb-island-11-ask.png');
             await B("document.querySelector('.isl-tab[aria-label=\"Drop files\"]').click(); 1"); await wait(500); console.log('SMOKE island drop', JSON.stringify(await text('.isl-drop'))); await bshot('fb-island-12-drop.png');

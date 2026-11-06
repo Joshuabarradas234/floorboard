@@ -636,6 +636,12 @@ html.isl-sleepy .isl-ch:not(.wig):not(.ring) .isl-svg{animation:isl-snooze 3.4s 
 .isl-row.new .isl-unread{background:#60A5FA}
 .isl-row.new b{color:#fff}
 .isl-row>.isl-wa-av,.isl-wa-av{flex:none;display:grid;place-items:center;width:24px;height:24px;border-radius:50%;background:rgba(74,222,128,.18);color:#4ADE80;font-weight:700;font-size:11px;flex:none}
+.ask-work,.isl-askwork{display:block;margin:6px 4px 0;font-size:11px;line-height:1.35;color:var(--ink-3)}
+.isl-askwork{color:rgba(233,235,238,.5);margin:0 2px}
+.ask-flags{display:grid;gap:12px}.ask-flags td{vertical-align:top}
+.isl-cnt{min-width:20px;height:20px;box-sizing:border-box;border-radius:10px;color:#2a2230;font:700 11px/20px var(--f-body);text-align:center;padding:0 6px;flex:none}
+.isl-who-row b{font-size:13px}
+.isl-more.sm{padding:3px 10px;font-size:11.5px;justify-self:start}
 .isl-wa-n{min-width:18px;height:18px;box-sizing:border-box;border-radius:9px;background:#25D366;color:#03140a;font:700 10.5px/18px var(--f-body);text-align:center;padding:0 5px;flex:none}
 .isl-empty{margin:6px 2px;color:rgba(233,235,238,.55);font-size:12px}
 .isl-gh{margin:6px 6px 2px;font-size:11.5px;font-weight:700;color:rgba(233,235,238,.6)}
@@ -3191,7 +3197,7 @@ function IslTaskboard({ big, setBig, demo }) {
   const who = (p) => p.who || firstName(userById(db, p.author)) || 'Someone';
   const row = (p) => html`<button key=${p.id} className="isl-row" onClick=${() => { if (!p.demo) full('post:' + p.id); }}><${Icon} n="task" s=${14}/><span><b>#${p.no} ${p.title}</b><small>${[p.due ? 'due ' + fmtKey(p.due) : '', p.level === 'red' ? 'ASAP' : '', p.recips && p.recips[user.id] && p.recips[user.id].pct ? p.recips[user.id].pct + '% done' : ''].filter(Boolean).join(' · ') || shortTime(p.createdAt)}</small></span></button>`;
   return html`<div className=${'isl-big' + (big ? ' tall' : '')}>
-    <${IslCardHead} id="taskboard" sub="Tasks" count=${tk.left ? tk.left + ' to do' : 'All done'} onOpen=${() => full('view:taskboard')}/>
+    <${IslCardHead} id="taskboard" sub="Sent to you" count=${tk.left ? tk.left + ' to do' : 'All done'} onOpen=${() => full('view:taskboard')}/>
     ${big ? html`<div className="isl-list">
       ${tk.by.map(([n, k]) => html`<div key=${n} className="isl-group"><p className="isl-gh">${k} ${k === 1 ? 'task' : 'tasks'} from ${n}</p>${tk.sent.filter((p) => who(p) === n).map(row)}</div>`)}
       ${!tk.sent.length && html`<p className="isl-empty">No tasks waiting on you.</p>`}
@@ -3199,10 +3205,18 @@ function IslTaskboard({ big, setBig, demo }) {
       ${led.map((d) => { const pct = tbTeamPct(db, [d], wk); return html`<div key=${d.id} className="isl-row static"><${Icon} n="team" s=${14}/><span><b>${d.name}</b><small>${pct == null ? 'No tasks set this week' : 'The team is ' + pct + '% of the way'}</small></span></div>`; })}
       ${mine.map((t) => html`<div key=${t.id} className="isl-task"><b>${t.title}</b><${TbProgress} t=${t} compact/></div>`)}
       <button className="isl-more" onClick=${() => setBig(false)}>Less</button></div>`
+    : tk.by.length ? html`<${IslWho} rows=${tk.by} color=${ISL.taskboard.fur} onPick=${() => setBig(true)}/>`
     : html`<button className="isl-lines" onClick=${() => setBig(true)}>
-      <span className="isl-prev">${tk.left ? tk.left + (tk.left === 1 ? ' task needs' : ' tasks need') + ' you' : 'No tasks waiting on you'}</span>
-      <span className="isl-line"><${Icon} n="chev" s=${11}/><span>${tk.left ? fromLine(tk.by) : tk.todo.length ? tk.todo.length + ' left on this week’s board' : 'Nothing left this week'}</span></span></button>`}
+      <span className="isl-prev">No tasks waiting on you</span>
+      <span className="isl-line"><${Icon} n="chev" s=${11}/><span>${tk.todo.length ? tk.todo.length + ' left on this week’s board' : 'Nothing left this week'}</span></span></button>`}
   </div>`;
+}
+// who sent you things, one under another, each with how many: tasks by who sent them, unread emails by sender
+function IslWho({ rows, color, onPick }) {
+  return html`<div className="isl-list short">${rows.slice(0, 3).map(([n, k]) => html`<button key=${n} className="isl-row isl-who-row" onClick=${() => onPick(n)}>
+      <span className="isl-wa-av" style=${{ background: color, color: '#2a2230' }}>${(String(n).replace(/[^\p{L}\p{N}]/gu, '')[0] || '?').toUpperCase()}</span>
+      <span><b>${n}</b></span><b className="isl-cnt" style=${{ background: color }}>${k}</b></button>`)}
+    ${rows.length > 3 && html`<button className="isl-more sm" onClick=${() => onPick('')}>and ${rows.length - 3} more</button>`}</div>`;
 }
 
 /* JARVIS: what needs you, the jobs, the Tower and the brief, in turn; all of it when opened */
@@ -3239,6 +3253,7 @@ function IslMail({ big, setBig, st }) {
   useEffect(() => { setBig(!!one || finding); }, [!!one, finding]);
   useEffect(() => {
     if (!finding || !q.trim()) { setFound(null); return undefined; }
+    if ((m.emails || []).some((e) => e.demo)) { const w = q.trim().toLowerCase(); setFound((m.emails || []).filter((e) => (e.from + ' ' + e.subject).toLowerCase().includes(w))); return undefined; }
     const t = setTimeout(() => desk.island.mail.list(q).then((r) => setFound(r.emails || [])).catch(() => setFound([])), 400); return () => clearTimeout(t);
   }, [q, finding]);
   const read = async (e) => { if (e.demo) { setOne({ e, r: { subject: e.subject, from: e.from, address: '', to: '', received: e.received, body: demoBody(e), files: [] } }); return; } setOne({ e, loading: true }); const r = await desk.island.mail.read(e.id, e.store).catch(() => ({ error: 'Outlook didn’t answer.' })); setOne({ e, r }); };
@@ -3254,10 +3269,10 @@ function IslMail({ big, setBig, st }) {
       ${!m.closed && html`<button className="isl-btn sm" onClick=${() => { setFinding(!finding); setQ(''); }} title="Search your mail" aria-label="Search your mail"><${Icon} n=${finding ? 'close' : 'search'} s=${13}/></button>`}<//>
     ${m.closed ? html`<div className="isl-closed"><p>Open Outlook (the classic one) to see your mail here.</p><button className="isl-more" onClick=${() => desk.island.mail.openOutlook()}>Open Outlook</button></div>` : html`
       ${finding && html`<label className="isl-search"><${Icon} n="search" s=${14}/><input autoFocus value=${q} onChange=${(e) => setQ(e.target.value)} placeholder="Search your mail: who, or words in the subject" aria-label="Search your mail" autoComplete="off"/></label>`}
-      ${!finding && (m.from || []).length > 0 && html`<p className="isl-from">${fromLine((m.from || []).map((x) => [x.name, x.n]))}</p>`}
+      ${!big && !finding && (m.from || []).length > 0 ? html`<${IslWho} rows=${(m.from || []).map((x) => [x.name, x.n])} color=${ISL.mail.fur} onPick=${(n) => { setFinding(true); setQ(n); }}/>` : html`
       <div className=${'isl-list' + (big ? '' : ' short')}>${list.slice(0, big ? 30 : 2).map((e) => html`<button key=${e.id} className=${'isl-row' + (e.unread ? ' new' : '')} onClick=${() => read(e)}>
         <i className="isl-unread"></i><span><b>${e.from || e.address || 'Someone'}</b><small>${e.subject || '(no subject)'}</small></span><em>${when(e.received)}</em></button>`)}
-        ${!list.length && html`<p className="isl-empty">${finding && q.trim() ? (found ? 'No email matches.' : 'Looking…') : m.error || 'Nothing in the inbox.'}</p>`}</div>`}
+        ${!list.length && html`<p className="isl-empty">${finding && q.trim() ? (found ? 'No email matches.' : 'Looking…') : m.error || 'Nothing in the inbox.'}</p>`}</div>`}`}
   </div>`;
 }
 
@@ -3310,6 +3325,8 @@ function IslWaThread({ c, onBack }) {
 }
 
 /* 💬: Ask Floorboard (or JARVIS), right in the island */
+// the line under Ask Floorboard: what it's for, and that questions that clearly aren't about work are noted for admins
+const ASK_WORK = 'For your work: questions about your job and your field, the store, your files, tasks and emails. Questions that clearly aren’t about work are noted for the admins.';
 function IslAsk({ j }) {
   const { db, user } = useApp(), desk = window.floorboardDesktop;
   const [who, setWho] = useState('floorboard'), [turns, setTurns] = useState([]), [text, setText] = useState(''), [busy, setBusy] = useState(''), convo = useRef(null), live = useRef({ db, user }), box = useRef(null);
@@ -3329,7 +3346,8 @@ function IslAsk({ j }) {
   };
   return html`<div className="isl-ask">
     <div className="isl-ask-msgs" ref=${box}>
-      ${!turns.length && html`<p className="isl-empty">${who === 'jarvis' ? 'Ask JARVIS how far it is with something, what needs you, or for the morning brief.' : 'Ask Floorboard: find a document, see how far a team is with its tasks, what’s on tomorrow, or what needs you.'}</p>`}
+      ${!turns.length && html`<p className="isl-empty">${who === 'jarvis' ? 'Ask JARVIS how far it is with something, what needs you, or for the morning brief.' : 'Ask Floorboard about your work: how something works in your field, a checklist or practice questions, a draft email, a document, how far a team is, or what needs you.'}</p>`}
+      ${!turns.length && who !== 'jarvis' && html`<small className="isl-askwork">${ASK_WORK}</small>`}
       ${turns.map((t, k) => html`<div key=${k} className=${t.me ? 'isl-q' : 'isl-a' + (t.err ? ' err' : '')}>${t.me ? t.text : html`<${AskText} text=${t.text}/>`}</div>`)}
       ${busy && html`<div className="isl-a busy">${busy}</div>`}</div>
     <form className="isl-ask-in" onSubmit=${go}>
@@ -4851,7 +4869,7 @@ function PersonModal({ personId, onClose, onAdded }) {
     if (!CLOUD && !/^\d{4}$/.test(v.pin || '')) return setErr('The PIN must be 4 digits.');
     if (p && p.id === user.id && v.role !== 'admin') return setErr('You can’t remove your own admin access.');
     if ((v.onedrive || '').trim() && !ONEDRIVE_OK.test(v.onedrive.trim())) return setErr('The OneDrive link should be the address from OneDrive in the browser (it starts with https:// and has sharepoint.com or onedrive in it).');
-    const clean = { ...v, onedrive: (v.onedrive || '').trim(), name: v.name.trim(), title: v.title.trim() || 'Staff', manages: v.role === 'staff' ? [] : v.manages };
+    const clean = { ...v, job: (v.job || '').trim().slice(0, 400), onedrive: (v.onedrive || '').trim(), name: v.name.trim(), title: v.title.trim() || 'Staff', manages: v.role === 'staff' ? [] : v.manages };
     const id = p ? p.id : uid('u');
     update((d) => { if (p) Object.assign(d.users.find((u) => u.id === p.id), clean); else d.users.push({ ...clean, id }); });
     onClose();
@@ -4865,12 +4883,36 @@ function PersonModal({ personId, onClose, onAdded }) {
       ${CLOUD ? html`<div className="field"><span>Login</span><small>After you add them, you get a setup code to give them. They choose their own PIN with it.</small></div>`
         : html`<label className="field"><span>Login PIN (4 digits)</span><input id="pm-pin" className="input mono" inputMode="numeric" maxLength="4" value=${v.pin} onChange=${(e) => set('pin', e.target.value.replace(/\D/g, ''))}/></label>`}
     </div>
+    <label className="field"><span>What they do (helps Ask Floorboard help them)</span><textarea id="pm-job" className="input" rows="2" maxLength="400" value=${v.job || ''} onChange=${(e) => set('job', e.target.value)} placeholder="e.g. Looks after the centre's tenants and leases: renewals, rentals, deposits and maintenance requests"></textarea><small>Ask Floorboard answers their work questions with this in mind, with examples from their kind of work.</small></label>
     <label className="field"><span>OneDrive link (optional)</span><input id="pm-onedrive" className="input" value=${v.onedrive || ''} onChange=${(e) => set('onedrive', e.target.value)} placeholder="https://…sharepoint.com/… or https://onedrive.live.com/…"/><small>Drive opens their own OneDrive with this. They can also add it themselves on the Drive page.</small></label>
     <div className="field"><span>Departments they belong to</span><div className="checks">${db.depts.map((d) => html`<label key=${d.id}><input type="checkbox" checked=${v.depts.includes(d.id)} onChange=${() => flip('depts', d.id)}/>${d.name}</label>`)}</div><small>Tagging one of these teams reaches this person.</small></div>
     <div className="field"><span>Departments they manage</span><div className="checks">${db.depts.map((d) => html`<label key=${d.id} className=${v.role === 'staff' ? 'dis' : ''}><input type="checkbox" disabled=${v.role === 'staff'} checked=${v.manages.includes(d.id)} onChange=${() => flip('manages', d.id)}/>${d.name}</label>`)}</div><small>Managers see the progress of everyone in these teams and can edit the team’s tools.</small></div>
     ${p && p.id !== user.id && html`<label className="sm" style=${{ display: 'flex', gap: 8, alignItems: 'center' }}><input type="checkbox" checked=${v.active === false} onChange=${(e) => set('active', !e.target.checked)}/>Deactivated: can’t log in and won’t be tagged</label>`}
     ${err && html`<p className="err">${err}</p>`}
   <//>`;
+}
+// Ask Floorboard's flagged questions: ones to the work assistant that clearly weren't about work (admins only; staff are
+// told in the app that these are noted). Clear them once seen.
+function AskFlags() {
+  const { db, toast, ask } = useApp(), [rows, setRows] = useState(null), [err, setErr] = useState('');
+  const load = useCallback(async () => {
+    if (!CLOUD) { setRows([{ id: 1, at: new Date(Date.now() - 2 * HOUR).toISOString(), staff_id: (db.users.find((x) => /Johan/.test(x.name)) || {}).id, name: 'Johan Botha', title: 'Bakery Manager', question: 'Who will win the rugby on Saturday?', why: 'sport, not work' }, { id: 2, at: new Date(Date.now() - DAY).toISOString(), name: 'Lerato Dlamini', title: 'Finance Clerk', question: 'Write my daughter\'s school essay about the ocean', why: 'school homework' }]); return; }
+    const { data, error } = await CLOUD.from('ask_flags').select('*').order('at', { ascending: false }).limit(200);
+    if (error) setErr(/ask_flags|relation|schema/i.test(error.message || '') ? 'Flags aren’t switched on yet: run supabase/ask-flags.sql once in Supabase (SQL Editor).' : error.message); else { setErr(''); setRows(data || []); }
+  }, []);
+  useEffect(() => { load(); }, [load]);
+  const clear = (r) => ask({ title: 'Clear this flag?', body: 'It goes from this list. The question isn’t kept anywhere else.', confirm: 'Clear', onConfirm: async () => {
+    if (CLOUD) { const { error } = await CLOUD.from('ask_flags').delete().eq('id', r.id); if (error) { toast(error.message, 'warn'); return; } }
+    setRows((x) => (x || []).filter((y) => y.id !== r.id)); toast('Cleared');
+  } });
+  return html`<div className="ask-flags">
+    <p className="muted">Questions to Ask Floorboard that clearly weren’t about work. Staff see a note under Ask Floorboard that these are noted for the admins. Ask Floorboard also answers each of them by steering back to work.</p>
+    ${err && html`<p className="err">${err}</p>`}
+    ${rows && !rows.length && !err && html`<div className="empty"><p>Nothing flagged. Everyone’s using it for work.</p></div>`}
+    ${rows && rows.length > 0 && html`<div className="table-wrap"><table><thead><tr><th>When</th><th>Who</th><th>What they asked</th><th>Why it was noted</th><th></th></tr></thead><tbody>
+      ${rows.map((r) => { const u = db.users.find((x) => x.id === r.staff_id), title = u ? u.title : r.title; return html`<tr key=${r.id}><td className="nowrap">${shortTime(Date.parse(r.at))}</td><td><b>${u ? u.name : r.name || r.staff_id}</b>${title && html`<div className="muted sm">${title}</div>`}</td><td>${r.question}</td><td className="muted">${r.why || ''}</td>
+        <td><button className="btn sm ghost" onClick=${() => clear(r)}>Clear</button></td></tr>`; })}</tbody></table></div>`}
+  </div>`;
 }
 function AdminView() {
   const { db, user, update, toast, startSeeing } = useApp();
@@ -4912,7 +4954,8 @@ function AdminView() {
   };
   const flipAccess = (driveId, deptId) => update((d) => { const dr = d.drives.find((x) => x.id === driveId); dr.access = dr.access.includes(deptId) ? dr.access.filter((x) => x !== deptId) : [...dr.access, deptId]; });
   return html`<${Page} title="People & access" sub="Who can log in, which departments they’re in, and which drives each department can open." actions=${tab === 'people' && html`<button className="btn primary" onClick=${() => setEdit('new')}><${Icon} n="plus" s=${16}/>Add person</button>`}>
-    <div className="tabs" role="tablist">${[['people', 'People', db.users.length], ['depts', 'Departments', db.depts.length], ['drives', 'Drive access', db.drives.filter((dr) => driveOn(db, dr)).length]].map(([k, l, n]) => html`<button key=${k} className=${tab === k ? 'on' : ''} onClick=${() => setTab(k)}>${l} <b>${n}</b></button>`)}</div>
+    <div className="tabs" role="tablist">${[['people', 'People', db.users.length], ['depts', 'Departments', db.depts.length], ['drives', 'Drive access', db.drives.filter((dr) => driveOn(db, dr)).length], ['ask', 'Ask Floorboard', null]].map(([k, l, n]) => html`<button key=${k} className=${tab === k ? 'on' : ''} onClick=${() => setTab(k)}>${l}${n != null && html` <b>${n}</b>`}</button>`)}</div>
+    ${tab === 'ask' && html`<${AskFlags}/>`}
     ${tab === 'people' && html`<div className="table-wrap"><table>
       <thead><tr><th>Name</th><th>Access</th><th>Departments</th><th>Manages</th><th>${CLOUD ? 'Login' : 'PIN'}</th><th></th></tr></thead>
       <tbody>${db.users.map((u) => html`<tr key=${u.id} onClick=${() => setEdit(u.id)} tabIndex="0" onKeyDown=${(e) => { if (e.key === 'Enter') setEdit(u.id); }} style=${u.active === false ? { opacity: 0.5 } : null}>
@@ -8743,7 +8786,7 @@ const askStep = (name, input) => (ASK_STEP[name] || 'Looking it up') + (input &&
 async function newConvo(db, u) {
   const names = (ids) => ids.map((id) => deptById(db, id).name).join(', ');
   const email = !!((MS.on && await MS.account().catch(() => null)) || (window.floorboardDesktop && window.floorboardDesktop.outlook));
-  return { at: Date.now(), messages: [], context: { name: u.name, role: u.role, departments: names(u.depts), manages: names(u.manages), now: new Date().toLocaleString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }), email } };
+  return { at: Date.now(), messages: [], context: { name: u.name, title: u.title || '', job: u.job || '', role: u.role, departments: names(u.depts), manages: names(u.manages), now: new Date().toLocaleString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }), email } };
 }
 // live() gives the newest data each time, since it can change while Floorboard works
 async function askFloorboard(convo, question, onStep, live) {
@@ -8852,7 +8895,7 @@ function useInCoucou() {
   }, []);
   return on;
 }
-const ASK_IDEAS = ['Find the last Highveld invoice', 'How far is everyone with their tasks?', 'What needs me today?', 'Any emails about quotes this week?'];
+const ASK_IDEAS = ['What needs me today?', 'How far is everyone with their tasks?', 'Find the last Highveld invoice', 'Quiz me on something from my job'];
 function AskCard({ compact }) {
   const { db, user } = useApp();
   const [open, setOpen] = useFold('floorboard.ask.fold.v1'), inCoucou = useInCoucou();
@@ -8889,9 +8932,10 @@ function AskCard({ compact }) {
         ${busy && html`<div className="ask-busy"><span className="ask-dots" aria-hidden="true"><i/><i/><i/></span>${busy}…</div>`}
       </div>`}
     <form className="ask-form" onSubmit=${(e) => { e.preventDefault(); ask(q); }}>
-      <input ref=${box} className="input" value=${q} onChange=${(e) => setQ(e.target.value)} placeholder="Ask about files, tasks, emails…" aria-label="Ask Floorboard" maxLength="600"/>
+      <input ref=${box} className="input" value=${q} onChange=${(e) => setQ(e.target.value)} placeholder="Ask about your work, files, tasks, emails…" aria-label="Ask Floorboard" maxLength="600"/>
       <button className="icon-btn solid" type="submit" disabled=${!q.trim() || !!busy} title="Ask" aria-label="Ask"><${Icon} n="send" s=${15}/></button>
     </form>
+    ${turns.length === 0 && !busy && html`<small className="ask-work">${ASK_WORK}</small>`}
   </div>`;
 }
 // the Windows app hands over questions from Coucou's chat; they're answered here, where the data and the sign-in are
