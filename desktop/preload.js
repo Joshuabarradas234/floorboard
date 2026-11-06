@@ -34,7 +34,7 @@ contextBridge.exposeInMainWorld('floorboardDesktop', {
     const c = (cfg) => ({ clientId: String((cfg && cfg.clientId) || ''), tenantId: String((cfg && cfg.tenantId) || '') });
     return {
       account: (cfg) => ipcRenderer.invoke('ms-account', { cfg: c(cfg) }),
-      signIn: (cfg) => ipcRenderer.invoke('ms-signin', { cfg: c(cfg) }),
+      signIn: (cfg, what) => ipcRenderer.invoke('ms-signin', { cfg: c(cfg), what: what === 'teams' ? 'teams' : 'mail' }),
       signOut: (cfg) => ipcRenderer.invoke('ms-signout', { cfg: c(cfg) }),
       graph: (cfg, path) => ipcRenderer.invoke('ms-graph', { cfg: c(cfg), path: String(path || '') }),
     };

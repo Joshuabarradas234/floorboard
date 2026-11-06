@@ -623,6 +623,12 @@ html.isl-sleepy .isl-ch:not(.wig):not(.ring) .isl-svg{animation:isl-snooze 3.4s 
 .ask-work,.isl-askwork{display:block;margin:6px 4px 0;font-size:11px;line-height:1.35;color:var(--ink-3)}
 .isl-askwork{color:rgba(233,235,238,.5);margin:0 2px}
 .ask-flags{display:grid;gap:12px}.ask-flags td{vertical-align:top}
+.tm-badge{display:inline-flex;align-items:center;gap:4px;font-size:10.5px;font-weight:700;color:#7B83EB;background:rgba(123,131,235,.16);border-radius:999px;padding:1px 7px;margin-left:auto}
+.tm-hint{display:flex;align-items:center;gap:8px;margin-top:10px;padding:8px 10px;border-radius:12px;background:rgba(123,131,235,.13);font-size:12px;line-height:1.3}
+.tm-hint>span{flex:1;min-width:0}.tm-hint>svg{color:#7B83EB;flex:none}
+.isl-row.tm-row{gap:6px;padding:2px 4px}.isl-row.tm-row>svg{flex:none;opacity:.7}
+.isl-row-main{flex:1;min-width:0;display:grid;border:0;background:none;color:inherit;text-align:left;padding:2px 4px;border-radius:8px;cursor:pointer;font:inherit}
+.isl-row-main:hover{background:rgba(255,255,255,.07)}.isl-row-main>span{display:grid;min-width:0}
 .isl-cnt{min-width:20px;height:20px;box-sizing:border-box;border-radius:10px;color:#2a2230;font:700 11px/20px var(--f-body);text-align:center;padding:0 6px;flex:none}
 .isl-who-row b{font-size:13px}
 /* on the small card three names fit one under another (or two and "and N more") */
@@ -2629,7 +2635,7 @@ const greeting = () => { const h = new Date().getHours(); return h < 12 ? 'Good 
 function useCounts() {
   const { db, user } = useApp();
   const vis = db.posts.filter((p) => canSee(db, p, user));
-  const mine = vis.filter((p) => needsMe(p, user.id));
+  const mine = [...vis.filter((p) => needsMe(p, user.id)), ...teamsNeeds(db, user)];
   return {
     vis, mine,
     nT: (t) => mine.filter((p) => p.type === t).length,
@@ -2649,6 +2655,7 @@ function Board({ onPick, note }) {
     <div className="lvlbar" aria-hidden="true">${LEVEL_KEYS.map((l) => c.nL(l) > 0 && html`<i key=${l} className=${l} style=${{ flex: c.nL(l) }}></i>`)}</div>
     <div className="lvl-legend">${LEVEL_KEYS.map((l) => html`<button key=${l} onClick=${() => pick({ level: l })}><i className=${l}></i>${c.nL(l)} ${LEVELS[l].label}</button>`)}</div>
     <div className="board-rows">${shownTypes(db).map((t) => html`<button key=${t} className="board-row" onClick=${() => pick({ type: t })}><${Icon} n=${TYPES[t].icon} s=${16}/><span>${TYPES[t].plural}</span><b>${c.nT(t)}</b></button>`)}</div>
+    <${TeamsHint}/>
     ${note}
   </section>`;
 }
@@ -2731,6 +2738,7 @@ function Page({ title, sub, actions, children }) {
 /* ---------------- widget: the narrow sidebar for a desktop edge or a phone ---------------- */
 function WidgetItem({ p, tab }) {
   const { db, user, openPost } = useApp();
+  if (p.teams) return html`<${TeamsItem} p=${p}/>`;
   const r = p.recips[user.id]; const a = userById(db, p.author);
   return html`<article className=${'witem' + (p.level === 'red' ? ' is-red' : '')} role="button" tabIndex="0" aria-label=${p.title} onClick=${() => openPost(p.id)} onKeyDown=${(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPost(p.id); } }}>
     <div className="witem-top"><${LevelTag} l=${p.level}/><span>${TYPES[p.type].label}</span><span className="mono">#${p.no}</span></div>
@@ -2810,6 +2818,7 @@ function SideSearch() {
 function Widget() {
   const { db, user, openId, composer, closeComposer, compose, toast } = useApp();
   useAskBridge();
+  useTeamsSync(true);
   useIslandCards();
   // the Windows app's tray menu: connect MFS for Finance's card
   const [mfsOpen, setMfsOpen] = useState(false);
@@ -2988,8 +2997,9 @@ function Bar() {
 // Floorboard's.
 // color: the card's dot; fur: its character's colour (the five pastels of Joshua's ghosts and slimes)
 const ISL = { floorboard: { name: 'Floorboard', color: '#F5F6F8', fur: '#E6E5F8', icon: 'logo' }, taskboard: { name: 'Tasks', color: '#EAB308', fur: '#F8C5B0', icon: 'task' },
-  jarvis: { name: 'JARVIS', color: '#E879F9', fur: '#D3C2F4', icon: 'spark' }, mail: { name: 'Mail', color: '#60A5FA', fur: '#BCDDF7', icon: 'inbox' }, whatsapp: { name: 'WhatsApp', color: '#4ADE80', fur: '#C3EBCF', icon: 'chat' } };
-const ISL_ORDER = ['floorboard', 'taskboard', 'jarvis', 'mail', 'whatsapp'];
+  jarvis: { name: 'JARVIS', color: '#E879F9', fur: '#D3C2F4', icon: 'spark' }, teams: { name: 'Teams', color: '#7B83EB', fur: '#C7CAF6', icon: 'chat' }, mail: { name: 'Mail', color: '#60A5FA', fur: '#BCDDF7', icon: 'inbox' }, whatsapp: { name: 'WhatsApp', color: '#4ADE80', fur: '#C3EBCF', icon: 'chat' } };
+// Teams took JARVIS's place (JARVIS stays in the sidebar and in 💬)
+const ISL_ORDER = ['floorboard', 'taskboard', 'teams', 'mail', 'whatsapp'];
 const islGet = (k, d) => { try { return JSON.parse(lsGet('floorboard.island.' + k) || 'null') ?? d; } catch (e) { return d; } };
 const islSet = (k, v) => lsSet('floorboard.island.' + k, JSON.stringify(v));
 // a short rising note when something comes in (Floorboard's own, made here: no sound files)
@@ -3160,7 +3170,12 @@ function islDemo(stage, t0) {
     mail(4, 'Coldline Services', 'Invoice INV-2231', 5 * H, true), mail(5, 'Pieter van Wyk', 'Cleaning roster for next week', 6 * H, true), mail(6, 'SunPack', 'New price list from 1 December', 26 * H, false)];
   if (stage >= 2) emails.unshift(mail(7, 'Highveld Meats', 'Price change on beef from Monday', -8000, true));
   const from = {}; emails.filter((e) => e.unread).forEach((e) => { from[e.from] = (from[e.from] || 0) + 1; });
+  const tm = (id, from0, kind, title, chat, ago, level) => ({ id: 'demo-tm' + id, from: from0, kind, title, chat, at: t0 - ago, level: level || 'green', link: '', status: 'open', seen: true, demo: true });
+  const teams = [tm(1, 'Thandi Mokoena', 'task', 'Do the bakery stock count before 4 today', '', 25 * M, 'red'), tm(2, 'Ayesha Patel', 'approval', 'Approve the Coldline invoice so it can be paid on Friday', 'Month end', H, 'amber'),
+    tm(3, 'Pieter van Wyk', 'feedback', 'Say what you think of the new cleaning roster', '', 3 * H, 'amber'), tm(4, 'Johan Botha', 'look', 'Have a look at the new promo signs', 'Riverside managers › General', 5 * H), tm(5, 'Ayesha Patel', 'feedback', 'Confirm the petty cash count for October', 'Month end', 26 * H)];
+  if (stage >= 2) teams.unshift(tm(6, 'Thandi Mokoena', 'task', 'Call Sasko about tomorrow’s flour delivery', '', -6000, 'amber'));
   return {
+    teams,
     whatsapp: { connected: true, error: '', chats, count: chats.reduce((a, c) => a + c.unread, 0), latest, ringing: null },
     mail: { closed: false, error: '', emails, count: emails.filter((e) => e.unread).length, from: Object.entries(from).sort((a, b) => b[1] - a[1]).map(([name, n]) => ({ name, n })) },
     tasks: { board: [], todo: [], sent: tasks, by: Object.entries(tally).sort((a, b) => b[1] - a[1]), left: tasks.length, demo: true },
@@ -3236,6 +3251,33 @@ function IslJarvis({ big, setBig, j }) {
 }
 
 /* Mail: Outlook (classic)'s inbox, an email to read, a search */
+/* Teams: what people asked of you in Teams (the same as on your Needs you), by who asked, with a count each */
+function IslTeams({ big, setBig, demo }) {
+  const { db, user, update, toast } = useApp(), t = teamsState(db, user), live = useRef(null), [who, setWho] = useState(null), [busy, setBusy] = useState(false), [gone, setGone] = useState([]);
+  live.current = { db, user };
+  useEffect(() => { setBig(who !== null); }, [who]);
+  const items = (demo ? demo.teams : (t.items || []).filter((x) => x.status !== 'done')).filter((x) => !gone.includes(x.id)).sort((a, b) => b.at - a.at);
+  const tally = {}; items.forEach((x) => { const n = firstWord(x.from); tally[n] = (tally[n] || 0) + 1; });
+  const rows = Object.entries(tally).sort((a, b) => b[1] - a[1]);
+  const connect = async () => { setBusy(true); try { await teamsConnect(() => live.current, update); } catch (e) { toast(String((e && e.message) || e), 'warn'); } setBusy(false); };
+  const done = (x) => { if (!x.demo) teamsMark(update, user, x.id, 'done'); setGone((g) => [...g, x.id]); toast('Marked done'); };
+  const open = (x) => { if (x.demo) { toast('A sample from the Demo: in real use this opens the message in Teams'); return; } openTeams(x.link); if (!x.seen) teamsMark(update, user, x.id, 'open'); };
+  const live0 = demo || t.status === 'ok';
+  const list = who ? items.filter((x) => !who || firstWord(x.from) === who) : items;
+  return html`<div className=${'isl-big' + (big ? ' tall' : '')}>
+    <${IslCardHead} id="teams" sub="Asked of you" count=${live0 ? (items.length ? items.length + ' open' : 'All done') : ''} onOpen=${() => { const d = window.floorboardDesktop; if (d && d.openFull) d.openFull('view:needs'); else location.hash = 'go-view:needs'; }}/>
+    ${!live0 ? html`<div className="isl-closed">${!MS.on ? html`<p>Teams needs Floorboard set up in your company’s Microsoft 365 first (once, by whoever looks after it). Then everyone can connect here.</p>`
+      : t.off ? html`<p>Teams is switched off for you.</p><button className="isl-more" onClick=${connect} disabled=${busy}>Switch it on</button>`
+      : html`<p>${t.status === 'error' ? 'Teams: ' + t.err : 'See what people ask of you in Teams: tasks, feedback, things to look at and approvals.'}</p><button className="isl-more primary" onClick=${connect} disabled=${busy}>${busy ? 'Connecting…' : t.status === 'error' ? 'Try again' : 'Connect Teams'}</button>`}</div>`
+    : who === null ? (rows.length ? html`<${IslWho} rows=${rows} color=${ISL.teams.fur} onPick=${(n) => setWho(n)}/>` : html`<p className="isl-empty">Nothing asked of you in Teams.</p>`)
+    : html`<div className="isl-list">
+      <div className="isl-ch-row"><button className="isl-btn" onClick=${() => setWho(null)} aria-label="Back"><${Icon} n="back" s=${14}/></button><b className="isl-ell">${who ? 'From ' + who : 'Everything from Teams'}</b></div>
+      ${list.map((x) => html`<div key=${x.id} className="isl-row static tm-row">
+        <${Icon} n=${(TYPES[x.kind] || TYPES.task).icon} s=${14}/><button className="isl-row-main" onClick=${() => open(x)} title="Open in Teams"><span><b>${x.title}</b><small>${TYPES[x.kind] ? TYPES[x.kind].label : 'Task'}${x.chat ? ' · ' + x.chat : ''} · ${shortTime(x.at)}</small></span></button>
+        <button className="isl-btn sm" onClick=${() => done(x)} title="Done" aria-label=${'Done: ' + x.title}><${Icon} n="check" s=${13}/></button></div>`)}
+      ${!list.length && html`<p className="isl-empty">Nothing left from ${who}.</p>`}</div>`}
+  </div>`;
+}
 function IslMail({ big, setBig, st }) {
   const desk = window.floorboardDesktop, m = st.mail || {}, [q, setQ] = useState(''), [found, setFound] = useState(null), [one, setOne] = useState(null), [finding, setFinding] = useState(false);
   useEffect(() => { setBig(!!one || finding); }, [!!one, finding]);
@@ -3387,7 +3429,7 @@ function IslSettings({ opts, setOpts, avail, onDone }) {
     <b>Island</b>
     <label className="isl-tog"><input type="checkbox" checked=${!!opts.hover} onChange=${() => flip('hover')}/>Open when the pointer is over it</label>
     <label className="isl-tog"><input type="checkbox" checked=${!opts.quiet} onChange=${() => flip('quiet')}/>A sound when something comes in</label>
-    <label className="isl-tog"><input type="checkbox" checked=${!!opts.demo} onChange=${() => flip('demo')}/>Demo: sample tasks, emails and WhatsApps for showing (on this computer only; nothing is saved or sent)</label>
+    <label className="isl-tog"><input type="checkbox" checked=${!!opts.demo} onChange=${() => flip('demo')}/>Demo: sample tasks, Teams requests, emails and WhatsApps for showing (on this computer only; nothing is saved or sent)</label>
     <b>Cards</b>
     <div className="isl-set-cards">${ISL_ORDER.filter((id) => id !== 'floorboard' && avail[id]).map((id) => html`<label key=${id} className="isl-tog"><input type="checkbox" checked=${!hide[id]} onChange=${() => setOpts({ ...opts, hide: { ...hide, [id]: !hide[id] } })}/>${ISL[id].name}</label>`)}</div>
     <button className="isl-more" onClick=${onDone}>Done</button>
@@ -3465,7 +3507,7 @@ function Island() {
   };
   // which cards this person has here
   const tk = dm ? dm.tasks : islTasks(db, user), tb = !!dm || tbDepts(db, user).length > 0 || tk.sent.length > 0;
-  const avail = { floorboard: true, taskboard: tb, jarvis: !!(j && j.mine && (j.found || j.installed)),
+  const avail = { floorboard: true, taskboard: tb, teams: true, jarvis: !!(j && j.mine && (j.found || j.installed)),
     mail: !!(st.mail && (user.role === 'admin' || outlookOn(db, user) || (st.mail.emails || []).length > 0)), whatsapp: !!(st.whatsapp && (st.whatsapp.connected || (st.whatsapp.chats || []).length > 0)) };
   const cards = ISL_ORDER.filter((id) => avail[id] && !(opts.hide || {})[id] || id === 'floorboard');
   const fo = cards.includes(focus) ? focus : 'floorboard';
@@ -3474,6 +3516,7 @@ function Island() {
   const counts = {
     floorboard: db.posts.filter((p) => needsMe(p, user.id) && p.type !== 'task').length + myChats(db, user.id).reduce((a, c) => a + unreadIn(db, c, user.id), 0),
     taskboard: tk.left,
+    teams: dm ? dm.teams.length : teamsNeeds(db, user).length,
     jarvis: j && j.found ? (j.attention || []).length : 0,
     mail: (st.mail && st.mail.count) || 0, whatsapp: (st.whatsapp && st.whatsapp.count) || 0,
   };
@@ -3487,7 +3530,7 @@ function Island() {
     const up = cards.filter((id) => counts[id] > (p[id] || 0) || (id === 'jarvis' && p.jv && jvNews && jvNews !== p.jv));
     if (!up.length) return;
     setWig((w) => { const n = { ...w }; up.forEach((id) => { n[id] = Date.now(); }); return n; });
-    const r = ['whatsapp', 'mail', 'taskboard', 'jarvis', 'floorboard'].find((x) => up.includes(x)); if (r) { setRecent(r); islSet('recent', r); }
+    const r = ['whatsapp', 'mail', 'teams', 'taskboard', 'jarvis', 'floorboard'].find((x) => up.includes(x)); if (r) { setRecent(r); islSet('recent', r); }
     if (!opts.quiet) islBlip();
     setTimeout(() => setWig({}), 900);
   });
@@ -3527,11 +3570,11 @@ function Island() {
   const others = cards.filter((id) => id !== fo).slice(0, 4);
   // closed: the card with the latest news and its number ("WhatsApp 3 new", "Mail 2 new", "Tasks 4 to do"), the others small
   const news = (id) => id !== 'floorboard' && cards.includes(id) && counts[id] > 0;
-  const pillId = news(recent) ? recent : ['whatsapp', 'mail', 'taskboard', 'jarvis'].find(news) || fo;
-  const say = { whatsapp: 'new', mail: 'new', taskboard: 'to do', jarvis: 'need you' };
+  const pillId = news(recent) ? recent : ['whatsapp', 'mail', 'teams', 'taskboard', 'jarvis'].find(news) || fo;
+  const say = { whatsapp: 'new', mail: 'new', teams: 'for you', taskboard: 'to do', jarvis: 'need you' };
   const peekText = news(pillId) ? html`<b>${ISL[pillId].name}</b> ${counts[pillId]} ${say[pillId]}` : islandLine(db, user) || 'All caught up';
   const pillOthers = cards.filter((id) => id !== pillId).slice(0, 4);
-  const main = ringing ? 'whatsapp' : fo, Big = ringing ? IslRing : { floorboard: IslFloorboard, taskboard: IslTaskboard, jarvis: IslJarvis, mail: IslMail, whatsapp: IslWhatsApp }[fo];
+  const main = ringing ? 'whatsapp' : fo, Big = ringing ? IslRing : { floorboard: IslFloorboard, taskboard: IslTaskboard, teams: IslTeams, jarvis: IslJarvis, mail: IslMail, whatsapp: IslWhatsApp }[fo];
   const openChat = (jid) => { setFocusS('whatsapp'); islSet('focus', 'whatsapp'); setWaOpen(jid); show(true); mark('whatsapp'); };
   return html`<div className=${'isl' + (open ? ' open' : '') + (tall ? ' tall' : '') + (peek && !open ? ' peeking' : '')} style=${tint} onDragEnter=${dragIn}
     onMouseEnter=${() => { clearTimeout(leave.current); clearTimeout(peekT.current); if (!open && opts.hover) show(true); }} onMouseLeave=${() => { if (peek && !open) peekT.current = setTimeout(() => setPeek(null), 2500); if (open && opts.hover && !big && tab === 'home' && !ringing) leave.current = setTimeout(() => show(false), 600); }}>
@@ -3617,6 +3660,7 @@ function Overall({ p }) {
 }
 function PostCard({ p, mode }) {
   const { db, user, openPost, openId } = useApp();
+  if (p.teams) return html`<${TeamsItem} p=${p} full/>`;
   const r = p.recips[user.id]; const a = userById(db, p.author);
   const showMine = mode !== 'sent' && r;
   const open = () => openPost(p.id);
@@ -3655,7 +3699,7 @@ function FeedView({ kind }) {
   const { db, user, filters, setFilters, compose } = useApp();
   const [status, setStatus] = useState(kind === 'sent' ? 'open' : 'all');
   const vis = db.posts.filter((p) => canSee(db, p, user));
-  let base = kind === 'needs' ? vis.filter((p) => needsMe(p, user.id)) : kind === 'all' ? vis.filter((p) => p.recips[user.id]) : vis.filter((p) => p.author === user.id);
+  let base = kind === 'needs' ? [...vis.filter((p) => needsMe(p, user.id)), ...teamsNeeds(db, user)] : kind === 'all' ? vis.filter((p) => p.recips[user.id]) : vis.filter((p) => p.author === user.id);
   if (kind !== 'needs' && status !== 'all') {
     const isDone = (p) => p.closed || (p.type === 'approval' ? (kind === 'sent' ? ['paid', 'rejected'].includes(apState(p)) : !needsMe(p, user.id))
       : kind === 'sent' ? Object.values(p.recips).every((r) => r.status === 'done') : p.recips[user.id].status === 'done');
@@ -8468,6 +8512,9 @@ function PasteModal({ onClose }) {
 // sign-in. The website signs in with Microsoft's library; the desktop app signs in itself and hands the page only what it reads.
 const MSAL_BASE = 'https://cdn.jsdelivr.net/npm/@azure/msal-browser@3.30.0/lib/';
 const MS_SCOPES = ['User.Read', 'Mail.Read'];
+// Teams: chats to read what's asked of the person; team channels only once the company's admin has allowed it
+const TEAMS_SCOPES = ['User.Read', 'Chat.Read'], TEAMS_CHANNEL_SCOPES = ['User.Read', 'Team.ReadBasic.All', 'Channel.ReadBasic.All', 'ChannelMessage.Read.All'];
+const msScopesFor = (p) => (/^\/(me\/joinedTeams|teams\/)/.test(p) ? TEAMS_CHANNEL_SCOPES : /^\/(me$|me\?|me\/chats)/.test(p) ? TEAMS_SCOPES : MS_SCOPES);
 const MS = (() => {
   const c = window.FLOORBOARD_CONFIG || {}, cfg = { clientId: String(c.msClientId || ''), tenantId: String(c.msTenantId || '') };
   const G = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -8493,12 +8540,13 @@ const MS = (() => {
       const d = desk(); if (d) return unwrap(await d.account(cfg));
       return who((await web()).getAllAccounts()[0]);
     },
-    async signIn() {
-      if (demo) { lsSet('floorboard.demomail.v1', '1'); return this.account(); }
-      const d = desk(); if (d) return unwrap(await d.signIn(cfg));
+    async signIn(what) {
+      const scopes = what === 'teams' ? TEAMS_SCOPES : MS_SCOPES;
+      if (demo) { if (what === 'teams') { lsSet('floorboard.demoteams.v1', String(Date.now())); return { username: 'you@riverside.example', name: '' }; } lsSet('floorboard.demomail.v1', '1'); return this.account(); }
+      const d = desk(); if (d) return unwrap(await d.signIn(cfg, what));
       const p = await web();
-      try { return who((await p.loginPopup({ scopes: MS_SCOPES, prompt: 'select_account' })).account); }
-      catch (e) { if (/popup|empty_window/i.test(e.errorCode || e.message || '')) { await p.loginRedirect({ scopes: MS_SCOPES }); return null; } throw e; }
+      try { return who((await p.loginPopup({ scopes, prompt: 'select_account' })).account); }
+      catch (e) { if (/popup|empty_window/i.test(e.errorCode || e.message || '')) { await p.loginRedirect({ scopes }); return null; } throw e; }
     },
     async signOut() {
       if (demo) { lsSet('floorboard.demomail.v1', ''); return; }
@@ -8507,13 +8555,14 @@ const MS = (() => {
       await (await web()).clearCache();
     },
     async get(path) {
-      if (demo) return demoMailGet(path);
+      if (demo) return TEAMS_RE.test(path) ? demoTeamsGet(path) : demoMailGet(path);
       const d = desk(); if (d) return unwrap(await d.graph(cfg, path));
       const p = await web(), account = p.getAllAccounts()[0];
       if (!account) throw new Error('signin');
-      let token; try { token = (await p.acquireTokenSilent({ scopes: MS_SCOPES, account })).accessToken; } catch (e) { throw new Error('signin'); }
+      const scopes = msScopesFor(path);
+      let token; try { token = (await p.acquireTokenSilent({ scopes, account })).accessToken; } catch (e) { throw new Error(scopes === TEAMS_CHANNEL_SCOPES ? 'channels' : 'signin'); }
       const res = await fetch('https://graph.microsoft.com/v1.0' + path, { headers: { Authorization: 'Bearer ' + token } });
-      if (!res.ok) throw new Error('Outlook answered ' + res.status);
+      if (!res.ok) throw new Error((scopes === MS_SCOPES ? 'Outlook' : 'Teams') + ' answered ' + res.status);
       return res.json();
     },
     // back from signing in on a phone (pop-ups don't work there): finish it, but never inside a sign-in pop-up
@@ -8553,6 +8602,190 @@ function demoMailGet(path) {
     const name = x && /Q-1188/.test(x.subject) ? 'Sasko_Quote_Q-1188.pdf' : x && /INV-2240/.test(x.subject) ? 'Coldline_Invoice_INV-2240.pdf' : 'Statement.pdf';
     r = { value: x && x.hasAttachments ? [{ '@odata.type': '#microsoft.graph.fileAttachment', id: 'at-' + x.id, name, contentType: 'application/pdf', size: 30, isInline: false, contentBytes: btoa('%PDF-1.1 demo') }] : [] };
   } else r = { value: [] };
+  return Promise.resolve(JSON.parse(JSON.stringify(r)));
+}
+/* ---------------- Teams: what people ask of you in Teams, on your Needs you ---------------- */
+// With Floorboard registered in the company's Microsoft 365 (the same as for Outlook) and the person's OK (Connect Teams),
+// Floorboard looks at their Teams chats every couple of minutes, on their own device and with their own sign-in: messages
+// to them in a one-to-one chat, and in group chats and team channels the ones that @mention or name them. Ask Floorboard's
+// assistant (or, without it, a simple check of the words) picks out the ones asking something of them: a task, feedback,
+// a look, or an approval. Those go on their Needs you with who asked, where, and a link back to the message in Teams.
+// Only that short line is kept (in their own pins, which only they can read), never the chats.
+const TEAMS_RE = /^\/(me$|me\?|me\/chats|me\/joinedTeams|teams\/)/;
+const teamsState = (db, user) => (user && (db.pins[user.id] || {}).teams) || {};
+const teamsLink = (chatId, msgId) => 'https://teams.microsoft.com/l/message/' + encodeURIComponent(chatId) + '/' + encodeURIComponent(msgId) + '?context=' + encodeURIComponent('{"contextType":"chat"}');
+const openTeams = (link) => { if (link) window.open(link, '_blank', 'noopener'); };
+// (an inert document: nothing in a message runs or loads)
+const teamsText = (html0) => { const d = new DOMParser().parseFromString(String(html0 || '').replace(/<(br|\/p|\/div)\s*\/?>/gi, ' '), 'text/html'); return ((d.body && d.body.textContent) || '').replace(/\s+/g, ' ').trim(); };
+const firstWord = (s) => String(s || '').trim().split(/\s+/)[0] || 'Someone';
+// Without the assistant: a simple look at the words
+function teamsGuess(c) {
+  const t = c.text.replace(/^(hi|hey|hello|hie|morning|good (?:morning|afternoon|day))(?:\s+[A-Z][\w'-]*)?[,!.]?\s+/i, '').trim(), low = t.toLowerCase();
+  const kind = /\b(approve|approval|sign(?:ed)?[ -]off|authori[sz]e|ok(?:ay)? to pay)\b/.test(low) ? 'approval'
+    : /\b(fyi|have a look|take a look|look at|for your info|heads[ -]up|see attached)\b/.test(low) ? 'look'
+    : /\b(what do you think|your thoughts|feedback|your opinion|let me know|can you confirm|do you agree|are you (?:ok|happy) with)\b/.test(low) ? 'feedback'
+    : /\b(can you|could you|would you|please|pls|plz|need you to|make sure|remember to|don'?t forget)\b/.test(low) ? 'task'
+    : /\?\s*$/.test(t) && t.length > 12 ? 'feedback' : 'none';
+  const level = /\b(urgent|asap|immediately|right now|emergency)\b/.test(low) ? 'red' : /\b(today|tonight|this (?:morning|afternoon)|before \d|by \d|eod|end of (?:the )?day|tomorrow|important)\b/.test(low) ? 'amber' : 'green';
+  const one = ((t.match(/^.{12,}?[.!?](?=\s|$)/) || [t])[0]).trim(), title = one.length > 100 ? one.slice(0, 99) + '…' : one;
+  const due = /\b(today|tonight|this (?:morning|afternoon)|eod|end of (?:the )?day|before \d|by \d)\b/.test(low) ? dkey() : /\btomorrow\b/.test(low) ? keyPlus(1) : '';
+  return { kind, level, title: title.charAt(0).toUpperCase() + title.slice(1), due };
+}
+// With the assistant set up, it reads them and writes the line; anything it misses gets the simple look
+async function teamsSort(cands, user) {
+  if (CLOUD) {
+    try {
+      const { data, error } = await CLOUD.functions.invoke('ask', { body: { sortTeams: cands.map(({ id, from, chat, text }) => ({ id, from, chat, text })), context: { name: user.name, title: user.title || '', job: user.job || '', now: new Date().toString() } } });
+      if (!error && data && Array.isArray(data.sorted)) {
+        return cands.map((c) => { const s = data.sorted.find((x) => x && x.id === c.id); return { ...c, ...(s && ['task', 'feedback', 'look', 'approval', 'none'].includes(s.kind) ? { kind: s.kind, level: LEVELS[s.level] ? s.level : 'green', title: String(s.title || '').slice(0, 120) || teamsGuess(c).title, due: /^\d{4}-\d\d-\d\d$/.test(s.due || '') ? s.due : '' } : teamsGuess(c)) }; });
+      }
+    } catch (e) { /* the simple look below */ }
+  }
+  return cands.map((c) => ({ ...c, ...teamsGuess(c) }));
+}
+let TEAMS_BUSY = false;
+async function teamsPoll(live, update) {
+  if (TEAMS_BUSY) return;
+  TEAMS_BUSY = true;
+  try {
+    const { db, user } = live(); if (!user) return;
+    const st = teamsState(db, user);
+    if (st.off) return;
+    const save = (fn) => update((d) => { const p = d.pins[user.id] = d.pins[user.id] || { posts: [], notes: [] }; p.teams = p.teams || {}; fn(p.teams); });
+    let me;
+    try { me = await MS.get('/me?$select=id,displayName,givenName'); } catch (e) {
+      const s = e.message === 'signin' ? 'signin' : 'error';
+      if (st.status !== s || (s === 'error' && st.err !== String(e.message).slice(0, 200))) save((t) => { t.status = s; t.err = s === 'error' ? String(e.message).slice(0, 200) : ''; });
+      return;
+    }
+    const since = { ...(st.since || {}) }, start = Date.now() - 2 * DAY, after = (k) => Date.parse(since[k] || '') || start, cands = [];
+    const mineMsg = (m) => !!(m.from && m.from.user && m.from.user.id === me.id);
+    const toMe = (m) => (m.mentions || []).some((x) => x.mentioned && x.mentioned.user && x.mentioned.user.id === me.id);
+    const given = (me.givenName || '').trim(), named = (t) => given.length > 2 && new RegExp('(^|[^\\p{L}])@?' + given.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '(?![\\p{L}])', 'iu').test(t);
+    const take = (m, k, where, link, direct) => {
+      const at = Date.parse(m.createdDateTime); if (!at || at <= after(k) || m.messageType !== 'message' || m.deletedDateTime || mineMsg(m) || !m.from || !m.from.user) return;
+      let text = teamsText(m.body && m.body.content);
+      // "@Joshua please…": the @mention of them at the start isn't part of what's asked
+      (m.mentions || []).forEach((x) => { if (x.mentioned && x.mentioned.user && x.mentioned.user.id === me.id && x.mentionText && text.startsWith(x.mentionText)) text = text.slice(x.mentionText.length).replace(/^[\s,:]+/, ''); });
+      if (!text) return;
+      if (direct || toMe(m) || named(text)) cands.push({ id: m.id, from: m.from.user.displayName || 'Someone', chat: where, text: text.slice(0, 1500), at, link });
+    };
+    // chats: the ones with something new since last time (up to 15 a time)
+    const chats = (await MS.get('/me/chats?$top=50&$expand=lastMessagePreview&$orderby=lastMessagePreview/createdDateTime%20desc')).value || [];
+    let looked = 0;
+    for (const ch of chats) {
+      const last = Date.parse((ch.lastMessagePreview || {}).createdDateTime || ''), k = 'c:' + ch.id;
+      if (!last || last <= after(k)) continue;
+      if (++looked > 15) break;
+      const msgs = (await MS.get('/me/chats/' + encodeURIComponent(ch.id) + '/messages?$top=20&$orderby=createdDateTime%20desc')).value || [];
+      const one = ch.chatType === 'oneOnOne';
+      msgs.forEach((m) => take(m, k, one ? '' : (ch.topic || 'Group chat'), teamsLink(ch.id, m.id), one));
+      since[k] = new Date(last).toISOString();
+    }
+    // team channels, every 10 minutes, when the company has allowed Floorboard to read them
+    let chan = { at: st.chanAt || 0, off: !!st.chanOff };
+    if (Date.now() - chan.at > (chan.off ? DAY : 10 * MIN)) {
+      chan = { at: Date.now(), off: false };
+      try {
+        const teams = ((await MS.get('/me/joinedTeams?$select=id,displayName')).value || []).slice(0, 10);
+        let n = 0;
+        for (const tm of teams) {
+          const cs = (await MS.get('/teams/' + encodeURIComponent(tm.id) + '/channels?$select=id,displayName')).value || [];
+          for (const c of cs) {
+            if (++n > 25) break;
+            const k = 'h:' + c.id, msgs = (await MS.get('/teams/' + encodeURIComponent(tm.id) + '/channels/' + encodeURIComponent(c.id) + '/messages?$top=10&$expand=replies')).value || [];
+            let newest = after(k);
+            msgs.forEach((m) => { [m, ...(m.replies || [])].forEach((x) => { take(x, k, tm.displayName + ' › ' + c.displayName, x.webUrl || m.webUrl || '', false); newest = Math.max(newest, Date.parse(x.createdDateTime) || 0); }); });
+            since[k] = new Date(newest).toISOString();
+          }
+        }
+      } catch (e) { chan.off = true; }
+    }
+    const have = new Set((st.items || []).map((x) => x.id)), fresh = cands.filter((c) => !have.has(c.id)).sort((a, b) => b.at - a.at).slice(0, 25);
+    const sorted = fresh.length ? await teamsSort(fresh, user) : [];
+    const add = sorted.filter((x) => x.kind && x.kind !== 'none').map(({ text, ...x }) => ({ ...x, status: 'open', seen: false }));
+    const changed = add.length > 0 || JSON.stringify(since) !== JSON.stringify(st.since || {}) || st.status !== 'ok' || chan.at !== (st.chanAt || 0);
+    if (changed) save((t) => {
+      t.status = 'ok'; t.err = ''; t.who = me.displayName || ''; t.since = since; t.chanAt = chan.at; t.chanOff = chan.off;
+      t.items = [...add, ...(t.items || []).filter((x) => !add.some((y) => y.id === x.id) && (x.status !== 'done' || Date.now() - (x.doneAt || x.at) < 30 * DAY))].slice(0, 150);
+    });
+  } finally { TEAMS_BUSY = false; }
+}
+// one window looks for new requests (the sidebar on the Windows app; the app itself on a phone or the website)
+function useTeamsSync(active) {
+  const { db, user, update } = useApp(), live = useRef(null);
+  live.current = { db, user, update };
+  const on = !!(active && user && MS.on && !teamsState(db, user).off);
+  useEffect(() => {
+    if (!on) return undefined;
+    const go = () => teamsPoll(() => live.current, (fn) => live.current.update(fn)).catch(() => { });
+    const t0 = setTimeout(go, 4000), t = setInterval(go, 2 * MIN);
+    return () => { clearTimeout(t0); clearInterval(t); };
+  }, [on, user && user.id]);
+}
+// connecting: the person's own Microsoft sign-in, then a first look straight away
+async function teamsConnect(live, update) {
+  await MS.signIn('teams');
+  update((d) => { const p = d.pins[live().user.id] = d.pins[live().user.id] || { posts: [], notes: [] }; p.teams = { ...(p.teams || {}), off: false }; });
+  await teamsPoll(live, update);
+}
+// the requests as Needs you items, next to the ones from Floorboard
+function teamsNeeds(db, user) {
+  const t = teamsState(db, user); if (!t || t.off) return [];
+  const types = shownTypes(db);
+  return (t.items || []).filter((x) => x.status !== 'done').map((x) => {
+    const type = types.includes(x.kind) ? x.kind : x.kind === 'approval' ? 'feedback' : TYPES[x.kind] ? x.kind : 'task';
+    return { id: 'tm:' + x.id, no: '', type, level: LEVELS[x.level] ? x.level : 'green', title: x.title, body: '', author: null, about: null, toDepts: [], toUsers: [],
+      attachments: [], activity: [], recips: { [user.id]: { status: 'todo', seen: x.seen ? x.at : null } }, createdAt: x.at, due: type !== 'approval' && x.due ? x.due : null, closed: false, teams: x };
+  });
+}
+const teamsFind = (db, user, id) => (teamsState(db, user).items || []).find((x) => 'tm:' + x.id === id);
+function teamsMark(update, user, id, status) {
+  update((d) => { const it = (((d.pins[user.id] || {}).teams || {}).items || []).find((x) => x.id === id); if (it) { it.status = status; it.seen = true; if (status === 'done') it.doneAt = Date.now(); } });
+}
+function TeamsItem({ p, full }) {
+  const { user, update, toast } = useApp(), x = p.teams;
+  const done = (msg) => { teamsMark(update, user, x.id, 'done'); toast(msg); };
+  const open = () => { openTeams(x.link); if (!x.seen) teamsMark(update, user, x.id, 'open'); };
+  return html`<article className=${(full ? 'card' : 'witem') + ' tm-item' + (p.level === 'red' ? ' is-red' : '')} tabIndex="0" role="button" aria-label=${p.title + ', from Teams'} onClick=${open} onKeyDown=${(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } }}>
+    <div className=${full ? 'card-top' : 'witem-top'}><${LevelTag} l=${p.level}/>${full ? html`<${TypeChip} t=${p.type}/>` : html`<span>${TYPES[p.type].label}</span>`}<span className="tm-badge"><${Icon} n="chat" s=${11}/>Teams</span>${full && html`<span className="when">${ago(x.at)}</span>`}</div>
+    <div className=${full ? 'card-title' : 'witem-t'}>${!x.seen && html`<span className="dot-new" title="New"></span>`}<span>${p.title}</span></div>
+    <div className=${full ? 'card-meta' : 'witem-m'}><span>From ${firstWord(x.from)}${x.chat ? ' · ' + x.chat : ''}</span>${p.due && html`<${DueTag} p=${p} uid=${user.id}/>`}${!full && html`<span style=${{ marginLeft: 'auto' }} className="muted sm">${shortTime(x.at)}</span>`}</div>
+    <div className="qa" onClick=${(e) => e.stopPropagation()} onKeyDown=${(e) => e.stopPropagation()}>
+      <button className="qa-b" onClick=${open}><${Icon} n="expand" s=${14}/>Open in Teams</button>
+      <button className="qa-b go" onClick=${() => done('Marked done')}><${Icon} n="check" s=${14}/>Done</button>
+      <button className="qa-b" onClick=${() => done('Taken off your Needs you')} title="It wasn’t asking anything of you">Not for me</button></div>
+  </article>`;
+}
+// under the board: connect Teams, or what's wrong with it
+function TeamsHint() {
+  const { db, user, update, toast } = useApp(), t = teamsState(db, user), [busy, setBusy] = useState(false), live = useRef(null);
+  live.current = { db, user };
+  if (!MS.on || !user || t.off || t.status === 'ok') return null;
+  const go = async () => { setBusy(true); try { await teamsConnect(() => live.current, update); toast('Teams is connected. What people ask of you there comes onto Needs you.'); } catch (e) { toast(String((e && e.message) || e), 'warn'); } setBusy(false); };
+  return html`<div className="tm-hint"><${Icon} n="chat" s=${14}/><span>${t.status === 'error' ? 'Teams: ' + t.err : 'Get what people ask of you in Teams here too'}</span>
+    <button className="btn sm" disabled=${busy} onClick=${go}>${busy ? 'Connecting…' : t.status === 'error' ? 'Try again' : 'Connect Teams'}</button></div>`;
+}
+// the demo store's Teams, so it can be seen working without a Microsoft account
+function demoTeamsGet(path) {
+  const T = Number(lsGet('floorboard.demoteams.v1') || 0);
+  if (!T) return Promise.reject(new Error('signin'));
+  const M = MIN, H = HOUR, me = { id: 'me-demo', displayName: 'You', givenName: '' };
+  const u = (id, name) => ({ user: { id, displayName: name } }), at = (n) => '<at id="0">' + n + '</at>';
+  const msg = (id, from, html0, ago, mention) => ({ id, messageType: 'message', createdDateTime: new Date(T - ago).toISOString(), from: from === 'me' ? u('me-demo', 'You') : u('u-' + from, from), body: { contentType: 'html', content: html0 }, mentions: mention ? [{ id: 0, mentionText: 'You', mentioned: u('me-demo', 'You') }] : [] });
+  const chats = {
+    'demo-c1': { id: 'demo-c1', chatType: 'oneOnOne', topic: null, msgs: [msg('dtm1', 'Thandi Mokoena', '<p>Hi, can you please do the stock count for the bakery before 4 today?</p>', 25 * M)] },
+    'demo-c2': { id: 'demo-c2', chatType: 'group', topic: 'Month end', msgs: [msg('dtm2', 'Ayesha Patel', '<p>' + at('You') + ' please approve the Coldline invoice of R6 200 so we can pay it on Friday</p>', H, true), msg('dtm3', 'Pieter van Wyk', '<p>Thanks all, have a good weekend</p>', 50 * M)] },
+    'demo-c3': { id: 'demo-c3', chatType: 'oneOnOne', topic: null, msgs: [msg('dtm4', 'Pieter van Wyk', '<p>What do you think of the new cleaning roster? Let me know by tomorrow.</p>', 3 * H), msg('dtm5', 'Pieter van Wyk', '<p>Thanks!</p>', 2 * H)] },
+  };
+  let r;
+  if (/^\/me(\?|$)/.test(path)) r = me;
+  else if (/^\/me\/chats\?/.test(path)) r = { value: Object.values(chats).map((c) => ({ id: c.id, chatType: c.chatType, topic: c.topic, lastMessagePreview: { createdDateTime: c.msgs.map((m) => m.createdDateTime).sort().pop() } })) };
+  else if (/^\/me\/chats\/([^/]+)\/messages/.test(path)) { const c = chats[decodeURIComponent(path.split('/')[3])]; r = { value: c ? c.msgs : [] }; }
+  else if (/^\/me\/joinedTeams/.test(path)) r = { value: [{ id: 'demo-t1', displayName: 'Riverside managers' }] };
+  else if (/^\/teams\/[^/]+\/channels\?/.test(path)) r = { value: [{ id: 'demo-h1', displayName: 'General' }] };
+  else if (/^\/teams\/[^/]+\/channels\/[^/]+\/messages/.test(path)) r = { value: [{ ...msg('dtm6', 'Johan Botha', '<p>' + at('You') + ' have a look at the new promo signs in the shared folder, FYI</p>', 5 * H, true), webUrl: '', replies: [] }] };
+  else r = { value: [] };
   return Promise.resolve(JSON.parse(JSON.stringify(r)));
 }
 function OutlookSide() {
@@ -9906,6 +10139,7 @@ const SCENE_KEY = 'floorboard.scene.v1';
 const DESKTOP_SHELL = /[?&]shell=desktop\b/.test(location.search);
 function Shell() {
   const { view, openId, closePost, drawer, setDrawer, composer, closeComposer, ask, resetDemo, openChatId } = useApp();
+  useTeamsSync(!DESKTOP_SHELL);
   const chatsMode = view === 'chats';
   let content;
   if (view === 'needs' || view === 'all' || view === 'sent') content = html`<${FeedView} kind=${view}/>`;
@@ -10355,7 +10589,7 @@ function App() {
         d.messages.push({ id: uid('m'), chat: ch.id, user: from.id, at: now, text: '', attachments: [], mentions: [], replyTo: null, postId: pid, kind: 'msg' });
       }), 3000);
     },
-    openPost: (id) => { setOpenId(id); setDrawer(false); }, closePost: () => setOpenId(null),
+    openPost: (id) => { if (String(id || '').startsWith('tm:')) { const x = teamsFind(vdb, user, id); if (x) { openTeams(x.link); teamsMark(update, user, x.id, 'open'); } return; } setOpenId(id); setDrawer(false); }, closePost: () => setOpenId(null),
     compose: (preset) => setComposer(preset || {}), closeComposer: () => setComposer(null),
     recordAsk, clearRecordAsk: () => setRecordAsk(null),
     login: (id) => { lsSet(SESSION_KEY, id); setMe(id); lsSet(SEEAS_KEY, ''); setSeeAs(''); setView(recordAsk ? 'calendar' : 'chats'); setOpenChatId(null); setOpenId(null); setFilters(NO_FILTERS); },

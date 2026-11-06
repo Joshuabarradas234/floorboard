@@ -513,9 +513,11 @@ function createSidebar() {
             console.log('SMOKE island whatsapp find', JSON.stringify(await text('.isl-left .isl-list'))); await bshot('fb-island-6-wafind.png');
             await B("document.querySelector('.isl-left .isl-btn.sm').click(); 1"); await wait(300);
             console.log('SMOKE island mail', await pick('Mail')); await wait(700); console.log('SMOKE island mail card', JSON.stringify(await text('.isl-left'))); await bshot('fb-island-7-mail.png');
-            console.log('SMOKE island jarvis', await pick('JARVIS')); await wait(700); console.log('SMOKE island jarvis card', JSON.stringify(await text('.isl-left'))); await bshot('fb-island-8-jarvis.png');
-            await B("document.querySelector('.isl-left .isl-lines').click(); 1"); await wait(700); console.log('SMOKE island jarvis all', JSON.stringify(await text('.isl-left'))); await bshot('fb-island-9-jarvis-all.png');
-            await B("[...document.querySelectorAll('.isl-more')].find((b) => b.innerText === 'Less').click(); 1"); await wait(300);
+            console.log('SMOKE island teams', await pick('Teams')); await wait(700); console.log('SMOKE island teams card', JSON.stringify(await text('.isl-left')));
+            await B("[...document.querySelectorAll('.isl-left .isl-more')].find((b) => /Connect Teams/.test(b.innerText)).click(); 1"); await wait(3000);
+            console.log('SMOKE island teams connected', JSON.stringify(await text('.isl-left'))); await bshot('fb-island-8-teams.png');
+            await B("document.querySelector('.isl-left .isl-who-row').click(); 1"); await wait(700); console.log('SMOKE island teams from', JSON.stringify(bar.getBounds()), JSON.stringify(await text('.isl-left'))); await bshot('fb-island-9-teams-from.png');
+            await B("document.querySelector('.isl-left .isl-ch-row .isl-btn').click(); 1"); await wait(400);
             console.log('SMOKE island taskboard', await pick('Tasks')); await wait(700); console.log('SMOKE island taskboard card', JSON.stringify(await text('.isl-left'))); await bshot('fb-island-10-week.png');
             await B("document.querySelector('.isl-tab[aria-label=\"Ask Floorboard\"]').click(); 1"); await wait(600); await typeIn('.isl-ask-in input', 'What needs me?'); await B("document.querySelector('.isl-ask-in').requestSubmit(); 1"); await wait(3500);
             console.log('SMOKE island ask', JSON.stringify(bar.getBounds()), JSON.stringify(await text('.isl-ask-msgs'))); await bshot('fb-island-11-ask.png');
@@ -569,6 +571,8 @@ function openFull(_e, target) {
 // Outlook: the desktop app signs in to Microsoft itself (in the browser, back to this computer) and reads the person's own
 // mail here, so the page never holds a Microsoft token. The sign-in is kept encrypted for this Windows user, or not at all.
 const MS_SCOPES = ['User.Read', 'Mail.Read'];
+// Teams (what people ask of the person there): chats, and team channels once the company's admin has allowed it
+const TEAMS_SCOPES = ['User.Read', 'Chat.Read'], TEAMS_CHANNEL_SCOPES = ['User.Read', 'Team.ReadBasic.All', 'Channel.ReadBasic.All', 'ChannelMessage.Read.All'];
 const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 let msApp = null, msKey = '';
 const msCacheFile = () => path.join(app.getPath('userData'), 'outlook.bin');
@@ -585,12 +589,12 @@ function msClient(cfg) {
   msKey = key;
   return msApp;
 }
-async function msToken(cfg, interactive) {
-  const pca = msClient(cfg), [account] = await pca.getTokenCache().getAllAccounts();
-  if (account) { try { return (await pca.acquireTokenSilent({ account, scopes: MS_SCOPES })).accessToken; } catch (e) { if (!interactive) throw new Error('signin'); } }
-  if (!interactive) throw new Error('signin');
+async function msToken(cfg, interactive, scopes = MS_SCOPES) {
+  const pca = msClient(cfg), [account] = await pca.getTokenCache().getAllAccounts(), why = scopes === TEAMS_CHANNEL_SCOPES ? 'channels' : 'signin';
+  if (account) { try { return (await pca.acquireTokenSilent({ account, scopes })).accessToken; } catch (e) { if (!interactive) throw new Error(why); } }
+  if (!interactive) throw new Error(why);
   const r = await pca.acquireTokenInteractive({
-    scopes: MS_SCOPES,
+    scopes,
     openBrowser: async (url) => { if (url.startsWith('https://login.microsoftonline.com/')) await shell.openExternal(url); },
     successTemplate: '<h2 style="font-family:sans-serif">Signed in. You can close this tab and go back to Floorboard.</h2>',
     errorTemplate: '<h2 style="font-family:sans-serif">Sign-in didn’t finish: {error}</h2>',
@@ -600,17 +604,21 @@ async function msToken(cfg, interactive) {
 const safe = (fn) => async (_e, arg) => { try { return { ok: await fn(arg || {}) }; } catch (e) { return { error: String((e && e.message) || e) } } };
 function msIpc() {
   ipcMain.handle('ms-account', safe(async ({ cfg }) => { const [a] = await msClient(cfg).getTokenCache().getAllAccounts(); return a ? { username: a.username, name: a.name || '' } : null; }));
-  ipcMain.handle('ms-signin', safe(async ({ cfg }) => { await msToken(cfg, true); const [a] = await msClient(cfg).getTokenCache().getAllAccounts(); return a ? { username: a.username, name: a.name || '' } : null; }));
+  ipcMain.handle('ms-signin', safe(async ({ cfg, what }) => { await msToken(cfg, true, what === 'teams' ? TEAMS_SCOPES : MS_SCOPES); const [a] = await msClient(cfg).getTokenCache().getAllAccounts(); return a ? { username: a.username, name: a.name || '' } : null; }));
   ipcMain.handle('ms-signout', safe(async ({ cfg }) => {
     try { const c = msClient(cfg).getTokenCache(); for (const a of await c.getAllAccounts()) await c.removeAccount(a); } catch (e) { /* nothing to remove */ }
     try { fs.unlinkSync(msCacheFile()); } catch (e) { /* already gone */ }
     msApp = null; return true;
   }));
-  // reads only: the person's own folders, messages and attachments
+  // reads only: the person's own mail folders, messages and attachments; who they are; their Teams chats; and the
+  // channels of the teams they're in
   ipcMain.handle('ms-graph', safe(async ({ cfg, path: p }) => {
-    if (typeof p !== 'string' || !/^\/me\/(mailFolders|messages)[\w/().,$=&?'%:+ -]*$/.test(p)) throw new Error('Not allowed');
-    const res = await fetch('https://graph.microsoft.com/v1.0' + p, { headers: { Authorization: 'Bearer ' + (await msToken(cfg, false)) } });
-    if (!res.ok) throw new Error('Outlook answered ' + res.status);
+    const ok = typeof p === 'string' && (/^\/me\/(mailFolders|messages)[\w/().,$=&?'%:+ -]*$/.test(p) || /^\/me(\?\$select=[\w,]+)?$/.test(p)
+      || /^\/me\/chats(\/[\w%.-]+\/messages)?\?[\w/().,$=&'%:+ -]*$/.test(p) || /^\/me\/joinedTeams\?[\w,$=]*$/.test(p) ||/^\/teams\/[\w%.-]+\/channels(\/[\w%.-]+\/messages)?\?[\w/().,$=&'%:+ -]*$/.test(p));
+    if (!ok) throw new Error('Not allowed');
+    const scopes = /^\/(me\/joinedTeams|teams\/)/.test(p) ? TEAMS_CHANNEL_SCOPES : /^\/(me$|me\?|me\/chats)/.test(p) ? TEAMS_SCOPES : MS_SCOPES;
+    const res = await fetch('https://graph.microsoft.com/v1.0' + p, { headers: { Authorization: 'Bearer ' + (await msToken(cfg, false, scopes)) } });
+    if (!res.ok) throw new Error((scopes === MS_SCOPES ? 'Outlook' : 'Teams') + ' answered ' + res.status);
     return res.json();
   }));
 }
