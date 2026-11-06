@@ -341,7 +341,10 @@ async function sampleSidebar() {
     if (c !== sideColor) { sideColor = c; prefs.sideColor = c; savePrefs(); islandSend(); }
   } catch (e) { /* keeps the last one */ }
 }
-function islandState() { return { island: !!prefs.island, side: sideColor, wall: wallpaperColor(), whatsapp: whatsapp.summary(), mail: { closed: mail.closed, error: mail.error, count: mail.count, from: mail.from || [], emails: mail.emails.slice(0, 30) } }; }
+// is Outlook (classic) on this computer? (the Mail card offers to open it only when it is)
+let classicAt = null;
+function hasClassic() { if (classicAt === null) { try { require('child_process').execFileSync('reg', ['query', 'HKCR\\Outlook.Application\\CurVer'], { windowsHide: true, stdio: 'ignore' }); classicAt = true; } catch (e) { classicAt = false; } } return classicAt; }
+function islandState() { return { island: !!prefs.island, side: sideColor, wall: wallpaperColor(), whatsapp: whatsapp.summary(), mail: { closed: mail.closed, classic: hasClassic(), error: mail.error, count: mail.count, from: mail.from || [], emails: mail.emails.slice(0, 30) } }; }
 function islandSend() { if (bar && !bar.isDestroyed()) bar.webContents.send('island-state', islandState()); }
 function islandIpc() {
   try { mailSeen = Number(fs.readFileSync(mailSeenFile(), 'utf8')) || 0; } catch (e) { /* first look */ }
@@ -358,6 +361,10 @@ function islandIpc() {
   ipcMain.handle('wa-send', (e, a) => (ours(e) ? whatsapp.send(String((a && a.jid) || ''), String((a && a.text) || '')) : { error: 'no' }));
   ipcMain.handle('wa-open', (e, jid) => (ours(e) ? whatsapp.openApp(String(jid || '')) : {}));
   ipcMain.handle('wa-end-call', (e) => { if (ours(e)) whatsapp.endCall(); return true; });
+  // linking WhatsApp on this computer: its gateway (downloaded and checked), then the QR code for the phone
+  ipcMain.handle('wa-install', (e) => (ours(e) ? whatsapp.install() : { error: 'no' }));
+  ipcMain.handle('wa-qr', (e) => (ours(e) ? whatsapp.linkQr() : { error: 'no' }));
+  ipcMain.handle('wa-link-status', (e) => (ours(e) ? whatsapp.linkStatus() : {}));
   ipcMain.handle('mail-list', async (e, q) => {
     if (!ours(e)) return {};
     if (!String(q || '').trim()) { await mailPoll(); return { emails: mail.emails, error: mail.error, closed: mail.closed }; }
@@ -498,6 +505,16 @@ function createSidebar() {
             console.log('SMOKE island home', JSON.stringify(bar.getBounds()), JSON.stringify(await text('.isl-grid')), '||', JSON.stringify(await text('.isl-left')));
             console.log('SMOKE island eyes', await B("[...document.querySelectorAll('.isl-ch')].slice(0, 3).map((e) => e.style.getPropertyValue('--ex') + ',' + e.style.getPropertyValue('--ey')).join(' ')"));
             await bshot('fb-island-2-home.png');
+            if (process.env.FLOORBOARD_SMOKE_WALINK) { // linking WhatsApp from the island, against a stand-in gateway with no phone linked yet
+              console.log('SMOKE walink', await pick('WhatsApp')); await wait(800);
+              console.log('SMOKE walink card', JSON.stringify(await text('.isl-left')));
+              await B("[...document.querySelectorAll('.isl-left .isl-more')].find((b) => /Link WhatsApp/.test(b.innerText)).click(); 1"); await wait(3000);
+              console.log('SMOKE walink qr', JSON.stringify(bar.getBounds()), JSON.stringify(await text('.isl-left')), await B("(document.querySelector('.isl-qr img') || {}).naturalWidth || 0")); await bshot('fb-walink-qr.png');
+              await wait(13000); console.log('SMOKE walink qr again', JSON.stringify(await B("[((document.querySelector('.isl-qr img') || {}).src || '').slice(-40), document.querySelector('.isl') && document.querySelector('.isl').className]")));
+              await fetch(process.env.FLOORBOARD_WA_URL + '/test/scan').catch(() => {}); await wait(4000);
+              console.log('SMOKE walink after scan', JSON.stringify(await text('.isl-left'))); await bshot('fb-walink-done.png');
+              await wait(17000); console.log('SMOKE walink chats', JSON.stringify(await text('.isl-left')));
+            }
             console.log('SMOKE island search', await typeIn('#isl-q', 'bakery')); await wait(700);
             console.log('SMOKE island search results', JSON.stringify(bar.getBounds()), JSON.stringify(await text('.isl-list'))); await bshot('fb-island-3-search.png');
             await typeIn('#isl-q', ''); await wait(400);

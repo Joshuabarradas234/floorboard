@@ -4,7 +4,7 @@
 // message only when the person presses Enter or Send in the island, only to a chat they already have or someone in their
 // own contacts (never a typed-in number), and not too fast.
 // Nothing goes to Floorboard's server: the island gets it from here, on this computer.
-const fs = require('fs'), path = require('path'), { spawn } = require('child_process');
+const fs = require('fs'), path = require('path'), { spawn, execFile } = require('child_process');
 const { app, shell } = require('electron');
 
 const BASE = (process.env.FLOORBOARD_WA_URL || 'http://127.0.0.1:3000').replace(/\/+$/, '');
@@ -28,11 +28,13 @@ function gowaDir() {
     return own;
   } catch (e) { return COUCOU_GOWA; }
 }
+// (or Floorboard's own gateway that isn't linked to a phone yet)
+const gowaOrOwn = () => gowaDir() || (fs.existsSync(path.join(ownGowa(), 'gowa.exe')) ? ownGowa() : '');
 let gateway = null, gatewayAt = 0;
-function startGateway() {
-  if (gateway || process.env.FLOORBOARD_WA_URL || Date.now() - gatewayAt < 60 * 1000) return;
+function startGateway(now) {
+  if (gateway || process.env.FLOORBOARD_WA_URL || (!now && Date.now() - gatewayAt < 60 * 1000)) return;
   gatewayAt = Date.now();
-  const dir = gowaDir(); if (!dir) return;
+  const dir = gowaOrOwn(); if (!dir) return;
   const exe = path.join(dir, 'gowa.exe');
   try {
     gateway = spawn(exe, ['rest', '--host=127.0.0.1', '--port=3000', '--auto-download-media=false'], { cwd: dir, windowsHide: true, stdio: 'ignore' });
@@ -80,9 +82,11 @@ async function call(method, p, query, body) {
   return (j && j.results) || {};
 }
 
+// a device linked to a phone ("disconnected" and "logged_out" aren't)
+const live = (x) => /^(logged_in|connected)$/i.test(String((x && x.state) || ''));
 async function findDevice() {
   const ds = await call('GET', '/devices');
-  const d = (Array.isArray(ds) ? ds : []).find((x) => /logged_in|connected/i.test(x.state || '')) || null;
+  const d = (Array.isArray(ds) ? ds : []).find(live) || null;
   if (!d) throw new Error('WhatsApp isn’t linked yet: link it with your phone first.');
   device = str(d.id || d.device_id, 120); me = str(d.jid, 120);
 }
@@ -130,7 +134,9 @@ async function poll() {
 
 function summary() {
   const rows = chats.slice(0, 30).map((c) => ({ ...c, unread: (unread.get(c.jid) || {}).unread || 0 }));
-  return { ...state, chats: rows, count: rows.reduce((a, c) => a + c.unread, 0), latest, ringing };
+  // what the card offers when it isn't connected: getting WhatsApp's gateway onto this computer, or linking the phone
+  const need = state.connected ? '' : !process.env.FLOORBOARD_WA_URL && !gowaOrOwn() ? 'install' : /linked yet/.test(state.error || '') ? 'link' : '';
+  return { ...state, need, chats: rows, count: rows.reduce((a, c) => a + c.unread, 0), latest, ringing };
 }
 
 // what the gateway told Floorboard: a message (look now rather than at the next turn) or a call ringing
@@ -210,7 +216,84 @@ async function openApp(jid) {
   return { ok: true };
 }
 
+// Linking WhatsApp on a computer that hasn't got the gateway: when the person asks to (the island's WhatsApp card),
+// Floorboard downloads GOWA's official Windows release, one fixed version, and uses it only if its SHA-256 matches the one
+// GOWA published for it; it unpacks it into its own folder and starts it. Then the island shows the QR code to scan with
+// the phone (WhatsApp → Settings → Linked devices → Link a device), a new one as each runs out, until the phone has linked.
+const GOWA_RELEASE = {
+  url: 'https://github.com/aldinokemal/go-whatsapp-web-multidevice/releases/download/v9.9.0/whatsapp_9.9.0_windows_amd64.zip',
+  sha256: '51fa01ee9379cb8201c4ae07d54fca1b05aee0770a20de91773255dbd3913b69', size: 13414155,
+};
+// (the test run points it at a stand-in download)
+if (process.env.FLOORBOARD_SMOKE && process.env.FLOORBOARD_GOWA_ZIP) Object.assign(GOWA_RELEASE, { url: process.env.FLOORBOARD_GOWA_ZIP, sha256: process.env.FLOORBOARD_GOWA_SHA || '', size: 0 });
+let installing = null, linking = '';
+function findExe(dir, depth = 0) {
+  for (const n of fs.readdirSync(dir)) {
+    const p = path.join(dir, n), st = fs.statSync(p);
+    if (st.isFile() && /\.exe$/i.test(n)) return p;
+    if (st.isDirectory() && depth < 3) { const x = findExe(p, depth + 1); if (x) return x; }
+  }
+  return '';
+}
+function install() {
+  if (gowaOrOwn() || process.env.FLOORBOARD_WA_URL) { startGateway(true); return Promise.resolve({ ok: true }); }
+  if (installing) return installing;
+  installing = (async () => {
+    const tmp = path.join(app.getPath('temp'), 'floorboard-gowa-' + Date.now());
+    try {
+      const res = await fetch(GOWA_RELEASE.url, { redirect: 'follow', signal: AbortSignal.timeout(5 * 60 * 1000) });
+      if (!res.ok) throw new Error('The download didn’t work (' + res.status + '). Check the internet connection and try again.');
+      const buf = Buffer.from(await res.arrayBuffer());
+      if (buf.length > 80 * 1048576 || require('crypto').createHash('sha256').update(buf).digest('hex') !== GOWA_RELEASE.sha256) throw new Error('The download didn’t match the WhatsApp gateway’s official release, so it wasn’t used.');
+      fs.mkdirSync(tmp, { recursive: true });
+      const zip = path.join(tmp, 'gowa.zip');
+      fs.writeFileSync(zip, buf);
+      const tar = path.join(process.env.SystemRoot || 'C:\\Windows', 'System32', 'tar.exe');
+      await new Promise((ok, no) => execFile(tar, ['-xf', zip, '-C', tmp], { windowsHide: true }, (e) => (e ? no(new Error('Couldn’t unpack the WhatsApp gateway.')) : ok())));
+      const exe = findExe(tmp); if (!exe) throw new Error('The WhatsApp gateway wasn’t in the download.');
+      fs.mkdirSync(ownGowa(), { recursive: true });
+      fs.copyFileSync(exe, path.join(ownGowa(), 'gowa.exe'));
+      startGateway(true);
+      return { ok: true };
+    } catch (e) { return { error: str(e.message, 200) }; } finally {
+      try { fs.rmSync(tmp, { recursive: true, force: true }); } catch (e) { /* the temp folder goes later */ }
+      installing = null;
+    }
+  })();
+  return installing;
+}
+// the QR code to scan (as a picture), and how long it lasts
+async function linkQr() {
+  try {
+    let list = null;
+    for (let i = 0; i < 20 && !list; i++) { try { list = await call('GET', '/devices'); } catch (e) { startGateway(); await new Promise((r) => setTimeout(r, 1000)); } }
+    if (!list) return { error: 'WhatsApp’s gateway didn’t start on this computer. Try again in a minute.' };
+    const ds = Array.isArray(list) ? list : [];
+    if (ds.some(live)) { device = ''; poll(); return { linked: true }; }
+    let id = str((ds[0] && (ds[0].id || ds[0].device_id)) || '', 120);
+    if (!id) { const r = await call('POST', '/devices', null, { device_id: 'floorboard' }); id = str(r.id || r.device_id || 'floorboard', 120); }
+    linking = id;
+    const r = await call('GET', '/devices/' + encodeURIComponent(id) + '/login');
+    const at = new URL(String(r.qr_link || ''), BASE), png = await fetch(BASE + at.pathname, { signal: AbortSignal.timeout(10000) });
+    if (!png.ok) throw new Error('The code didn’t come through. Try again.');
+    return { qr: 'data:image/png;base64,' + Buffer.from(await png.arrayBuffer()).toString('base64'), seconds: Math.max(10, Number(r.qr_duration) || 30) };
+  } catch (e) {
+    if (/already/i.test(e.message)) { device = ''; poll(); return { linked: true }; }
+    return { error: str(e.message, 200) };
+  }
+}
+// has the phone linked it yet?
+async function linkStatus() {
+  if (state.connected) return { linked: true };
+  if (!linking) return { linked: false };
+  try {
+    const r = await call('GET', '/devices/' + encodeURIComponent(linking) + '/status');
+    if (r && (r.is_logged_in || r.logged_in)) { linking = ''; device = ''; await poll(); return { linked: true }; }
+  } catch (e) { /* asked again in a moment */ }
+  return { linked: false };
+}
+
 function init(onChange) { changed = onChange || changed; load(); if (!seen.card) { seen.card = Date.now(); save(); } if (!timer) { poll(); timer = setInterval(poll, EVERY); } }
 function stop() { clearInterval(timer); timer = null; if (gateway) { try { gateway.kill(); } catch (e) { /* gone already */ } gateway = null; } }
 
-module.exports = { init, stop, summary, opened, messages, find, send, openApp, webhook, setHook, endCall };
+module.exports = { init, stop, summary, opened, messages, find, send, openApp, webhook, setHook, endCall, install, linkQr, linkStatus };

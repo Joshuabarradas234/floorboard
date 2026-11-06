@@ -83,6 +83,10 @@ contextBridge.exposeInMainWorld('floorboardDesktop', {
       send: (jid, text) => ipcRenderer.invoke('wa-send', { jid: String(jid || ''), text: String(text || '') }),
       open: (jid) => ipcRenderer.invoke('wa-open', String(jid || '')),
       endCall: () => ipcRenderer.invoke('wa-end-call'),
+      // linking WhatsApp on this computer
+      install: () => ipcRenderer.invoke('wa-install'),
+      qr: () => ipcRenderer.invoke('wa-qr'),
+      linkStatus: () => ipcRenderer.invoke('wa-link-status'),
     },
     mail: {
       list: (q) => ipcRenderer.invoke('mail-list', String(q || '')),

@@ -645,6 +645,11 @@ html.isl-sleepy .isl-ch:not(.wig):not(.ring) .isl-svg{animation:isl-snooze 3.4s 
 .isl-row.tm-row{gap:6px;padding:2px 4px}.isl-row.tm-row>svg{flex:none;opacity:.7}
 .isl-row-main{flex:1;min-width:0;display:grid;border:0;background:none;color:inherit;text-align:left;padding:2px 4px;border-radius:8px;cursor:pointer;font:inherit}
 .isl-row-main:hover{background:rgba(255,255,255,.07)}.isl-row-main>span{display:grid;min-width:0}
+.isl-link{display:flex;gap:14px;align-items:center;padding:4px 2px}
+.isl-qr{flex:none;width:176px;height:176px;border-radius:14px;background:#fff;display:grid;place-items:center;padding:8px;box-sizing:border-box}
+.isl-qr img{width:100%;height:100%;image-rendering:pixelated}.isl-qr span{color:#555;font-size:12px}
+.isl-link-t{min-width:0;display:grid;gap:6px;font-size:12.5px}.isl-link-t ol{margin:0;padding-left:18px;display:grid;gap:3px;color:rgba(233,235,238,.8)}
+.isl-err{color:#ffb4a8;font-size:11.5px}.isl-note{color:rgba(233,235,238,.5);font-size:11px;line-height:1.35}.isl-btns{display:flex;gap:6px;flex-wrap:wrap}
 .isl-cnt{min-width:20px;height:20px;box-sizing:border-box;border-radius:10px;color:#2a2230;font:700 11px/20px var(--f-body);text-align:center;padding:0 6px;flex:none}
 .isl-who-row b{font-size:13px}
 /* on the small card three names fit one under another (or two and "and N more") */
@@ -3296,15 +3301,23 @@ function IslTeams({ big, setBig, demo }) {
       ${!list.length && html`<p className="isl-empty">Nothing left from ${who}.</p>`}</div>`}
   </div>`;
 }
-function IslMail({ big, setBig, st }) {
+function IslMail({ big, setBig, st, gm }) {
   const desk = window.floorboardDesktop, m = st.mail || {}, [q, setQ] = useState(''), [found, setFound] = useState(null), [one, setOne] = useState(null), [finding, setFinding] = useState(false);
   useEffect(() => { setBig(!!one || finding); }, [!!one, finding]);
   useEffect(() => {
     if (!finding || !q.trim()) { setFound(null); return undefined; }
-    if ((m.emails || []).some((e) => e.demo)) { const w = q.trim().toLowerCase(); setFound((m.emails || []).filter((e) => (e.from + ' ' + e.subject).toLowerCase().includes(w))); return undefined; }
+    if ((m.emails || []).some((e) => e.demo || e.graph)) { const w = q.trim().toLowerCase(); setFound((m.emails || []).filter((e) => (e.from + ' ' + e.subject).toLowerCase().includes(w))); return undefined; }
     const t = setTimeout(() => desk.island.mail.list(q).then((r) => setFound(r.emails || [])).catch(() => setFound([])), 400); return () => clearTimeout(t);
   }, [q, finding]);
-  const read = async (e) => { if (e.demo) { setOne({ e, r: { subject: e.subject, from: e.from, address: '', to: '', received: e.received, body: demoBody(e), files: [] } }); return; } setOne({ e, loading: true }); const r = await desk.island.mail.read(e.id, e.store).catch(() => ({ error: 'Outlook didn’t answer.' })); setOne({ e, r }); };
+  const read = async (e) => {
+    if (e.graph) { // through Microsoft 365
+      setOne({ e, loading: true }); let r;
+      try { const x = await MS.get('/me/messages/' + encodeURIComponent(e.id) + '?$select=subject,from,toRecipients,receivedDateTime,body'), a = ((x.from || {}).emailAddress || {});
+        r = { subject: x.subject || e.subject, from: a.name || e.from, address: a.address || e.address, to: (x.toRecipients || []).map((t) => (t.emailAddress || {}).name || (t.emailAddress || {}).address).join(', '), received: x.receivedDateTime || e.received, body: (x.body ? (x.body.contentType === 'html' ? htmlText(x.body.content) : x.body.content) : '') || e.preview, files: [] }; }
+      catch (er) { r = { subject: e.subject, from: e.from, address: e.address, to: '', received: e.received, body: e.preview || '', files: [] }; }
+      setOne({ e, r }); return;
+    }
+    if (e.demo) { setOne({ e, r: { subject: e.subject, from: e.from, address: '', to: '', received: e.received, body: demoBody(e), files: [] } }); return; } setOne({ e, loading: true }); const r = await desk.island.mail.read(e.id, e.store).catch(() => ({ error: 'Outlook didn’t answer.' })); setOne({ e, r }); };
   const when = (s) => { const t = Date.parse(s); return t ? shortTime(t) : ''; };
   const list = found || m.emails || [];
   if (one) return html`<div className="isl-big tall"><div className="isl-ch-row"><button className="isl-btn" onClick=${() => setOne(null)} aria-label="Back to the inbox"><${Icon} n="back" s=${14}/></button><b className="isl-ell">${one.e.subject || '(no subject)'}</b></div>
@@ -3315,7 +3328,7 @@ function IslMail({ big, setBig, st }) {
   return html`<div className=${'isl-big' + (big ? ' tall' : '')}>
     <${IslCardHead} id="mail" sub="Inbox" count=${m.count ? m.count + ' unread' : ''}>
       ${!m.closed && html`<button className="isl-btn sm" onClick=${() => { setFinding(!finding); setQ(''); }} title="Search your mail" aria-label="Search your mail"><${Icon} n=${finding ? 'close' : 'search'} s=${13}/></button>`}<//>
-    ${m.closed ? html`<div className="isl-closed"><p>Open Outlook (the classic one) to see your mail here.</p><button className="isl-more" onClick=${() => desk.island.mail.openOutlook()}>Open Outlook</button></div>` : html`
+    ${m.closed ? html`<${IslMailSignIn} m=${m} gm=${gm}/>` : html`
       ${finding && html`<label className="isl-search"><${Icon} n="search" s=${14}/><input autoFocus value=${q} onChange=${(e) => setQ(e.target.value)} placeholder="Search your mail: who, or words in the subject" aria-label="Search your mail" autoComplete="off"/></label>`}
       ${!big && !finding && (m.from || []).length > 0 ? html`<${IslWho} rows=${(m.from || []).map((x) => [x.name, x.n])} color=${ISL.mail.fur} onPick=${(n) => { setFinding(true); setQ(n); }}/>` : html`
       <div className=${'isl-list' + (big ? '' : ' short')}>${list.slice(0, big ? 30 : 2).map((e) => html`<button key=${e.id} className=${'isl-row' + (e.unread ? ' new' : '')} onClick=${() => read(e)}>
@@ -3324,6 +3337,81 @@ function IslMail({ big, setBig, st }) {
   </div>`;
 }
 
+// Linking WhatsApp on this computer from the island: its gateway (fetched and checked the first time), then the QR code
+// to scan with the phone, a new one as each runs out, until the phone has linked
+function IslWaLink({ w, setBig }) {
+  const desk = window.floorboardDesktop, can = !!(desk && desk.island && desk.island.wa.qr), [step, setStep] = useState(''), [qr, setQr] = useState(''), [err, setErr] = useState('');
+  useEffect(() => { setBig(step === 'qr'); }, [step]);
+  useEffect(() => () => setBig(false), []);
+  const start = async () => {
+    setErr('');
+    if (w.need === 'install') { setStep('getting'); const r = await desk.island.wa.install(); if (r && r.error) { setErr(r.error); setStep(''); return; } }
+    setQr(''); setStep('qr');
+  };
+  useEffect(() => {
+    if (step !== 'qr') return undefined;
+    let dead = false, t1 = 0, t2 = 0;
+    const getQr = async () => {
+      const r = await desk.island.wa.qr(); if (dead) return;
+      if (r.linked) { setStep('done'); return; }
+      if (r.error) { setErr(r.error); t1 = setTimeout(getQr, 4000); return; }
+      setErr(''); setQr(r.qr); t1 = setTimeout(getQr, r.seconds * 1000);
+    };
+    const check = async () => { const r = await desk.island.wa.linkStatus(); if (dead) return; if (r.linked) { setStep('done'); return; } t2 = setTimeout(check, 2000); };
+    getQr(); t2 = setTimeout(check, 2500);
+    return () => { dead = true; clearTimeout(t1); clearTimeout(t2); };
+  }, [step]);
+  if (step === 'done') return html`<div className="isl-closed"><p>WhatsApp is linked. Your chats come in here in a moment.</p></div>`;
+  if (step === 'getting') return html`<div className="isl-closed"><p>Setting WhatsApp up on this computer (about 13 MB, only the first time)…</p></div>`;
+  if (step === 'qr') return html`<div className="isl-link">
+    <div className="isl-qr">${qr ? html`<img src=${qr} alt="The code to scan with WhatsApp on your phone"/>` : html`<span>Getting the code…</span>`}</div>
+    <div className="isl-link-t"><b>Scan this with your phone</b>
+      <ol><li>Open <b>WhatsApp</b> on your phone</li><li>Tap <b>⋮</b> (Android) or <b>Settings</b> (iPhone), then <b>Linked devices</b></li><li>Tap <b>Link a device</b> and point the phone at this code</li></ol>
+      ${err && html`<small className="isl-err">${err}</small>`}
+      <button className="isl-more sm" onClick=${() => setStep('')}>Not now</button></div></div>`;
+  const offer = can && (w.need === 'install' || w.need === 'link');
+  return html`<div className="isl-closed"><p>${offer ? 'Link your WhatsApp to see your chats here and answer them. It takes a scan with your phone.' : w.error || 'WhatsApp isn’t connected on this computer.'}</p>
+    ${err && html`<small className="isl-err">${err}</small>`}
+    ${offer && html`<button className="isl-more primary" onClick=${start}>Link WhatsApp</button>`}
+    ${offer && w.need === 'install' && html`<small className="isl-note">The first time, Floorboard gets WhatsApp’s link program for this computer (13 MB, from its official release, checked before it’s used).</small>`}</div>`;
+}
+// Mail through Microsoft 365, for a computer without Outlook (classic) open: the person's own inbox, read with their
+// own sign-in, every couple of minutes (nothing kept)
+function useGraphMail(on) {
+  const [m, setM] = useState(null);
+  useEffect(() => {
+    if (!on || !MS.on) { setM(null); return undefined; }
+    let dead = false, t = 0;
+    const go = async () => {
+      clearTimeout(t);
+      try {
+        const [inbox, list] = await Promise.all([MS.get('/me/mailFolders/inbox?$select=id,displayName,unreadItemCount,totalItemCount'), MS.get('/me/mailFolders/inbox/messages?$top=30&' + OL_SEL)]);
+        const addr = (e) => ((e.from || {}).emailAddress || {});
+        const emails = (list.value || []).map((e) => ({ id: e.id, graph: true, from: addr(e).name || addr(e).address || '', address: addr(e).address || '', subject: e.subject || '', received: e.receivedDateTime, unread: !e.isRead, preview: e.bodyPreview || '', link: e.webLink || '' }));
+        const from = {}; emails.filter((e) => e.unread).forEach((e) => { from[e.from] = (from[e.from] || 0) + 1; });
+        if (!dead) setM({ closed: false, graph: true, error: '', emails, count: Number(inbox.unreadItemCount) || 0, from: Object.entries(from).sort((a, b) => b[1] - a[1]).map(([name, n]) => ({ name, n })) });
+      } catch (e) { if (!dead) setM(e.message === 'signin' ? { signin: true } : { error: String((e && e.message) || e) }); }
+      if (!dead) t = setTimeout(go, 2 * MIN);
+    };
+    go();
+    window.addEventListener('fb-mail-signin', go);
+    return () => { dead = true; clearTimeout(t); window.removeEventListener('fb-mail-signin', go); };
+  }, [on]);
+  return m;
+}
+// the Mail card when there's no mail to show: sign in with the work Microsoft account, or open Outlook
+function IslMailSignIn({ m, gm }) {
+  const desk = window.floorboardDesktop, [busy, setBusy] = useState(false), [err, setErr] = useState('');
+  const signIn = async () => { setBusy(true); setErr(''); try { await MS.signIn('mail'); window.dispatchEvent(new Event('fb-mail-signin')); } catch (e) { setErr(String((e && e.message) || e)); } setBusy(false); };
+  const classic = m.classic !== false;
+  return html`<div className="isl-closed"><p>${MS.on ? (gm && gm.error ? 'Email: ' + gm.error : 'See your email here: sign in with your work Microsoft account' + (classic ? ', or open Outlook (the classic one).' : '.'))
+      : classic ? 'Open Outlook (the classic one) to see your mail here.' : 'To see your email here, sign in to Outlook (classic) on this computer. (Signing in from here needs Microsoft 365 set up for the store first.)'}</p>
+    ${err && html`<small className="isl-err">${err}</small>`}
+    <span className="isl-btns">${MS.on && html`<button className="isl-more primary" onClick=${signIn} disabled=${busy}>${busy ? 'Signing in…' : 'Sign in to your email'}</button>`}
+      ${classic && desk && desk.island && html`<button className="isl-more" onClick=${() => desk.island.mail.openOutlook()}>Open Outlook</button>`}</span></div>`;
+}
+// an email's text from its HTML (an inert document: nothing in it runs or loads), keeping its lines
+const htmlText = (h) => { const d = new DOMParser().parseFromString(String(h || '').replace(/<br\s*\/?>/gi, '\n').replace(/<\/(p|div|li|tr|h\d)>/gi, '\n'), 'text/html'); return ((d.body && d.body.textContent) || '').replace(/[ \t ]+/g, ' ').replace(/\n\s*\n\s*\n+/g, '\n\n').trim(); };
 /* WhatsApp: the chats with what's new, a chat big enough to read and answer, and finding someone */
 function IslWhatsApp({ big, setBig, st, openJid }) {
   const desk = window.floorboardDesktop, w = st.whatsapp || {}, [cur, setCur] = useState(() => (openJid && (w.chats || []).find((c) => c.jid === openJid)) || null), [finding, setFinding] = useState(false), [q, setQ] = useState(''), [found, setFound] = useState(null);
@@ -3334,9 +3422,9 @@ function IslWhatsApp({ big, setBig, st, openJid }) {
   }, [q, finding]);
   if (cur) return html`<div className="isl-big tall"><${IslWaThread} c=${cur} onBack=${() => setCur(null)}/></div>`;
   return html`<div className=${'isl-big' + (big ? ' tall' : '')}>
-    <${IslCardHead} id="whatsapp" sub=${w.connected ? (w.count ? w.count + ' unread' : 'All read') : 'Not connected'} onOpen=${() => desk.island.wa.open('')}>
+    <${IslCardHead} id="whatsapp" sub=${w.connected ? (w.count ? w.count + ' unread' : 'All read') : w.need ? 'Not linked yet' : 'Not connected'} onOpen=${() => desk.island.wa.open('')}>
       ${w.connected && html`<button className="isl-btn sm" onClick=${() => { setFinding(!finding); setQ(''); }} title="Find someone" aria-label="Find someone"><${Icon} n=${finding ? 'close' : 'search'} s=${13}/></button>`}<//>
-    ${!w.connected ? html`<div className="isl-closed"><p>${w.error || 'WhatsApp isn’t connected on this computer.'}</p></div>` : html`
+    ${!w.connected ? html`<${IslWaLink} w=${w} setBig=${setBig}/>` : html`
       ${finding && html`<label className="isl-search"><${Icon} n="search" s=${14}/><input autoFocus value=${q} onChange=${(e) => setQ(e.target.value)} placeholder="Find someone: a name or a number" aria-label="Find someone on WhatsApp" autoComplete="off"/></label>`}
       <div className=${'isl-list' + (big ? '' : ' short')}>${(finding && q.trim() ? (found || []) : (w.chats || []).slice(0, big ? 30 : 3)).map((c) => html`<button key=${c.jid} className=${'isl-row' + (c.unread ? ' new' : '')} onClick=${() => { setCur(c); setFinding(false); setQ(''); }}>
         <span className="isl-wa-av">${(c.name || '?').replace(/[^\p{L}\p{N}]/gu, '').slice(0, 1).toUpperCase() || '#'}</span><span><b>${c.name}</b><small>${finding ? (c.chat ? 'Chat' : 'Contact') : c.group ? 'Group' : c.at ? shortTime(c.at) : ''}</small></span>${c.unread > 0 && html`<b className="isl-wa-n">${c.unread}</b>`}</button>`)}
@@ -3518,7 +3606,9 @@ function Island() {
   // the Demo (⚙): sample news arriving a few seconds apart
   const [demo, setDemo] = useState({ stage: 0, t0: Date.now() });
   useEffect(() => { if (!opts.demo) return undefined; setDemo({ stage: 0, t0: Date.now() }); const ts = [5000, 10000, 15000].map((ms, i) => setTimeout(() => setDemo((d) => ({ ...d, stage: i + 1 })), ms)); return () => ts.forEach(clearTimeout); }, [!!opts.demo]);
-  const dm = opts.demo ? islDemo(demo.stage, demo.t0) : null, st = dm ? { ...stReal, whatsapp: dm.whatsapp, mail: dm.mail } : stReal;
+  const comMail = !!(stReal.mail && !stReal.mail.closed), gm = useGraphMail(!opts.demo && !comMail);
+  const dm = opts.demo ? islDemo(demo.stage, demo.t0) : null, st = dm ? { ...stReal, whatsapp: dm.whatsapp, mail: dm.mail }
+    : { ...stReal, mail: gm && gm.graph ? gm : stReal.mail || (MS.on ? { closed: true, classic: false, emails: [], count: 0 } : null) };
   const mark = (id) => {
     if (id === 'mail' || id === 'whatsapp') return; // WhatsApp's count clears when you move on from its card (leaveWa); Mail's is Outlook's own
     setSeen((s) => { const n = { ...s, [id]: Date.now() }; islSet('seen', n); return n; });
@@ -3526,7 +3616,7 @@ function Island() {
   // which cards this person has here
   const tk = dm ? dm.tasks : islTasks(db, user), tb = !!dm || tbDepts(db, user).length > 0 || tk.sent.length > 0;
   const avail = { floorboard: true, taskboard: tb, teams: true, jarvis: !!(j && j.mine && (j.found || j.installed)),
-    mail: !!(st.mail && (user.role === 'admin' || outlookOn(db, user) || (st.mail.emails || []).length > 0)), whatsapp: !!(st.whatsapp && (st.whatsapp.connected || (st.whatsapp.chats || []).length > 0)) };
+    mail: !!st.mail, whatsapp: !!st.whatsapp }; // (on any computer: they offer signing in when they're not connected)
   const cards = ISL_ORDER.filter((id) => avail[id] && !(opts.hide || {})[id] || id === 'floorboard');
   const fo = cards.includes(focus) ? focus : 'floorboard';
   // the number on each card: WhatsApp's unread messages, Outlook's unread emails, tasks still to do, what needs you in
@@ -3610,7 +3700,7 @@ function Island() {
       : tab === 'chat' ? html`<${IslAsk} j=${j}/>`
       : tab === 'drop' ? html`<${IslDrop} j=${j} files=${files} setFiles=${setFiles}/>`
       : html`<div className=${'isl-home' + (big ? ' big' : '')}>
-        <div className="isl-left"><span className="isl-me"><${IslChar} id=${main} s=${big ? 36 : 54} busy=${busy[main]} ring=${!!ringing}/></span><${Big} key=${ringing ? 'ring' : fo} big=${big} setBig=${setBig} st=${st} j=${j} r=${ringing} demo=${dm} openJid=${fo === 'whatsapp' ? waOpen : ''}/></div>
+        <div className="isl-left"><span className="isl-me"><${IslChar} id=${main} s=${big ? 36 : 54} busy=${busy[main]} ring=${!!ringing}/></span><${Big} key=${ringing ? 'ring' : fo} big=${big} setBig=${setBig} st=${st} gm=${gm} j=${j} r=${ringing} demo=${dm} openJid=${fo === 'whatsapp' ? waOpen : ''}/></div>
         ${!big && html`<div className="isl-grid">${(ringing ? cards.filter((id) => id !== 'whatsapp').slice(0, 4) : others).map((id) => html`<button key=${id} className="isl-pick" onClick=${() => setFocus(id)} title=${ISL[id].name}>
           <${IslChar} id=${id} s=${26} n=${counts[id]} wig=${wig[id]} busy=${busy[id]}/><span>${ISL[id].name}</span></button>`)}</div>`}
       </div>`}
@@ -8573,7 +8663,7 @@ const MS = (() => {
       await (await web()).clearCache();
     },
     async get(path) {
-      if (demo) return TEAMS_RE.test(path) ? demoTeamsGet(path) : demoMailGet(path);
+      if (demo) return TEAMS_RE.test(path) ? demoTeamsGet(path) : lsGet('floorboard.demomail.v1') ? demoMailGet(path) : Promise.reject(new Error('signin'));
       const d = desk(); if (d) return unwrap(await d.graph(cfg, path));
       const p = await web(), account = p.getAllAccounts()[0];
       if (!account) throw new Error('signin');
