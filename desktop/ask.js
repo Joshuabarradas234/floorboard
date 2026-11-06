@@ -5,6 +5,7 @@
 const http = require('http');
 const { ipcMain } = require('electron');
 const coucou = require('./coucou');
+const jarvis = require('./jarvis');
 
 const PORT = Number(process.env.FLOORBOARD_ASK_PORT) || 47831; // another port only for testing beside a running Floorboard
 let server = null, sidebar = () => null, ready = false, seq = 0;
@@ -52,7 +53,10 @@ async function chat(req, res) {
   if (!question) return sendJson(res, 400, { error: { message: 'Ask Floorboard a question.' } });
   const history = msgs.slice(0, lastUser).map((m) => ({ role: m.role, text: textOf(m.content).slice(0, 4000) })).filter((m) => m.text).slice(-12);
   const id = 'fb-' + Date.now().toString(36), created = Math.floor(Date.now() / 1000);
-  const chunk = (delta, finish) => 'data: ' + JSON.stringify({ id, object: 'chat.completion.chunk', created, model: 'floorboard', choices: [{ index: 0, delta, finish_reason: finish || null }] }) + '\n\n';
+  // JARVIS answers when it's the model picked, or the question starts with its name (only for the account it's linked to)
+  const toJarvis = body.model === 'jarvis' || (jarvis.ready() && /^\s*(hey |ok |okay |ask )?jarvis\b/i.test(question));
+  const model = toJarvis ? 'jarvis' : 'floorboard';
+  const chunk = (delta, finish) => 'data: ' + JSON.stringify({ id, object: 'chat.completion.chunk', created, model, choices: [{ index: 0, delta, finish_reason: finish || null }] }) + '\n\n';
 
   coucou.asked(question);
   const stream = body.stream !== false;
@@ -65,9 +69,9 @@ async function chat(req, res) {
   }
   const step = (text) => { coucou.busy(text); if (stream && text) res.write(chunk({ content: text + '\n' })); };
   try {
-    const answer = await askSidebar(question, history, step);
+    const answer = toJarvis ? await jarvis.answer(question, history, step) : await askSidebar(question, history, step);
     if (stream) { res.write(chunk({ content: '</think>' + answer })); res.write(chunk({}, 'stop')); res.end('data: [DONE]\n\n'); }
-    else sendJson(res, 200, { id, object: 'chat.completion', created, model: 'floorboard', choices: [{ index: 0, message: { role: 'assistant', content: answer }, finish_reason: 'stop' }] });
+    else sendJson(res, 200, { id, object: 'chat.completion', created, model, choices: [{ index: 0, message: { role: 'assistant', content: answer }, finish_reason: 'stop' }] });
   } catch (e) {
     const message = String((e && e.message) || e);
     if (stream) { res.write(chunk({ content: '</think>' })); res.end('data: ' + JSON.stringify({ error: { message } }) + '\n\n'); }
@@ -79,7 +83,7 @@ function onRequest(req, res) {
   // only programs on this computer, never a web page: browsers always say which site they come from
   if (req.headers.origin || !/^(127\.0\.0\.1|localhost)(:\d+)?$/.test(String(req.headers.host || ''))) { res.writeHead(403); return res.end(); }
   const path = String(req.url || '').split('?')[0].replace(/\/+$/, '');
-  if (req.method === 'GET' && /^(\/v1)?\/models$/.test(path)) return sendJson(res, 200, { object: 'list', data: [{ id: 'floorboard', object: 'model', created: 0, owned_by: 'floorboard' }] });
+  if (req.method === 'GET' && /^(\/v1)?\/models$/.test(path)) return sendJson(res, 200, { object: 'list', data: [{ id: 'floorboard', object: 'model', created: 0, owned_by: 'floorboard' }, ...(jarvis.mine() ? [{ id: 'jarvis', object: 'model', created: 0, owned_by: 'jarvis' }] : [])] });
   if (req.method === 'POST' && /^(\/v1)?\/chat\/completions$/.test(path)) { chat(req, res).catch(() => { try { res.end(); } catch (e) { } }); return; }
   sendJson(res, 404, { error: { message: 'Floorboard answers questions at /v1/chat/completions.' } });
 }

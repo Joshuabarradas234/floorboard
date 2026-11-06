@@ -7,6 +7,7 @@ const coucou = require('./coucou');
 const ask = require('./ask');
 const outlook = require('./outlook');
 const mfs = require('./mfs');
+const jarvis = require('./jarvis');
 
 const PAGE = path.join(__dirname, '..', 'index.html');
 const ICON = path.join(__dirname, '..', 'icon-192.png');
@@ -20,7 +21,7 @@ app.commandLine.appendSwitch('disable-features', 'CalculateNativeWinOcclusion');
 const BUBBLE = 80; // the floating button's window: the 56px button and its shadow
 // the bar at the top of the screen: its window closed (the pill and its shadow) and open (the chat panel)
 const BAR = { pill: { width: 320, height: 48 }, open: { width: 430, height: 490 } };
-let prefs = { onTop: false, side: 'right', bubble: true, bubbleAt: null, bar: true, slim: false, width: SIDEBAR_WIDTH, coucou: true, card: 'auto', mfs: null };
+let prefs = { onTop: false, side: 'right', bubble: true, bubbleAt: null, bar: true, slim: false, width: SIDEBAR_WIDTH, coucou: true, card: 'auto', mfs: null, jarvisUser: '', jarvisCard: true, jarvisNotify: true };
 let sidebar = null, full = null, tray = null, bubble = null, bar = null, rail = null, barState = 'pill';
 let opened = false, slide = null, home = null, need = { count: 0, urgent: false }; // home: the work area of the screen the sidebar docks to
 
@@ -214,8 +215,8 @@ function chosenCard() {
 }
 function showCard() {
   mfs.want(cardList.some((c) => c.mfs) && (prefs.card === 'auto' || prefs.card === 'mfs'));
-  const c = chosenCard();
-  coucou.setCards(c ? [c] : []);
+  const c = chosenCard(), j = prefs.jarvisCard !== false ? jarvis.card() : null;
+  coucou.setCards([c, j].filter(Boolean));
 }
 function setCard(id) { prefs.card = id; savePrefs(); showCard(); if (tray) tray.setContextMenu(trayMenu()); }
 function islandCards(e, list) {
@@ -244,6 +245,33 @@ function mfsIpc() {
     return r.ok ? { ok: true, line: r.line } : { error: r.error };
   });
   ipcMain.handle('mfs-disconnect', () => { mfs.disconnect(); prefs.mfs = null; savePrefs(); showCard(); if (tray) tray.setContextMenu(trayMenu()); return true; });
+}
+// JARVIS on this computer, for the account it's linked to: its card in Coucou's island, notifications, Coucou's chat, and
+// jobs sent from the sidebar. The sidebar says who's signed in; JARVIS's work only ever goes to that account's windows.
+let jarvisWas = '';
+function jarvisChanged() {
+  showCard();
+  const st = jarvis.state(), key = JSON.stringify(st);
+  if (key !== jarvisWas) { jarvisWas = key; [sidebar, full].forEach((w) => { if (w && !w.isDestroyed()) w.webContents.send('jarvis-state', st); }); }
+  if (tray && st.mine !== jarvisMenuWas) { jarvisMenuWas = st.mine; tray.setContextMenu(trayMenu()); }
+}
+let jarvisMenuWas = false;
+const ours = (e) => [sidebar, full].some((w) => w && !w.isDestroyed() && e.sender === w.webContents);
+function jarvisIpc() {
+  ipcMain.on('jarvis-who', (e, w) => { if (ours(e)) jarvis.setWho(w); });
+  ipcMain.handle('jarvis-state', (e) => (ours(e) ? jarvis.state() : {}));
+  ipcMain.handle('jarvis-link', (e) => (ours(e) ? jarvis.link() : { error: 'no' }));
+  ipcMain.handle('jarvis-unlink', (e) => (ours(e) ? jarvis.unlink() : { error: 'no' }));
+  ipcMain.handle('jarvis-suits', async (e) => { if (!ours(e) || !jarvis.ready()) return { error: 'JARVIS isn’t open on this computer.' }; try { return { suits: await jarvis.suits() }; } catch (x) { return { error: x.message }; } });
+  ipcMain.handle('jarvis-run', (e, a) => (ours(e) ? jarvis.run(a && a.job, !!(a && a.confirm)) : { error: 'no' }));
+  ipcMain.handle('jarvis-continue', (e, id) => (ours(e) ? jarvis.carryOn(id) : { error: 'no' }));
+}
+function jarvisMenu() {
+  return [
+    { label: 'Its card in Coucou’s island', type: 'checkbox', checked: prefs.jarvisCard !== false, enabled: prefs.coucou, click: (i) => { prefs.jarvisCard = i.checked; savePrefs(); showCard(); } },
+    { label: 'Pop-ups when its work is done, or the morning brief is in', type: 'checkbox', checked: prefs.jarvisNotify !== false, click: (i) => { prefs.jarvisNotify = i.checked; savePrefs(); } },
+    { label: 'Open JARVIS in the sidebar', click: () => openSidebarAt(null, '.w-jv') },
+  ];
 }
 function setBar(on) {
   prefs.bar = !!on; savePrefs();
@@ -312,6 +340,46 @@ function createSidebar() {
           openMfs(); await wait(1200); // the tray's "MFS: change or disconnect…" opens this in the sidebar
           console.log('SMOKE mfs window', JSON.stringify(await sidebar.webContents.executeJavaScript("(() => { const m = document.querySelector('.modal'); return m ? m.innerText.replace(/\\s+/g, ' ').slice(0, 400) : 'no window'; })()")));
           const shot = await sidebar.webContents.capturePage(); fs.writeFileSync(path.join(app.getPath('temp'), 'floorboard-mfs.png'), shot.toPNG());
+        }
+        if (process.env.FLOORBOARD_JARVIS_DECK) { // JARVIS, against a stand-in deck: only an admin may link it, then only that account sees it
+          const js = (x) => sidebar.webContents.executeJavaScript(x), shot = async (name) => fs.writeFileSync(path.join(app.getPath('temp'), name), (await sidebar.webContents.capturePage()).toPNG());
+          const st = () => { const s = jarvis.state(); return JSON.stringify({ found: s.found, linked: s.linked, mine: s.mine, canLink: s.canLink, connected: s.connected, error: s.error, runs: (s.runs || []).map((r) => r.title + ' ' + r.status + ' ' + r.progress + '%'), attention: (s.attention || []).length, brief: s.brief ? s.brief.title : null }); };
+          const deck = JSON.parse(fs.readFileSync(process.env.FLOORBOARD_JARVIS_DECK, 'utf8'));
+          const emit = (b) => new Promise((ok) => { const r = require('http').request({ host: '127.0.0.1', port: deck.port, path: '/test/emit', method: 'POST', headers: { 'x-deck-key': deck.token } }, (res) => { let t = ''; res.on('data', (c) => (t += c)); res.on('end', () => ok(t)); }); r.end(JSON.stringify(b)); });
+          const chat = async (model, q, history = []) => {
+            const r = await req('POST', '/v1/chat/completions', { model, stream: true, messages: [...history, { role: 'user', content: q }] });
+            return r.text.split('\n').filter((l) => l.startsWith('data: {')).map((l) => { try { const x = JSON.parse(l.slice(6)); return x.error ? '[error: ' + x.error.message + ']' : x.choices[0].delta.content || ''; } catch (e) { return ''; } }).join('').replace(/<think>[\s\S]*?<\/think>/, '');
+          };
+          await wait(5500); console.log('SMOKE jarvis u3 (no admin)', st(), '| slips card:', await js("!!document.querySelector('.w-slip:not(.w-jv-offer)')"), '| on the page:', await js("!!document.querySelector('.w-jv,.w-jv-offer')"));
+          await js("localStorage.setItem('floorboard.session.v1', 'u1'); location.reload(); 1"); await wait(4500);
+          console.log('SMOKE jarvis u1 before linking', st(), '| slips card:', await js("!!document.querySelector('.w-slip:not(.w-jv-offer)')"), '| offer:', JSON.stringify(await js("(document.querySelector('.w-jv-offer') || {}).innerText || 'none'")));
+          console.log('SMOKE jarvis models before linking', (await req('GET', '/v1/models')).text);
+          console.log('SMOKE jarvis link', JSON.stringify(await js('window.floorboardDesktop.jarvis.link()'))); await wait(1500);
+          console.log('SMOKE jarvis linked', st(), '| card:', JSON.stringify(jarvis.card()), '| prefs:', prefs.jarvisUser);
+          console.log('SMOKE jarvis page', JSON.stringify(await js("(document.querySelector('.w-jv') || {}).innerText || 'none'")));
+          await js("document.querySelector('.w-jv').scrollIntoView(); 1"); await wait(300); await shot('floorboard-jarvis.png');
+          await emit({ run: 'r1', set: { status: 'done', progress: 100, finishedAt: Date.now(), step: 'Done' } }); await wait(800);
+          console.log('SMOKE jarvis run finished', JSON.stringify(jarvis.card()));
+          await emit({ brief: true }); await wait(800); console.log('SMOKE jarvis brief in', JSON.stringify(jarvis.card().note), st());
+          await emit({ attention: [] }); await wait(800); console.log('SMOKE jarvis nothing needs you', JSON.stringify(jarvis.card()));
+          console.log('SMOKE jarvis models', (await req('GET', '/v1/models')).text);
+          for (const q of ['How far is the hardware flyer?', 'What needs me?', 'Morning brief please', 'What are you working on?', 'Start some marketing for the café']) console.log('SMOKE jarvis chat', JSON.stringify(q), '->', JSON.stringify(await chat('jarvis', q)));
+          console.log('SMOKE jarvis via floorboard', JSON.stringify(await chat('floorboard', 'JARVIS, how far is the menu boards?')));
+          const offer = await chat('jarvis', 'continue the flyer'); console.log('SMOKE jarvis continue?', JSON.stringify(offer));
+          console.log('SMOKE jarvis yes', JSON.stringify(await chat('jarvis', 'yes', [{ role: 'user', content: 'continue the flyer' }, { role: 'assistant', content: offer }])), '| r3 now', JSON.stringify((jarvis.state().runs || []).filter((r) => r.id === 'r3').map((r) => r.status)));
+          const png = path.join(app.getPath('temp'), 'floorboard-jarvis.png');
+          const job = { tower: 'Wayne Enterprises', floor: 30, suit: 'joker-bat', client: 'Corner Café', files: [png], task: 'Make 3 Instagram posts from this' };
+          const run = (j, c) => js('window.floorboardDesktop.jarvis.run(' + JSON.stringify(j) + ', ' + !!c + ')').then((x) => JSON.stringify(x));
+          console.log('SMOKE jarvis job no file', await run({ ...job, files: ['artwork.png'] }), '| no suit', await run({ ...job, suit: '' }), '| no task', await run({ ...job, task: '' }));
+          console.log('SMOKE jarvis job check', await run(job));
+          console.log('SMOKE jarvis job start', await run(job, true)); await wait(800);
+          console.log('SMOKE jarvis after start', st(), '| the stand-in got', JSON.stringify(JSON.parse(await emit({})).received.map((b) => ({ suit: b.suit, client: b.client, floor: b.floor, files: b.files.length, task: b.task, confirm: b.confirm }))));
+          await js("document.querySelector('.w-jv .btn.primary').click(); 1"); await wait(1500);
+          await js("(() => { const s = document.querySelector('#jv-form select'); s.value = 'joker-bat'; s.dispatchEvent(new Event('change', { bubbles: true })); return 1; })()"); await wait(300);
+          console.log('SMOKE jarvis send window', JSON.stringify(await js("(document.querySelector('.modal') || {}).innerText || 'no window'").then((t) => t.replace(/\s+/g, ' ').slice(0, 500))));
+          await shot('floorboard-jarvis-send.png');
+          await js("document.querySelector('.modal .icon-btn').click(); localStorage.setItem('floorboard.session.v1', 'u5'); location.reload(); 1"); await wait(4500);
+          console.log('SMOKE jarvis u5 (someone else)', st(), '| slips card:', await js("!!document.querySelector('.w-slip:not(.w-jv-offer)')"), '| on the page:', await js("!!document.querySelector('.w-jv,.w-jv-offer')"), '| models', (await req('GET', '/v1/models')).text, '| chat:', JSON.stringify(await chat('jarvis', 'what are you working on')));
         }
       }
       if (process.env.FLOORBOARD_UPDATE_BASE) { // updates through the page's bridge, against a stand-in GitHub
@@ -434,6 +502,7 @@ function trayMenu() {
     { label: 'Show the bar at the top of the screen', type: 'checkbox', checked: prefs.bar, click: (i) => setBar(i.checked) },
     { label: 'Show Floorboard in Coucou’s island (when Coucou is open)', type: 'checkbox', checked: prefs.coucou, click: (i) => setCoucou(i.checked) },
     { label: 'Your department’s card in Coucou’s island', enabled: prefs.coucou && cardList.length > 0, submenu: cardMenu() },
+    ...(jarvis.mine() ? [{ label: 'JARVIS', submenu: jarvisMenu() }] : []),
     { label: 'Dock on the left', type: 'checkbox', checked: prefs.side === 'left', click: (i) => { prefs.side = i.checked ? 'left' : 'right'; savePrefs(); dock(); } },
     { label: 'Check GitHub for new versions', type: 'checkbox', checked: updates.getState().on, click: (i) => { updates.answer(i.checked); tray.setContextMenu(trayMenu()); } },
     { label: 'Check for a new version now', enabled: updates.getState().on, click: () => { updates.check().then((st) => { if (st.available) showSidebar(); }); } },
@@ -463,7 +532,8 @@ app.setAppUserModelId('Floorboard'); // lets Windows show pop-up notifications f
 if (SMOKE) app.setPath('userData', path.join(app.getPath('temp'), 'floorboard-smoke'));
 if (!SMOKE && !app.requestSingleInstanceLock()) app.quit();
 else {
-  app.on('second-instance', (_e, argv) => { if (!startupFlag(argv)) showSidebar(); });
+  // starting it again shows the sidebar; with --quit it closes the running Floorboard properly (its cards leave Coucou's island)
+  app.on('second-instance', (_e, argv) => { if (argv.includes('--quit')) { app.isQuitting = true; app.quit(); return; } if (!startupFlag(argv)) showSidebar(); });
   app.whenReady().then(() => {
     loadPrefs();
     updates.init(); // new versions from GitHub, if the person said it may look
@@ -486,6 +556,10 @@ else {
     ipcMain.on('island-line', (e, line) => { if (sidebar && e.sender === sidebar.webContents) coucou.setLine(line); });
     ipcMain.handle('coucou-state', () => inCoucou());
     mfsIpc();
+    // JARVIS on this computer, for the account it's linked to (a test run pops nothing up)
+    jarvis.init({ owner: prefs.jarvisUser, icon: ICON, notify: () => !SMOKE && prefs.jarvisNotify !== false, onChange: jarvisChanged, onOpen: () => openSidebarAt(null, '.w-jv'),
+      saveOwner: (id) => { prefs.jarvisUser = id; savePrefs(); } });
+    jarvisIpc();
     if (SMOKE) return;
     buildTray();
     startupFlag(process.argv);
@@ -504,6 +578,7 @@ else {
   let leaving = false;
   app.on('will-quit', (e) => {
     globalShortcut.unregisterAll();
+    jarvis.stop();
     if (leaving || !coucou.running()) return;
     leaving = true; e.preventDefault();
     Promise.race([coucou.stop(), new Promise((ok) => setTimeout(ok, 800))]).then(() => app.quit());

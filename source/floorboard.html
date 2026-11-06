@@ -1175,6 +1175,37 @@ td.mono{white-space:nowrap}
 .tb-lead b{font-size:13px;white-space:nowrap}.tb-lead small{color:var(--ink-3);font-size:11.5px;white-space:nowrap}
 .tb-week{display:flex;align-items:center;gap:4px}.tb-week .linkish{min-width:96px;text-align:center}
 .tb-sec{margin:0 0 18px;display:grid;gap:10px}
+/* JARVIS */
+.w-jv{flex:none;padding:12px;border-radius:22px;display:grid;gap:8px}
+.w-jv:has(.stk-bar){padding:7px 10px 7px 12px}
+.w-jv .w-files-h{margin-bottom:0}
+.board-col .w-jv,.board-col .w-jv-offer{margin-bottom:14px}
+.fold-ic.jv{background:#dfe9ff;color:#0d2a5c}
+.jv-ic{display:grid;place-items:center;width:30px;height:30px;border-radius:10px;background:#dfe9ff;color:#0d2a5c;font:800 15px var(--f-display);flex:none}
+.w-jv-offer .slip-txt small{white-space:normal}
+.jv-dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.35);margin-right:6px;vertical-align:1px}
+.jv-dot.on{background:var(--green-dot);box-shadow:0 0 0 3px rgba(95,212,151,.18)}
+.jv-run{display:grid;gap:4px;padding:8px 10px;border-radius:14px;background:var(--glass);border:1px solid var(--glass-line)}
+.jv-run-h{display:flex;align-items:baseline;gap:8px}.jv-run-h b{flex:1;min-width:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.jv-run small{color:var(--ink-3);font-size:11.5px;line-height:1.35}
+.jv-run .slider-row{gap:8px}.jv-run .btn.sm{justify-self:start;padding:3px 10px}
+.jv-need{display:grid;gap:6px;padding:8px 10px;border-radius:14px;background:rgba(255,181,71,.14);border:1px solid rgba(255,181,71,.3)}
+.jv-need>div{display:flex;gap:8px;align-items:flex-start;font-size:12.5px}.jv-need>div>svg{color:#ffcf85;flex:none;margin-top:2px}
+.jv-need span{display:grid;min-width:0}.jv-need small{color:var(--ink-3)}
+.jv-brief{display:grid;gap:6px}.jv-brief .linkish{display:inline-flex;align-items:center;gap:6px;justify-self:start}
+.jv-brief-t{white-space:pre-wrap;font-size:12.5px;line-height:1.45;max-height:260px;overflow:auto;padding:8px 10px;border-radius:14px;background:var(--glass);border:1px solid var(--glass-line)}
+.jv-form{display:grid;gap:12px}
+.jv-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.jv-more{display:grid;gap:10px}
+.jv-files{display:grid;grid-template-columns:repeat(auto-fill,minmax(86px,1fr));gap:8px}
+.jv-file{position:relative;display:grid;gap:4px;padding:4px;border-radius:12px;background:var(--glass);border:1px solid var(--glass-line)}
+.jv-file img,.jv-file-ic{width:100%;aspect-ratio:1;object-fit:cover;border-radius:8px;display:grid;place-items:center;background:rgba(255,255,255,.08)}
+.jv-file small{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink-2)}
+.jv-file .icon-btn{position:absolute;top:6px;right:6px;width:22px;height:22px;background:rgba(0,0,0,.45);color:#fff}
+.jv-check{display:grid;gap:6px;padding:10px 12px;border-radius:14px;background:rgba(95,212,151,.12);border:1px solid rgba(95,212,151,.35)}
+.jv-check.no{background:rgba(255,181,71,.14);border-color:rgba(255,181,71,.35)}
+.jv-check p{margin:0;white-space:pre-wrap;font-size:13px;line-height:1.45}.jv-check small{color:var(--ink-3)}
+@media (max-width:420px){.jv-row{grid-template-columns:1fr}}
 .tb-sec.glass{padding:14px 16px;border-radius:var(--r-lg)}
 .tb-sec h3{margin:0;font:700 15px var(--f-display);display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}.tb-sec h3 small{font:500 12px var(--f-body,inherit);color:var(--ink-3)}
 .tb-people{display:grid;gap:6px}
@@ -2633,6 +2664,7 @@ function Widget() {
     <${AskCard} compact/>
     <${TaskBoardCard}/>
     <${SlipCard}/>
+    <${JarvisCard}/>
     <${NextMeeting}/>
     ${plannerOn(db, user) && html`<div className="w-day glass"><${TodayCard} compact/></div>`}
     ${outlookOn(db, user) && html`<div className="w-mail glass"><${OutlookCard} compact/></div>`}
@@ -8118,13 +8150,15 @@ function useAskBridge() {
 }
 
 /* ---------------- petrol & expense slips: snap the slip, send it to the admin team, watch it print ---------------- */
-// Anyone can send a petrol slip (or parking, tolls, anything they paid for the store) to the team that handles claims:
+// The Finance team sends its petrol slips (or parking, tolls, anything they paid for the store) to the team that handles claims:
 // the department with Expense slips on in People & access (the Admin department unless someone changed it). It arrives
 // there as an expense claim to approve, with the photo of the slip, and goes on through Approvals as usual. The person
 // sees their claim print out as a receipt and tear off.
 const SLIP_KINDS = [['petrol', 'Petrol'], ['travel', 'Parking & tolls'], ['other', 'Other expense']];
 const slipsOn = (d) => featureOn(d, 'slips') || (/admin/i.test(d.name) && !(d.features && 'slips' in d.features));
 const slipDept = (db) => db.depts.find(slipsOn);
+// who sends slips: the Finance team (a department named Finance or Accounts, the same as Finance's cards in Coucou), not admins
+const slipSender = (db, u) => u.role !== 'admin' && db.depts.some((d) => /financ|account/i.test(d.name) && (u.depts.includes(d.id) || u.manages.includes(d.id)));
 const slipApprovers = (db, d) => {
   const act = db.users.filter((x) => x.active !== false), heads = d ? act.filter((x) => x.manages.includes(d.id)) : [];
   return (heads.length ? heads : act.filter((x) => x.role === 'admin')).map((x) => x.id);
@@ -8218,7 +8252,7 @@ function SlipModal({ onClose }) {
 // the sidebar's card: one tap to send a slip, and how the last one is getting on
 function SlipCard() {
   const { db, user } = useApp(), [open, setOpen] = useState(false), team = slipDept(db);
-  if (!team) return null;
+  if (!team || !slipSender(db, user)) return null;
   const last = db.posts.find((p) => p.type === 'approval' && p.author === user.id && p.approval && p.approval.kind === 'Expense claim');
   const st = last ? apState(last) : null;
   return html`<div className="w-slip glass" id="slips">
@@ -8486,6 +8520,135 @@ function MfsModal({ onClose }) {
       <label className="field"><span>MFS address</span><input className="input" value=${url} onChange=${(e) => setUrl(e.target.value)} placeholder="http://localhost:8787" spellcheck="false"/></label>
       <label className="field"><span>Jarvis key</span><input className="input" type="password" value=${key} onChange=${(e) => setKey(e.target.value)} placeholder=${st && st.connected ? 'Saved (type a new one to change it)' : 'JARVIS_KEY from the MFS app’s .env'} autocomplete="off" spellcheck="false"/>
         <small>It stays on this computer, locked to your Windows account. MFS only answers on its own computer or network.</small></label>
+      ${err && html`<p className="err sm" style=${{ margin: 0 }}>${err}</p>`}
+    </form>
+  <//>`;
+}
+
+/* ---------------- JARVIS: the Tower's work, the morning brief, and new jobs, from JARVIS on this computer ---------------- */
+// JARVIS (JARVIS Armor Workspace) on the same computer, for the one account it's linked to: an admin links it once, and no
+// one else sees any of it. Its card shows what the Tower is working on, what needs you and the morning brief; artwork
+// dropped in goes to a suit and client as a new job, after JARVIS says what it will do. Only in the Windows app; JARVIS's
+// work stays on this computer and never goes to the store's server.
+const JV_ACTIVE = ['queued', 'planning', 'working', 'reviewing'];
+const JV_SAY = { queued: 'Waiting to start', planning: 'Planning', working: 'Working', reviewing: 'Checking its work', done: 'Done', failed: 'Failed', stopped: 'Stopped', budget: 'At its budget', needs_brief: 'Needs a brief', needs_changes: 'Needs your changes' };
+const JV_CONT = ['stopped', 'budget', 'failed'];
+const jvWhere = (r) => r.floorName || (r.floor !== '' && r.floor != null ? 'Floor ' + r.floor : '');
+const jvTime = (t) => { if (!t) return ''; const d = new Date(t); return (d.toDateString() === new Date().toDateString() ? '' : d.toLocaleDateString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short' }) + ' ') + d.toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' }); };
+// what the Windows app knows about JARVIS here (null outside it), and it hears who's signed in
+function useJarvis() {
+  const { user, seeing } = useApp(), d = window.floorboardDesktop, [st, setSt] = useState(null);
+  useEffect(() => { if (d && d.jarvis && !seeing) d.jarvis.who({ id: user.id, admin: user.role === 'admin' }); }, [user.id, user.role, !!seeing]);
+  useEffect(() => { if (!d || !d.jarvis) return undefined; d.jarvis.state().then(setSt).catch(() => {}); return d.jarvis.onState(setSt); }, []);
+  return st;
+}
+function JvRun({ r, onCarryOn }) {
+  const act = JV_ACTIVE.includes(r.status), cls = r.status === 'done' ? 'ok' : r.status === 'failed' ? 'bad' : act ? 'todo' : 'warn';
+  const meta = [jvWhere(r), act ? r.step : r.status === 'failed' ? r.error || r.step : r.status === 'done' ? '' : r.step, r.status === 'done' ? jvTime(r.finishedAt) : act ? (r.startedAt ? 'since ' + jvTime(r.startedAt) : '') : jvTime(r.updatedAt)].filter(Boolean).join(' · ');
+  return html`<div className="jv-run">
+    <div className="jv-run-h"><b title=${r.title}>${r.title}</b><span className=${'st ' + cls}>${r.status === 'done' && html`<${Icon} n="check" s=${13}/>`}${JV_SAY[r.status] || r.status}</span></div>
+    ${act && html`<div className="slider-row"><div className="bar"><i style=${{ width: r.progress + '%' }}></i></div><span className="pct-pill">${r.progress}%</span></div>`}
+    ${meta && html`<small>${meta}</small>`}
+    ${JV_CONT.includes(r.status) && html`<button className="btn sm" onClick=${() => onCarryOn(r)}>Continue where it stopped</button>`}
+  </div>`;
+}
+function JarvisCard() {
+  const { toast, ask, seeing } = useApp(), j = useJarvis(), d = window.floorboardDesktop;
+  const [open, setOpen] = useFold('floorboard.jarvis.fold.v1'), [send, setSend] = useState(false), [brief, setBrief] = useState(false), [all, setAll] = useState(false);
+  if (!j || !(j.found || j.installed) || seeing) return null;
+  if (!j.mine) {
+    if (!j.canLink) return null;
+    const link = async () => { const r = await d.jarvis.link(); if (r && r.ok) toast('JARVIS is linked to your account on this computer'); else toast((r && r.error) || 'JARVIS didn’t link', 'warn'); };
+    return html`<div className="w-slip w-jv-offer glass">
+      <span className="jv-ic" aria-hidden="true">J</span>
+      <div className="slip-txt"><b>JARVIS is on this computer</b><small>Link it to your account: its card in Coucou, a pop-up when its work is done, and sending it artwork from here. Only you see it.</small></div>
+      <button className="btn sm primary" onClick=${link}>Link</button>
+    </div>`;
+  }
+  if (!j.found) return html`<div className="w-slip w-jv-offer glass" id="jarvis">
+      <span className="jv-ic" aria-hidden="true">J</span>
+      <div className="slip-txt"><b>JARVIS isn’t connected</b><small>Open JARVIS on this computer. It needs version 1.107 or later to talk to Floorboard.</small></div>
+    </div>`;
+  const runs = j.runs || [], active = runs.filter((r) => JV_ACTIVE.includes(r.status)), need = j.attention || [];
+  if (!open) return html`<div className="w-jv glass" id="jarvis"><${FoldBar} icon="spark" kind="jv" title="JARVIS" count=${active.length + need.length} hot=${need.length > 0} onOpen=${() => setOpen(true)}/></div>`;
+  const carryOn = (r) => ask({ title: 'Continue “' + r.title + '”?', body: 'JARVIS carries on where it stopped. It can cost money, so JARVIS may ask you to approve it first.', confirm: 'Continue',
+    onConfirm: async () => { const x = await d.jarvis.carryOn(r.id); toast(x && x.ok ? 'JARVIS is carrying on with it' : x && x.pending ? x.message || 'Waiting for your approval in JARVIS' : (x && x.error) || 'JARVIS didn’t answer', x && x.error ? 'warn' : undefined); } });
+  const shown = all ? runs : runs.slice(0, 4);
+  return html`<div className="w-jv glass" id="jarvis">
+    <div className="w-files-h"><span className="eyebrow"><i className=${'jv-dot' + (j.connected ? ' on' : '')} title=${j.connected ? 'Connected to JARVIS ' + (j.version || '') : j.loading ? 'Connecting…' : 'Not connected'}></i>JARVIS</span>
+      <span className="w-card-a"><button className="btn sm primary" onClick=${() => setSend(true)} disabled=${!j.connected}><${Icon} n="send" s=${13}/>Send work</button><${FoldBtn} what="JARVIS" onFold=${() => setOpen(false)}/></span></div>
+    ${j.error && html`<p className="err sm" style=${{ margin: 0 }}>${j.error}</p>`}
+    ${need.length > 0 && html`<div className="jv-need">${need.slice(0, 3).map((a, i) => html`<div key=${i}><${Icon} n="alert" s=${13}/><span><b>${a.title}</b>${a.detail && html`<small>${a.detail}</small>`}</span></div>`)}
+      ${need.length > 3 && html`<small className="muted">and ${need.length - 3} more in JARVIS</small>`}</div>`}
+    ${shown.map((r) => html`<${JvRun} key=${r.id} r=${r} onCarryOn=${carryOn}/>`)}
+    ${runs.length > 4 && html`<button className="linkish sm" onClick=${() => setAll(!all)}>${all ? 'Fewer' : 'All ' + runs.length + ' from the last two days'}</button>`}
+    ${j.connected && !runs.length && html`<p className="muted sm" style=${{ margin: 0 }}>Nothing in the Tower in the last two days. Send it some work.</p>`}
+    ${j.brief && html`<div className="jv-brief"><button className="linkish sm" onClick=${() => setBrief(!brief)} aria-expanded=${brief}><${Icon} n="sun" s=${13}/>${j.brief.title}${j.brief.at ? ' · ' + jvTime(j.brief.at) : ''}</button>
+      ${brief && html`<div className="jv-brief-t">${j.brief.text}</div>`}</div>`}
+    ${send && html`<${JarvisSend} j=${j} onClose=${() => setSend(false)}/>`}
+  </div>`;
+}
+// a new job for JARVIS: the files (dropped in or picked), the suit and its client, the floor, and what to do with them.
+// JARVIS first says what it will do (and what it may cost); it starts only after Start it.
+function JarvisSend({ j, onClose }) {
+  const { toast } = useApp(), d = window.floorboardDesktop.jarvis, floors = j.floors || [];
+  const [suits, setSuits] = useState(null), [err, setErr] = useState(''), [files, setFiles] = useState([]), [over, setOver] = useState(false), [more, setMore] = useState(false);
+  const [check, setCheck] = useState(null), [busy, setBusy] = useState(false), pick = useRef(null), urls = useRef([]);
+  const firstFloor = () => { const k = lsGet('floorboard.jarvis.floor'), i = floors.findIndex((x) => x.tower + '|' + x.floor === k); return String(i >= 0 ? i : Math.max(0, floors.findIndex((x) => /market/i.test(x.name)))); };
+  const [f, setF] = useState(() => ({ suit: lsGet('floorboard.jarvis.suit') || '', client: '', floor: firstFloor(), task: '', outcome: '', audience: '', constraints: '', finished: '' }));
+  const set = (k, v) => { setF((x) => ({ ...x, [k]: v, ...(k === 'suit' ? { client: '' } : {}) })); setCheck(null); setErr(''); };
+  useEffect(() => { d.suits().then((r) => { if (r && r.suits) setSuits(r.suits); else { setSuits([]); setErr((r && r.error) || 'JARVIS didn’t list its suits.'); } }); }, []);
+  useEffect(() => () => urls.current.forEach((u) => URL.revokeObjectURL(u)), []);
+  const suit = (suits || []).find((s) => s.id === f.suit), fl = floors[+f.floor];
+  const take = (list) => {
+    const add = [...(list || [])].map((file) => ({ key: uid('jf'), name: file.name, size: file.size, path: d.pathOf(file), url: /^image\//.test(file.type) ? URL.createObjectURL(file) : '' }));
+    add.forEach((x) => x.url && urls.current.push(x.url));
+    setErr(add.some((x) => !x.path) ? 'Drop files from File Explorer or your desktop.' : '');
+    setFiles((cur) => [...cur, ...add.filter((x) => x.path && !cur.some((c) => c.path === x.path))].slice(0, 20)); setCheck(null);
+  };
+  const job = () => ({ tower: fl && fl.tower, floor: fl && fl.floor, suit: f.suit, client: f.client, files: files.map((x) => x.path), task: f.task,
+    brief: { outcome: f.outcome, audience: f.audience, constraints: f.constraints, finished: f.finished } });
+  const go = async (e) => {
+    e.preventDefault(); setBusy(true); setErr('');
+    const r = await d.run(job(), !!check).catch((x) => ({ error: String((x && x.message) || x) }));
+    setBusy(false);
+    if (r && r.needsConfirm) { setCheck(r); lsSet('floorboard.jarvis.suit', f.suit); if (fl) lsSet('floorboard.jarvis.floor', fl.tower + '|' + fl.floor); return; }
+    if (r && r.ok) { toast('JARVIS has started it. You’ll get a pop-up when it’s done.'); onClose(); return; }
+    if (r && r.pending) { toast(r.message || 'It’s waiting for your approval in JARVIS'); onClose(); return; }
+    setErr((r && r.error) || 'JARVIS didn’t answer.');
+  };
+  const isFiles = (e) => [...(e.dataTransfer.types || [])].includes('Files');
+  const ready = files.length > 0 && f.suit && fl && f.task.trim().length >= 3 && (!suit || !suit.clients.length || f.client);
+  return html`<${Modal} title="Send work to JARVIS" onClose=${onClose} footer=${html`<button className="btn" onClick=${onClose}>Cancel</button>
+      <button className="btn primary" type="submit" form="jv-form" disabled=${busy || !ready || (check && !check.canStart)}>${busy ? (check ? 'Starting…' : 'Asking JARVIS…') : check ? 'Start it' : 'Check with JARVIS'}</button>`}>
+    <form id="jv-form" onSubmit=${go} className="jv-form">
+      <div className=${'qd-zone' + (over ? ' over' : '')} role="button" tabIndex="0" aria-label="Drop the artwork here, or choose files"
+        onClick=${() => pick.current && pick.current.click()} onKeyDown=${(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick.current.click(); } }}
+        onDragEnter=${(e) => { if (isFiles(e)) { e.preventDefault(); setOver(true); } }} onDragOver=${(e) => { if (isFiles(e)) { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; if (!over) setOver(true); } }}
+        onDragLeave=${(e) => { if (!e.currentTarget.contains(e.relatedTarget)) setOver(false); }} onDrop=${(e) => { e.preventDefault(); setOver(false); take(e.dataTransfer.files); }}>
+        <${Icon} n="image" s=${20}/><span><b>${over ? 'Let go to add them' : files.length ? 'Drop more, or choose' : 'Drop the artwork here'}</b><small>Images, PDFs or design files from your computer, up to 20 MB each</small></span>
+      </div>
+      <input ref=${pick} type="file" multiple hidden onChange=${(e) => { take(e.target.files); e.target.value = ''; }}/>
+      ${files.length > 0 && html`<div className="jv-files">${files.map((x) => html`<div key=${x.key} className="jv-file" title=${x.path}>
+        ${x.url ? html`<img src=${x.url} alt=""/>` : html`<span className="jv-file-ic"><${Icon} n="doc" s=${18}/></span>`}
+        <small>${x.name}</small><button type="button" className="icon-btn sm" onClick=${() => { setFiles((c) => c.filter((y) => y.key !== x.key)); setCheck(null); }} aria-label=${'Take ' + x.name + ' out'}><${Icon} n="close" s=${12}/></button></div>`)}</div>`}
+      <div className="jv-row">
+        <label className="field"><span>Suit</span><select className="select" value=${f.suit} onChange=${(e) => set('suit', e.target.value)} disabled=${!suits}>
+          <option value="">${suits ? 'Choose…' : 'Asking JARVIS…'}</option>${(suits || []).map((s) => html`<option key=${s.id} value=${s.id}>${s.name}${s.hall ? ' · ' + s.hall : ''}</option>`)}</select></label>
+        <label className="field"><span>Client</span><select className="select" value=${f.client} onChange=${(e) => set('client', e.target.value)} disabled=${!suit || !suit.clients.length}>
+          <option value="">${!suit ? 'Pick the suit first' : suit.clients.length ? 'Choose…' : suit.reachable === false ? 'Its folder can’t be reached (is J: connected?)' : 'This suit has no clients'}</option>${(suit ? suit.clients : []).map((c) => html`<option key=${c} value=${c}>${c}</option>`)}</select></label>
+      </div>
+      <label className="field"><span>Floor</span><select className="select" value=${f.floor} onChange=${(e) => set('floor', e.target.value)} disabled=${!floors.length}>
+        ${floors.length ? floors.map((x, i) => html`<option key=${i} value=${String(i)}>${(x.name || 'Floor ' + x.floor) + (x.tower ? ' · ' + x.tower : '')}</option>`) : html`<option value="0">JARVIS has no floors yet</option>`}</select></label>
+      <label className="field"><span>What should JARVIS do with them?</span><textarea className="input" rows="3" value=${f.task} onChange=${(e) => set('task', e.target.value)} placeholder="Make Instagram and Facebook posts from these for the Christmas promo, with captions" maxLength="3000"></textarea></label>
+      <button type="button" className="linkish sm" style=${{ justifySelf: 'start' }} onClick=${() => setMore(!more)} aria-expanded=${more}>${more ? 'Less' : 'More for the brief (optional)'}</button>
+      ${more && html`<div className="jv-more">
+        <label className="field"><span>What it’s for</span><input className="input" value=${f.outcome} onChange=${(e) => set('outcome', e.target.value)} placeholder="More feet in the centre over the holidays" maxLength="1000"/></label>
+        <label className="field"><span>Who it’s for</span><input className="input" value=${f.audience} onChange=${(e) => set('audience', e.target.value)} placeholder="Families in the area" maxLength="1000"/></label>
+        <label className="field"><span>Must or mustn’t</span><input className="input" value=${f.constraints} onChange=${(e) => set('constraints', e.target.value)} placeholder="Keep the client’s colours and logo" maxLength="1000"/></label>
+        <label className="field"><span>Finished means</span><input className="input" value=${f.finished} onChange=${(e) => set('finished', e.target.value)} placeholder="5 posts and captions, ready to approve" maxLength="1000"/></label>
+      </div>`}
+      ${check && html`<div className=${'jv-check' + (check.canStart ? '' : ' no')}><b>${check.canStart ? 'JARVIS will:' : 'Not yet:'}</b><p>${check.summary || 'Start the job.'}</p>${check.estimate && html`<small>Estimate: ${check.estimate}</small>`}<small>${check.canStart ? 'Press Start it to go ahead, or change something above.' : 'Sort that out (in JARVIS, or above), then check again.'}</small></div>`}
       ${err && html`<p className="err sm" style=${{ margin: 0 }}>${err}</p>`}
     </form>
   <//>`;
@@ -8964,7 +9127,7 @@ function Shell() {
     <${Rail}/>
     ${drawer && html`<div className="side-scrim" onClick=${() => setDrawer(false)}></div>`}
     ${chatsMode ? html`<main className="stage glass chats-mode"><${ChatsView}/></main>` : html`<main className="stage glass">
-      <aside className="board-col"><${Board} note=${note}/><${AskCard}/><${TaskBoardCard}/><${SlipCard}/><${TodayCard}/><${OutlookSide}/><${QuoteDrop}/><${StickyNotes}/><${Shortcuts}/></aside>
+      <aside className="board-col"><${Board} note=${note}/><${AskCard}/><${TaskBoardCard}/><${SlipCard}/><${JarvisCard}/><${TodayCard}/><${OutlookSide}/><${QuoteDrop}/><${StickyNotes}/><${Shortcuts}/></aside>
       <section className="content" key=${view}>${content}</section>
     </main>`}
     <${Dock}/>
@@ -9398,6 +9561,7 @@ function App() {
       }
       setOpenId(null); setDrawer(false); setComposer(null); setOpenChatId(null); lsSet(SEEAS_KEY, ''); setSeeAs('');
       MS.signOut().catch(() => {}); // the next person on this device doesn't get this mailbox
+      try { const dk = window.floorboardDesktop; if (dk && dk.jarvis) dk.jarvis.who({}); } catch (e) { /* not the Windows app */ } // nor JARVIS
       if (!CLOUD) { lsSet(SESSION_KEY, ''); setMe(null); return; }
       // shared devices: don't leave the store's data or anyone's files behind
       lsSet(CACHE_KEY, ''); lsSet('floorboard.cloud.me', ''); lsSet(PENDING_KEY, ''); lsSet(UPLOADS_KEY, ''); Blobs.clear();

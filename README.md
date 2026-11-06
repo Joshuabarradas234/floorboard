@@ -22,13 +22,13 @@ If you use [Coucou](https://github.com/Louis-CFM/coucou) (a free app that puts W
 
 - Turn it on or off from the tray icon's menu: **Show Floorboard in Coucou's island**.
 - WhatsApp and Outlook live in Coucou's island. WhatsApp: in Coucou, **Settings… → Integrations → WhatsApp**, **Install WhatsApp**, then scan the code with your phone (WhatsApp › Settings › Linked devices › Link a device). Email: sign in to **Outlook (classic)** and leave it open (the new Outlook can't be reached), and have Coucou show its **Mail** card. Coucou 0.5.9 has no switch for that card yet: close Coucou, add `"integration_mail"` to `"activeIntegrations"` in `%APPDATA%\Coucou\settings.json`, and start Coucou again.
-- The island shows four small cards beside the main one: your department's card, Mail and WhatsApp, with one spot to spare. Coucou's services are switched on and off in **Settings… → Integrations**: Mail and WhatsApp suit the store; the developer services (Resend, n8n, Vercel, GitHub and the rest) need their own keys and do nothing without them.
+- The island shows four small cards beside the main one: your department's card, Mail and WhatsApp, and one more spot (JARVIS's card, on the computer where JARVIS is linked; see below). Coucou's services are switched on and off in **Settings… → Integrations**: Mail and WhatsApp suit the store; the developer services (Resend, n8n, Vercel, GitHub and the rest) need their own keys and do nothing without them.
 
 **Your department's card.** Beside Floorboard's main card, each person gets one small card for their own work, busy while something wants doing:
 
 | Who | Card | What it says |
 |---|---|---|
-| Everyone with a task board | **task-board** | your tasks this week (how many done); a department head, how far the team is and who's furthest behind; an admin, the whole store and the department furthest behind |
+| Everyone with a task board | **taskboard** (amber) | your tasks this week (how many done); a department head, how far the team is and who's furthest behind; an admin, the whole store and the department furthest behind |
 | Finance | **mfs** | what's waiting for approval in MFS, who owes (and how much is late), anything wrong |
 | Finance, and anyone who approves | **approvals** | invoices and quotes to approve and to pay, with the amounts |
 | Finance | **month-end** | what's late and what's due this week |
@@ -36,11 +36,26 @@ If you use [Coucou](https://github.com/Louis-CFM/coucou) (a free app that puts W
 | Whoever has the quote drop box | **quotes** | quotes waiting, with a question, or approved |
 | Every department | its name (**bakery**, **fruit-veg**…) | the team's open and overdue tasks, and who's gone quiet for 2 days |
 
+Coucou colours a card by its name, from four colours only (green, yellow, blue, pink; its colour settings don't reach these cards), so the task board's card is called **taskboard** to come out amber, the nearest to orange, and JARVIS's comes out pink.
+
 Floorboard picks the best one for you (the task board first; then for Finance MFS and approvals, for the store manager the store, for everyone else their own team). To pick another, or none: the tray icon's menu → **Your department's card in Coucou's island**. A card you pick shows only itself.
 
 Coucou always keeps one main card for a coding app (Claude Code, Cursor, Codex or Antigravity); Floorboard takes that card over while it's open, and it goes back to the coding app when Floorboard closes. If you also run Claude Code with Coucou's hooks installed, both share that card.
 
 MFS (Finance's card): on a computer that can reach the MFS app, open the tray menu → **Your department's card in Coucou's island → Connect MFS…**, enter the MFS address (`http://localhost:8787` on the MFS computer itself) and the MFS app's Jarvis key (`JARVIS_KEY` in its `.env`; `pnpm jarvis:setup` sets one up). The key stays on that computer, locked with Windows' own encryption. MFS answers its Jarvis questions only on its own computer or network, and only reading: nothing in MFS changes. Until MFS is connected, Finance gets the approvals card.
+
+### JARVIS (Windows, one account)
+
+On a computer that also runs JARVIS (JARVIS Armor Workspace), Floorboard can follow JARVIS's Tower and send it work, for one Floorboard account only. The first time an admin signs in there, the sidebar offers **JARVIS is on this computer → Link**; after that only that account sees anything of JARVIS, in the sidebar, the island or the chat, and nobody else's account can link it. Everything goes between Floorboard and JARVIS on that computer: nothing of JARVIS's goes to the store's server.
+
+- **Its own card in Coucou's island (jarvis).** What the Tower is working on and how far it is (`2 working · Corner Café menu boards 40%`), what needs you, or what it last finished. It's busy while JARVIS works, and says *Not connected · open JARVIS* while JARVIS is closed. Coucou names cards in small letters, so it reads **jarvis**, in pink.
+- **Pop-ups.** A Windows notification when a job is done, failed, stopped at its budget, or needs a brief or your changes, and when the morning brief is in. Clicking one opens JARVIS in the sidebar. The newest one also shows on the island card.
+- **In the sidebar.** The JARVIS card: what needs you, each job with its floor, progress and the step it's on, **Continue where it stopped** for a stopped job (JARVIS may ask you to approve the cost first), and the morning brief.
+- **Send work.** Drop the artwork (images, PDFs or design files, up to 20 at 20 MB each, from File Explorer or the desktop), pick the suit and the client (the suit's client folders), the floor (Client Marketing & Web by default) and say what to do with it; **More for the brief** adds what it's for, who it's for, musts and what finished means. **Check with JARVIS** shows what JARVIS will do (where it files the artwork, the floor, what it may cost); nothing starts until **Start it**. JARVIS copies the files into the client's folder itself, and anything that costs money still goes through JARVIS's own approval.
+- **Ask it in Coucou's chat.** Pick the **jarvis** model in Coucou's chat (beside **floorboard**), or start a question to Floorboard with "JARVIS": *how far is the menu boards?*, *what needs me?*, *morning brief*, *what are you working on?*, *continue the flyer* (then *yes*). It answers from JARVIS's own records, on that computer.
+- The tray icon's menu → **JARVIS** turns the island card and the pop-ups on or off.
+
+It needs JARVIS 1.107 or later, which tells programs on the same computer where its control deck is listening (a new key each time JARVIS starts, in a file only that Windows user can read). Until then the card says JARVIS isn't connected.
 
 ### Keeping it up to date (Windows)
 
@@ -218,7 +233,7 @@ Switch it on in **People & access**: under Finance, turn on **Month end**. A **M
 
 ## Petrol & expense slips
 
-Anyone can send a petrol slip (or parking and tolls, or anything else they paid for the store) to the team that handles claims: the **Petrol & expense slips** card in the sidebar → **Send a slip**.
+The Finance team sends its petrol slips (or parking and tolls, or anything else they paid for the store) to the team that handles claims: the **Petrol & expense slips** card in the sidebar → **Send a slip**. The card shows only for people in a department named Finance (or Accounts), not for admins.
 
 - Take a photo of the slip (on a phone it opens the camera) or pick a PDF, then the amount and the date. For petrol, also the garage, litres, odometer and vehicle (the vehicle is remembered for next time), and what it was for.
 - **Send** prints the claim as a receipt that tears off and goes to the team. It arrives there as an **expense claim** for that department's head to approve, with the photo, and goes on through **Approvals** like any other: approve, query, mark paid. The person hears when it's approved and paid, and the card shows how their last slip is getting on.

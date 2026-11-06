@@ -1,6 +1,6 @@
 // The only bridge between the page and Windows: open the full app, show or hide the sidebar, open or close the bar, keep it in front,
 // print quotes to a printer, and tell Windows how many things need you (red items wake the sidebar).
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer, webUtils } = require('electron');
 contextBridge.exposeInMainWorld('floorboardDesktop', {
   openFull: (target) => ipcRenderer.send('open-full', typeof target === 'string' ? target : undefined),
   hide: () => ipcRenderer.send('hide-sidebar'),
@@ -68,5 +68,18 @@ contextBridge.exposeInMainWorld('floorboardDesktop', {
     connect: (url, key) => ipcRenderer.invoke('mfs-connect', { url: String(url || ''), key: String(key || '') }),
     disconnect: () => ipcRenderer.invoke('mfs-disconnect'),
     onOpen: (fn) => { const h = () => fn(); ipcRenderer.on('mfs-open', h); return () => ipcRenderer.removeListener('mfs-open', h); },
+  },
+  // JARVIS on this computer, for the one account it's linked to: what it's doing, and jobs sent to it (files go by their place on disk)
+  jarvis: {
+    who: (u) => ipcRenderer.send('jarvis-who', { id: String((u && u.id) || ''), admin: !!(u && u.admin) }),
+    state: () => ipcRenderer.invoke('jarvis-state'),
+    onState: (fn) => { const h = (_e, s) => fn(s || {}); ipcRenderer.on('jarvis-state', h); return () => ipcRenderer.removeListener('jarvis-state', h); },
+    link: () => ipcRenderer.invoke('jarvis-link'),
+    unlink: () => ipcRenderer.invoke('jarvis-unlink'),
+    suits: () => ipcRenderer.invoke('jarvis-suits'),
+    run: (job, confirm) => ipcRenderer.invoke('jarvis-run', { job: JSON.parse(JSON.stringify(job || {})), confirm: !!confirm }),
+    carryOn: (runId) => ipcRenderer.invoke('jarvis-continue', String(runId || '')),
+    // where a dropped or picked file is on this computer ('' for one that isn't a file on disk)
+    pathOf: (file) => { try { return webUtils.getPathForFile(file) || ''; } catch (e) { return ''; } },
   },
 });
