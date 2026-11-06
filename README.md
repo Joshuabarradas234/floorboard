@@ -307,7 +307,9 @@ When the team works in Microsoft Teams, what people ask of you there comes onto 
 - **What's kept:** only that short line, who asked, where, and the link back to the message, in your own pins (only you can read them). The chats themselves aren't kept. The messages it checks go to Claude (Anthropic) to be sorted, as Ask Floorboard's questions do.
 - **Connect:** under the board on Needs you (**Connect Teams**), or on the island's Teams card. It signs in with your work Microsoft account and asks once for Teams' permission.
 
-Set it up once: it uses the same registration in your company's Microsoft 365 as Outlook (see [Outlook email](#outlook-email), steps 1 to 4, with the Teams permissions in step 3 and the admin's **Grant admin consent**). Without the admin's consent, chats still work and team channels are skipped. Then deploy the `ask` function again (it now sorts Teams messages too).
+**Switching it on, from the island:** an admin clicks the Teams ghost → **Set up Teams**, follows the four steps there (they open Microsoft's page) and pastes the **Application (client) ID** into the card. It's kept with the store (only admins can change it), so every computer and phone then offers **Connect Teams**, and **Sign in to your email** on the Mail card; nobody edits `config.js` (an ID in `config.js` still wins). Staff see that their manager switches it on.
+
+Or set it up by hand: it uses the same registration in your company's Microsoft 365 as Outlook (see [Outlook email](#outlook-email), steps 1 to 4, with the Teams permissions in step 3 and the admin's **Grant admin consent**). Without the admin's consent, chats still work and team channels are skipped. Then deploy the `ask` function again (it now sorts Teams messages too).
 
 ## Approvals (Finance)
 

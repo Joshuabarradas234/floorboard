@@ -521,6 +521,9 @@ html.bar-mode,html.bar-mode body,html.bar-mode #root{background:transparent!impo
 @keyframes isl-fadein{from{opacity:0;transform:translateY(-3px)}}
 @media (prefers-reduced-motion:reduce){.isl-arrive,.isl-pill .isl-peek{animation:none}}
 .isl-need{display:block;font-size:10.5px;font-weight:700;color:#ffcf85;margin-top:1px}.isl-need.off{color:rgba(233,235,238,.45);font-weight:600}
+.isl-setup{display:grid;gap:7px;font-size:12px;color:rgba(233,235,238,.85);max-height:300px;overflow-y:auto;padding-right:4px}.isl-setup ol{margin:0;padding-left:18px;display:grid;gap:5px;line-height:1.4}
+.isl-setup code{font-size:11px;background:rgba(255,255,255,.08);border-radius:5px;padding:1px 4px;word-break:break-all}.isl-setup .isl-more.sm{margin-right:4px}
+.isl-setup input{width:100%;box-sizing:border-box;height:30px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:#fff;padding:0 10px;font:12.5px var(--f-mono, monospace)}
 .isl-mini{display:grid;grid-template-columns:repeat(2,12px);gap:2px 3px;flex:none}
 .isl-mini-b{display:block;width:12px;height:12px;padding:0;border:0;background:none;cursor:pointer}.isl-mini-b .isl-ch{transition:transform .2s}.isl-mini-b:hover .isl-ch{transform:scale(1.35)}
 .isl-panel{width:640px;box-sizing:border-box;background:var(--isl-bg,#000);border-radius:0 0 30px 30px;padding:8px 10px 10px;box-shadow:0 14px 40px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:8px}
@@ -3258,6 +3261,39 @@ function IslJarvis({ big, setBig, j }) {
 }
 
 /* Mail: Outlook (classic)'s inbox, an email to read, a search */
+// Switching Teams (and signing in to email) on for the store, once: an admin registers Floorboard in the company's
+// Microsoft 365 and pastes its ID here. It's kept with the store, so everyone's Teams card then offers Connect Teams.
+// while Teams is being set up the island stays open when you go to the browser and back
+let ISL_HOLD = false;
+const MS_SETUP_URL = 'https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/CreateApplicationBlade/quickStartType~/null/isMSAApp~/false';
+const GUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+function TeamsSetup({ setBig }) {
+  const { db, user, update, toast } = useApp(), [open, setOpen] = useState(false), [id, setId] = useState(''), [tenant, setTenant] = useState(''), [err, setErr] = useState('');
+  const c = window.FLOORBOARD_CONFIG || {}, needTenant = !GUID_RE.test(String(c.msTenantId || db.msTenantId || ''));
+  useEffect(() => { setBig(open); ISL_HOLD = open; return () => { ISL_HOLD = false; }; }, [open]);
+  if (user.role !== 'admin') return html`<p>Not switched on for your store yet. Ask your manager to switch it on.</p>`;
+  const save = () => {
+    const ci = id.trim(), ti = tenant.trim();
+    if (!GUID_RE.test(ci)) { setErr('That isn’t an Application (client) ID. It looks like 1a2b3c4d-5e6f-…, 36 characters.'); return; }
+    if (needTenant && !GUID_RE.test(ti)) { setErr('Add the Directory (tenant) ID too, from the same Overview page.'); return; }
+    update((d) => { d.msClientId = ci; if (needTenant) d.msTenantId = ti; });
+    MS.use(ci, needTenant ? ti : String(c.msTenantId || db.msTenantId || ''));
+    setOpen(false); toast('Teams is switched on for the store. Now connect your own.');
+  };
+  if (!open) return html`<p>Not switched on for the store yet. Switch it on once; then everyone connects their own.</p><button className="isl-more primary" onClick=${() => setOpen(true)}>Set up Teams</button>`;
+  return html`<div className="isl-setup">
+    <ol>
+      <li><button className="isl-more sm" onClick=${() => window.open(MS_SETUP_URL, '_blank', 'noopener')}>Open Microsoft’s page</button> and sign in with your <b>work</b> account. Name: <b>Floorboard</b>; <b>this organization only</b>; redirect URI: <b>Single-page application</b>, <code>${APP_URL}</code>. Register.</li>
+      <li><b>Authentication</b> → Add a platform → <b>Mobile and desktop applications</b> → <code>http://localhost</code> → Configure.</li>
+      <li><b>API permissions</b> → Add a permission → Microsoft Graph → <b>Delegated</b>: Mail.Read, Chat.Read, Team.ReadBasic.All, Channel.ReadBasic.All, ChannelMessage.Read.All → Add, then <b>Grant admin consent</b>.</li>
+      <li>On <b>Overview</b>, copy the <b>Application (client) ID</b>${needTenant ? ' and the Directory (tenant) ID' : ''} into here:</li>
+    </ol>
+    <input value=${id} onChange=${(e) => { setId(e.target.value); setErr(''); }} placeholder="Application (client) ID" aria-label="Application (client) ID" spellCheck="false" autoComplete="off"/>
+    ${needTenant && html`<input value=${tenant} onChange=${(e) => { setTenant(e.target.value); setErr(''); }} placeholder="Directory (tenant) ID" aria-label="Directory (tenant) ID" spellCheck="false" autoComplete="off"/>`}
+    ${err && html`<small className="isl-err">${err}</small>`}
+    <span className="isl-btns"><button className="isl-more primary" onClick=${save}>Switch Teams on</button><button className="isl-more" onClick=${() => setOpen(false)}>Not now</button></span>
+  </div>`;
+}
 /* Teams: what people asked of you in Teams (the same as on your Needs you), by who asked, with a count each */
 function IslTeams({ big, setBig, demo }) {
   const { db, user, update, toast } = useApp(), t = teamsState(db, user), live = useRef(null), [who, setWho] = useState(null), [busy, setBusy] = useState(false), [gone, setGone] = useState([]);
@@ -3273,7 +3309,7 @@ function IslTeams({ big, setBig, demo }) {
   const list = who ? items.filter((x) => !who || firstWord(x.from) === who) : items;
   return html`<div className=${'isl-big' + (big ? ' tall' : '')}>
     <${IslCardHead} id="teams" sub="Asked of you" count=${live0 ? (items.length ? items.length + ' open' : 'All done') : ''} onOpen=${() => { const d = window.floorboardDesktop; if (d && d.openFull) d.openFull('view:needs'); else location.hash = 'go-view:needs'; }}/>
-    ${!live0 ? html`<div className="isl-closed">${!MS.on ? html`<p>Teams needs Floorboard set up in your company’s Microsoft 365 first (once, by whoever looks after it). Then everyone can connect here.</p>`
+    ${!live0 ? html`<div className="isl-closed">${!MS.on ? html`<${TeamsSetup} setBig=${setBig}/>`
       : t.off ? html`<p>Teams is switched off for you.</p><button className="isl-more" onClick=${connect} disabled=${busy}>Switch it on</button>`
       : html`<p>${t.status === 'error' ? 'Teams: ' + t.err : 'See what people ask of you in Teams: tasks, feedback, things to look at and approvals.'}</p><button className="isl-more primary" onClick=${connect} disabled=${busy}>${busy ? 'Connecting…' : t.status === 'error' ? 'Try again' : 'Connect Teams'}</button>`}</div>`
     : who === null ? (rows.length ? html`<${IslWho} rows=${rows} color=${ISL.teams.fur} onPick=${(n) => setWho(n)}/>` : html`<p className="isl-empty">Nothing asked of you in Teams.</p>`)
@@ -3656,7 +3692,7 @@ function Island() {
   const openCard = (id) => { setFocus(id); setTabS('home'); show(true); };
   const setTab = (t) => { setTabS(t); setGear(false); };
   useEffect(() => {
-    const blur = () => { if (!files.length) show(false); }, key = (e) => { if (e.key === 'Escape') show(false); };
+    const blur = () => { if (!files.length && !ISL_HOLD) show(false); }, key = (e) => { if (e.key === 'Escape') show(false); };
     window.addEventListener('blur', blur); window.addEventListener('keydown', key);
     return () => { window.removeEventListener('blur', blur); window.removeEventListener('keydown', key); };
   }, [files.length]);
@@ -5714,7 +5750,7 @@ function stable(v) {
 // could change the same thing at once (progress on a task, a reaction, read receipts, votes).
 function toRecs(db) {
   const out = [], put = (coll, id, data) => out.push({ coll, id: String(id), data });
-  put('meta', 'store', { store: db.store });
+  put('meta', 'store', { store: db.store, ...(db.msClientId ? { msClientId: db.msClientId } : {}), ...(db.msTenantId ? { msTenantId: db.msTenantId } : {}) });
   (db.shortcuts || []).forEach((s) => put('shortcuts', s.id, s));
   db.depts.forEach((d) => put('depts', d.id, d));
   db.users.forEach((u) => { const { pin, ...rest } = u; put('users', u.id, rest); });
@@ -5749,6 +5785,8 @@ function fromRecs(list) {
   const of = (c) => (by[c] || []).map((r) => r.data);
   const meta = (by.meta || []).find((r) => r.id === 'store');
   if (meta && meta.data.store) db.store = meta.data.store;
+  if (meta && meta.data.msClientId) db.msClientId = String(meta.data.msClientId);
+  if (meta && meta.data.msTenantId) db.msTenantId = String(meta.data.msTenantId);
   db.depts = of('depts'); db.users = of('users'); db.groups = of('groups'); db.shortcuts = of('shortcuts'); db.drives = of('drives'); db.folders = of('folders'); db.files = of('files'); db.tiles = of('tiles');
   (by.pins || []).forEach((r) => { db.pins[r.id] = r.data; });
   (by.status || []).forEach((r) => { db.status[r.id] = r.data; });
@@ -8621,7 +8659,7 @@ const msScopesFor = (p) => (/^\/(me\/joinedTeams|teams\/)/.test(p) ? TEAMS_CHANN
 const MS = (() => {
   const c = window.FLOORBOARD_CONFIG || {}, cfg = { clientId: String(c.msClientId || ''), tenantId: String(c.msTenantId || '') };
   const G = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  const live = G.test(cfg.clientId) && G.test(cfg.tenantId), demo = !live && !CLOUD;
+  let live = G.test(cfg.clientId) && G.test(cfg.tenantId), demo = !live && !CLOUD;
   const desk = () => (window.floorboardDesktop && window.floorboardDesktop.ms) || null;
   let pcaP = null;
   const web = () => pcaP || (pcaP = new Promise((ok, no) => {
@@ -8636,7 +8674,15 @@ const MS = (() => {
   const unwrap = (r) => { if (r && r.error) throw new Error(r.error); return r ? r.ok : null; };
   const who = (a) => (a ? { username: a.username, name: a.name || '' } : null);
   return {
-    on: live || demo, demo,
+    get on() { return live || demo; },
+    get demo() { return demo; },
+    // the store's own Microsoft app, added by an admin from the island's Teams card (config.js wins when it has one)
+    use(id, tenant) {
+      const ci = String(c.msClientId || id || ''), ti = String(c.msTenantId || tenant || '');
+      if (ci === cfg.clientId && ti === cfg.tenantId) return;
+      cfg.clientId = ci; cfg.tenantId = ti; pcaP = null;
+      live = G.test(cfg.clientId) && G.test(cfg.tenantId); demo = !live && !CLOUD;
+    },
     async account() {
       if (demo) return lsGet('floorboard.demomail.v1') ? { username: 'you@riverside.example', name: '' } : null;
       if (!live) return null;
@@ -10638,6 +10684,7 @@ function App() {
     const h = (e) => { if (e.key !== 'Escape' || document.querySelector('.modal-wrap,.lightbox')) return; if (openId) setOpenId(null); else if (drawer) setDrawer(false); };
     window.addEventListener('keydown', h); return () => window.removeEventListener('keydown', h);
   }, [openId, drawer]);
+  MS.use(vdb.msClientId, vdb.msTenantId); // the store's Microsoft app, once an admin has added it
   const ctx = {
     db: vdb, update: seeing ? lookOnlyUpdate : update, user, seeing, startSeeing, stopSeeing, view, go, openId,
     toast: seeing ? (msg, kind) => { if (kind === 'warn' || Date.now() - blockedAt.current > 1000) toast(msg, kind); } : toast, toasts, filters, setFilters, searchQ, setSearchQ, saved, drawer, setDrawer, lightbox, setLightbox, composer,
