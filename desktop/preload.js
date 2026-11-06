@@ -70,6 +70,11 @@ contextBridge.exposeInMainWorld('floorboardDesktop', {
     onOpen: (fn) => { const h = () => fn(); ipcRenderer.on('mfs-open', h); return () => ipcRenderer.removeListener('mfs-open', h); },
   },
   // Floorboard's own island at the top: WhatsApp (through the WhatsApp gateway on this computer) and Mail (Outlook classic)
+  // logging in or out here, told to Floorboard's other windows, and hearing theirs
+  session: {
+    tell: (st) => ipcRenderer.send('session-changed', st === 'in' ? 'in' : 'out'),
+    on: (fn) => { const h = (_e, st) => fn(String(st)); ipcRenderer.on('session-changed', h); return () => ipcRenderer.removeListener('session-changed', h); },
+  },
   island: {
     state: () => ipcRenderer.invoke('island-state'),
     onState: (fn) => { const h = (_e, s) => fn(s || {}); ipcRenderer.on('island-state', h); return () => ipcRenderer.removeListener('island-state', h); },

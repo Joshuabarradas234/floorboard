@@ -10433,6 +10433,21 @@ function App() {
     };
     window.addEventListener('storage', h); return () => window.removeEventListener('storage', h);
   }, []);
+  // On the Windows app: logging in or out in one window (the sidebar, say) is told to the others through the app, and a
+  // window that isn't logged in (the island at the top) loads again with the login (and one still logged in, without)
+  const meWas = useRef(me);
+  useEffect(() => {
+    const d = window.floorboardDesktop, was = meWas.current; meWas.current = me;
+    if (d && d.session && !!was !== !!me) d.session.tell(me ? 'in' : 'out');
+  }, [me]);
+  useEffect(() => {
+    const d = window.floorboardDesktop; if (!d || !d.session) return undefined;
+    return d.session.on((st) => {
+      if (!CLOUD) { setMe(lsGet(SESSION_KEY) || null); return; }
+      if (st === 'in' && (cloudRef.current === 'signedout' || cloudRef.current === 'offline')) location.reload();
+      if (st === 'out' && cloudRef.current === 'ready') location.reload();
+    });
+  }, []);
   useEffect(() => {
     // #widget is the sidebar; #go-chat:<id> or #go-view:<name> is a sidebar shortcut asking the full app to open something
     const h = () => {

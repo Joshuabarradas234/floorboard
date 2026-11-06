@@ -265,6 +265,14 @@ function jarvisChanged() {
 }
 let jarvisMenuWas = false;
 const ours = (e) => [sidebar, full, bar].some((w) => w && !w.isDestroyed() && e.sender === w.webContents);
+// Logging in or out in one window (the sidebar, say) is passed to the others (the island at the top, the full app, the
+// slim rail), which pick it up straight away
+function sessionIpc() {
+  ipcMain.on('session-changed', (e, st) => {
+    if (!ours(e)) return;
+    [sidebar, bar, full, rail].forEach((w) => { if (w && !w.isDestroyed() && w.webContents !== e.sender) w.webContents.send('session-changed', st === 'in' ? 'in' : 'out'); });
+  });
+}
 function jarvisIpc() {
   ipcMain.on('jarvis-who', (e, w) => { if (ours(e)) jarvis.setWho(w); });
   ipcMain.handle('jarvis-state', (e) => (ours(e) ? jarvis.state() : {}));
@@ -531,7 +539,7 @@ function createSidebar() {
             await B("document.querySelector('.isl-left .isl-btn.sm').click(); 1"); await wait(300);
             console.log('SMOKE island mail', await pick('Mail')); await wait(700); console.log('SMOKE island mail card', JSON.stringify(await text('.isl-left'))); await bshot('fb-island-7-mail.png');
             console.log('SMOKE island teams', await pick('Teams')); await wait(700); console.log('SMOKE island teams card', JSON.stringify(await text('.isl-left')));
-            await B("[...document.querySelectorAll('.isl-left .isl-more')].find((b) => /Connect Teams/.test(b.innerText)).click(); 1"); await wait(3000);
+            await B("(() => { const b = [...document.querySelectorAll('.isl-left .isl-more')].find((x) => /Connect Teams/.test(x.innerText)); if (b) b.click(); return 1; })()"); await wait(3000); // (connected already from an earlier run: nothing to click)
             console.log('SMOKE island teams connected', JSON.stringify(await text('.isl-left'))); await bshot('fb-island-8-teams.png');
             await B("document.querySelector('.isl-left .isl-who-row').click(); 1"); await wait(700); console.log('SMOKE island teams from', JSON.stringify(bar.getBounds()), JSON.stringify(await text('.isl-left'))); await bshot('fb-island-9-teams-from.png');
             await B("document.querySelector('.isl-left .isl-ch-row .isl-btn').click(); 1"); await wait(400);
@@ -550,8 +558,14 @@ function createSidebar() {
             console.log('SMOKE island call', JSON.stringify(bar.getBounds()), JSON.stringify(await text('.isl-left')), await B("!!document.querySelector('.isl-me .isl-ch.ring')")); await bshot('fb-island-16-call.png');
             await B("[...document.querySelectorAll('.isl-more')].find((b) => b.innerText === 'Not now').click(); 1"); await wait(1200);
             console.log('SMOKE island after the call', JSON.stringify(bar.getBounds()), JSON.stringify(await text('.isl-pill')));
+            // logging out and back in in the sidebar reaches the island at the top straight away (through the app)
+            const who = await js("localStorage.getItem('floorboard.session.v1') || ''"), topIs = () => B("document.querySelector('.isl-pill, .isl-panel') ? 'island' : document.querySelector('.fbar-pill') ? 'login pill' : 'other'");
+            await js("localStorage.setItem('floorboard.session.v1', ''); window.floorboardDesktop.session.tell('out'); 1"); await wait(1000);
+            console.log('SMOKE session out: the top shows', JSON.stringify(await topIs()));
+            await js(`localStorage.setItem('floorboard.session.v1', ${JSON.stringify(who)}); window.floorboardDesktop.session.tell('in'); 1`); await wait(1500);
+            console.log('SMOKE session in: the top shows', JSON.stringify(await topIs()), JSON.stringify(await B("[document.querySelector('#root') && document.querySelector('#root').firstElementChild ? document.querySelector('#root').firstElementChild.className : 'empty', document.body.innerText.replace(/\\s+/g, ' ').slice(0, 80)].join(' | ')")), '| who:', JSON.stringify(who)); await bshot('fb-session-in.png');
           }
-          await js("document.querySelector('.modal .icon-btn').click(); localStorage.setItem('floorboard.session.v1', 'u5'); location.reload(); 1"); await wait(4500);
+          await js("(document.querySelector('.modal .icon-btn') || { click() { } }).click(); localStorage.setItem('floorboard.session.v1', 'u5'); location.reload(); 1"); await wait(4500);
           console.log('SMOKE search bar', JSON.stringify(await js("(document.querySelector('#side-search') || {}).placeholder || 'none'")));
           openFull(null, 'search:invoice highveld'); await wait(4000);
           console.log('SMOKE search in full app', JSON.stringify(await full.webContents.executeJavaScript("[(document.querySelector('#big-search') || {}).value, (document.querySelector('.tabs') || {}).innerText].join(' | ')")));
@@ -748,6 +762,7 @@ else {
       saveOwner: (id) => { prefs.jarvisUser = id; savePrefs(); }, seen: prefs.jarvisSeen, saveSeen: (v) => { prefs.jarvisSeen = v; savePrefs(); } });
     jarvisIpc();
     islandIpc();
+    sessionIpc();
     if (SMOKE) return;
     buildTray();
     startupFlag(process.argv);
