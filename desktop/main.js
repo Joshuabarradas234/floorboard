@@ -368,7 +368,7 @@ function createSidebar() {
           const offer = await chat('jarvis', 'continue the flyer'); console.log('SMOKE jarvis continue?', JSON.stringify(offer));
           console.log('SMOKE jarvis yes', JSON.stringify(await chat('jarvis', 'yes', [{ role: 'user', content: 'continue the flyer' }, { role: 'assistant', content: offer }])), '| r3 now', JSON.stringify((jarvis.state().runs || []).filter((r) => r.id === 'r3').map((r) => r.status)));
           const png = path.join(app.getPath('temp'), 'floorboard-jarvis.png');
-          const job = { tower: 'Wayne Enterprises', floor: 30, suit: 'joker-bat', client: 'Corner Café', files: [png], task: 'Make 3 Instagram posts from this' };
+          const job = { tower: 'wayne', floor: 'we-marketing', suit: 'joker-bat', client: 'Corner Café', files: [png], task: 'Make 3 Instagram posts from this' };
           const run = (j, c) => js('window.floorboardDesktop.jarvis.run(' + JSON.stringify(j) + ', ' + !!c + ')').then((x) => JSON.stringify(x));
           console.log('SMOKE jarvis job no file', await run({ ...job, files: ['artwork.png'] }), '| no suit', await run({ ...job, suit: '' }), '| no task', await run({ ...job, task: '' }));
           console.log('SMOKE jarvis job check', await run(job));
@@ -378,6 +378,8 @@ function createSidebar() {
           await js("(() => { const s = document.querySelector('#jv-form select'); s.value = 'joker-bat'; s.dispatchEvent(new Event('change', { bubbles: true })); return 1; })()"); await wait(300);
           console.log('SMOKE jarvis send window', JSON.stringify(await js("(document.querySelector('.modal') || {}).innerText || 'no window'").then((t) => t.replace(/\s+/g, ' ').slice(0, 500))));
           await shot('floorboard-jarvis-send.png');
+          await js("(() => { const s = document.querySelector('#jv-form select'); s.value = 'oracle'; s.dispatchEvent(new Event('change', { bubbles: true })); return 1; })()"); await wait(300);
+          console.log('SMOKE jarvis unreachable suit', JSON.stringify(await js("[...document.querySelectorAll('#jv-form .err, #jv-form select')].map((x) => x.tagName === 'SELECT' ? x.options[x.selectedIndex].text : x.innerText).join(' | ')")));
           await js("document.querySelector('.modal .icon-btn').click(); localStorage.setItem('floorboard.session.v1', 'u5'); location.reload(); 1"); await wait(4500);
           console.log('SMOKE jarvis u5 (someone else)', st(), '| slips card:', await js("!!document.querySelector('.w-slip:not(.w-jv-offer)')"), '| on the page:', await js("!!document.querySelector('.w-jv,.w-jv-offer')"), '| models', (await req('GET', '/v1/models')).text, '| chat:', JSON.stringify(await chat('jarvis', 'what are you working on')));
         }

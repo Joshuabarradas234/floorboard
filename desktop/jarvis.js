@@ -97,7 +97,7 @@ function setRuns(t, live) {
   const list = (Array.isArray(t && t.runs) ? t.runs : []).map(cleanRun).filter(Boolean).slice(0, 30);
   list.forEach((r) => noticed(r, live));
   runs = list; order();
-  if (Array.isArray(t && t.floors)) floors = t.floors.filter((f) => f && f.floor != null).slice(0, 80).map((f) => ({ tower: str(f.tower, 60), floor: typeof f.floor === 'number' ? f.floor : str(f.floor, 40), name: str(f.name, 80) }));
+  if (Array.isArray(t && t.floors)) floors = t.floors.filter((f) => f && f.floor != null).slice(0, 80).map((f) => ({ tower: str(f.tower, 60), towerName: str(f.towerName, 80), floor: typeof f.floor === 'number' ? f.floor : str(f.floor, 40), number: f.number == null ? '' : str(f.number, 10), name: str(f.name, 80), images: f.images !== false }));
 }
 function setAttention(a) {
   attention = (Array.isArray(a && a.items) ? a.items : []).slice(0, 30).map((x) => ({ kind: str(x && x.kind, 20), title: str(x && x.title, 160), detail: str(x && x.detail, 300), at: when(x && x.at) }));
@@ -292,7 +292,7 @@ async function answer(question, history, step) {
 /* ---------- jobs from the sidebar ---------- */
 async function suits() {
   const s = await call('GET', '/api/suits');
-  return (Array.isArray(s && s.suits) ? s.suits : []).slice(0, 60).map((x) => ({ id: str(x && x.id, 80), name: str(x && x.name, 80), hall: str(x && x.hall, 80),
+  return (Array.isArray(s && s.suits) ? s.suits : []).slice(0, 60).map((x) => ({ id: str(x && x.id, 80), name: str(x && x.name, 80), hall: str(x && (x.hallName || x.hall), 80),
     clients: (Array.isArray(x && x.clients) ? x.clients : []).slice(0, 80).map((c) => str(c, 120)).filter(Boolean), reachable: !(x && x.reachable === false) })).filter((x) => x.id);
 }
 // job: { tower?, floor, suit, client, files: [paths], task, brief: { outcome, audience, constraints, finished } }; confirm: start it now

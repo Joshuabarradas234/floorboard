@@ -8618,7 +8618,8 @@ function JarvisSend({ j, onClose }) {
     setErr((r && r.error) || 'JARVIS didn’t answer.');
   };
   const isFiles = (e) => [...(e.dataTransfer.types || [])].includes('Files');
-  const ready = files.length > 0 && f.suit && fl && f.task.trim().length >= 3 && (!suit || !suit.clients.length || f.client);
+  const away = suit && suit.reachable === false; // its folder is on the Mac, and J: isn't connected
+  const ready = files.length > 0 && f.suit && !away && fl && f.task.trim().length >= 3 && (!suit || !suit.clients.length || f.client);
   return html`<${Modal} title="Send work to JARVIS" onClose=${onClose} footer=${html`<button className="btn" onClick=${onClose}>Cancel</button>
       <button className="btn primary" type="submit" form="jv-form" disabled=${busy || !ready || (check && !check.canStart)}>${busy ? (check ? 'Starting…' : 'Asking JARVIS…') : check ? 'Start it' : 'Check with JARVIS'}</button>`}>
     <form id="jv-form" onSubmit=${go} className="jv-form">
@@ -8638,8 +8639,10 @@ function JarvisSend({ j, onClose }) {
         <label className="field"><span>Client</span><select className="select" value=${f.client} onChange=${(e) => set('client', e.target.value)} disabled=${!suit || !suit.clients.length}>
           <option value="">${!suit ? 'Pick the suit first' : suit.clients.length ? 'Choose…' : suit.reachable === false ? 'Its folder can’t be reached (is J: connected?)' : 'This suit has no clients'}</option>${(suit ? suit.clients : []).map((c) => html`<option key=${c} value=${c}>${c}</option>`)}</select></label>
       </div>
+      ${away && html`<p className="err sm" style=${{ margin: 0 }}>${suit.name}’s folder can’t be reached. Is the Mac on, with J: connected?</p>`}
       <label className="field"><span>Floor</span><select className="select" value=${f.floor} onChange=${(e) => set('floor', e.target.value)} disabled=${!floors.length}>
-        ${floors.length ? floors.map((x, i) => html`<option key=${i} value=${String(i)}>${(x.name || 'Floor ' + x.floor) + (x.tower ? ' · ' + x.tower : '')}</option>`) : html`<option value="0">JARVIS has no floors yet</option>`}</select></label>
+        ${floors.length ? floors.map((x, i) => html`<option key=${i} value=${String(i)}>${(x.number ? 'Floor ' + x.number + ' · ' : '') + (x.name || 'Floor ' + x.floor) + (x.towerName ? ' · ' + x.towerName : '')}</option>`) : html`<option value="0">JARVIS has no floors yet</option>`}</select></label>
+      ${fl && fl.images === false && files.some((x) => x.url) && html`<p className="muted sm" style=${{ margin: 0 }}>This floor’s agents can’t open images: they’ll go on the file names and what you write.</p>`}
       <label className="field"><span>What should JARVIS do with them?</span><textarea className="input" rows="3" value=${f.task} onChange=${(e) => set('task', e.target.value)} placeholder="Make Instagram and Facebook posts from these for the Christmas promo, with captions" maxLength="3000"></textarea></label>
       <button type="button" className="linkish sm" style=${{ justifySelf: 'start' }} onClick=${() => setMore(!more)} aria-expanded=${more}>${more ? 'Less' : 'More for the brief (optional)'}</button>
       ${more && html`<div className="jv-more">

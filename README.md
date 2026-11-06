@@ -55,6 +55,8 @@ On a computer that also runs JARVIS (JARVIS Armor Workspace), Floorboard can fol
 - **Ask it in Coucou's chat.** Pick the **jarvis** model in Coucou's chat (beside **floorboard**), or start a question to Floorboard with "JARVIS": *how far is the menu boards?*, *what needs me?*, *morning brief*, *what are you working on?*, *continue the flyer* (then *yes*). It answers from JARVIS's own records, on that computer.
 - The tray icon's menu → **JARVIS** turns the island card and the pop-ups on or off.
 
+JARVIS has to be open for its work to run and for the card to move: night shifts (floor 31 on Monday mornings) start only while it's open, and the morning brief comes the first time JARVIS is opened that day, so its pop-up comes then. Nothing is ever posted by JARVIS or Floorboard: you approve and post yourself.
+
 It needs JARVIS 1.107 or later, which tells programs on the same computer where its control deck is listening (a new key each time JARVIS starts, in a file only that Windows user can read). Until then the card says JARVIS isn't connected.
 
 ### Keeping it up to date (Windows)
