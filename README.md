@@ -214,7 +214,7 @@ Without it, sorting still works, by the words in and on the files.
 
 ## Ask Floorboard
 
-**Ask Floorboard** (in the sidebar under the board, at the top of the full app's side column, and the ✦ on the slim rail) answers questions in plain words:
+**Ask Floorboard** (on the Windows app: 💬 on the island at the top; in the full app, at the top of its side column; on a phone, in the app) answers questions in plain words:
 
 - "Find the last Highveld invoice", "Where's my October payslip?" (your files, your folders and your department's archive, including the words inside PDFs kept on this device)
 - "How far is the bakery with its tasks?", "Who hasn't touched the waste sheets?" (each person's progress, what's overdue and who's been quiet for 2 days)

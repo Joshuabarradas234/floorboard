@@ -2812,7 +2812,7 @@ function SlimRail({ onOpen }) {
   const full = (t) => (desk && desk.openFull ? desk.openFull(t) : (location.hash = 'go-' + t));
   const items = [
     ['needs', 'inbox', 'Needs you', c.mine.length, c.mine.some((p) => p.level === 'red'), () => onOpen('.w-list')],
-    !inCoucou && ['ask', 'spark', 'Ask Floorboard', 0, false, () => onOpen('.w-ask')],
+    !inCoucou && !DESKTOP_SHELL && ['ask', 'spark', 'Ask Floorboard', 0, false, () => onOpen('.w-ask')], // (on the Windows app: 💬 on the island at the top)
     tbDepts(db, user).length > 0 && ['tboard', 'task', 'This week', tbDepts(db, user).flatMap((d) => tbWeek(db, d.id, weekOf()).filter((t) => tbWho(db, t).includes(user.id) && tbPct(t, user.id) < 100)).length, false, () => onOpen('.w-tb')],
     ['chats', 'chat', 'Chats', unreadChats, false, () => full('view:chats')],
     plannerOn(db, user) && ['today', 'list', 'Today', 0, false, () => onOpen('.w-day')],
@@ -2891,7 +2891,7 @@ function Widget() {
     <${UpdateNotice}/>
     <${SideSearch}/>
     <${Board} onPick=${pick}/>
-    <${AskCard} compact/>
+    ${!DESKTOP_SHELL && html`<${AskCard} compact/>`}
     <${TaskBoardCard}/>
     <${SlipCard}/>
     <${JarvisCard}/>
