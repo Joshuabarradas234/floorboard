@@ -5727,11 +5727,15 @@ function ChatsView() {
 
 /* ---------------- shared server (Supabase): logins, live sync and file storage ---------------- */
 // The installed app gets its server address from config.js. Without it (the preview link, or ?demo) it runs the demo store.
+// On the Windows app every window (the sidebar, the island at the top, the full app) shares one login. Only the sidebar
+// renews it: when each window renewed its own, the renewals clashed (each renewal can be used once) and the island
+// dropped out overnight. The others read the renewed login the sidebar keeps. (A phone or the website: the one page renews.)
+const AUTH_LEADER = !window.floorboardDesktop || location.hash === '#widget';
 const CLOUD = (() => {
   try {
     const c = window.FLOORBOARD_CONFIG;
     if (/[?&]demo\b/.test(location.search) || !c || !c.supabaseUrl || !c.supabaseKey || !window.supabase) return null;
-    return window.supabase.createClient(c.supabaseUrl, c.supabaseKey, { auth: { persistSession: true, autoRefreshToken: true, storageKey: 'floorboard.auth' } });
+    return window.supabase.createClient(c.supabaseUrl, c.supabaseKey, { auth: { persistSession: true, autoRefreshToken: AUTH_LEADER, storageKey: 'floorboard.auth' } });
   } catch (e) { return null; }
 })();
 const STAFF_DOMAIN = '@staff.floorboard.app';
@@ -10435,6 +10439,23 @@ function App() {
   }, []);
   // On the Windows app: logging in or out in one window (the sidebar, say) is told to the others through the app, and a
   // window that isn't logged in (the island at the top) loads again with the login (and one still logged in, without)
+  // The windows that don't renew the login (above): keep using the sidebar's renewed one, live updates included, and if
+  // one of them has dropped out while the sidebar has a good login, load again with it
+  useEffect(() => {
+    if (!CLOUD || AUTH_LEADER) return undefined;
+    const t = setInterval(async () => {
+      try {
+        if (cloudRef.current === 'signedout' || cloudRef.current === 'offline') {
+          const kept = JSON.parse(lsGet('floorboard.auth') || 'null');
+          if (kept && kept.access_token && (kept.expires_at || 0) * 1000 > Date.now()) location.reload();
+        } else if (cloudRef.current === 'ready') {
+          const { data } = await CLOUD.auth.getSession();
+          if (data && data.session && CLOUD.realtime && CLOUD.realtime.setAuth) await CLOUD.realtime.setAuth(data.session.access_token);
+        }
+      } catch (e) { /* tried again in a moment */ }
+    }, 15000);
+    return () => clearInterval(t);
+  }, []);
   const meWas = useRef(me);
   useEffect(() => {
     const d = window.floorboardDesktop, was = meWas.current; meWas.current = me;
