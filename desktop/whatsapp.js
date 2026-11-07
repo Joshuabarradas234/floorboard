@@ -83,11 +83,16 @@ async function call(method, p, query, body) {
   return (j && j.results) || {};
 }
 
-// a device linked to a phone ("disconnected" and "logged_out" aren't)
-const live = (x) => /^(logged_in|connected)$/i.test(String((x && x.state) || ''));
+// A device linked to a phone: "logged_in", or the gateway's own check says it's logged in. (A device can show
+// "connected" while it's only waiting for its QR code to be scanned: that isn't linked.)
+async function loggedIn(d) {
+  if (/^logged_in$/i.test(String((d && d.state) || ''))) return true;
+  if (!d || /^(disconnected|logged_out)$/i.test(String(d.state || ''))) return false;
+  try { const st = await call('GET', '/devices/' + encodeURIComponent(str(d.id || d.device_id, 120)) + '/status'); return !!(st && st.is_logged_in); } catch (e) { return false; }
+}
+async function linkedDevice(ds) { for (const d of (Array.isArray(ds) ? ds : [])) if (await loggedIn(d)) return d; return null; }
 async function findDevice() {
-  const ds = await call('GET', '/devices');
-  const d = (Array.isArray(ds) ? ds : []).find(live) || null;
+  const d = await linkedDevice(await call('GET', '/devices'));
   if (!d) throw new Error('WhatsApp isn’t linked yet: link it with your phone first.');
   device = str(d.id || d.device_id, 120); me = str(d.jid, 120);
 }
@@ -270,7 +275,7 @@ async function linkQr() {
     for (let i = 0; i < 20 && !list; i++) { try { list = await call('GET', '/devices'); } catch (e) { startGateway(); await new Promise((r) => setTimeout(r, 1000)); } }
     if (!list) return { error: 'WhatsApp’s gateway didn’t start on this computer. Try again in a minute.' };
     const ds = Array.isArray(list) ? list : [];
-    if (ds.some(live)) { device = ''; poll(); return { linked: true }; }
+    if (await linkedDevice(ds)) { device = ''; poll(); return { linked: true }; }
     let id = str((ds[0] && (ds[0].id || ds[0].device_id)) || '', 120);
     if (!id) { const r = await call('POST', '/devices', null, { device_id: 'floorboard' }); id = str(r.id || r.device_id || 'floorboard', 120); }
     linking = id;

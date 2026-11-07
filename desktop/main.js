@@ -516,7 +516,7 @@ function createSidebar() {
             if (process.env.FLOORBOARD_SMOKE_WALINK) { // linking WhatsApp from the island, against a stand-in gateway with no phone linked yet
               console.log('SMOKE walink', await pick('WhatsApp')); await wait(800);
               console.log('SMOKE walink card', JSON.stringify(await text('.isl-left')));
-              await B("[...document.querySelectorAll('.isl-left .isl-more')].find((b) => /Link WhatsApp/.test(b.innerText)).click(); 1"); await wait(3000);
+              await B("(() => { const b = [...document.querySelectorAll('.isl-left .isl-more')].find((x) => /Link WhatsApp/.test(x.innerText)); if (b) b.click(); return 1; })()"); await wait(3000); // (with the gateway there, the code shows straight away)
               console.log('SMOKE walink qr', JSON.stringify(bar.getBounds()), JSON.stringify(await text('.isl-left')), await B("(document.querySelector('.isl-qr img') || {}).naturalWidth || 0")); await bshot('fb-walink-qr.png');
               await wait(13000); console.log('SMOKE walink qr again', JSON.stringify(await B("[((document.querySelector('.isl-qr img') || {}).src || '').slice(-40), document.querySelector('.isl') && document.querySelector('.isl').className]")));
               await fetch(process.env.FLOORBOARD_WA_URL + '/test/scan').catch(() => {}); await wait(4000);
