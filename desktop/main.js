@@ -605,7 +605,7 @@ const MS_SCOPES = ['User.Read', 'Mail.Read'];
 // Teams (what people ask of the person there): chats, and team channels once the company's admin has allowed it
 const TEAMS_SCOPES = ['User.Read', 'Chat.Read'], TEAMS_CHANNEL_SCOPES = ['User.Read', 'Team.ReadBasic.All', 'Channel.ReadBasic.All', 'ChannelMessage.Read.All'];
 const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-let msApp = null, msKey = '';
+let msApp = null, msKey = '', msWeb = null; // msApp: through Windows' own sign-in when it's there; msWeb: through the browser
 const msCacheFile = () => path.join(app.getPath('userData'), 'outlook.bin');
 function msClient(cfg) {
   if (!cfg || !GUID.test(String(cfg.clientId || '')) || !GUID.test(String(cfg.tenantId || ''))) throw new Error('Outlook isn’t set up for this store yet.');
@@ -616,15 +616,31 @@ function msClient(cfg) {
     beforeCacheAccess: async (ctx) => { try { if (safeStorage.isEncryptionAvailable()) ctx.tokenCache.deserialize(safeStorage.decryptString(fs.readFileSync(msCacheFile()))); } catch (e) { /* signed out */ } },
     afterCacheAccess: async (ctx) => { if (ctx.cacheHasChanged && safeStorage.isEncryptionAvailable()) { try { fs.writeFileSync(msCacheFile(), safeStorage.encryptString(ctx.tokenCache.serialize())); } catch (e) { /* stays signed in until closed */ } } },
   };
-  msApp = new (PublicClientApplication)({ auth: { clientId: cfg.clientId, authority: 'https://login.microsoftonline.com/' + cfg.tenantId }, cache: { cachePlugin } });
+  const auth = { clientId: cfg.clientId, authority: 'https://login.microsoftonline.com/' + cfg.tenantId };
+  // Windows' own sign-in (WAM): the work account already on this computer, the one Teams and Office use, without a password
+  let broker = null;
+  try { const { NativeBrokerPlugin } = require('@azure/msal-node-extensions'); const b = new NativeBrokerPlugin(); if (b.isBrokerAvailable) broker = b; } catch (e) { broker = null; }
+  msWeb = new (PublicClientApplication)({ auth, cache: { cachePlugin } });
+  msApp = broker ? new (PublicClientApplication)({ auth, cache: { cachePlugin }, broker: { nativeBrokerPlugin: broker } }) : msWeb;
   msKey = key;
   return msApp;
 }
 async function msToken(cfg, interactive, scopes = MS_SCOPES) {
-  const pca = msClient(cfg), [account] = await pca.getTokenCache().getAllAccounts(), why = scopes === TEAMS_CHANNEL_SCOPES ? 'channels' : 'signin';
-  if (account) { try { return (await pca.acquireTokenSilent({ account, scopes })).accessToken; } catch (e) { if (!interactive) throw new Error(why); } }
+  const pca = msClient(cfg), why = scopes === TEAMS_CHANNEL_SCOPES ? 'channels' : 'signin';
+  for (const p of [...new Set([pca, msWeb])]) {
+    let accounts = []; try { accounts = await p.getAllAccounts(); } catch (e) { accounts = []; }
+    for (const account of accounts) { try { return (await p.acquireTokenSilent({ account, scopes })).accessToken; } catch (e) { /* next */ } }
+  }
   if (!interactive) throw new Error(why);
-  const r = await pca.acquireTokenInteractive({
+  // first Windows' own sign-in (a small Windows window to pick the work account), then the browser
+  if (pca !== msWeb) {
+    try {
+      const w = [bar, sidebar, full].find((x) => x && !x.isDestroyed() && x.isVisible()) || sidebar;
+      const r = await pca.acquireTokenInteractive({ scopes, windowHandle: w.getNativeWindowHandle() });
+      return r.accessToken;
+    } catch (e) { if (/cancel/i.test(String((e && (e.errorCode || e.message)) || ''))) throw new Error('Sign-in was cancelled.'); /* else the browser below */ }
+  }
+  const r = await msWeb.acquireTokenInteractive({
     scopes,
     openBrowser: async (url) => { if (url.startsWith('https://login.microsoftonline.com/')) await shell.openExternal(url); },
     successTemplate: '<h2 style="font-family:sans-serif">Signed in. You can close this tab and go back to Floorboard.</h2>',
@@ -634,12 +650,14 @@ async function msToken(cfg, interactive, scopes = MS_SCOPES) {
 }
 const safe = (fn) => async (_e, arg) => { try { return { ok: await fn(arg || {}) }; } catch (e) { return { error: String((e && e.message) || e) } } };
 function msIpc() {
-  ipcMain.handle('ms-account', safe(async ({ cfg }) => { const [a] = await msClient(cfg).getTokenCache().getAllAccounts(); return a ? { username: a.username, name: a.name || '' } : null; }));
-  ipcMain.handle('ms-signin', safe(async ({ cfg, what }) => { await msToken(cfg, true, what === 'teams' ? TEAMS_SCOPES : MS_SCOPES); const [a] = await msClient(cfg).getTokenCache().getAllAccounts(); return a ? { username: a.username, name: a.name || '' } : null; }));
+  // the account signed in here: through Windows' own sign-in, or the browser's
+  const msAccount = async (cfg) => { msClient(cfg); for (const p of [...new Set([msApp, msWeb])]) { try { const [a] = await p.getAllAccounts(); if (a) return { username: a.username, name: a.name || '' }; } catch (e) { /* next */ } } return null; };
+  ipcMain.handle('ms-account', safe(async ({ cfg }) => msAccount(cfg)));
+  ipcMain.handle('ms-signin', safe(async ({ cfg, what }) => { await msToken(cfg, true, what === 'teams' ? TEAMS_SCOPES : MS_SCOPES); return msAccount(cfg); }));
   ipcMain.handle('ms-signout', safe(async ({ cfg }) => {
-    try { const c = msClient(cfg).getTokenCache(); for (const a of await c.getAllAccounts()) await c.removeAccount(a); } catch (e) { /* nothing to remove */ }
+    try { msClient(cfg); for (const p of [...new Set([msApp, msWeb])]) { const c = p.getTokenCache(); for (const a of await c.getAllAccounts()) await c.removeAccount(a); } } catch (e) { /* nothing to remove */ }
     try { fs.unlinkSync(msCacheFile()); } catch (e) { /* already gone */ }
-    msApp = null; return true;
+    msApp = null; msWeb = null; return true;
   }));
   // reads only: the person's own mail folders, messages and attachments; who they are; their Teams chats; and the
   // channels of the teams they're in

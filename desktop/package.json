@@ -12,6 +12,7 @@
     "electron": "33.2.1"
   },
   "dependencies": {
-    "@azure/msal-node": "7.1.0"
+    "@azure/msal-node": "7.1.0",
+    "@azure/msal-node-extensions": "5.5.2"
   }
 }
