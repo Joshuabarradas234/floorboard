@@ -521,6 +521,7 @@ html.bar-mode,html.bar-mode body,html.bar-mode #root{background:transparent!impo
 @keyframes isl-fadein{from{opacity:0;transform:translateY(-3px)}}
 @media (prefers-reduced-motion:reduce){.isl-arrive,.isl-pill .isl-peek{animation:none}}
 .isl-need{display:block;font-size:10.5px;font-weight:700;color:#ffcf85;margin-top:1px}.isl-need.off{color:rgba(233,235,238,.45);font-weight:600}
+.isl-linkish{border:0;background:none;color:rgba(233,235,238,.5);font:11.5px var(--f-body);text-decoration:underline;cursor:pointer;justify-self:start;padding:2px 0;margin-top:2px}.isl-linkish:hover{color:#fff}
 .isl-copy{border:1px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:#e9ebee;border-radius:7px;font:600 10.5px var(--f-body);padding:1px 6px;cursor:pointer;vertical-align:1px}.isl-copy:hover{background:rgba(255,255,255,.16)}
 .isl-setup{display:grid;gap:7px;font-size:12px;color:rgba(233,235,238,.85);max-height:300px;overflow-y:auto;padding-right:4px}.isl-setup ol{margin:0;padding-left:18px;display:grid;gap:5px;line-height:1.4}
 .isl-setup code{font-size:11px;background:rgba(255,255,255,.08);border-radius:5px;padding:1px 4px;word-break:break-all}.isl-setup .isl-more.sm{margin-right:4px}
@@ -3277,15 +3278,15 @@ const GUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 const guidAfter = (text, word) => { const t = String(text || ''), at = word ? t.search(word) : 0; if (at < 0) return ''; const m = t.slice(at).match(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/i); return m ? m[0].toLowerCase() : ''; };
 function TeamsSetup({ setBig }) {
   const { db, user, update, toast } = useApp(), [open, setOpen] = useState(false), [id, setId] = useState(''), [tenant, setTenant] = useState(''), [err, setErr] = useState('');
-  const c = window.FLOORBOARD_CONFIG || {}, needTenant = !GUID_RE.test(String(c.msTenantId || db.msTenantId || ''));
+  const c = window.FLOORBOARD_CONFIG || {}, needTenant = !GUID_RE.test(String(c.msTenantId || ''));
   useEffect(() => { setBig(open); ISL_HOLD = open; return () => { ISL_HOLD = false; }; }, [open]);
   if (user.role !== 'admin') return html`<p>Not switched on for your store yet. Ask your manager to switch it on.</p>`;
   const save = () => {
-    const ci = guidAfter(id, /client/i) || guidAfter(id), ti = guidAfter(tenant, /tenant/i) || guidAfter(tenant) || (needTenant ? guidAfter(id, /tenant/i) : '');
+    const ci = guidAfter(id, /client/i) || guidAfter(id), ti = guidAfter(tenant, /tenant/i) || guidAfter(tenant) || guidAfter(id, /tenant/i) || String(c.msTenantId || '');
     if (!GUID_RE.test(ci)) { setErr('No Application (client) ID in that. On Microsoft’s Overview page, copy the one next to “Application (client) ID” (it looks like 1a2b3c4d-5e6f-…).'); return; }
     if (needTenant && !GUID_RE.test(ti)) { setErr('Add the Directory (tenant) ID too, from the same Overview page.'); return; }
-    update((d) => { d.msClientId = ci; if (needTenant) d.msTenantId = ti; });
-    MS.use(ci, needTenant ? ti : String(c.msTenantId || db.msTenantId || ''));
+    update((d) => { d.msClientId = ci; d.msTenantId = ti; });
+    MS.use(ci, ti);
     setOpen(false); toast('Teams is switched on for the store. Now connect your own.');
   };
   if (!open) return html`<p>Not switched on for the store yet. Switch it on once; then everyone connects their own.</p><button className="isl-more primary" onClick=${() => setOpen(true)}>Set up Teams</button>`;
@@ -3294,17 +3295,17 @@ function TeamsSetup({ setBig }) {
       <li><button className="isl-more sm" onClick=${() => window.open(MS_SETUP_URL, '_blank', 'noopener')}>Open Microsoft’s page</button> and sign in with your <b>work</b> account. Name: <b>Floorboard</b>; <b>this organization only</b>; redirect URI: <b>Single-page application</b>, <code>${APP_URL}</code> <${CopyBtn} text=${APP_URL}/>. Register.</li>
       <li><b>Authentication</b> → Add a platform → <b>Mobile and desktop applications</b> → <code>http://localhost</code> <${CopyBtn} text="http://localhost"/> → Configure.</li>
       <li><b>API permissions</b> → Add a permission → Microsoft Graph → <b>Delegated</b>: Mail.Read, Chat.Read, Team.ReadBasic.All, Channel.ReadBasic.All, ChannelMessage.Read.All (type each in the search) → Add, then <b>Grant admin consent</b>.</li>
-      <li>On <b>Overview</b>, copy the <b>Application (client) ID</b>${needTenant ? ' and the Directory (tenant) ID' : ''} into here:</li>
+      <li>On <b>Overview</b>, copy the <b>Application (client) ID</b> and the <b>Directory (tenant) ID</b>  into here (pasting the whole Overview fills in both):</li>
     </ol>
     <input value=${id} onChange=${(e) => { setId(e.target.value); setErr(''); }} placeholder="Paste the Application (client) ID (or the whole Overview)" aria-label="Application (client) ID" spellCheck="false" autoComplete="off"/>
-    ${needTenant && html`<input value=${tenant} onChange=${(e) => { setTenant(e.target.value); setErr(''); }} placeholder="Directory (tenant) ID" aria-label="Directory (tenant) ID" spellCheck="false" autoComplete="off"/>`}
+    ${html`<input value=${tenant} onChange=${(e) => { setTenant(e.target.value); setErr(''); }} placeholder=${needTenant ? 'Directory (tenant) ID' : 'Directory (tenant) ID (leave empty for this store’s usual one)'} aria-label="Directory (tenant) ID" spellCheck="false" autoComplete="off"/>`}
     ${err && html`<small className="isl-err">${err}</small>`}
     <span className="isl-btns"><button className="isl-more primary" onClick=${save}>Switch Teams on</button><button className="isl-more" onClick=${() => setOpen(false)}>Not now</button></span>
   </div>`;
 }
 /* Teams: what people asked of you in Teams (the same as on your Needs you), by who asked, with a count each */
 function IslTeams({ big, setBig, demo }) {
-  const { db, user, update, toast } = useApp(), t = teamsState(db, user), live = useRef(null), [who, setWho] = useState(null), [busy, setBusy] = useState(false), [gone, setGone] = useState([]);
+  const { db, user, update, toast, ask } = useApp(), t = teamsState(db, user), live = useRef(null), [who, setWho] = useState(null), [busy, setBusy] = useState(false), [gone, setGone] = useState([]);
   live.current = { db, user };
   useEffect(() => { setBig(who !== null); }, [who]);
   const items = (demo ? demo.teams : (t.items || []).filter((x) => x.status !== 'done')).filter((x) => !gone.includes(x.id)).sort((a, b) => b.at - a.at);
@@ -3314,6 +3315,12 @@ function IslTeams({ big, setBig, demo }) {
   const done = (x) => { if (!x.demo) teamsMark(update, user, x.id, 'done'); setGone((g) => [...g, x.id]); toast('Marked done'); };
   const open = (x) => { if (x.demo) { toast('A sample from the Demo: in real use this opens the message in Teams'); return; } openTeams(x.link); if (!x.seen) teamsMark(update, user, x.id, 'open'); };
   const live0 = demo || t.status === 'ok';
+  const cfg0 = window.FLOORBOARD_CONFIG || {}, canOff = !demo && user.role === 'admin' && !!db.msClientId && !cfg0.msClientId;
+  const switchOff = () => ask({ title: 'Switch Teams off for the store?', body: 'Everyone’s Teams card goes back to “not switched on”, and email sign-in from the Mail card stops, until it’s set up again (with the same or another Microsoft 365). Requests already on Needs you stay.', confirm: 'Switch off', onConfirm: async () => {
+    try { await MS.signOut(); } catch (e) { /* not signed in here */ }
+    update((d) => { delete d.msClientId; delete d.msTenantId; const p = d.pins[user.id]; if (p && p.teams) { p.teams.status = ''; p.teams.err = ''; } });
+    MS.use('', ''); toast('Teams is switched off for the store');
+  } });
   const list = who ? items.filter((x) => !who || firstWord(x.from) === who) : items;
   return html`<div className=${'isl-big' + (big ? ' tall' : '')}>
     <${IslCardHead} id="teams" sub="Asked of you" count=${live0 ? (items.length ? items.length + ' open' : 'All done') : ''} onOpen=${() => { const d = window.floorboardDesktop; if (d && d.openFull) d.openFull('view:needs'); else location.hash = 'go-view:needs'; }}/>
@@ -3327,6 +3334,7 @@ function IslTeams({ big, setBig, demo }) {
         <${Icon} n=${(TYPES[x.kind] || TYPES.task).icon} s=${14}/><button className="isl-row-main" onClick=${() => open(x)} title="Open in Teams"><span><b>${x.title}</b><small>${TYPES[x.kind] ? TYPES[x.kind].label : 'Task'}${x.chat ? ' · ' + x.chat : ''} · ${shortTime(x.at)}</small></span></button>
         <button className="isl-btn sm" onClick=${() => done(x)} title="Done" aria-label=${'Done: ' + x.title}><${Icon} n="check" s=${13}/></button></div>`)}
       ${!list.length && html`<p className="isl-empty">Nothing left from ${who}.</p>`}</div>`}
+    ${canOff && html`<button className="isl-linkish" onClick=${switchOff}>Switch Teams off for the store</button>`}
   </div>`;
 }
 function IslMail({ big, setBig, st, gm }) {
@@ -8690,7 +8698,7 @@ const MS = (() => {
     get demo() { return demo; },
     // the store's own Microsoft app, added by an admin from the island's Teams card (config.js wins when it has one)
     use(id, tenant) {
-      const ci = String(c.msClientId || id || ''), ti = String(c.msTenantId || tenant || '');
+      const ci = String(c.msClientId || id || ''), ti = String((c.msClientId ? c.msTenantId : tenant || c.msTenantId) || '');
       if (ci === cfg.clientId && ti === cfg.tenantId) return;
       cfg.clientId = ci; cfg.tenantId = ti; pcaP = null;
       live = G.test(cfg.clientId) && G.test(cfg.tenantId); demo = !live && !CLOUD;
