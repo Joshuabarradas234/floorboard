@@ -6652,7 +6652,14 @@ function CloudLogin() {
       setBusy(true);
       const { data, error } = await CLOUD.auth.signInWithPassword({ email, password: pinPassword(pin) });
       setBusy(false);
-      if (error) { setPin(''); return setErr('That PIN doesn’t match. If you’ve forgotten it, ask your manager for a new setup code.'); }
+      if (error) {
+        setPin('');
+        // say which it is: a wrong PIN, too many tries in a row (the server pauses logins for a few minutes), or no connection
+        const st = error.status || 0, msg = String(error.message || '');
+        if (st === 429 || /rate limit|too many/i.test(msg)) return setErr('Too many tries in a row. Wait about five minutes, then type the PIN again.');
+        if (!st || st >= 500 || /fetch|network|failed to/i.test(msg)) return setErr('Can’t reach the store’s server. Check this computer is online, then try again.');
+        return setErr('That PIN doesn’t match. If you’ve forgotten it, ask your manager for a new setup code.');
+      }
       return cloudSignedIn(data.session);
     }
     if (setup.length !== 6) return setErr('The setup code from your manager is 6 digits.');
