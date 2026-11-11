@@ -33,11 +33,16 @@ async function check() {
     if (!res.ok) throw new Error(res.status === 404 ? 'No version published yet' : 'GitHub answered ' + res.status);
     const latest = String((await res.json()).version || '');
     set({ busy: '', latest, available: newer(latest, state.current), checkedAt: Date.now() });
+    // the installed app (Floorboard-Setup.exe) updates itself, nobody has to click: but never while something is being recorded
+    if (state.available && app.isPackaged && process.env.FLOORBOARD_SMOKE !== '1') {
+      if (!(holdOff && holdOff())) install(); else setTimeout(check, 5 * 60 * 1000);
+    }
   } catch (e) {
     set({ busy: '', error: String((e && e.message) || e), checkedAt: Date.now() });
   }
   return state;
 }
+let holdOff = null; // () => true while updating now would interrupt something (a meeting being recorded)
 
 const depsIn = (dir) => { try { const p = JSON.parse(fs.readFileSync(path.join(dir, 'desktop', 'package.json'), 'utf8')); return JSON.stringify([p.dependencies, p.devDependencies]); } catch (e) { return ''; } };
 const SETUP = 'https://github.com/' + 'Joshuabarradas234/floorboard' + '/releases/download/windows-app/Floorboard-Setup.exe';
@@ -91,7 +96,8 @@ function answer(yes) {
 }
 function schedule() { clearInterval(timer); if (state.on) timer = setInterval(check, EVERY); }
 
-function init() {
+function init(opts) {
+  holdOff = (opts && opts.holdOff) || null;
   try { saved = { ...saved, ...JSON.parse(fs.readFileSync(file(), 'utf8')) }; } catch (e) { /* first run */ }
   // installed with Floorboard-Setup.exe: keeping up to date is part of what was installed, so it doesn't ask
   if (app.isPackaged && saved.answer === null) { saved.answer = 'yes'; try { fs.writeFileSync(file(), JSON.stringify(saved)); } catch (e) { /* says yes again next time */ } }

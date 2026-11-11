@@ -807,7 +807,7 @@ else {
     loadPrefs();
     // installed with Floorboard-Setup.exe: it starts with Windows from the first run (the tray menu turns it off)
     if (app.isPackaged && !SMOKE && !prefs.startSet) { app.setLoginItemSettings({ openAtLogin: true, ...loginItem() }); prefs.startSet = true; savePrefs(); }
-    updates.init(); // new versions from GitHub, if the person said it may look
+    updates.init({ holdOff: () => recorder.status().on }); // new versions from GitHub, if the person said it may look (not mid-recording)
     session.defaultSession.setPermissionRequestHandler((_wc, permission, done) => done(permission === 'media' || permission === 'notifications'));
     createSidebar();
     createBubble();

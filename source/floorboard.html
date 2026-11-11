@@ -5055,7 +5055,7 @@ function SearchView() {
 function PersonModal({ personId, onClose, onAdded }) {
   const { db, update, toast, user } = useApp();
   const p = userById(db, personId);
-  const [v, setV] = useState(() => (p ? { ...p } : { name: '', title: '', role: 'staff', depts: [], manages: [], pin: '', active: true }));
+  const [v, setV] = useState(() => (p ? { ...p } : { name: '', title: '', role: 'staff', depts: [], manages: [], pin: '', active: true, recorder: true })); // (new people get Minutes, screen and voice)
   const [err, setErr] = useState('');
   const set = (k, x) => setV((o) => ({ ...o, [k]: x }));
   const flip = (k, id) => setV((o) => ({ ...o, [k]: o[k].includes(id) ? o[k].filter((x) => x !== id) : [...o[k], id] }));
