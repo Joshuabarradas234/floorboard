@@ -74,6 +74,7 @@ contextBridge.exposeInMainWorld('floorboardDesktop', {
   recorder: {
     start: () => ipcRenderer.invoke('rec-start'),
     chunk: (buf) => ipcRenderer.invoke('rec-chunk', buf),
+    sound: (buf) => ipcRenderer.invoke('rec-sound', buf),
     status: () => ipcRenderer.invoke('rec-status'),
     stop: () => ipcRenderer.invoke('rec-stop'),
     cancel: () => ipcRenderer.invoke('rec-cancel'),

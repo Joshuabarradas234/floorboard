@@ -41,17 +41,46 @@ function listen() {
   return ps;
 }
 
+// The meeting's sound is also kept as a plain 16 kHz mono WAV (in the temp folder, deleted after), so that after Stop
+// Windows' speech engine can write down what was said from the recording itself (transcribe.ps1): that works even when
+// listening live (dictation.ps1) heard nothing, because it's the same sound the recording got.
+const wavHeader = (bytes) => { const b = Buffer.alloc(44); b.write('RIFF', 0); b.writeUInt32LE(36 + bytes, 4); b.write('WAVE', 8); b.write('fmt ', 12); b.writeUInt32LE(16, 16); b.writeUInt16LE(1, 20); b.writeUInt16LE(1, 22); b.writeUInt32LE(16000, 24); b.writeUInt32LE(32000, 28); b.writeUInt16LE(2, 32); b.writeUInt16LE(16, 34); b.write('data', 36); b.writeUInt32LE(bytes, 40); return b; };
+let writing = null; // { at, total } (seconds) while the recording is being written down after Stop
+
 function start() {
   if (cur) return { ok: true, file: cur.file, again: true };
   fs.mkdirSync(folder(), { recursive: true });
   const started = new Date(), file = path.join(folder(), 'Meeting ' + stamp(started) + '.webm');
-  cur = { file, out: fs.createWriteStream(file), words: [], ps: null, speech: 'starting', started: started.getTime() };
+  const wav = path.join(app.getPath('temp'), 'floorboard-meeting-' + started.getTime() + '.wav');
+  cur = { file, out: fs.createWriteStream(file), words: [], ps: null, speech: 'starting', started: started.getTime(), wav, wfd: null, wbytes: 0 };
+  try { cur.wfd = fs.openSync(wav, 'w'); fs.writeSync(cur.wfd, wavHeader(0)); } catch (e) { cur.wfd = null; }
   cur.ps = listen();
   return { ok: true, file, name: path.basename(file) };
 }
 // a few seconds of the video at a time
 function chunk(buf) { if (cur && cur.out && buf && buf.byteLength) cur.out.write(Buffer.from(buf)); return true; }
-const status = () => (cur ? { on: true, speech: cur.speech, words: cur.words.length, last: (cur.words[cur.words.length - 1] || {}).text || '', started: cur.started, name: path.basename(cur.file) } : { on: false });
+// a few seconds of the sound at a time, as 16-bit samples at 16 kHz, for writing it down after
+function sound(buf) { if (cur && cur.wfd !== null && buf && buf.byteLength) { const b = Buffer.from(buf); try { fs.writeSync(cur.wfd, b); cur.wbytes += b.length; } catch (e) { /* the video still records */ } } return true; }
+const status = () => (cur ? { on: true, speech: cur.speech, words: cur.words.length, last: (cur.words[cur.words.length - 1] || {}).text || '', started: cur.started, name: path.basename(cur.file) } : { on: false, writing });
+
+// write down what's said in the WAV, with Windows' own speech engine on this computer
+function transcribeFile(wav, total) {
+  return new Promise((done) => {
+    const script = path.join(__dirname, 'transcribe.ps1'), lines = [];
+    let why = '', buf = '';
+    writing = { at: 0, total };
+    const ps = spawn('powershell.exe', ['-NoProfile', '-ExecutionPolicy', 'Bypass', '-File', script, '-Wav', wav], { windowsHide: true });
+    ps.stdout.on('data', (d) => {
+      buf += d.toString('utf8'); let i;
+      while ((i = buf.indexOf('\n')) >= 0) {
+        const line = buf.slice(0, i).trim(); buf = buf.slice(i + 1);
+        try { const m = JSON.parse(line); if (m.t === 'text' && m.text) { lines.push(String(m.text)); writing = { at: Number(m.at) || writing.at, total }; } else if (m.t === 'error') why = String(m.why || 'error').slice(0, 160); } catch (e) { /* not ours */ }
+      }
+    });
+    ps.on('error', (e) => { why = why || String(e.message || e); });
+    ps.on('exit', () => { writing = null; done({ text: lines.join('\n'), why }); });
+  });
+}
 
 // A recording made in the browser has no length written in it, so Windows' player can't show how long it is or skip
 // through it. This writes the length into the video's header (WebM: Segment > Info > Duration, in milliseconds).
@@ -104,10 +133,21 @@ async function stop() {
   await new Promise((ok) => c.out.end(ok));
   try { await writeLength(c.file, Date.now() - c.started); } catch (e) { try { fs.unlinkSync(c.file + '.part'); } catch (x) { } } // it still plays without it
   let size = 0; try { size = fs.statSync(c.file).size; } catch (e) { /* none */ }
-  const transcript = c.words.map((w) => w.text).join('\n');
-  return { ok: true, file: c.file, name: path.basename(c.file), folder: folder(), size, transcript, speech: c.speech, started: c.started, ended: Date.now() };
+  const ended = Date.now(), live = c.words.map((w) => w.text).join('\n');
+  // and from the recording itself: used when it caught clearly more than listening live did (or live caught nothing)
+  let transcript = live, how = live ? 'live' : '', fileWhy = '';
+  if (c.wfd !== null) {
+    try { fs.writeSync(c.wfd, wavHeader(c.wbytes), 0, 44, 0); fs.closeSync(c.wfd); } catch (e) { /* none */ }
+    if (c.wbytes > 32000) { // more than a second of sound
+      const f = await transcribeFile(c.wav, Math.round(c.wbytes / 32000));
+      fileWhy = f.why || (f.text ? '' : 'no speech found in the recording');
+      if (f.text && (live.length < 20 || f.text.length > live.length * 1.6)) { transcript = f.text; how = 'recording'; }
+    } else fileWhy = 'the recording had no sound';
+    try { fs.unlinkSync(c.wav); } catch (e) { /* already gone */ }
+  }
+  return { ok: true, file: c.file, name: path.basename(c.file), folder: folder(), size, transcript, how, speech: c.speech, fileWhy, started: c.started, ended };
 }
-function cancel() { if (!cur) return; const c = cur; cur = null; try { c.ps.kill(); } catch (e) { } c.out.end(() => { try { fs.unlinkSync(c.file); } catch (e) { } }); }
+function cancel() { if (!cur) return; const c = cur; cur = null; try { c.ps.kill(); } catch (e) { } c.out.end(() => { try { fs.unlinkSync(c.file); } catch (e) { } }); if (c.wfd !== null) { try { fs.closeSync(c.wfd); fs.unlinkSync(c.wav); } catch (e) { } } }
 
 // a recording by its full path, or by its name in the Meeting recordings folder (as My files keeps it)
 const where = (file) => (file ? (path.isAbsolute(file) ? file : path.join(folder(), path.basename(file))) : '');
@@ -120,4 +160,4 @@ const speechOn = () => new Promise((ok) => {
   require('child_process').execFile('reg', ['query', 'HKCU\\Software\\Microsoft\\Speech_OneCore\\Settings\\OnlineSpeechPrivacy', '/v', 'HasAccepted'], { windowsHide: true }, (err, out) => ok(!err && /HasAccepted\s+REG_DWORD\s+0x1\b/i.test(String(out))));
 });
 
-module.exports = { allowScreen, start, chunk, status, stop, cancel, openFolder, play, openSpeechSettings, speechOn, writeLength };
+module.exports = { allowScreen, start, chunk, sound, status, stop, cancel, openFolder, play, openSpeechSettings, speechOn, writeLength };

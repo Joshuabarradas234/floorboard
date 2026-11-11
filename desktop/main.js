@@ -274,6 +274,7 @@ function recorderIpc() {
   recorder.allowScreen();
   ipcMain.handle('rec-start', (e) => (ours(e) ? recorder.start() : { error: 'no' }));
   ipcMain.handle('rec-chunk', (e, buf) => (ours(e) ? recorder.chunk(buf) : false));
+  ipcMain.handle('rec-sound', (e, buf) => (ours(e) ? recorder.sound(buf) : false));
   ipcMain.handle('rec-status', (e) => (ours(e) ? recorder.status() : {}));
   ipcMain.handle('rec-stop', (e) => (ours(e) ? recorder.stop() : { error: 'no' }));
   ipcMain.handle('rec-cancel', (e) => { if (ours(e)) recorder.cancel(); return true; });
@@ -420,7 +421,7 @@ function createSidebar() {
     x: workArea.x + workArea.width - SIDEBAR_WIDTH, y: workArea.y, width: prefs.width || SIDEBAR_WIDTH, height: workArea.height,
     minWidth: 320, maxWidth: 520, frame: false, maximizable: false, fullscreenable: false, show: false,
     title: 'Floorboard', icon: ICON, backgroundColor: '#00000000', backgroundMaterial: 'acrylic',
-    alwaysOnTop: prefs.onTop, webPreferences,
+    alwaysOnTop: prefs.onTop, webPreferences: { ...webPreferences, backgroundThrottling: false }, // (Minutes keeps recording while the sidebar is tucked away)
   });
   sidebar.loadFile(PAGE, { hash: 'widget', query: QUERY });
   openLinksOutside(sidebar);
@@ -453,7 +454,7 @@ function createSidebar() {
         console.log('SMOKE rec card', JSON.stringify(await J("(document.querySelector('.w-rec') || {}).innerText || 'none'")));
         await J("[...document.querySelectorAll('.w-rec button')].find((b) => b.innerText === 'Record').click(); 1"); await wait(800);
         console.log('SMOKE rec asks', JSON.stringify(await J("(document.querySelector('.modal') || {}).innerText || 'no question'")));
-        await J("[...document.querySelectorAll('.modal button')].find((b) => /Start recording/.test(b.innerText)).click(); 1"); await wait(10000);
+        await J("[...document.querySelectorAll('.modal button')].find((b) => /Start recording/.test(b.innerText)).click(); 1"); await wait(Number(process.env.FLOORBOARD_SMOKE_REC_SECONDS || 10) * 1000);
         console.log('SMOKE rec during', JSON.stringify(await J("document.querySelector('.w-rec').innerText.replace(/\\n+/g, ' | ')")), JSON.stringify(recorder.status()));
         await J("[...document.querySelectorAll('.w-rec button')].find((b) => b.innerText === 'Stop').click(); 1"); await wait(15000);
         console.log('SMOKE rec after', JSON.stringify(await J("document.querySelector('.w-rec').innerText.replace(/\\n+/g, ' | ') + ' || ' + ([...document.querySelectorAll('.toast')].map((t) => t.innerText).join(' / '))")));
