@@ -76,10 +76,15 @@ It needs JARVIS 1.107 or later, which tells programs on the same computer where 
 
 ### Minutes: record a meeting from the sidebar (Windows)
 
-For the people an admin switches it on for (People & access → the person → **Minutes on their sidebar**), the sidebar has a **Minutes** card under Needs you. **Record** asks once (make sure everyone in the meeting knows), then records the whole screen with the microphone and the computer's own sound (so the other side of a Teams or Zoom call is in it too), and writes down what's said as it goes. **Stop** ends it and makes two things:
+For the people an admin switches it on for (People & access → the person → **Minutes on their sidebar**), the sidebar has a **Minutes** card under Needs you. There are two kinds:
+
+- **Voice only:** records the microphone, not the screen, for the minutes and a summary (so nobody has to take notes).
+- **Screen and voice:** records the whole screen with the microphone and the computer's own sound (so the other side of a Teams or Zoom call is in the video too).
+
+**Record** asks once (make sure everyone in the meeting knows), then records and writes down what's said as it goes. **Stop** ends it and makes two things:
 
 - **The minutes:** a PDF with the summary, decisions, tasks, things to approve, follow-ups and everything that was said, in **My files › Meeting recordings** (the folder is made the first time). The store's AI writes the summary (the same `meeting-notes` function and `ANTHROPIC_API_KEY` as meeting notes); without it, Floorboard writes simpler minutes itself.
-- **The recording:** a video of the screen and sound in **Documents › Meeting recordings** on that computer (up to about 7 MB a minute). It doesn't go to the store's server. Opening the minutes in My files on that computer gives **Play the recording** and **Show in folder**.
+- **The recording:** in **Documents › Meeting recordings** on that computer: the voice (about 0.3 MB a minute), or a video of the screen and sound (up to about 7 MB a minute). It doesn't go to the store's server. Opening the minutes in My files on that computer gives **Play the recording** and **Show in folder**.
 
 Writing down uses Windows' own speech recognition, so on each computer that records, switch on **Settings → Privacy & security → Speech → Online speech recognition** once. Until then the card says writing down is off (with a button to that setting): the video is still recorded, and the minutes say there was nothing to write down.
 

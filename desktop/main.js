@@ -444,7 +444,7 @@ function createSidebar() {
       slideTo(true); await wait(400);
       if (process.env.FLOORBOARD_SMOKE_REC) { // the sidebar's meeting recorder: a short real recording of the screen, and minutes from a stand-in for Windows' speech
         const J = (x) => sidebar.webContents.executeJavaScript(x);
-        await J("(() => { localStorage.setItem('floorboard.session.v1', 'u5'); const k = 'floorboard.demo.v5', d = JSON.parse(localStorage.getItem(k) || 'null'); if (!d) return 0; d.users.find((x) => x.id === 'u5').recorder = true; if (d.pins.u5) { delete d.pins.u5.myfolders; d.pins.u5.myfiles = []; } localStorage.setItem(k, JSON.stringify(d)); location.reload(); return 1; })()"); await wait(4500);
+        await J("(() => { localStorage.setItem('floorboard.session.v1', 'u5'); const k = 'floorboard.demo.v5', d = JSON.parse(localStorage.getItem(k) || 'null'); if (!d) return 0; d.users.find((x) => x.id === 'u5').recorder = " + (process.env.FLOORBOARD_SMOKE_REC === 'voice' ? "'voice'" : 'true') + "; if (d.pins.u5) { delete d.pins.u5.myfolders; d.pins.u5.myfiles = []; } localStorage.setItem(k, JSON.stringify(d)); location.reload(); return 1; })()"); await wait(4500);
         console.log('SMOKE rec card', JSON.stringify(await J("(document.querySelector('.w-rec') || {}).innerText || 'none'")));
         await J("[...document.querySelectorAll('.w-rec button')].find((b) => b.innerText === 'Record').click(); 1"); await wait(800);
         console.log('SMOKE rec asks', JSON.stringify(await J("(document.querySelector('.modal') || {}).innerText || 'no question'")));
@@ -471,7 +471,8 @@ function createSidebar() {
         if (process.env.FLOORBOARD_SMOKE_SHOTS) { fs.writeFileSync(path.join(process.env.FLOORBOARD_SMOKE_SHOTS, 'minutes-files.png'), (await full.webContents.capturePage()).toPNG()); fs.writeFileSync(path.join(process.env.FLOORBOARD_SMOKE_SHOTS, 'minutes-sidebar.png'), (await sidebar.webContents.capturePage()).toPNG()); }
         const dir = path.join(app.getPath('documents'), 'Meeting recordings'), vids = fs.existsSync(dir) ? fs.readdirSync(dir).filter((n) => /\.webm$/.test(n)).map((n) => ({ n, s: fs.statSync(path.join(dir, n)) })).sort((x, y) => y.s.mtimeMs - x.s.mtimeMs) : [];
         const v = vids[0], head = v ? fs.readFileSync(path.join(dir, v.n)).subarray(0, 4).toString('hex') : '';
-        console.log('SMOKE rec video', JSON.stringify(v ? { name: v.n, kb: Math.round(v.s.size / 1024), webm: head === '1a45dfa3' } : 'none'));
+        const top = v ? fs.readFileSync(path.join(dir, v.n)).subarray(0, 4096).toString('latin1') : '';
+        console.log('SMOKE rec video', JSON.stringify(v ? { name: v.n, kb: Math.round(v.s.size / 1024), webm: head === '1a45dfa3', tracks: (top.match(/V_VP[89]|A_OPUS/g) || []).join('+'), length: top.includes('\x44\x89') } : 'none'));
         app.quit(); return;
       }
       if (process.env.FLOORBOARD_SMOKE_DEMO) await sidebar.webContents.executeJavaScript("localStorage.setItem('floorboard.session.v1', 'u5'); 1");

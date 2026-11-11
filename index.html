@@ -4623,7 +4623,7 @@ function FolderView({ where, onBack }) {
   const [q, setQ] = useState(''), [adding, setAdding] = useState(false), [openId, setOpenId] = useState(null), [naming, setNaming] = useState(false), [sorting, setSorting] = useState(false);
   if (sorting) return html`<${SortView} where=${where} onClose=${() => setSorting(false)}/>`;
   if (!title) return html`<${Page} title="Files"><div className="empty"><p>You can’t open this archive any more.</p><button className="btn" onClick=${onBack}>Back to Files</button></div><//>`;
-  const items = isMe ? myFilesOf(db, user.id).filter((f) => (f.folder || null) === fid).map((f) => ({ id: f.id, title: f.title, att: f.att, at: f.at, by: user.id, mf: f.folder || null, video: f.video || '' }))
+  const items = isMe ? myFilesOf(db, user.id).filter((f) => (f.folder || null) === fid).map((f) => ({ id: f.id, title: f.title, att: f.att, at: f.at, by: user.id, mf: f.folder || null, video: f.video || '', rec: f.rec || '' }))
     : archiveFiles(db, where).map((f) => ({ id: f.id, title: f.name, att: f.att, at: f.at || 0, by: f.by, folder: folderPath(db, f.folder), paper: f.hardCopy || '' }));
   const words = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
   const shown = items.filter((x) => { const s = (x.title + ' ' + (x.att ? x.att.name : '') + ' ' + (x.folder || '') + ' ' + x.paper).toLowerCase(); return words.every((w) => s.includes(w)); });
@@ -4697,8 +4697,8 @@ function FileViewer({ x, where, onClose }) {
       <option value="">My files</option>${myFoldersOf(db, user.id).map((fo) => html`<option key=${fo.id} value=${fo.id}>${fo.name}</option>`)}</select></label>`}
     ${x.paper && html`<p className="fv-paper"><${Icon} n="archive" s=${15}/>Paper copy: ${x.paper}</p>`}
     ${x.video && (window.floorboardDesktop && window.floorboardDesktop.recorder
-      ? html`<p className="fv-paper fv-video"><${Icon} n="play" s=${15}/><span>Screen and voice recording: ${x.video}</span><button type="button" className="btn sm" onClick=${() => window.floorboardDesktop.recorder.play(x.video)}>Play the recording</button><button type="button" className="btn sm" onClick=${() => window.floorboardDesktop.recorder.openFolder(x.video)}>Show in folder</button></p>`
-      : html`<p className="fv-paper"><${Icon} n="play" s=${15}/>Screen and voice recording: on the computer it was made on, in Documents › Meeting recordings › ${x.video}</p>`)}
+      ? html`<p className="fv-paper fv-video"><${Icon} n="play" s=${15}/><span>${x.rec === 'voice' ? 'Voice recording' : 'Screen and voice recording'}: ${x.video}</span><button type="button" className="btn sm" onClick=${() => window.floorboardDesktop.recorder.play(x.video)}>Play the recording</button><button type="button" className="btn sm" onClick=${() => window.floorboardDesktop.recorder.openFolder(x.video)}>Show in folder</button></p>`
+      : html`<p className="fv-paper"><${Icon} n="play" s=${15}/>${x.rec === 'voice' ? 'Voice recording' : 'Screen and voice recording'}: on the computer it was made on, in Documents › Meeting recordings › ${x.video}</p>`)}
     <div className="fv-body">
       ${!a ? html`<p className="muted">This is a record of a paper document. There’s no scan with it.</p>`
         : st.busy ? html`<p className="muted">Opening…</p>`
@@ -5098,7 +5098,8 @@ function PersonModal({ personId, onClose, onAdded }) {
     <label className="field"><span>OneDrive link (optional)</span><input id="pm-onedrive" className="input" value=${v.onedrive || ''} onChange=${(e) => set('onedrive', e.target.value)} placeholder="https://…sharepoint.com/… or https://onedrive.live.com/…"/><small>Drive opens their own OneDrive with this. They can also add it themselves on the Drive page.</small></label>
     <div className="field"><span>Departments they belong to</span><div className="checks">${db.depts.map((d) => html`<label key=${d.id}><input type="checkbox" checked=${v.depts.includes(d.id)} onChange=${() => flip('depts', d.id)}/>${d.name}</label>`)}</div><small>Tagging one of these teams reaches this person.</small></div>
     <div className="field"><span>Departments they manage</span><div className="checks">${db.depts.map((d) => html`<label key=${d.id} className=${v.role === 'staff' ? 'dis' : ''}><input type="checkbox" disabled=${v.role === 'staff'} checked=${v.manages.includes(d.id)} onChange=${() => flip('manages', d.id)}/>${d.name}</label>`)}</div><small>Managers see the progress of everyone in these teams and can edit the team’s tools.</small></div>
-    <label className="sm" style=${{ display: 'flex', gap: 8, alignItems: 'center' }}><input type="checkbox" checked=${!!v.recorder} onChange=${(e) => set('recorder', e.target.checked)}/>Minutes on their sidebar (Windows): records the screen and voice, and writes the minutes</label>
+    <label className="field"><span>Minutes on their sidebar (Windows)</span><select id="pm-minutes" className="select" value=${v.recorder === 'voice' ? 'voice' : v.recorder ? 'screen' : ''} onChange=${(e) => set('recorder', e.target.value === 'voice' ? 'voice' : e.target.value === 'screen')}>
+      <option value="">Off</option><option value="voice">Voice only: records what’s said and writes the minutes and a summary</option><option value="screen">Screen and voice: also records the screen as a video</option></select></label>
     ${p && p.id !== user.id && html`<label className="sm" style=${{ display: 'flex', gap: 8, alignItems: 'center' }}><input type="checkbox" checked=${v.active === false} onChange=${(e) => set('active', !e.target.checked)}/>Deactivated: can’t log in and won’t be tagged</label>`}
     ${err && html`<p className="err">${err}</p>`}
   <//>`;
@@ -9809,11 +9810,25 @@ function RecorderCard() {
   const [st, setSt] = useState(null), [busy, setBusy] = useState(''), [now, setNow] = useState(Date.now()), media = useRef(null);
   useEffect(() => { if (!has) return undefined; const get = () => desk.recorder.status().then(setSt).catch(() => {}); get(); const t = setInterval(() => { get(); setNow(Date.now()); }, 1000); return () => clearInterval(t); }, []);
   if (!has || !user.recorder) return null;
+  const voice = user.recorder === 'voice'; // voice only: the microphone, no screen
   const stopTracks = () => { const m = media.current; media.current = null; if (!m) return; try { if (m.rec.state !== 'inactive') m.rec.stop(); } catch (e) { } [...m.streams].forEach((x) => x.getTracks().forEach((t) => t.stop())); try { m.ctx.close(); } catch (e) { } };
   const begin = async () => {
     setBusy('Starting…');
     const r = await desk.recorder.start();
     if (!r || r.error) { setBusy(''); toast((r && r.error) || 'Minutes didn’t start recording.', 'warn'); return; }
+    if (voice) try {
+      const mic = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+      const type = ['audio/webm;codecs=opus', 'audio/webm'].find((t) => MediaRecorder.isTypeSupported(t));
+      const rec = new MediaRecorder(mic, { mimeType: type, audioBitsPerSecond: 48000 });
+      let chain = Promise.resolve();
+      rec.ondataavailable = (e) => { if (e.data && e.data.size) chain = chain.then(() => e.data.arrayBuffer()).then((b) => desk.recorder.chunk(b)).catch(() => {}); };
+      media.current = { rec, ctx: null, streams: [mic], done: () => chain };
+      rec.start(4000);
+      setBusy(''); return;
+    } catch (e) {
+      stopTracks(); await desk.recorder.cancel(); setBusy('');
+      toast('Couldn’t use the microphone: ' + ((e && e.message) || e), 'warn'); return;
+    }
     try {
       // the screen and the computer's own sound (a call on the speakers, a video), and the microphone, mixed into one recording
       const screen = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 10 }, audio: true });
@@ -9834,7 +9849,9 @@ function RecorderCard() {
       toast('Couldn’t record the screen: ' + ((e && e.message) || e), 'warn');
     }
   };
-  const start = () => ask({ title: 'Record this meeting?', body: 'Your screen, your microphone and the computer’s sound are recorded, and what’s said is written down for the minutes. Make sure everyone in the meeting knows. The video stays on this computer (Documents › Meeting recordings); the minutes go into your My files › Meeting recordings.', confirm: 'Start recording', onConfirm: begin });
+  const start = () => ask({ title: 'Record this meeting?', body: voice
+    ? 'Your microphone is recorded (not your screen), and what’s said is written down for the minutes and a summary. Make sure everyone in the meeting knows. The voice recording stays on this computer (Documents › Meeting recordings); the minutes go into your My files › Meeting recordings.'
+    : 'Your screen, your microphone and the computer’s sound are recorded, and what’s said is written down for the minutes. Make sure everyone in the meeting knows. The video stays on this computer (Documents › Meeting recordings); the minutes go into your My files › Meeting recordings.', confirm: 'Start recording', onConfirm: begin });
   const finish = async () => {
     if (!media.current || busy) return;
     setBusy('Saving the recording…');
@@ -9860,10 +9877,11 @@ function RecorderCard() {
         p.myfolders = p.myfolders || [];
         let fo = p.myfolders.find((x) => /^meeting recordings$/i.test(x.name));
         if (!fo) { fo = { id: uid('mf'), name: 'Meeting recordings', at: Date.now() }; p.myfolders.push(fo); }
-        p.myfiles = [{ id: uid('mf'), title: title + ' – minutes', att, at: Date.now(), folder: fo.id, video: r.name }, ...(p.myfiles || [])];
+        p.myfiles = [{ id: uid('mf'), title: title + ' – minutes', att, at: Date.now(), folder: fo.id, video: r.name, ...(voice ? { rec: 'voice' } : {}) }, ...(p.myfiles || [])];
       });
-      toast(notes ? 'Saved: the minutes are in My files › Meeting recordings, the video in Documents › Meeting recordings' : 'Saved the video and a PDF (' + why + ')');
-    } catch (e) { toast('The video is saved, but the minutes didn’t: ' + ((e && e.message) || e), 'warn'); }
+      const what = voice ? 'voice recording' : 'video';
+      toast(notes ? 'Saved: the minutes are in My files › Meeting recordings, the ' + what + ' in Documents › Meeting recordings' : 'Saved the ' + what + ' and a PDF (' + why + ')');
+    } catch (e) { toast('The ' + (voice ? 'voice recording' : 'video') + ' is saved, but the minutes didn’t: ' + ((e && e.message) || e), 'warn'); }
     setBusy(''); desk.recorder.openFolder(r.file);
   };
   const on = st && st.on;
@@ -9871,7 +9889,7 @@ function RecorderCard() {
     <div className="rec-row">
       <span className=${'rec-dot' + (on ? ' live' : '')}></span>
       <span className="rec-t"><b>${on ? 'Recording · ' + fmtDur(now - st.started) : 'Minutes'}</b>
-        <small>${busy || (on ? (st.speech === 'privacy' ? 'Writing down is off: switch on Windows’ online speech recognition' : st.speech === 'on' ? (st.words ? st.words + ' things written down' + (st.last ? ': “' + st.last.slice(0, 60) + '”' : '') : 'Listening…') : st.speech === 'starting' ? 'Starting to listen…' : String(st.speech || '')) : 'Screen, voice and minutes')}</small></span>
+        <small>${busy || (on ? (st.speech === 'privacy' ? 'Writing down is off: switch on Windows’ online speech recognition' : st.speech === 'on' ? (st.words ? st.words + ' things written down' + (st.last ? ': “' + st.last.slice(0, 60) + '”' : '') : 'Listening…') : st.speech === 'starting' ? 'Starting to listen…' : String(st.speech || '')) : voice ? 'Voice, minutes and a summary' : 'Screen, voice and minutes')}</small></span>
       ${on ? html`<button className="btn sm primary" onClick=${finish} disabled=${!!busy}>Stop</button>` : html`<button className="btn sm primary" onClick=${start} disabled=${!!busy}>Record</button>`}
     </div>
     ${on && st.speech === 'privacy' && html`<button className="btn sm ghost" onClick=${() => desk.recorder.speechSettings()}>Open Windows’ speech settings</button>`}
