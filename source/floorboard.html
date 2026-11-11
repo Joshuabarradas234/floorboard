@@ -527,6 +527,7 @@ html.bar-mode,html.bar-mode body,html.bar-mode #root{background:transparent!impo
 .isl-setup code{font-size:11px;background:rgba(255,255,255,.08);border-radius:5px;padding:1px 4px;word-break:break-all}.isl-setup .isl-more.sm{margin-right:4px}
 .isl-setup input{width:100%;box-sizing:border-box;height:30px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:#fff;padding:0 10px;font:12.5px var(--f-mono, monospace)}
 .w-rec{flex:none;padding:10px 12px;border-radius:22px;display:grid;gap:8px}.rec-row{display:flex;align-items:center;gap:10px}.rec-t{flex:1;min-width:0;display:grid}.rec-t small{font-size:11.5px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rec-who{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;margin:4px 0 12px}.rec-who label{display:flex;gap:8px;align-items:center;font-size:14px}
 .rec-setup{display:grid;gap:6px}.rec-setup small{font-size:12px;color:var(--ink-2);line-height:1.35}.rec-setup .btn{justify-self:start}.rec-warn small{color:#f59e0b}
 .rec-dot{width:12px;height:12px;border-radius:50%;background:rgba(127,127,127,.5);flex:none}.rec-dot.live{background:#ef4444;box-shadow:0 0 0 4px rgba(239,68,68,.25);animation:rec-pulse 1.4s ease-in-out infinite}@keyframes rec-pulse{50%{box-shadow:0 0 0 7px rgba(239,68,68,.08)}}
 .isl-mini{display:grid;grid-template-columns:repeat(2,12px);gap:2px 3px;flex:none}
@@ -7902,15 +7903,19 @@ function cleanNotes(n) {
     tasks: (Array.isArray(n.tasks) ? n.tasks : []).map((t) => ({ title: String(t.title || '').trim(), who: String(t.who || ''), due: /^\d{4}-\d{2}-\d{2}$/.test(t.due || '') ? t.due : '' })).filter((t) => t.title),
     approvals: (Array.isArray(n.approvals) ? n.approvals : []).map((a) => ({ what: String(a.what || '').trim(), supplier: String(a.supplier || ''), amount: Number(a.amount) || 0, why: String(a.why || '') })).filter((a) => a.what),
     followups: noteList(n.followups),
+    // (Minutes) who each voice is, and what was gone through on the screen
+    speakers: (Array.isArray(n.speakers) ? n.speakers : []).map((s) => ({ label: String(s.label || '').trim(), name: String(s.name || '').trim(), sure: !!s.sure })).filter((s) => s.label),
+    walkthrough: (Array.isArray(n.walkthrough) ? n.walkthrough : []).map((w) => ({ at: String(w.at || '').trim(), screen: String(w.screen || '').trim(), discussed: String(w.discussed || '').trim() })).filter((w) => w.screen || w.discussed),
   };
 }
-async function makeNotes(db, ev, k, transcript) {
+// more (Minutes): { names: who was in it, screens: [{ at, path }] pictures of the screen in the person's own files }
+async function makeNotes(db, ev, k, transcript, more = {}) {
   const owner = userById(db, ev.owner);
   const meeting = { title: ev.title, date: k, owner: owner ? owner.name : '', agenda: ev.notes || '',
-    attendees: [...(ev.attendees || []).map((id) => (userById(db, id) || {}).name).filter(Boolean), ev.guests].filter(Boolean) };
+    attendees: more.names && more.names.length ? more.names : [...(ev.attendees || []).map((id) => (userById(db, id) || {}).name).filter(Boolean), ev.guests].filter(Boolean) };
   const people = db.users.filter((u) => u.active !== false).map((u) => u.name);
   if (CLOUD) {
-    const { data, error } = await CLOUD.functions.invoke('meeting-notes', { body: { meeting, people, transcript } });
+    const { data, error } = await CLOUD.functions.invoke('meeting-notes', { body: { meeting, people, transcript, ...(more.screens && more.screens.length ? { screens: more.screens } : {}) } });
     if (error) {
       let why = '';
       if (error.context && error.context.json) { try { why = ((await error.context.json()) || {}).error || ''; } catch (e) { /* no details */ } }
@@ -9771,39 +9776,85 @@ function JvRun({ r, onCarryOn }) {
     ${JV_CONT.includes(r.status) && html`<button className="btn sm" onClick=${() => onCarryOn(r)}>Continue where it stopped</button>`}
   </div>`;
 }
-/* The sidebar's meeting recorder (Windows; switched on per person in People & access). Records the screen with the
-   microphone and the computer's own sound into a video in Documents\Meeting recordings on this computer, while Windows'
-   speech recognition writes down what's said; when it stops, the minutes and a summary (as the Calendar's meeting notes
-   make them) go as a PDF into My files → Meeting recordings, naming the video. */
+/* The sidebar's meeting recorder, Minutes (Windows; switched on per person in People & access). Before recording it asks
+   who's in the meeting. It records the screen with the microphone and the computer's own sound into a video in
+   Documents\Meeting recordings on this computer (or only the voice), keeps a small copy of the sound, and takes a picture
+   of the screen whenever it changes (at most one every 20 seconds). After Stop, the sound goes to the store's speech
+   service (AssemblyAI, through the meeting-notes function), which writes down what was said split by voice; Claude then
+   works out who each voice is from the names, and with the pictures of the screen writes the minutes: a summary, what
+   was gone through on screen and what was said about it, decisions, to-dos, approvals and follow-ups, and the full notes
+   with names. The sound and pictures are deleted from the server straight after. Without the speech service, Windows
+   writes down what it can on the computer instead. The minutes go as a PDF into My files › Meeting recordings. */
 const fmtDur = (ms) => { const s0 = Math.max(0, Math.round(ms / 1000)), h = Math.floor(s0 / 3600), m = Math.floor((s0 % 3600) / 60), sec = s0 % 60; return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(sec).padStart(2, '0'); };
-async function minutesPdf(title, when, notes, transcript, video) {
+const durMs = (t) => String(t || '').split(':').reduce((a, x) => a * 60 + (Number(x) || 0), 0) * 1000; // 'm:ss' or 'h:mm:ss'
+const MINUTES_WHO = 'floorboard.minutes.who.v1';
+async function minutesCall(body) {
+  const { data, error } = await CLOUD.functions.invoke('meeting-notes', { body });
+  if (error) {
+    let why = '';
+    if (error.context && error.context.json) { try { why = ((await error.context.json()) || {}).error || ''; } catch (e) { /* no details */ } }
+    throw new Error(why || error.message || 'the store’s server didn’t answer');
+  }
+  return data || {};
+}
+const blobDataUrl = (b) => new Promise((ok) => { const r = new FileReader(); r.onload = () => ok(String(r.result)); r.onerror = () => ok(''); r.readAsDataURL(b); });
+// extra: { names: who was in it, shots: [{ at (ms), blob }] pictures of the screen, how: how it was written down }
+async function minutesPdf(title, when, notes, transcript, video, extra = {}) {
   const JsPDF = await loadJsPdf(), doc = new JsPDF({ unit: 'pt', format: 'a4' }), W = 595, M = 48;
   let y = M;
+  const room = (h) => { if (y + h > 800) { doc.addPage(); y = M; } };
   const line = (text, size, bold, gap) => {
     doc.setFont('helvetica', bold ? 'bold' : 'normal'); doc.setFontSize(size);
-    doc.splitTextToSize(String(text || ''), W - M * 2).forEach((l) => { if (y > 800) { doc.addPage(); y = M; } doc.text(l, M, y); y += size * 1.35; });
+    doc.splitTextToSize(String(text || ''), W - M * 2).forEach((l) => { room(size * 1.35); doc.text(l, M, y); y += size * 1.35; });
     y += gap || 0;
   };
   const list = (head, items) => { if (!items || !items.length) return; line(head, 13, true, 2); items.forEach((it) => line('•  ' + it, 11, false, 1)); y += 8; };
-  line(title, 18, true, 4);
-  line(when + (video ? '  ·  Recording: Documents\\Meeting recordings\\' + video : ''), 10, false, 14);
-  // everything from the meeting in one document: the summary first, then what was decided, the to-dos (who and by when),
-  // what needs approving and what to follow up, and last the full notes of everything that was said
   const none = (items, empty) => { if (!items || !items.length) { line(empty, 10.5, false, 8); return true; } return false; };
+  // the speakers' names, where Claude could tell who each voice is
+  const who = {}; ((notes && notes.speakers) || []).forEach((s) => { if (s.name) who[s.label] = s.name + (s.sure ? '' : ' (?)'); });
+  const named = (t) => String(t || '').replace(/^(\[[\d:]+\] )?(Speaker [A-Z]+):/gm, (all, at, label) => (at || '') + (who[label] || label) + ':');
+  line(title, 18, true, 4);
+  line(when + (video ? '  ·  Recording: Documents\\Meeting recordings\\' + video : ''), 10, false, 6);
+  if (extra.how) line(extra.how, 9.5, false, 6);
+  y += 6;
+  const names = extra.names || [];
+  if (names.length) {
+    line('Who was there', 13, true, 2); line(names.join(', '), 11, false, 4);
+    const sp = ((notes && notes.speakers) || []).map((s) => s.label + ': ' + (s.name ? s.name + (s.sure ? '' : ' (probably)') : 'not sure who'));
+    if (sp.length) line('Voices: ' + sp.join('  ·  '), 9.5, false, 4);
+    y += 6;
+  }
   if (notes) {
     line('Meeting summary', 13, true, 2); line(notes.summary || 'No summary.', 11, false, 10);
+    // what was gone through on the screen, in order, each with the picture nearest to when it started
+    if (notes.walkthrough && notes.walkthrough.length) {
+      line('What we went through', 13, true, 4);
+      const shots = extra.shots || [];
+      for (const s of notes.walkthrough) {
+        line(s.at + '  ·  ' + s.screen, 11, true, 1);
+        line(s.discussed, 11, false, 4);
+        const t = durMs(s.at), pic = shots.filter((x) => x.at <= t + 30000).pop() || shots.find((x) => x.at >= t);
+        if (pic) {
+          const url = await blobDataUrl(pic.blob);
+          if (url) { const w = 230, h = Math.round(w * (pic.h || 9) / (pic.w || 16)); room(h + 8); try { doc.addImage(url, 'JPEG', M, y, w, h); y += h + 10; } catch (e) { /* no picture */ } }
+        }
+        y += 4;
+      }
+      y += 6;
+    }
     line('Decisions', 13, true, 2); if (!none(notes.decisions, 'No decisions were recorded.')) { notes.decisions.forEach((it) => line('•  ' + it, 11, false, 1)); y += 8; }
     line('To do', 13, true, 2);
     if (!none(notes.tasks, 'No to-dos came out of this meeting.')) { notes.tasks.forEach((t) => line('[  ]  ' + t.title + (t.who ? '  ·  ' + t.who : '') + (t.due ? '  ·  by ' + t.due : ''), 11, false, 1)); y += 8; }
     list('To approve', (notes.approvals || []).map((a) => a.what + (a.supplier ? ', ' + a.supplier : '') + (a.amount ? ', ' + rand(a.amount) : '') + (a.why ? ' (' + a.why + ')' : '')));
     list('Follow up', notes.followups);
   }
-  if (transcript) { line('Full notes: everything that was said', 13, true, 2); line(transcript, 9.5, false, 0); }
+  if (transcript) { line('Full notes: everything that was said', 13, true, 2); line(named(transcript), 9.5, false, 0); }
   return doc.output('blob');
 }
 function RecorderCard() {
-  const { db, user, update, toast, ask } = useApp(), desk = window.floorboardDesktop, has = !!(DESKTOP_SHELL && desk && desk.recorder);
+  const { db, user, update, toast } = useApp(), desk = window.floorboardDesktop, has = !!(DESKTOP_SHELL && desk && desk.recorder);
   const [st, setSt] = useState(null), [busy, setBusy] = useState(''), [now, setNow] = useState(Date.now()), media = useRef(null);
+  const [who, setWho] = useState(null); // the "who's in this meeting?" window: { ids, guests }
   useEffect(() => { if (!has) return undefined; const get = () => desk.recorder.status().then(setSt).catch(() => {}); get(); const t = setInterval(() => { get(); setNow(Date.now()); }, 1000); return () => clearInterval(t); }, []);
   // before the first meeting: is Windows' speech recognition on, so what's said gets written down? (checked again every few seconds until it is)
   const [speechOk, setSpeechOk] = useState(true), [quiet, setQuiet] = useState(false);
@@ -9814,9 +9865,15 @@ function RecorderCard() {
   }, [user.recorder]);
   if (!has || !user.recorder) return null;
   const voice = user.recorder === 'voice'; // voice only: the microphone, no screen
-  const stopTracks = () => { const m = media.current; media.current = null; setQuiet(false); if (!m) return; clearInterval(m.watch); try { if (m.rec.state !== 'inactive') m.rec.stop(); } catch (e) { } [...m.streams].forEach((x) => x.getTracks().forEach((t) => t.stop())); try { m.ctx.close(); } catch (e) { } if (m.keep) m.keep.close(); };
+  const people = db.users.filter((u) => u.active !== false).sort((a, b) => a.name.localeCompare(b.name));
+  const stopTracks = () => {
+    const m = media.current; media.current = null; setQuiet(false); if (!m) return;
+    clearInterval(m.watch); clearInterval(m.snapTimer);
+    [m.rec, m.talkRec].forEach((r) => { try { if (r && r.state !== 'inactive') r.stop(); } catch (e) { } });
+    [...m.streams].forEach((x) => x.getTracks().forEach((t) => t.stop())); try { m.ctx.close(); } catch (e) { } if (m.keep) m.keep.close();
+  };
   // a plain copy of the meeting's sound (16 kHz mono), a few seconds at a time, so that after Stop Windows can write down
-  // what was said from the recording itself, even when listening live heard nothing
+  // what was said from the recording itself if the speech service isn't there
   const keepSound = (streams) => {
     if (!desk.recorder.sound) return null;
     const ctx = new AudioContext({ sampleRate: 16000 }), proc = ctx.createScriptProcessor(4096, 1, 1), mute = ctx.createGain();
@@ -9833,19 +9890,43 @@ function RecorderCard() {
     const buf = new Float32Array(an.fftSize); let heard = Date.now();
     return setInterval(() => { an.getFloatTimeDomainData(buf); let peak = 0; for (const v of buf) peak = Math.max(peak, Math.abs(v)); if (peak > 0.003) heard = Date.now(); setQuiet(Date.now() - heard > 15000); }, 1000);
   };
-  const begin = async () => {
+  // pictures of the screen for the minutes: every 20 seconds, kept only when the screen has changed (or 3 minutes went by)
+  const watchScreen = (screen, t0, shots) => {
+    const vid = document.createElement('video'); vid.muted = true; vid.srcObject = new MediaStream(screen.getVideoTracks()); vid.play().catch(() => {});
+    const tiny = document.createElement('canvas'); tiny.width = 48; tiny.height = 27; const tc = tiny.getContext('2d', { willReadFrequently: true });
+    let last = null, lastAt = -1e9;
+    const snap = () => {
+      if (!vid.videoWidth) return;
+      tc.drawImage(vid, 0, 0, 48, 27); const px = tc.getImageData(0, 0, 48, 27).data;
+      let diff = 1; if (last) { let s = 0; for (let i = 0; i < px.length; i += 4) s += Math.abs(px[i] - last[i]) + Math.abs(px[i + 1] - last[i + 1]) + Math.abs(px[i + 2] - last[i + 2]); diff = s / (48 * 27 * 3 * 255); }
+      const at = Date.now() - t0;
+      if (diff < 0.015 && at - lastAt < 180000) return;
+      last = px; lastAt = at;
+      const w = Math.min(1280, vid.videoWidth), h = Math.round(vid.videoHeight * w / vid.videoWidth), c = document.createElement('canvas');
+      c.width = w; c.height = h; c.getContext('2d').drawImage(vid, 0, 0, w, h);
+      c.toBlob((b) => { if (!b) return; shots.push({ at, blob: b, w, h }); if (shots.length > 160) { const keep = shots.filter((_, i) => i % 2 === 0); shots.length = 0; shots.push(...keep); } }, 'image/jpeg', 0.7);
+    };
+    setTimeout(snap, 3000);
+    return setInterval(snap, 20000);
+  };
+  const recordInto = (stream, mimeTypes, opts, parts, toDisk) => {
+    const type = mimeTypes.find((t) => MediaRecorder.isTypeSupported(t));
+    const rec = new MediaRecorder(stream, { mimeType: type, ...opts });
+    let chain = Promise.resolve();
+    rec.ondataavailable = (e) => { if (!e.data || !e.data.size) return; if (parts) parts.push(e.data); if (toDisk) chain = chain.then(() => e.data.arrayBuffer()).then((b) => desk.recorder.chunk(b)).catch(() => {}); };
+    return { rec, done: () => chain };
+  };
+  const begin = async (names) => {
     setBusy('Starting…');
     const r = await desk.recorder.start();
     if (!r || r.error) { setBusy(''); toast((r && r.error) || 'Minutes didn’t start recording.', 'warn'); return; }
+    const t0 = Date.now(), talk = [], shots = [];
     if (voice) try {
       const mic = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
-      const type = ['audio/webm;codecs=opus', 'audio/webm'].find((t) => MediaRecorder.isTypeSupported(t));
-      const rec = new MediaRecorder(mic, { mimeType: type, audioBitsPerSecond: 48000 });
-      let chain = Promise.resolve();
-      rec.ondataavailable = (e) => { if (e.data && e.data.size) chain = chain.then(() => e.data.arrayBuffer()).then((b) => desk.recorder.chunk(b)).catch(() => {}); };
+      const main = recordInto(mic, ['audio/webm;codecs=opus', 'audio/webm'], { audioBitsPerSecond: 48000 }, talk, true); // the voice recording is also what's sent to be written down
       const ctx = new AudioContext();
-      media.current = { rec, ctx, streams: [mic], done: () => chain, watch: watchMic(ctx, mic), keep: keepSound([mic]) };
-      rec.start(4000);
+      media.current = { rec: main.rec, ctx, streams: [mic], done: main.done, watch: watchMic(ctx, mic), keep: keepSound([mic]), names, talk, shots, t0 };
+      main.rec.start(4000);
       setBusy(''); return;
     } catch (e) {
       stopTracks(); await desk.recorder.cancel(); setBusy('');
@@ -9857,13 +9938,10 @@ function RecorderCard() {
       let mic = null; try { mic = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }); } catch (e) { toast('No microphone: only the screen and the computer’s sound are recorded', 'warn'); }
       const ctx = new AudioContext(), mix = ctx.createMediaStreamDestination();
       [screen, mic].filter((x) => x && x.getAudioTracks().length).forEach((x) => ctx.createMediaStreamSource(x).connect(mix));
-      const out = new MediaStream([...screen.getVideoTracks(), ...mix.stream.getAudioTracks()]);
-      const type = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'].find((t) => MediaRecorder.isTypeSupported(t));
-      const rec = new MediaRecorder(out, { mimeType: type, videoBitsPerSecond: 900000, audioBitsPerSecond: 64000 });
-      let chain = Promise.resolve();
-      rec.ondataavailable = (e) => { if (e.data && e.data.size) chain = chain.then(() => e.data.arrayBuffer()).then((b) => desk.recorder.chunk(b)).catch(() => {}); };
-      media.current = { rec, ctx, streams: [screen, mic].filter(Boolean), done: () => chain, watch: mic ? watchMic(ctx, mic) : null, keep: keepSound([screen, mic]) };
-      rec.start(4000);
+      const main = recordInto(new MediaStream([...screen.getVideoTracks(), ...mix.stream.getAudioTracks()]), ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'], { videoBitsPerSecond: 900000, audioBitsPerSecond: 64000 }, null, true);
+      const side = recordInto(new MediaStream(mix.stream.getAudioTracks()), ['audio/webm;codecs=opus', 'audio/webm'], { audioBitsPerSecond: 32000 }, talk, false); // a small sound-only copy, to be written down
+      media.current = { rec: main.rec, talkRec: side.rec, ctx, streams: [screen, mic].filter(Boolean), done: main.done, watch: mic ? watchMic(ctx, mic) : null, keep: keepSound([screen, mic]), names, talk, shots, t0, snapTimer: watchScreen(screen, t0, shots) };
+      main.rec.start(4000); side.rec.start(10000);
       screen.getVideoTracks()[0].addEventListener('ended', () => finish()); // stopped from Windows' own "stop sharing"
       setBusy('');
     } catch (e) {
@@ -9871,33 +9949,82 @@ function RecorderCard() {
       toast('Couldn’t record the screen: ' + ((e && e.message) || e), 'warn');
     }
   };
-  const start = () => ask({ title: 'Record this meeting?', body: voice
-    ? 'Your microphone is recorded (not your screen), and what’s said is written down for the minutes and a summary. Make sure everyone in the meeting knows. The voice recording stays on this computer (Documents › Meeting recordings); the minutes go into your My files › Meeting recordings.'
-    : 'Your screen, your microphone and the computer’s sound are recorded, and what’s said is written down for the minutes. Make sure everyone in the meeting knows. The video stays on this computer (Documents › Meeting recordings); the minutes go into your My files › Meeting recordings.', confirm: 'Start recording', onConfirm: begin });
+  // Record: first who's in the meeting (last time's people ticked), so the minutes can say who said what
+  const start = () => {
+    let last = []; try { last = JSON.parse(localStorage.getItem(MINUTES_WHO) || '[]'); } catch (e) { /* none */ }
+    const ids = (Array.isArray(last) ? last : []).filter((id) => people.some((p) => p.id === id));
+    setWho({ ids: ids.length ? ids : [user.id], guests: '' });
+  };
+  const go = () => {
+    const names = [...people.filter((p) => who.ids.includes(p.id)).map((p) => p.name), ...who.guests.split(/[,;\n]/).map((s) => s.trim()).filter(Boolean)].slice(0, 30);
+    try { localStorage.setItem(MINUTES_WHO, JSON.stringify(who.ids)); } catch (e) { /* not kept */ }
+    setWho(null); begin(names);
+  };
+  const stopRec = (r) => new Promise((ok) => { if (!r || r.state === 'inactive') { ok(); return; } r.onstop = ok; try { r.stop(); } catch (e) { ok(); } });
   const finish = async () => {
     if (!media.current || busy) return;
     setBusy('Saving the recording…');
     const m = media.current;
-    await new Promise((ok) => { m.rec.onstop = ok; try { m.rec.stop(); } catch (e) { ok(); } });
-    await m.done(); if (m.keep) await m.keep.flush(); stopTracks();
-    setBusy('Writing down what was said…');
-    const r = await desk.recorder.stop();
-    if (!r || r.error) { setBusy(''); toast((r && r.error) || 'The recording didn’t save.', 'warn'); return; }
-    const when = new Date(r.started).toLocaleString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) + ' (' + fmtDur(r.ended - r.started) + ')'
-      + (r.how === 'recording' ? '  ·  Written down from the recording' : r.how === 'live' ? '  ·  Written down as it was said' : '');
+    await stopRec(m.rec); await stopRec(m.talkRec);
+    await m.done(); if (m.keep) await m.keep.flush();
+    const talk = new Blob(m.talk, { type: 'audio/webm' }), shots = m.shots.slice(), names = m.names || [];
+    stopTracks();
+    const base = 'me/' + user.id + '/minutes/' + Date.now() + '/', uploaded = [];
+    const tidy = () => { if (uploaded.length) Promise.resolve(CLOUD.storage.from('files').remove(uploaded)).catch(() => {}); };
+    // 1. the speech service writes it down, split by voice (the store's server, then nothing kept there)
+    let lines = null, cloudWhy = '';
+    if (CLOUD && !LookOnly.on && talk.size > 4000) {
+      try {
+        setBusy('Sending the sound to be written down…');
+        const path = base + 'talk.webm';
+        const up = await CLOUD.storage.from('files').upload(path, talk, { contentType: 'audio/webm', upsert: false });
+        if (up.error) throw new Error(up.error.message);
+        uploaded.push(path);
+        const job = await minutesCall({ action: 'transcribe', path, speakers: names.length });
+        const w0 = Date.now();
+        for (;;) {
+          await new Promise((ok) => setTimeout(ok, 4000));
+          setBusy('Writing down who said what… ' + fmtDur(Date.now() - w0));
+          const t = await minutesCall({ action: 'transcript', id: job.id });
+          if (t.status === 'completed') { lines = t.utterances || []; break; }
+          if (t.status === 'error') throw new Error(t.error || 'it couldn’t be written down');
+          if (Date.now() - w0 > 45 * 60000) throw new Error('it took too long');
+        }
+      } catch (e) { cloudWhy = (e && e.message) || String(e); lines = null; }
+    }
+    const said = lines && lines.length ? lines.map((u) => '[' + fmtDur(u.start) + '] Speaker ' + u.speaker + ': ' + u.text).join('\n') : '';
+    // 2. the recording closed (and, without the speech service, Windows writes it down on the computer)
+    setBusy(said ? 'Saving the recording…' : 'Writing down what was said…');
+    const r = await desk.recorder.stop({ local: !said });
+    if (!r || r.error) { tidy(); setBusy(''); toast((r && r.error) || 'The recording didn’t save.', 'warn'); return; }
+    const transcript = said || r.transcript || '';
+    const when = new Date(r.started).toLocaleString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) + ' (' + fmtDur(r.ended - r.started) + ')';
+    const how = said ? 'Written down by the speech service, split by voice'
+      : (r.how === 'recording' ? 'Written down on this computer from the recording' : r.how === 'live' ? 'Written down on this computer as it was said' : '')
+        + (cloudWhy ? (r.how ? '. ' : '') + 'The speech service (who said what) wasn’t used: ' + cloudWhy : '');
     const title = 'Meeting ' + new Date(r.started).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' });
-    let notes = null, why = '';
-    if (r.transcript && r.transcript.length >= 20) {
-      setBusy('Writing the minutes…');
-      try { notes = (await makeNotes(db, { title, owner: user.id, attendees: [user.id], notes: '' }, dkey(r.started), r.transcript)).notes; } catch (e) { why = (e && e.message) || 'The minutes couldn’t be written.'; }
+    // 3. the pictures of the screen (at most 40, spread over the meeting), then Claude writes the minutes
+    let notes = null, why = '', screens = [];
+    if (transcript.length >= 20) {
+      if (CLOUD && !LookOnly.on && shots.length) {
+        setBusy('Sending the pictures of the screen…');
+        const pick = shots.length <= 40 ? shots : Array.from({ length: 40 }, (_, i) => shots[Math.round(i * (shots.length - 1) / 39)]);
+        for (const s of pick) {
+          const path = base + 's-' + Math.round(s.at / 1000) + '.jpg';
+          try { const up = await CLOUD.storage.from('files').upload(path, s.blob, { contentType: 'image/jpeg', upsert: false }); if (!up.error) { uploaded.push(path); screens.push({ at: fmtDur(s.at), path }); } } catch (e) { /* that one's left out */ }
+        }
+      }
+      setBusy(screens.length ? 'Writing the minutes from what was said and shown…' : 'Writing the minutes…');
+      try { notes = (await makeNotes(db, { title, owner: user.id, attendees: [user.id], notes: '' }, dkey(r.started), transcript, { names, screens })).notes; } catch (e) { why = (e && e.message) || 'The minutes couldn’t be written.'; }
     } else {
       // nothing to make minutes from: say why, as plainly as can be told
       const live = r.speech === 'privacy' ? 'Windows’ online speech recognition is off' : /^error/.test(r.speech || '') ? 'listening live failed (' + r.speech.slice(7) + ')' : r.speech === 'starting' ? 'listening live never started' : 'nothing was heard live';
-      why = 'Nothing was written down: ' + live + (r.fileWhy ? '; from the recording: ' + r.fileWhy : '') + '.';
+      why = 'Nothing was written down: ' + (cloudWhy ? 'the speech service: ' + cloudWhy + '; ' : '') + live + (r.fileWhy ? '; from the recording: ' + r.fileWhy : '') + '.';
     }
+    tidy();
     setBusy('Saving the minutes…');
     try {
-      const blob = await minutesPdf(title + ': minutes', when, notes || { summary: why }, r.transcript, r.name);
+      const blob = await minutesPdf(title + ': minutes', when, notes || { summary: why }, transcript, r.name, { names, shots, how });
       const name = r.name.replace(/\.webm$/, '') + ' – minutes.pdf', file = new File([blob], name, { type: 'application/pdf' });
       const [att] = await storeFiles([{ file, name, mime: 'application/pdf', size: file.size, kind: 'pdf', title: title + ' – minutes' }], 'me/' + user.id + '/');
       const had = ((db.pins[user.id] || {}).myfolders || []).find((x) => /^meeting recordings$/i.test(x.name));
@@ -9919,16 +10046,25 @@ function RecorderCard() {
     setBusy(''); desk.recorder.openFolder(r.file);
   };
   const on = st && st.on;
+  const flip = (id) => setWho((w) => ({ ...w, ids: w.ids.includes(id) ? w.ids.filter((x) => x !== id) : [...w.ids, id] }));
   return html`<div className=${'w-rec glass' + (on ? ' on' : '')}>
     <div className="rec-row">
-      <span className=${'rec-dot' + (on ? ' live' : '')}></span>
-      <span className="rec-t"><b>${on ? 'Recording · ' + fmtDur(now - st.started) : 'Minutes'}</b>
+      <span className=${'rec-dot' + (on && !busy ? ' live' : '')}></span>
+      <span className="rec-t"><b>${on && !busy ? 'Recording · ' + fmtDur(now - st.started) : 'Minutes'}</b>
         <small>${(busy === 'Writing down what was said…' && st && st.writing ? 'Writing down what was said… ' + fmtDur(st.writing.at * 1000) + ' of ' + fmtDur(st.writing.total * 1000) : busy) || (on ? (st.speech === 'privacy' ? 'Writing down is off: switch on Windows’ online speech recognition' : st.speech === 'on' ? (st.words ? st.words + ' things written down' + (st.last ? ': “' + st.last.slice(0, 60) + '”' : '') : 'Listening…') : st.speech === 'starting' ? 'Starting to listen…' : String(st.speech || '')) : voice ? 'Voice, minutes and a summary' : 'Screen, voice and minutes')}</small></span>
       ${on ? html`<button className="btn sm primary" onClick=${finish} disabled=${!!busy}>Stop</button>` : html`<button className="btn sm primary" onClick=${start} disabled=${!!busy}>Record</button>`}
     </div>
-    ${on && st.speech === 'privacy' && html`<button className="btn sm ghost" onClick=${() => desk.recorder.speechSettings()}>Open Windows’ speech settings</button>`}
-    ${on && quiet && html`<div className="rec-setup rec-warn"><small><b>Your microphone isn’t hearing anything.</b> Check it isn’t muted (the microphone key on the keyboard, or Windows’ sound settings), or nothing will be written down.</small></div>`}
-    ${!on && !speechOk && html`<div className="rec-setup"><small>One thing before your first meeting: so what’s said is written down, switch on <b>Online speech recognition</b> in Windows (one switch).</small><button className="btn sm" onClick=${() => desk.recorder.speechSettings()}>Switch it on</button></div>`}
+    ${on && st.speech === 'privacy' && !CLOUD && html`<button className="btn sm ghost" onClick=${() => desk.recorder.speechSettings()}>Open Windows’ speech settings</button>`}
+    ${on && !busy && quiet && html`<div className="rec-setup rec-warn"><small><b>Your microphone isn’t hearing anything.</b> Check it isn’t muted (the microphone key on the keyboard, or Windows’ sound settings), or nothing will be written down.</small></div>`}
+    ${!on && !speechOk && !CLOUD && html`<div className="rec-setup"><small>One thing before your first meeting: so what’s said is written down, switch on <b>Online speech recognition</b> in Windows (one switch).</small><button className="btn sm" onClick=${() => desk.recorder.speechSettings()}>Switch it on</button></div>`}
+    ${who && html`<${Modal} title="Record this meeting" onClose=${() => setWho(null)} footer=${html`<button className="btn" onClick=${() => setWho(null)}>Cancel</button><button className="btn primary" onClick=${go}>Start recording</button>`}>
+      <p className="sm">${voice
+        ? 'Your microphone is recorded (not your screen), and what’s said is written down for the minutes and a summary. Make sure everyone in the meeting knows. The voice recording stays on this computer (Documents › Meeting recordings); the minutes go into your My files › Meeting recordings.'
+        : 'Your screen, your microphone and the computer’s sound are recorded, and what’s said and shown goes into the minutes. Make sure everyone in the meeting knows. The video stays on this computer (Documents › Meeting recordings); the minutes go into your My files › Meeting recordings.'}</p>
+      <div className="field"><span>Who’s in this meeting?</span><small className="muted">So the minutes can say who said what.</small></div>
+      <div className="rec-who">${people.map((p) => html`<label key=${p.id}><input type="checkbox" checked=${who.ids.includes(p.id)} onChange=${() => flip(p.id)}/>${p.name}</label>`)}</div>
+      <label className="field"><span>Anyone else</span><input id="rec-guests" className="input" value=${who.guests} onChange=${(e) => { const v = e.target.value; setWho((w) => ({ ...w, guests: v })); }} placeholder="Names, with commas: e.g. Sipho from Coldline, the auditor"/></label>
+    <//>`}
   </div>`;
 }
 function JarvisCard() {

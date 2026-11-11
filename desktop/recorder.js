@@ -126,7 +126,7 @@ async function writeLength(file, ms) {
 }
 
 // stop: the video closed, the listening ended, and what was said handed back for the minutes
-async function stop() {
+async function stop(opts = {}) {
   if (!cur) return { error: 'Nothing is being recorded.' };
   const c = cur; cur = null;
   try { c.ps.kill(); } catch (e) { /* already ended */ }
@@ -138,7 +138,8 @@ async function stop() {
   let transcript = live, how = live ? 'live' : '', fileWhy = '';
   if (c.wfd !== null) {
     try { fs.writeSync(c.wfd, wavHeader(c.wbytes), 0, 44, 0); fs.closeSync(c.wfd); } catch (e) { /* none */ }
-    if (c.wbytes > 32000) { // more than a second of sound
+    if (opts.local === false) fileWhy = ''; // already written down by the speech service
+    else if (c.wbytes > 32000) { // more than a second of sound
       const f = await transcribeFile(c.wav, Math.round(c.wbytes / 32000));
       fileWhy = f.why || (f.text ? '' : 'no speech found in the recording');
       if (f.text && (live.length < 20 || f.text.length > live.length * 1.6)) { transcript = f.text; how = 'recording'; }

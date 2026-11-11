@@ -76,7 +76,7 @@ contextBridge.exposeInMainWorld('floorboardDesktop', {
     chunk: (buf) => ipcRenderer.invoke('rec-chunk', buf),
     sound: (buf) => ipcRenderer.invoke('rec-sound', buf),
     status: () => ipcRenderer.invoke('rec-status'),
-    stop: () => ipcRenderer.invoke('rec-stop'),
+    stop: (o) => ipcRenderer.invoke('rec-stop', o || {}), // { local: false } when the speech service has already written it down
     cancel: () => ipcRenderer.invoke('rec-cancel'),
     openFolder: (file) => ipcRenderer.send('rec-open-folder', String(file || '')),
     play: (file) => ipcRenderer.send('rec-play', String(file || '')),

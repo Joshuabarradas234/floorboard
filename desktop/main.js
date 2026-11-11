@@ -276,7 +276,7 @@ function recorderIpc() {
   ipcMain.handle('rec-chunk', (e, buf) => (ours(e) ? recorder.chunk(buf) : false));
   ipcMain.handle('rec-sound', (e, buf) => (ours(e) ? recorder.sound(buf) : false));
   ipcMain.handle('rec-status', (e) => (ours(e) ? recorder.status() : {}));
-  ipcMain.handle('rec-stop', (e) => (ours(e) ? recorder.stop() : { error: 'no' }));
+  ipcMain.handle('rec-stop', (e, o) => (ours(e) ? recorder.stop(o && typeof o === 'object' ? { local: o.local !== false } : {}) : { error: 'no' }));
   ipcMain.handle('rec-cancel', (e) => { if (ours(e)) recorder.cancel(); return true; });
   ipcMain.on('rec-open-folder', (e, file) => { if (ours(e)) recorder.openFolder(typeof file === 'string' ? file : ''); });
   ipcMain.on('rec-play', (e, file) => { if (ours(e)) recorder.play(typeof file === 'string' ? file : ''); });
@@ -477,6 +477,11 @@ function createSidebar() {
         const v = vids[0], head = v ? fs.readFileSync(path.join(dir, v.n)).subarray(0, 4).toString('hex') : '';
         const top = v ? fs.readFileSync(path.join(dir, v.n)).subarray(0, 4096).toString('latin1') : '';
         console.log('SMOKE rec video', JSON.stringify(v ? { name: v.n, kb: Math.round(v.s.size / 1024), webm: head === '1a45dfa3', tracks: (top.match(/V_VP[89]|A_OPUS/g) || []).join('+'), length: top.includes('\x44\x89') } : 'none'));
+        if (process.env.FLOORBOARD_SMOKE_LAYOUT) { // the minutes layout from a sample answer (speakers, what was gone through, screen pictures)
+          const b64 = await J(fs.readFileSync(process.env.FLOORBOARD_SMOKE_LAYOUT, 'utf8'));
+          fs.writeFileSync(path.join(app.getPath('userData'), 'smoke-minutes-layout.pdf'), Buffer.from(b64, 'base64'));
+          console.log('SMOKE rec layout saved', path.join(app.getPath('userData'), 'smoke-minutes-layout.pdf'));
+        }
         app.quit(); return;
       }
       if (process.env.FLOORBOARD_SMOKE_DEMO) await sidebar.webContents.executeJavaScript("localStorage.setItem('floorboard.session.v1', 'u5'); 1");
