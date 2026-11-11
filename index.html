@@ -543,6 +543,7 @@ html.bar-mode,html.bar-mode body,html.bar-mode #root{background:transparent!impo
 .isl-setup code{font-size:11px;background:rgba(255,255,255,.08);border-radius:5px;padding:1px 4px;word-break:break-all}.isl-setup .isl-more.sm{margin-right:4px}
 .isl-setup input{width:100%;box-sizing:border-box;height:30px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:#fff;padding:0 10px;font:12.5px var(--f-mono, monospace)}
 .w-rec{flex:none;padding:10px 12px;border-radius:22px;display:grid;gap:8px}.rec-row{display:flex;align-items:center;gap:10px}.rec-t{flex:1;min-width:0;display:grid}.rec-t small{font-size:11.5px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rec-setup{display:grid;gap:6px}.rec-setup small{font-size:12px;color:var(--ink-2);line-height:1.35}.rec-setup .btn{justify-self:start}.rec-warn small{color:#f59e0b}
 .rec-dot{width:12px;height:12px;border-radius:50%;background:rgba(127,127,127,.5);flex:none}.rec-dot.live{background:#ef4444;box-shadow:0 0 0 4px rgba(239,68,68,.25);animation:rec-pulse 1.4s ease-in-out infinite}@keyframes rec-pulse{50%{box-shadow:0 0 0 7px rgba(239,68,68,.08)}}
 .isl-mini{display:grid;grid-template-columns:repeat(2,12px);gap:2px 3px;flex:none}
 .isl-mini-b{display:block;width:12px;height:12px;padding:0;border:0;background:none;cursor:pointer}.isl-mini-b .isl-ch{transition:transform .2s}.isl-mini-b:hover .isl-ch{transform:scale(1.35)}
@@ -4599,11 +4600,13 @@ function FilesCard() {
 }
 function FilesView({ start }) {
   const { db, user } = useApp();
-  const [open, setOpen] = useState(start || null); // 'me', 'mf:<folder id>', or an archive's drive id
+  // start: 'me', 'mf:<folder id>' or an archive's drive id; 'mf:<folder id>:<file id>' also opens that file (the meeting minutes after Minutes stops)
+  const first = /^mf:[^:]+:(.+)$/.exec(start || ''), firstFile = first ? first[1] : null;
+  const [open, setOpen] = useState(start ? (first ? start.slice(0, start.length - firstFile.length - 1) : start) : null);
   const [adding, setAdding] = useState(null), [naming, setNaming] = useState(false), [sorting, setSorting] = useState(null);
   const archives = archivesFor(db, user);
   if (sorting) return html`<${SortView} where=${sorting} onClose=${() => setSorting(null)}/>`;
-  if (open) return html`<${FolderView} key=${open} where=${open} onBack=${() => setOpen(null)}/>`;
+  if (open) return html`<${FolderView} key=${open} where=${open} first=${open === (start || '').slice(0, open.length) ? firstFile : null} onBack=${() => setOpen(null)}/>`;
   return html`<${Page} title="Files" sub="Your own files and folders, and your department’s archive. They’re kept on this device, so they open with no signal too."
     actions=${html`<button className="btn primary" onClick=${() => setSorting('me')} title="Put every file in My files into the right folder"><${Icon} n="list" s=${16}/>Sort my files</button>`}>
     ${FOLDER_CLIP}
@@ -4616,11 +4619,11 @@ function FilesView({ start }) {
     ${naming && html`<${FolderNameModal} onClose=${() => setNaming(false)} onMade=${setOpen}/>`}
   <//>`;
 }
-function FolderView({ where, onBack }) {
+function FolderView({ where, onBack, first }) {
   const { db, user, update, ask, toast } = useApp();
   const isMe = isMine(where), fid = myFolderId(where), arch = !isMe && archivesFor(db, user).find((x) => x.drive.id === where);
   const myFolder = fid && myFoldersOf(db, user.id).find((x) => x.id === fid), title = folderName(db, user, where);
-  const [q, setQ] = useState(''), [adding, setAdding] = useState(false), [openId, setOpenId] = useState(null), [naming, setNaming] = useState(false), [sorting, setSorting] = useState(false);
+  const [q, setQ] = useState(''), [adding, setAdding] = useState(false), [openId, setOpenId] = useState(first || null), [naming, setNaming] = useState(false), [sorting, setSorting] = useState(false);
   if (sorting) return html`<${SortView} where=${where} onClose=${() => setSorting(false)}/>`;
   if (!title) return html`<${Page} title="Files"><div className="empty"><p>You can’t open this archive any more.</p><button className="btn" onClick=${onBack}>Back to Files</button></div><//>`;
   const items = isMe ? myFilesOf(db, user.id).filter((f) => (f.folder || null) === fid).map((f) => ({ id: f.id, title: f.title, att: f.att, at: f.at, by: user.id, mf: f.folder || null, video: f.video || '', rec: f.rec || '' }))
@@ -9795,23 +9798,40 @@ async function minutesPdf(title, when, notes, transcript, video) {
   const list = (head, items) => { if (!items || !items.length) return; line(head, 13, true, 2); items.forEach((it) => line('•  ' + it, 11, false, 1)); y += 8; };
   line(title, 18, true, 4);
   line(when + (video ? '  ·  Recording: Documents\\Meeting recordings\\' + video : ''), 10, false, 14);
+  // everything from the meeting in one document: the summary first, then what was decided, the to-dos (who and by when),
+  // what needs approving and what to follow up, and last the full notes of everything that was said
+  const none = (items, empty) => { if (!items || !items.length) { line(empty, 10.5, false, 8); return true; } return false; };
   if (notes) {
-    line('Summary', 13, true, 2); line(notes.summary || 'No summary.', 11, false, 10);
-    list('Decisions', notes.decisions);
-    list('Tasks', (notes.tasks || []).map((t) => t.title + (t.who ? ' (' + t.who + ')' : '') + (t.due ? ', by ' + t.due : '')));
-    list('To approve', (notes.approvals || []).map((a) => a.what + (a.supplier ? ', ' + a.supplier : '') + (a.amount ? ', ' + rand(a.amount) : '')));
+    line('Meeting summary', 13, true, 2); line(notes.summary || 'No summary.', 11, false, 10);
+    line('Decisions', 13, true, 2); if (!none(notes.decisions, 'No decisions were recorded.')) { notes.decisions.forEach((it) => line('•  ' + it, 11, false, 1)); y += 8; }
+    line('To do', 13, true, 2);
+    if (!none(notes.tasks, 'No to-dos came out of this meeting.')) { notes.tasks.forEach((t) => line('[  ]  ' + t.title + (t.who ? '  ·  ' + t.who : '') + (t.due ? '  ·  by ' + t.due : ''), 11, false, 1)); y += 8; }
+    list('To approve', (notes.approvals || []).map((a) => a.what + (a.supplier ? ', ' + a.supplier : '') + (a.amount ? ', ' + rand(a.amount) : '') + (a.why ? ' (' + a.why + ')' : '')));
     list('Follow up', notes.followups);
   }
-  if (transcript) { line('What was said', 13, true, 2); line(transcript, 9.5, false, 0); }
+  if (transcript) { line('Full notes: everything that was said', 13, true, 2); line(transcript, 9.5, false, 0); }
   return doc.output('blob');
 }
 function RecorderCard() {
   const { db, user, update, toast, ask } = useApp(), desk = window.floorboardDesktop, has = !!(DESKTOP_SHELL && desk && desk.recorder);
   const [st, setSt] = useState(null), [busy, setBusy] = useState(''), [now, setNow] = useState(Date.now()), media = useRef(null);
   useEffect(() => { if (!has) return undefined; const get = () => desk.recorder.status().then(setSt).catch(() => {}); get(); const t = setInterval(() => { get(); setNow(Date.now()); }, 1000); return () => clearInterval(t); }, []);
+  // before the first meeting: is Windows' speech recognition on, so what's said gets written down? (checked again every few seconds until it is)
+  const [speechOk, setSpeechOk] = useState(true), [quiet, setQuiet] = useState(false);
+  useEffect(() => {
+    if (!has || !user.recorder || !desk.recorder.speechOn) return undefined;
+    let t = null; const look = () => desk.recorder.speechOn().then((ok) => { setSpeechOk(!!ok); if (!ok) t = setTimeout(look, 4000); }).catch(() => {});
+    look(); return () => clearTimeout(t);
+  }, [user.recorder]);
   if (!has || !user.recorder) return null;
   const voice = user.recorder === 'voice'; // voice only: the microphone, no screen
-  const stopTracks = () => { const m = media.current; media.current = null; if (!m) return; try { if (m.rec.state !== 'inactive') m.rec.stop(); } catch (e) { } [...m.streams].forEach((x) => x.getTracks().forEach((t) => t.stop())); try { m.ctx.close(); } catch (e) { } };
+  const stopTracks = () => { const m = media.current; media.current = null; setQuiet(false); if (!m) return; clearInterval(m.watch); try { if (m.rec.state !== 'inactive') m.rec.stop(); } catch (e) { } [...m.streams].forEach((x) => x.getTracks().forEach((t) => t.stop())); try { m.ctx.close(); } catch (e) { } };
+  // a muted microphone records silence without any error: listen to it, and say so when it has heard nothing for 15 seconds
+  const watchMic = (ctx, mic) => {
+    const an = ctx.createAnalyser(); ctx.createMediaStreamSource(mic).connect(an);
+    const buf = new Float32Array(an.fftSize); let heard = Date.now();
+    return setInterval(() => { an.getFloatTimeDomainData(buf); let peak = 0; for (const v of buf) peak = Math.max(peak, Math.abs(v)); if (peak > 0.003) heard = Date.now(); setQuiet(Date.now() - heard > 15000); }, 1000);
+  };
   const begin = async () => {
     setBusy('Starting…');
     const r = await desk.recorder.start();
@@ -9822,7 +9842,8 @@ function RecorderCard() {
       const rec = new MediaRecorder(mic, { mimeType: type, audioBitsPerSecond: 48000 });
       let chain = Promise.resolve();
       rec.ondataavailable = (e) => { if (e.data && e.data.size) chain = chain.then(() => e.data.arrayBuffer()).then((b) => desk.recorder.chunk(b)).catch(() => {}); };
-      media.current = { rec, ctx: null, streams: [mic], done: () => chain };
+      const ctx = new AudioContext();
+      media.current = { rec, ctx, streams: [mic], done: () => chain, watch: watchMic(ctx, mic) };
       rec.start(4000);
       setBusy(''); return;
     } catch (e) {
@@ -9840,7 +9861,7 @@ function RecorderCard() {
       const rec = new MediaRecorder(out, { mimeType: type, videoBitsPerSecond: 900000, audioBitsPerSecond: 64000 });
       let chain = Promise.resolve();
       rec.ondataavailable = (e) => { if (e.data && e.data.size) chain = chain.then(() => e.data.arrayBuffer()).then((b) => desk.recorder.chunk(b)).catch(() => {}); };
-      media.current = { rec, ctx, streams: [screen, mic].filter(Boolean), done: () => chain };
+      media.current = { rec, ctx, streams: [screen, mic].filter(Boolean), done: () => chain, watch: mic ? watchMic(ctx, mic) : null };
       rec.start(4000);
       screen.getVideoTracks()[0].addEventListener('ended', () => finish()); // stopped from Windows' own "stop sharing"
       setBusy('');
@@ -9872,15 +9893,21 @@ function RecorderCard() {
       const blob = await minutesPdf(title + ': minutes', when, notes || { summary: why }, r.transcript, r.name);
       const name = r.name.replace(/\.webm$/, '') + ' – minutes.pdf', file = new File([blob], name, { type: 'application/pdf' });
       const [att] = await storeFiles([{ file, name, mime: 'application/pdf', size: file.size, kind: 'pdf', title: title + ' – minutes' }], 'me/' + user.id + '/');
+      const had = ((db.pins[user.id] || {}).myfolders || []).find((x) => /^meeting recordings$/i.test(x.name));
+      const folderId = had ? had.id : uid('mf'), fileId = uid('mf');
       update((d) => {
         const p = d.pins[user.id] = d.pins[user.id] || { posts: [], notes: [] };
         p.myfolders = p.myfolders || [];
-        let fo = p.myfolders.find((x) => /^meeting recordings$/i.test(x.name));
-        if (!fo) { fo = { id: uid('mf'), name: 'Meeting recordings', at: Date.now() }; p.myfolders.push(fo); }
-        p.myfiles = [{ id: uid('mf'), title: title + ' – minutes', att, at: Date.now(), folder: fo.id, video: r.name, ...(voice ? { rec: 'voice' } : {}) }, ...(p.myfiles || [])];
+        let fo = p.myfolders.find((x) => x.id === folderId) || p.myfolders.find((x) => /^meeting recordings$/i.test(x.name));
+        if (!fo) { fo = { id: folderId, name: 'Meeting recordings', at: Date.now() }; p.myfolders.push(fo); }
+        p.myfiles = [{ id: fileId, title: title + ' – minutes', att, at: Date.now(), folder: fo.id, video: r.name, ...(voice ? { rec: 'voice' } : {}) }, ...(p.myfiles || [])];
       });
       const what = voice ? 'voice recording' : 'video';
       toast(notes ? 'Saved: the minutes are in My files › Meeting recordings, the ' + what + ' in Documents › Meeting recordings' : 'Saved the ' + what + ' and a PDF (' + why + ')');
+      setBusy('');
+      // straight to them: Floorboard opens on My files › Meeting recordings with the new minutes open
+      if (desk.openFull) setTimeout(() => desk.openFull('view:files:mf:' + folderId + ':' + fileId), 400); else desk.recorder.openFolder(r.file);
+      return;
     } catch (e) { toast('The ' + (voice ? 'voice recording' : 'video') + ' is saved, but the minutes didn’t: ' + ((e && e.message) || e), 'warn'); }
     setBusy(''); desk.recorder.openFolder(r.file);
   };
@@ -9893,6 +9920,8 @@ function RecorderCard() {
       ${on ? html`<button className="btn sm primary" onClick=${finish} disabled=${!!busy}>Stop</button>` : html`<button className="btn sm primary" onClick=${start} disabled=${!!busy}>Record</button>`}
     </div>
     ${on && st.speech === 'privacy' && html`<button className="btn sm ghost" onClick=${() => desk.recorder.speechSettings()}>Open Windows’ speech settings</button>`}
+    ${on && quiet && html`<div className="rec-setup rec-warn"><small><b>Your microphone isn’t hearing anything.</b> Check it isn’t muted (the microphone key on the keyboard, or Windows’ sound settings), or nothing will be written down.</small></div>`}
+    ${!on && !speechOk && html`<div className="rec-setup"><small>One thing before your first meeting: so what’s said is written down, switch on <b>Online speech recognition</b> in Windows (one switch).</small><button className="btn sm" onClick=${() => desk.recorder.speechSettings()}>Switch it on</button></div>`}
   </div>`;
 }
 function JarvisCard() {

@@ -80,6 +80,7 @@ contextBridge.exposeInMainWorld('floorboardDesktop', {
     openFolder: (file) => ipcRenderer.send('rec-open-folder', String(file || '')),
     play: (file) => ipcRenderer.send('rec-play', String(file || '')),
     speechSettings: () => ipcRenderer.send('rec-speech-settings'),
+    speechOn: () => ipcRenderer.invoke('rec-speech-on'),
   },
   // logging in or out here, told to Floorboard's other windows, and hearing theirs
   session: {

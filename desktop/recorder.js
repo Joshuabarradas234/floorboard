@@ -114,5 +114,10 @@ const where = (file) => (file ? (path.isAbsolute(file) ? file : path.join(folder
 const openFolder = (file) => (where(file) && fs.existsSync(where(file)) ? shell.showItemInFolder(where(file)) : shell.openPath(folder()));
 const play = (file) => (where(file) && /\.webm$/i.test(where(file)) && fs.existsSync(where(file)) ? shell.openPath(where(file)) : openFolder(''));
 const openSpeechSettings = () => shell.openExternal('ms-settings:privacy-speech');
+// is Windows' online speech recognition on (Settings › Privacy & security › Speech)? Only read here: switching it on is the person's own choice.
+const speechOn = () => new Promise((ok) => {
+  if (process.env.FLOORBOARD_SMOKE && process.env.FLOORBOARD_DICTATION) { ok(true); return; } // the test run's stand-in listens without it
+  require('child_process').execFile('reg', ['query', 'HKCU\\Software\\Microsoft\\Speech_OneCore\\Settings\\OnlineSpeechPrivacy', '/v', 'HasAccepted'], { windowsHide: true }, (err, out) => ok(!err && /HasAccepted\s+REG_DWORD\s+0x1\b/i.test(String(out))));
+});
 
-module.exports = { allowScreen, start, chunk, status, stop, cancel, openFolder, play, openSpeechSettings, writeLength };
+module.exports = { allowScreen, start, chunk, status, stop, cancel, openFolder, play, openSpeechSettings, speechOn, writeLength };

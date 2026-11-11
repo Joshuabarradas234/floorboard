@@ -6,7 +6,13 @@ This is a working prototype with an example store and example staff. Every login
 
 ## Windows: glass sidebar on the edge of your screen
 
-Double-click `desktop/Start Floorboard.cmd`.
+**On a staff member's computer:** send them this link: https://github.com/Joshuabarradas234/floorboard/releases/download/windows-app/Floorboard-Setup.exe. They open the download and Floorboard installs for them (no admin password, nothing else to install), opens, starts with Windows from then on and keeps itself up to date. They type the store code once, pick their name and type their PIN. If someone has **Minutes** and Windows' online speech recognition is off, their Minutes card says so before the first meeting, with a button to that one switch.
+
+- The installer isn't signed with a paid code-signing certificate, so Edge may say it *isn't commonly downloaded* (**⋯ → Keep**) and Windows may say *Windows protected your PC* (**More info → Run anyway**), once.
+- A computer with **Smart App Control** switched on (Windows Security → App & browser control) blocks unsigned installers completely. On such a computer, use the way below instead (it needs Node.js from nodejs.org).
+- The installer is built by GitHub (`.github/workflows/windows-installer.yml`) each time the app changes; `node desktop/build-installer.js` builds it on a computer without Smart App Control.
+
+**On your own computer, from this folder:** double-click `desktop/Start Floorboard.cmd`.
 
 - The sidebar docks to the right edge of the screen. Windows shows your wallpaper through it as frosted glass.
 - **Search** at the top of the sidebar: posts, messages, documents and people (`@bakery`, `#1047`, `invoice highveld`). Enter opens the full app's search with your words in it.
@@ -81,12 +87,12 @@ For the people an admin switches it on for (People & access → the person → *
 - **Voice only:** records the microphone, not the screen, for the minutes and a summary (so nobody has to take notes).
 - **Screen and voice:** records the whole screen with the microphone and the computer's own sound (so the other side of a Teams or Zoom call is in the video too).
 
-**Record** asks once (make sure everyone in the meeting knows), then records and writes down what's said as it goes. **Stop** ends it and makes two things:
+**Record** asks once (make sure everyone in the meeting knows), then records and writes down what's said as it goes. If the microphone hears nothing for 15 seconds (muted), the card says so. **Stop** ends it, makes two things, and opens Floorboard on **My files › Meeting recordings** with the new minutes open:
 
-- **The minutes:** a PDF with the summary, decisions, tasks, things to approve, follow-ups and everything that was said, in **My files › Meeting recordings** (the folder is made the first time). The store's AI writes the summary (the same `meeting-notes` function and `ANTHROPIC_API_KEY` as meeting notes); without it, Floorboard writes simpler minutes itself.
+- **The minutes:** one PDF with everything from the meeting: the meeting summary, decisions, the to-do list (who and by when), things to approve, follow-ups, and the full notes of everything that was said, in **My files › Meeting recordings** (the folder is made the first time). The store's AI writes the summary (the same `meeting-notes` function and `ANTHROPIC_API_KEY` as meeting notes); without it, Floorboard writes simpler minutes itself.
 - **The recording:** in **Documents › Meeting recordings** on that computer: the voice (about 0.3 MB a minute), or a video of the screen and sound (up to about 7 MB a minute). It doesn't go to the store's server. Opening the minutes in My files on that computer gives **Play the recording** and **Show in folder**.
 
-Writing down uses Windows' own speech recognition, so on each computer that records, switch on **Settings → Privacy & security → Speech → Online speech recognition** once. Until then the card says writing down is off (with a button to that setting): the video is still recorded, and the minutes say there was nothing to write down.
+Writing down uses Windows' own speech recognition, so on each computer that records, switch on **Settings → Privacy & security → Speech → Online speech recognition** once. Until then the card says so before the first meeting, with a **Switch it on** button to that setting: the video is still recorded, and the minutes say there was nothing to write down.
 
 ### Keeping it up to date (Windows)
 

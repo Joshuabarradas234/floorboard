@@ -1,0 +1,40 @@
+# Builds Floorboard-Setup.exe (the one-click Windows installer) on GitHub's own Windows computers whenever the app
+# changes, and puts it on the "windows-app" release, so this link always gives the newest one:
+#   https://github.com/Joshuabarradas234/floorboard/releases/download/windows-app/Floorboard-Setup.exe
+# (Installed copies keep themselves up to date on their own; a new installer matters for new computers.)
+name: Windows installer
+
+on:
+  push:
+    branches: [main]
+    paths: ['desktop/**', 'index.html', 'version.json', 'config.js', 'vendor/**', '.github/workflows/windows-installer.yml']
+  workflow_dispatch:
+
+concurrency:
+  group: windows-installer
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install the desktop app's parts
+        working-directory: desktop
+        run: npm ci --no-audit --no-fund
+      - name: Build the installer
+        working-directory: desktop
+        run: node build-installer.js
+      - name: Put it on the windows-app release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view windows-app >/dev/null 2>&1 || gh release create windows-app --title "Floorboard for Windows" --notes "Download Floorboard-Setup.exe and open it: Floorboard installs and opens, then keeps itself up to date."
+          gh release upload windows-app dist/Floorboard-Setup.exe --clobber

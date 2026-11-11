@@ -279,6 +279,7 @@ function recorderIpc() {
   ipcMain.on('rec-open-folder', (e, file) => { if (ours(e)) recorder.openFolder(typeof file === 'string' ? file : ''); });
   ipcMain.on('rec-play', (e, file) => { if (ours(e)) recorder.play(typeof file === 'string' ? file : ''); });
   ipcMain.on('rec-speech-settings', (e) => { if (ours(e)) recorder.openSpeechSettings(); });
+  ipcMain.handle('rec-speech-on', (e) => (ours(e) ? recorder.speechOn() : false));
 }
 function sessionIpc() {
   ipcMain.on('session-changed', (e, st) => {
@@ -444,6 +445,7 @@ function createSidebar() {
       slideTo(true); await wait(400);
       if (process.env.FLOORBOARD_SMOKE_REC) { // the sidebar's meeting recorder: a short real recording of the screen, and minutes from a stand-in for Windows' speech
         const J = (x) => sidebar.webContents.executeJavaScript(x);
+        ipcMain.on('open-full', openFull); // as the real app has it (a test run otherwise leaves it out)
         await J("(() => { localStorage.setItem('floorboard.session.v1', 'u5'); const k = 'floorboard.demo.v5', d = JSON.parse(localStorage.getItem(k) || 'null'); if (!d) return 0; d.users.find((x) => x.id === 'u5').recorder = " + (process.env.FLOORBOARD_SMOKE_REC === 'voice' ? "'voice'" : 'true') + "; if (d.pins.u5) { delete d.pins.u5.myfolders; d.pins.u5.myfiles = []; } localStorage.setItem(k, JSON.stringify(d)); location.reload(); return 1; })()"); await wait(4500);
         console.log('SMOKE rec card', JSON.stringify(await J("(document.querySelector('.w-rec') || {}).innerText || 'none'")));
         await J("[...document.querySelectorAll('.w-rec button')].find((b) => b.innerText === 'Record').click(); 1"); await wait(800);
@@ -460,12 +462,10 @@ function createSidebar() {
           fs.writeFileSync(path.join(app.getPath('userData'), 'smoke-minutes.pdf'), Buffer.from(b64, 'base64'));
           console.log('SMOKE rec minutes saved', path.join(app.getPath('userData'), 'smoke-minutes.pdf'));
         }
-        // and in Files: My files › Meeting recordings › the minutes, with the recording's buttons
-        openFull(null, 'view:files'); await wait(4500);
-        const F = (x) => full.webContents.executeJavaScript(x);
-        const clickText = (re) => F(`(() => { const el = [...document.querySelectorAll('button, a, [role=button], [tabindex]')].filter((b) => b.offsetParent && ${re}.test((b.innerText || '').trim())).sort((a, b) => a.innerText.length - b.innerText.length)[0]; if (!el) return 'not found'; el.click(); return el.innerText.trim().replace(/\\n+/g, ' ').slice(0, 60); })()`);
-        console.log('SMOKE rec files folder', await clickText('/Meeting recordings/')); await wait(1000);
-        console.log('SMOKE rec files item', await clickText('/minutes/')); await wait(2500);
+        // Stop opens Floorboard by itself on My files › Meeting recordings, with the new minutes open (no clicks here)
+        console.log('SMOKE rec opened by itself', !!(full && !full.isDestroyed() && full.isVisible()) ? 'yes, at ' + full.webContents.getURL().split('#')[1] : 'no');
+        const F = (x) => (full && !full.isDestroyed() ? full.webContents.executeJavaScript(x) : Promise.resolve('no window'));
+        console.log('SMOKE rec files page', JSON.stringify(await F("(document.querySelector('.page h1, h1') || {}).innerText || ''")));
         console.log('SMOKE rec files viewer', JSON.stringify(await F("((document.querySelector('.fview') || {}).innerText || 'no viewer: ' + document.body.innerText.slice(0, 300)).replace(/\\n+/g, ' | ').slice(0, 500)")));
         console.log('SMOKE rec files buttons', await F("[...document.querySelectorAll('.fv-video button')].map((b) => b.innerText).join(' + ') || 'none'"), '| pdf pages shown:', await F("document.querySelectorAll('.fview canvas, .fview img').length"));
         if (process.env.FLOORBOARD_SMOKE_SHOTS) { fs.writeFileSync(path.join(process.env.FLOORBOARD_SMOKE_SHOTS, 'minutes-files.png'), (await full.webContents.capturePage()).toPNG()); fs.writeFileSync(path.join(process.env.FLOORBOARD_SMOKE_SHOTS, 'minutes-sidebar.png'), (await sidebar.webContents.capturePage()).toPNG()); }
@@ -801,6 +801,8 @@ else {
   app.on('second-instance', (_e, argv) => { if (argv.includes('--quit')) { app.isQuitting = true; app.quit(); return; } if (!startupFlag(argv)) showSidebar(); });
   app.whenReady().then(() => {
     loadPrefs();
+    // installed with Floorboard-Setup.exe: it starts with Windows from the first run (the tray menu turns it off)
+    if (app.isPackaged && !SMOKE && !prefs.startSet) { app.setLoginItemSettings({ openAtLogin: true, ...loginItem() }); prefs.startSet = true; savePrefs(); }
     updates.init(); // new versions from GitHub, if the person said it may look
     session.defaultSession.setPermissionRequestHandler((_wc, permission, done) => done(permission === 'media' || permission === 'notifications'));
     createSidebar();

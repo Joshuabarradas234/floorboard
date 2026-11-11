@@ -39,6 +39,9 @@ async function check() {
   return state;
 }
 
+const depsIn = (dir) => { try { const p = JSON.parse(fs.readFileSync(path.join(dir, 'desktop', 'package.json'), 'utf8')); return JSON.stringify([p.dependencies, p.devDependencies]); } catch (e) { return ''; } };
+const SETUP = 'https://github.com/' + 'Joshuabarradas234/floorboard' + '/releases/download/windows-app/Floorboard-Setup.exe';
+
 // This copy came from GitHub with git: fetch the new version the same way. Otherwise: download it and copy it over.
 async function fetchNew() {
   const useGit = !NOGIT && fs.existsSync(path.join(ROOT, '.git'));
@@ -56,6 +59,8 @@ async function fetchNew() {
     await run('tar', ['-xf', path.join(tmp, 'new.zip'), '-C', tmp]);
     const top = fs.readdirSync(tmp).map((x) => path.join(tmp, x)).find((x) => fs.statSync(x).isDirectory());
     if (!top || !fs.existsSync(path.join(top, 'index.html')) || !fs.existsSync(path.join(top, 'desktop', 'main.js'))) throw new Error('The download didn’t look like Floorboard, so it wasn’t used.');
+    // the installed app (Floorboard-Setup.exe) has no npm to add new building blocks with: a version that needs them comes as a new installer
+    if (app.isPackaged && depsIn(top) !== depsIn(ROOT)) throw new Error('This version needs the new installer: download it from ' + SETUP + ' and run it (your settings and login stay).');
     // everything except what this computer installed for itself
     fs.cpSync(top, ROOT, { recursive: true, force: true, filter: (src) => !/[\\/](node_modules|\.git)([\\/]|$)/.test(path.relative(top, src)) && !/^(node_modules|\.git)$/.test(path.relative(top, src)) });
   } finally { fs.rmSync(tmp, { recursive: true, force: true }); }
@@ -88,6 +93,8 @@ function schedule() { clearInterval(timer); if (state.on) timer = setInterval(ch
 
 function init() {
   try { saved = { ...saved, ...JSON.parse(fs.readFileSync(file(), 'utf8')) }; } catch (e) { /* first run */ }
+  // installed with Floorboard-Setup.exe: keeping up to date is part of what was installed, so it doesn't ask
+  if (app.isPackaged && saved.answer === null) { saved.answer = 'yes'; try { fs.writeFileSync(file(), JSON.stringify(saved)); } catch (e) { /* says yes again next time */ } }
   state = { ...state, ask: saved.answer === null, on: saved.answer === 'yes', current: readVersion() };
   // where updates come from: the GitHub repository this copy was taken from
   if (fs.existsSync(path.join(ROOT, '.git'))) run('git', ['-C', ROOT, 'remote', 'get-url', 'origin']).then((u) => { const m = u.trim().match(/github\.com[/:]([\w.-]+\/[\w.-]+?)(\.git)?$/); if (m) repo = m[1]; }).catch(() => {});
