@@ -53,9 +53,10 @@ async function winTools() {
   const z = path.join(path.dirname(stage), 'winCodeSign.7z'); fs.writeFileSync(z, Buffer.from(await res.arrayBuffer()));
   // the 7-Zip that comes with electron-builder (fetched once into npm's cache), leaving out the Mac folder
   execSync('npx --yes electron-builder@25.1.8 --version', { stdio: 'ignore' });
-  const npx = path.join(process.env.LOCALAPPDATA || '', 'npm-cache', '_npx');
-  const sz = fs.existsSync(npx) && fs.readdirSync(npx).map((d) => path.join(npx, d, 'node_modules', '7zip-bin', 'win', 'x64', '7za.exe')).find((p) => fs.existsSync(p));
-  if (!sz) throw new Error('7-Zip from electron-builder wasn’t found');
+  let cache = ''; try { cache = execSync('npm config get cache', { encoding: 'utf8' }).trim(); } catch (e) { /* the usual place below */ }
+  const npx = [cache, path.join(process.env.LOCALAPPDATA || '', 'npm-cache')].filter(Boolean).map((c) => path.join(c, '_npx')).find((p) => fs.existsSync(p));
+  const sz = npx && fs.readdirSync(npx).map((d) => path.join(npx, d, 'node_modules', '7zip-bin', 'win', 'x64', '7za.exe')).find((p) => fs.existsSync(p));
+  if (!sz) { fs.rmSync(dir, { recursive: true, force: true }); console.log('(7-Zip not found: electron-builder unpacks its tools itself, which works for an administrator)'); return; }
   execSync('"' + sz + '" x -y -bd "' + z + '" -o"' + dir + '" -xr!darwin', { stdio: 'ignore' });
   if (!fs.existsSync(path.join(dir, 'rcedit-x64.exe'))) throw new Error('The Windows tools didn’t unpack');
 }
