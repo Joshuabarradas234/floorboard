@@ -102,7 +102,7 @@ function dock() {
 }
 // Slide the sidebar in from the screen edge or back out. The floating button stands in for it while it's closed.
 function slideTo(open, { focus = true } = {}) {
-  if (!sidebar) return;
+  if (!sidebar || sidebar.isDestroyed()) return;
   clearInterval(slide); slide = null;
   const { width, height, x, y, away } = docked();
   const from = sidebar.isVisible() ? sidebar.getBounds().x : away, to = open ? x : away;
@@ -113,6 +113,7 @@ function slideTo(open, { focus = true } = {}) {
   if (open && focus) sidebar.focus();
   const t0 = Date.now(), ms = 220;
   const step = () => {
+    if (sidebar.isDestroyed()) { clearInterval(slide); slide = null; return; }
     const k = Math.min(1, (Date.now() - t0) / ms), nx = Math.round(from + (to - from) * (1 - Math.pow(1 - k, 3)));
     sidebar.setBounds({ x: nx, y, width, height });
     if (k < 1) return;
@@ -424,6 +425,8 @@ function createSidebar() {
   sidebar.loadFile(PAGE, { hash: 'widget', query: QUERY });
   openLinksOutside(sidebar);
   sidebar.on('close', (e) => { if (!app.isQuitting) { e.preventDefault(); hideSidebar(); } });
+  // if it's ever closed for good anyway (the page closing itself, a crash), make it again, tucked away behind the floating button
+  sidebar.on('closed', () => { if (app.isQuitting) return; clearInterval(slide); slide = null; createSidebar(); opened = false; sendBubble(); placeBubble(); });
   sidebar.on('focus', () => { sidebar.flashFrame(false); if (bubble) bubble.moveTop(); });
   // remember the width someone drags it to: 'resized' only fires when a person finishes resizing it, not for the app's own moves
   sidebar.on('resized', () => { if (slide) return; prefs.width = sidebar.getBounds().width; savePrefs(); });
