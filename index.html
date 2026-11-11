@@ -542,6 +542,8 @@ html.bar-mode,html.bar-mode body,html.bar-mode #root{background:transparent!impo
 .isl-setup{display:grid;gap:7px;font-size:12px;color:rgba(233,235,238,.85);max-height:300px;overflow-y:auto;padding-right:4px}.isl-setup ol{margin:0;padding-left:18px;display:grid;gap:5px;line-height:1.4}
 .isl-setup code{font-size:11px;background:rgba(255,255,255,.08);border-radius:5px;padding:1px 4px;word-break:break-all}.isl-setup .isl-more.sm{margin-right:4px}
 .isl-setup input{width:100%;box-sizing:border-box;height:30px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:#fff;padding:0 10px;font:12.5px var(--f-mono, monospace)}
+.w-rec{flex:none;padding:10px 12px;border-radius:22px;display:grid;gap:8px}.rec-row{display:flex;align-items:center;gap:10px}.rec-t{flex:1;min-width:0;display:grid}.rec-t small{font-size:11.5px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rec-dot{width:12px;height:12px;border-radius:50%;background:rgba(127,127,127,.5);flex:none}.rec-dot.live{background:#ef4444;box-shadow:0 0 0 4px rgba(239,68,68,.25);animation:rec-pulse 1.4s ease-in-out infinite}@keyframes rec-pulse{50%{box-shadow:0 0 0 7px rgba(239,68,68,.08)}}
 .isl-mini{display:grid;grid-template-columns:repeat(2,12px);gap:2px 3px;flex:none}
 .isl-mini-b{display:block;width:12px;height:12px;padding:0;border:0;background:none;cursor:pointer}.isl-mini-b .isl-ch{transition:transform .2s}.isl-mini-b:hover .isl-ch{transform:scale(1.35)}
 .isl-panel{width:640px;box-sizing:border-box;background:var(--isl-bg,#000);border-radius:0 0 30px 30px;padding:8px 10px 10px;box-shadow:0 14px 40px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:8px}
@@ -830,7 +832,7 @@ html.isl-sleepy .isl-ch:not(.wig):not(.ring) .isl-svg{animation:isl-snooze 3.4s 
 .fadd-pic{display:grid;place-items:center;width:56px;height:56px;border-radius:10px;overflow:hidden;background:var(--glass-2)}
 .fadd-pic img{width:100%;height:100%;object-fit:cover}
 .fv-title{display:flex;gap:8px;align-items:flex-end;margin-bottom:6px}.fv-title .field{flex:1;margin:0}
-.fv-paper{display:flex;gap:8px;align-items:center;font-size:14px}
+.fv-paper{display:flex;gap:8px;align-items:center;font-size:14px}.fv-video{flex-wrap:wrap}.fv-video span{flex:1;min-width:180px;overflow-wrap:anywhere}
 .fv-body{margin-top:10px}
 .fv-body .fv-img,.fv-body video{display:block;max-width:100%;max-height:68vh;margin:0 auto;border-radius:12px}
 .fv-body audio{width:100%}
@@ -2893,6 +2895,7 @@ function Widget() {
     <${UpdateNotice}/>
     <${SideSearch}/>
     <${Board} onPick=${pick}/>
+    <${RecorderCard}/>
     ${!DESKTOP_SHELL && html`<${AskCard} compact/>`}
     <${TaskBoardCard}/>
     <${SlipCard}/>
@@ -4620,7 +4623,7 @@ function FolderView({ where, onBack }) {
   const [q, setQ] = useState(''), [adding, setAdding] = useState(false), [openId, setOpenId] = useState(null), [naming, setNaming] = useState(false), [sorting, setSorting] = useState(false);
   if (sorting) return html`<${SortView} where=${where} onClose=${() => setSorting(false)}/>`;
   if (!title) return html`<${Page} title="Files"><div className="empty"><p>You can’t open this archive any more.</p><button className="btn" onClick=${onBack}>Back to Files</button></div><//>`;
-  const items = isMe ? myFilesOf(db, user.id).filter((f) => (f.folder || null) === fid).map((f) => ({ id: f.id, title: f.title, att: f.att, at: f.at, by: user.id, mf: f.folder || null }))
+  const items = isMe ? myFilesOf(db, user.id).filter((f) => (f.folder || null) === fid).map((f) => ({ id: f.id, title: f.title, att: f.att, at: f.at, by: user.id, mf: f.folder || null, video: f.video || '' }))
     : archiveFiles(db, where).map((f) => ({ id: f.id, title: f.name, att: f.att, at: f.at || 0, by: f.by, folder: folderPath(db, f.folder), paper: f.hardCopy || '' }));
   const words = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
   const shown = items.filter((x) => { const s = (x.title + ' ' + (x.att ? x.att.name : '') + ' ' + (x.folder || '') + ' ' + x.paper).toLowerCase(); return words.every((w) => s.includes(w)); });
@@ -4693,6 +4696,9 @@ function FileViewer({ x, where, onClose }) {
     ${isMe && myFoldersOf(db, user.id).length > 0 && html`<label className="field fv-move"><span>Folder</span><select id="fv-folder" className="select" value=${x.mf || ''} onChange=${(e) => { const to = e.target.value || null; update((d) => { const f = (d.pins[user.id].myfiles || []).find((y) => y.id === x.id); if (f) f.folder = to; }); toast('Moved to ' + (to ? myFoldersOf(db, user.id).find((y) => y.id === to).name : 'My files')); onClose(); }}>
       <option value="">My files</option>${myFoldersOf(db, user.id).map((fo) => html`<option key=${fo.id} value=${fo.id}>${fo.name}</option>`)}</select></label>`}
     ${x.paper && html`<p className="fv-paper"><${Icon} n="archive" s=${15}/>Paper copy: ${x.paper}</p>`}
+    ${x.video && (window.floorboardDesktop && window.floorboardDesktop.recorder
+      ? html`<p className="fv-paper fv-video"><${Icon} n="play" s=${15}/><span>Screen and voice recording: ${x.video}</span><button type="button" className="btn sm" onClick=${() => window.floorboardDesktop.recorder.play(x.video)}>Play the recording</button><button type="button" className="btn sm" onClick=${() => window.floorboardDesktop.recorder.openFolder(x.video)}>Show in folder</button></p>`
+      : html`<p className="fv-paper"><${Icon} n="play" s=${15}/>Screen and voice recording: on the computer it was made on, in Documents › Meeting recordings › ${x.video}</p>`)}
     <div className="fv-body">
       ${!a ? html`<p className="muted">This is a record of a paper document. There’s no scan with it.</p>`
         : st.busy ? html`<p className="muted">Opening…</p>`
@@ -5092,6 +5098,7 @@ function PersonModal({ personId, onClose, onAdded }) {
     <label className="field"><span>OneDrive link (optional)</span><input id="pm-onedrive" className="input" value=${v.onedrive || ''} onChange=${(e) => set('onedrive', e.target.value)} placeholder="https://…sharepoint.com/… or https://onedrive.live.com/…"/><small>Drive opens their own OneDrive with this. They can also add it themselves on the Drive page.</small></label>
     <div className="field"><span>Departments they belong to</span><div className="checks">${db.depts.map((d) => html`<label key=${d.id}><input type="checkbox" checked=${v.depts.includes(d.id)} onChange=${() => flip('depts', d.id)}/>${d.name}</label>`)}</div><small>Tagging one of these teams reaches this person.</small></div>
     <div className="field"><span>Departments they manage</span><div className="checks">${db.depts.map((d) => html`<label key=${d.id} className=${v.role === 'staff' ? 'dis' : ''}><input type="checkbox" disabled=${v.role === 'staff'} checked=${v.manages.includes(d.id)} onChange=${() => flip('manages', d.id)}/>${d.name}</label>`)}</div><small>Managers see the progress of everyone in these teams and can edit the team’s tools.</small></div>
+    <label className="sm" style=${{ display: 'flex', gap: 8, alignItems: 'center' }}><input type="checkbox" checked=${!!v.recorder} onChange=${(e) => set('recorder', e.target.checked)}/>Minutes on their sidebar (Windows): records the screen and voice, and writes the minutes</label>
     ${p && p.id !== user.id && html`<label className="sm" style=${{ display: 'flex', gap: 8, alignItems: 'center' }}><input type="checkbox" checked=${v.active === false} onChange=${(e) => set('active', !e.target.checked)}/>Deactivated: can’t log in and won’t be tagged</label>`}
     ${err && html`<p className="err">${err}</p>`}
   <//>`;
@@ -9769,6 +9776,105 @@ function JvRun({ r, onCarryOn }) {
     ${act && html`<div className="slider-row"><div className="bar"><i style=${{ width: r.progress + '%' }}></i></div><span className="pct-pill">${r.progress}%</span></div>`}
     ${meta && html`<small>${meta}</small>`}
     ${JV_CONT.includes(r.status) && html`<button className="btn sm" onClick=${() => onCarryOn(r)}>Continue where it stopped</button>`}
+  </div>`;
+}
+/* The sidebar's meeting recorder (Windows; switched on per person in People & access). Records the screen with the
+   microphone and the computer's own sound into a video in Documents\Meeting recordings on this computer, while Windows'
+   speech recognition writes down what's said; when it stops, the minutes and a summary (as the Calendar's meeting notes
+   make them) go as a PDF into My files → Meeting recordings, naming the video. */
+const fmtDur = (ms) => { const s0 = Math.max(0, Math.round(ms / 1000)), h = Math.floor(s0 / 3600), m = Math.floor((s0 % 3600) / 60), sec = s0 % 60; return (h ? h + ':' + String(m).padStart(2, '0') : m) + ':' + String(sec).padStart(2, '0'); };
+async function minutesPdf(title, when, notes, transcript, video) {
+  const JsPDF = await loadJsPdf(), doc = new JsPDF({ unit: 'pt', format: 'a4' }), W = 595, M = 48;
+  let y = M;
+  const line = (text, size, bold, gap) => {
+    doc.setFont('helvetica', bold ? 'bold' : 'normal'); doc.setFontSize(size);
+    doc.splitTextToSize(String(text || ''), W - M * 2).forEach((l) => { if (y > 800) { doc.addPage(); y = M; } doc.text(l, M, y); y += size * 1.35; });
+    y += gap || 0;
+  };
+  const list = (head, items) => { if (!items || !items.length) return; line(head, 13, true, 2); items.forEach((it) => line('•  ' + it, 11, false, 1)); y += 8; };
+  line(title, 18, true, 4);
+  line(when + (video ? '  ·  Recording: Documents\\Meeting recordings\\' + video : ''), 10, false, 14);
+  if (notes) {
+    line('Summary', 13, true, 2); line(notes.summary || 'No summary.', 11, false, 10);
+    list('Decisions', notes.decisions);
+    list('Tasks', (notes.tasks || []).map((t) => t.title + (t.who ? ' (' + t.who + ')' : '') + (t.due ? ', by ' + t.due : '')));
+    list('To approve', (notes.approvals || []).map((a) => a.what + (a.supplier ? ', ' + a.supplier : '') + (a.amount ? ', ' + rand(a.amount) : '')));
+    list('Follow up', notes.followups);
+  }
+  if (transcript) { line('What was said', 13, true, 2); line(transcript, 9.5, false, 0); }
+  return doc.output('blob');
+}
+function RecorderCard() {
+  const { db, user, update, toast, ask } = useApp(), desk = window.floorboardDesktop, has = !!(DESKTOP_SHELL && desk && desk.recorder);
+  const [st, setSt] = useState(null), [busy, setBusy] = useState(''), [now, setNow] = useState(Date.now()), media = useRef(null);
+  useEffect(() => { if (!has) return undefined; const get = () => desk.recorder.status().then(setSt).catch(() => {}); get(); const t = setInterval(() => { get(); setNow(Date.now()); }, 1000); return () => clearInterval(t); }, []);
+  if (!has || !user.recorder) return null;
+  const stopTracks = () => { const m = media.current; media.current = null; if (!m) return; try { if (m.rec.state !== 'inactive') m.rec.stop(); } catch (e) { } [...m.streams].forEach((x) => x.getTracks().forEach((t) => t.stop())); try { m.ctx.close(); } catch (e) { } };
+  const begin = async () => {
+    setBusy('Starting…');
+    const r = await desk.recorder.start();
+    if (!r || r.error) { setBusy(''); toast((r && r.error) || 'Minutes didn’t start recording.', 'warn'); return; }
+    try {
+      // the screen and the computer's own sound (a call on the speakers, a video), and the microphone, mixed into one recording
+      const screen = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 10 }, audio: true });
+      let mic = null; try { mic = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }); } catch (e) { toast('No microphone: only the screen and the computer’s sound are recorded', 'warn'); }
+      const ctx = new AudioContext(), mix = ctx.createMediaStreamDestination();
+      [screen, mic].filter((x) => x && x.getAudioTracks().length).forEach((x) => ctx.createMediaStreamSource(x).connect(mix));
+      const out = new MediaStream([...screen.getVideoTracks(), ...mix.stream.getAudioTracks()]);
+      const type = ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'].find((t) => MediaRecorder.isTypeSupported(t));
+      const rec = new MediaRecorder(out, { mimeType: type, videoBitsPerSecond: 900000, audioBitsPerSecond: 64000 });
+      let chain = Promise.resolve();
+      rec.ondataavailable = (e) => { if (e.data && e.data.size) chain = chain.then(() => e.data.arrayBuffer()).then((b) => desk.recorder.chunk(b)).catch(() => {}); };
+      media.current = { rec, ctx, streams: [screen, mic].filter(Boolean), done: () => chain };
+      rec.start(4000);
+      screen.getVideoTracks()[0].addEventListener('ended', () => finish()); // stopped from Windows' own "stop sharing"
+      setBusy('');
+    } catch (e) {
+      stopTracks(); await desk.recorder.cancel(); setBusy('');
+      toast('Couldn’t record the screen: ' + ((e && e.message) || e), 'warn');
+    }
+  };
+  const start = () => ask({ title: 'Record this meeting?', body: 'Your screen, your microphone and the computer’s sound are recorded, and what’s said is written down for the minutes. Make sure everyone in the meeting knows. The video stays on this computer (Documents › Meeting recordings); the minutes go into your My files › Meeting recordings.', confirm: 'Start recording', onConfirm: begin });
+  const finish = async () => {
+    if (!media.current || busy) return;
+    setBusy('Saving the recording…');
+    const m = media.current;
+    await new Promise((ok) => { m.rec.onstop = ok; try { m.rec.stop(); } catch (e) { ok(); } });
+    await m.done(); stopTracks();
+    const r = await desk.recorder.stop();
+    if (!r || r.error) { setBusy(''); toast((r && r.error) || 'The recording didn’t save.', 'warn'); return; }
+    const when = new Date(r.started).toLocaleString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) + ' (' + fmtDur(r.ended - r.started) + ')';
+    const title = 'Meeting ' + new Date(r.started).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' });
+    let notes = null, why = '';
+    if (r.transcript && r.transcript.length >= 20) {
+      setBusy('Writing the minutes…');
+      try { notes = (await makeNotes(db, { title, owner: user.id, attendees: [user.id], notes: '' }, dkey(r.started), r.transcript)).notes; } catch (e) { why = (e && e.message) || 'The minutes couldn’t be written.'; }
+    } else why = r.speech === 'privacy' ? 'Nothing was written down: Windows’ online speech recognition is off.' : 'Nothing was heard to write down.';
+    setBusy('Saving the minutes…');
+    try {
+      const blob = await minutesPdf(title + ': minutes', when, notes || { summary: why }, r.transcript, r.name);
+      const name = r.name.replace(/\.webm$/, '') + ' – minutes.pdf', file = new File([blob], name, { type: 'application/pdf' });
+      const [att] = await storeFiles([{ file, name, mime: 'application/pdf', size: file.size, kind: 'pdf', title: title + ' – minutes' }], 'me/' + user.id + '/');
+      update((d) => {
+        const p = d.pins[user.id] = d.pins[user.id] || { posts: [], notes: [] };
+        p.myfolders = p.myfolders || [];
+        let fo = p.myfolders.find((x) => /^meeting recordings$/i.test(x.name));
+        if (!fo) { fo = { id: uid('mf'), name: 'Meeting recordings', at: Date.now() }; p.myfolders.push(fo); }
+        p.myfiles = [{ id: uid('mf'), title: title + ' – minutes', att, at: Date.now(), folder: fo.id, video: r.name }, ...(p.myfiles || [])];
+      });
+      toast(notes ? 'Saved: the minutes are in My files › Meeting recordings, the video in Documents › Meeting recordings' : 'Saved the video and a PDF (' + why + ')');
+    } catch (e) { toast('The video is saved, but the minutes didn’t: ' + ((e && e.message) || e), 'warn'); }
+    setBusy(''); desk.recorder.openFolder(r.file);
+  };
+  const on = st && st.on;
+  return html`<div className=${'w-rec glass' + (on ? ' on' : '')}>
+    <div className="rec-row">
+      <span className=${'rec-dot' + (on ? ' live' : '')}></span>
+      <span className="rec-t"><b>${on ? 'Recording · ' + fmtDur(now - st.started) : 'Minutes'}</b>
+        <small>${busy || (on ? (st.speech === 'privacy' ? 'Writing down is off: switch on Windows’ online speech recognition' : st.speech === 'on' ? (st.words ? st.words + ' things written down' + (st.last ? ': “' + st.last.slice(0, 60) + '”' : '') : 'Listening…') : st.speech === 'starting' ? 'Starting to listen…' : String(st.speech || '')) : 'Screen, voice and minutes')}</small></span>
+      ${on ? html`<button className="btn sm primary" onClick=${finish} disabled=${!!busy}>Stop</button>` : html`<button className="btn sm primary" onClick=${start} disabled=${!!busy}>Record</button>`}
+    </div>
+    ${on && st.speech === 'privacy' && html`<button className="btn sm ghost" onClick=${() => desk.recorder.speechSettings()}>Open Windows’ speech settings</button>`}
   </div>`;
 }
 function JarvisCard() {

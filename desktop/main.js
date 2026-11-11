@@ -7,6 +7,7 @@ const coucou = require('./coucou');
 const ask = require('./ask');
 const outlook = require('./outlook');
 const mfs = require('./mfs');
+const recorder = require('./recorder');
 const jarvis = require('./jarvis');
 const whatsapp = require('./whatsapp');
 
@@ -267,6 +268,18 @@ let jarvisMenuWas = false;
 const ours = (e) => [sidebar, full, bar].some((w) => w && !w.isDestroyed() && e.sender === w.webContents);
 // Logging in or out in one window (the sidebar, say) is passed to the others (the island at the top, the full app, the
 // slim rail), which pick it up straight away
+// the sidebar's meeting recorder: screen, microphone and the computer's sound to a video on this computer, and what's said
+function recorderIpc() {
+  recorder.allowScreen();
+  ipcMain.handle('rec-start', (e) => (ours(e) ? recorder.start() : { error: 'no' }));
+  ipcMain.handle('rec-chunk', (e, buf) => (ours(e) ? recorder.chunk(buf) : false));
+  ipcMain.handle('rec-status', (e) => (ours(e) ? recorder.status() : {}));
+  ipcMain.handle('rec-stop', (e) => (ours(e) ? recorder.stop() : { error: 'no' }));
+  ipcMain.handle('rec-cancel', (e) => { if (ours(e)) recorder.cancel(); return true; });
+  ipcMain.on('rec-open-folder', (e, file) => { if (ours(e)) recorder.openFolder(typeof file === 'string' ? file : ''); });
+  ipcMain.on('rec-play', (e, file) => { if (ours(e)) recorder.play(typeof file === 'string' ? file : ''); });
+  ipcMain.on('rec-speech-settings', (e) => { if (ours(e)) recorder.openSpeechSettings(); });
+}
 function sessionIpc() {
   ipcMain.on('session-changed', (e, st) => {
     if (!ours(e)) return;
@@ -429,6 +442,38 @@ function createSidebar() {
         placeBar('open'); console.log('SMOKE bar open', JSON.stringify(bar.getBounds())); placeBar('pill');
       }
       slideTo(true); await wait(400);
+      if (process.env.FLOORBOARD_SMOKE_REC) { // the sidebar's meeting recorder: a short real recording of the screen, and minutes from a stand-in for Windows' speech
+        const J = (x) => sidebar.webContents.executeJavaScript(x);
+        await J("(() => { localStorage.setItem('floorboard.session.v1', 'u5'); const k = 'floorboard.demo.v5', d = JSON.parse(localStorage.getItem(k) || 'null'); if (!d) return 0; d.users.find((x) => x.id === 'u5').recorder = true; if (d.pins.u5) { delete d.pins.u5.myfolders; d.pins.u5.myfiles = []; } localStorage.setItem(k, JSON.stringify(d)); location.reload(); return 1; })()"); await wait(4500);
+        console.log('SMOKE rec card', JSON.stringify(await J("(document.querySelector('.w-rec') || {}).innerText || 'none'")));
+        await J("[...document.querySelectorAll('.w-rec button')].find((b) => b.innerText === 'Record').click(); 1"); await wait(800);
+        console.log('SMOKE rec asks', JSON.stringify(await J("(document.querySelector('.modal') || {}).innerText || 'no question'")));
+        await J("[...document.querySelectorAll('.modal button')].find((b) => /Start recording/.test(b.innerText)).click(); 1"); await wait(10000);
+        console.log('SMOKE rec during', JSON.stringify(await J("document.querySelector('.w-rec').innerText.replace(/\\n+/g, ' | ')")), JSON.stringify(recorder.status()));
+        await J("[...document.querySelectorAll('.w-rec button')].find((b) => b.innerText === 'Stop').click(); 1"); await wait(15000);
+        console.log('SMOKE rec after', JSON.stringify(await J("document.querySelector('.w-rec').innerText.replace(/\\n+/g, ' | ') + ' || ' + ([...document.querySelectorAll('.toast')].map((t) => t.innerText).join(' / '))")));
+        const pins = JSON.parse(await J("JSON.stringify(JSON.parse(localStorage.getItem('floorboard.demo.v5')).pins.u5 || {})"));
+        console.log('SMOKE rec my files', JSON.stringify({ folders: (pins.myfolders || []).map((f) => f.name), files: (pins.myfiles || []).slice(0, 2).map((f) => ({ title: f.title, video: f.video, att: f.att && { name: f.att.name, size: f.att.size, mime: f.att.mime }, inFolder: (pins.myfolders || []).some((x) => x.id === f.folder) })) }));
+        const att = pins.myfiles && pins.myfiles[0] && pins.myfiles[0].att;
+        if (att) { // the minutes PDF, for reading
+          const b64 = await J(`Blobs.get(${JSON.stringify(att.id)}).then((b) => new Promise((ok) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(',')[1]); r.readAsDataURL(b); }))`);
+          fs.writeFileSync(path.join(app.getPath('userData'), 'smoke-minutes.pdf'), Buffer.from(b64, 'base64'));
+          console.log('SMOKE rec minutes saved', path.join(app.getPath('userData'), 'smoke-minutes.pdf'));
+        }
+        // and in Files: My files › Meeting recordings › the minutes, with the recording's buttons
+        openFull(null, 'view:files'); await wait(4500);
+        const F = (x) => full.webContents.executeJavaScript(x);
+        const clickText = (re) => F(`(() => { const el = [...document.querySelectorAll('button, a, [role=button], [tabindex]')].filter((b) => b.offsetParent && ${re}.test((b.innerText || '').trim())).sort((a, b) => a.innerText.length - b.innerText.length)[0]; if (!el) return 'not found'; el.click(); return el.innerText.trim().replace(/\\n+/g, ' ').slice(0, 60); })()`);
+        console.log('SMOKE rec files folder', await clickText('/Meeting recordings/')); await wait(1000);
+        console.log('SMOKE rec files item', await clickText('/minutes/')); await wait(2500);
+        console.log('SMOKE rec files viewer', JSON.stringify(await F("((document.querySelector('.fview') || {}).innerText || 'no viewer: ' + document.body.innerText.slice(0, 300)).replace(/\\n+/g, ' | ').slice(0, 500)")));
+        console.log('SMOKE rec files buttons', await F("[...document.querySelectorAll('.fv-video button')].map((b) => b.innerText).join(' + ') || 'none'"), '| pdf pages shown:', await F("document.querySelectorAll('.fview canvas, .fview img').length"));
+        if (process.env.FLOORBOARD_SMOKE_SHOTS) { fs.writeFileSync(path.join(process.env.FLOORBOARD_SMOKE_SHOTS, 'minutes-files.png'), (await full.webContents.capturePage()).toPNG()); fs.writeFileSync(path.join(process.env.FLOORBOARD_SMOKE_SHOTS, 'minutes-sidebar.png'), (await sidebar.webContents.capturePage()).toPNG()); }
+        const dir = path.join(app.getPath('documents'), 'Meeting recordings'), vids = fs.existsSync(dir) ? fs.readdirSync(dir).filter((n) => /\.webm$/.test(n)).map((n) => ({ n, s: fs.statSync(path.join(dir, n)) })).sort((x, y) => y.s.mtimeMs - x.s.mtimeMs) : [];
+        const v = vids[0], head = v ? fs.readFileSync(path.join(dir, v.n)).subarray(0, 4).toString('hex') : '';
+        console.log('SMOKE rec video', JSON.stringify(v ? { name: v.n, kb: Math.round(v.s.size / 1024), webm: head === '1a45dfa3' } : 'none'));
+        app.quit(); return;
+      }
       if (process.env.FLOORBOARD_SMOKE_DEMO) await sidebar.webContents.executeJavaScript("localStorage.setItem('floorboard.session.v1', 'u5'); 1");
       setSlim(null, true); await wait(2500);
       if (process.env.FLOORBOARD_SMOKE_DEMO && rail) fs.writeFileSync(path.join(app.getPath('temp'), 'floorboard-rail.png'), (await rail.webContents.capturePage()).toPNG()); console.log('SMOKE folded: rail', rail && rail.isVisible() ? 'shown at ' + JSON.stringify(rail.getBounds()) + (rail.isAlwaysOnTop() ? ' in front' : '') : 'not shown', '| sidebar', sidebar.isVisible() ? 'visible' : 'put away', '| button', bubble && bubble.isVisible() ? 'shown' : 'hidden');
@@ -781,6 +826,7 @@ else {
     jarvisIpc();
     islandIpc();
     sessionIpc();
+    recorderIpc();
     if (SMOKE) return;
     buildTray();
     startupFlag(process.argv);

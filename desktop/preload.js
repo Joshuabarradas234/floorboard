@@ -70,6 +70,17 @@ contextBridge.exposeInMainWorld('floorboardDesktop', {
     onOpen: (fn) => { const h = () => fn(); ipcRenderer.on('mfs-open', h); return () => ipcRenderer.removeListener('mfs-open', h); },
   },
   // Floorboard's own island at the top: WhatsApp (through the WhatsApp gateway on this computer) and Mail (Outlook classic)
+  // the sidebar's meeting recorder (the video stays on this computer)
+  recorder: {
+    start: () => ipcRenderer.invoke('rec-start'),
+    chunk: (buf) => ipcRenderer.invoke('rec-chunk', buf),
+    status: () => ipcRenderer.invoke('rec-status'),
+    stop: () => ipcRenderer.invoke('rec-stop'),
+    cancel: () => ipcRenderer.invoke('rec-cancel'),
+    openFolder: (file) => ipcRenderer.send('rec-open-folder', String(file || '')),
+    play: (file) => ipcRenderer.send('rec-play', String(file || '')),
+    speechSettings: () => ipcRenderer.send('rec-speech-settings'),
+  },
   // logging in or out here, told to Floorboard's other windows, and hearing theirs
   session: {
     tell: (st) => ipcRenderer.send('session-changed', st === 'in' ? 'in' : 'out'),
