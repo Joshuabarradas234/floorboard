@@ -661,6 +661,7 @@ function openFull(_e, target) {
 const MS_SCOPES = ['User.Read', 'Mail.Read'];
 // Teams (what people ask of the person there): chats, and team channels once the company's admin has allowed it
 const TEAMS_SCOPES = ['User.Read', 'Chat.Read'], TEAMS_CHANNEL_SCOPES = ['User.Read', 'Team.ReadBasic.All', 'Channel.ReadBasic.All', 'ChannelMessage.Read.All'];
+const BOTH_SCOPES = ['User.Read', 'Mail.Read', 'Chat.Read'];
 const GUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 let msApp = null, msKey = '', msWeb = null; // msApp: through Windows' own sign-in when it's there; msWeb: through the browser
 const msCacheFile = () => path.join(app.getPath('userData'), 'outlook.bin');
@@ -710,7 +711,13 @@ function msIpc() {
   // the account signed in here: through Windows' own sign-in, or the browser's
   const msAccount = async (cfg) => { msClient(cfg); for (const p of [...new Set([msApp, msWeb])]) { try { const [a] = await p.getAllAccounts(); if (a) return { username: a.username, name: a.name || '' }; } catch (e) { /* next */ } } return null; };
   ipcMain.handle('ms-account', safe(async ({ cfg }) => msAccount(cfg)));
-  ipcMain.handle('ms-signin', safe(async ({ cfg, what }) => { await msToken(cfg, true, what === 'teams' ? TEAMS_SCOPES : MS_SCOPES); return msAccount(cfg); }));
+  // one sign-in does both, email and Teams, so the other card doesn't ask again (just the one asked for when the
+  // company's Microsoft 365 won't allow both). It's kept by Windows, not by Outlook or Teams: closing them changes nothing.
+  ipcMain.handle('ms-signin', safe(async ({ cfg, what }) => {
+    try { await msToken(cfg, true, BOTH_SCOPES); }
+    catch (e) { if (/cancel/i.test(String((e && e.message) || ''))) throw e; await msToken(cfg, true, what === 'teams' ? TEAMS_SCOPES : MS_SCOPES); }
+    return msAccount(cfg);
+  }));
   ipcMain.handle('ms-signout', safe(async ({ cfg }) => {
     try { msClient(cfg); for (const p of [...new Set([msApp, msWeb])]) { const c = p.getTokenCache(); for (const a of await c.getAllAccounts()) await c.removeAccount(a); } } catch (e) { /* nothing to remove */ }
     try { fs.unlinkSync(msCacheFile()); } catch (e) { /* already gone */ }

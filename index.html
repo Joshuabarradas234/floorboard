@@ -3351,7 +3351,7 @@ function IslTeams({ big, setBig, demo }) {
     <${IslCardHead} id="teams" sub="Asked of you" count=${live0 ? (items.length ? items.length + ' open' : 'All done') : ''} onOpen=${() => { const d = window.floorboardDesktop; if (d && d.openFull) d.openFull('view:needs'); else location.hash = 'go-view:needs'; }}/>
     ${!live0 ? html`<div className="isl-closed">${!MS.on ? html`<${TeamsSetup} setBig=${setBig}/>`
       : t.off ? html`<p>Teams is switched off for you.</p><button className="isl-more" onClick=${connect} disabled=${busy}>Switch it on</button>`
-      : html`<p>${t.status === 'error' ? 'Teams: ' + t.err : 'See what people ask of you in Teams: tasks, feedback, things to look at and approvals.'}</p><button className="isl-more primary" onClick=${connect} disabled=${busy}>${busy ? 'Connecting…' : t.status === 'error' ? 'Try again' : 'Connect Teams'}</button>`}</div>`
+      : html`<p>${t.status === 'error' ? 'Teams: ' + t.err : 'See what people ask of you in Teams: tasks, feedback, things to look at and approvals. Connect once (it does your email too): it stays connected, even with Teams closed.'}</p><button className="isl-more primary" onClick=${connect} disabled=${busy}>${busy ? 'Connecting…' : t.status === 'error' ? 'Try again' : 'Connect Teams'}</button>`}</div>`
     : who === null ? (rows.length ? html`<${IslWho} rows=${rows} color=${ISL.teams.fur} onPick=${(n) => setWho(n)}/>` : html`<p className="isl-empty">Nothing asked of you in Teams.</p>`)
     : html`<div className="isl-list">
       <div className="isl-ch-row"><button className="isl-btn" onClick=${() => setWho(null)} aria-label="Back"><${Icon} n="back" s=${14}/></button><b className="isl-ell">${who ? 'From ' + who : 'Everything from Teams'}</b></div>
@@ -3394,7 +3394,7 @@ function IslMail({ big, setBig, st, gm }) {
       ${!big && !finding && (m.from || []).length > 0 ? html`<${IslWho} rows=${(m.from || []).map((x) => [x.name, x.n])} color=${ISL.mail.fur} onPick=${(n) => { setFinding(true); setQ(n); }}/>` : html`
       <div className=${'isl-list' + (big ? '' : ' short')}>${list.slice(0, big ? 30 : 2).map((e) => html`<button key=${e.id} className=${'isl-row' + (e.unread ? ' new' : '')} onClick=${() => read(e)}>
         <i className="isl-unread"></i><span><b>${e.from || e.address || 'Someone'}</b><small>${e.subject || '(no subject)'}</small></span><em>${when(e.received)}</em></button>`)}
-        ${!list.length && html`<p className="isl-empty">${finding && q.trim() ? (found ? 'No email matches.' : 'Looking…') : m.error || 'Nothing in the inbox.'}</p>`}</div>`}`}
+        ${!list.length && html`<p className="isl-empty">${finding && q.trim() ? (found ? 'No email matches.' : 'Looking…') : m.loading ? 'Getting your mail…' : m.error || 'Nothing in the inbox.'}</p>`}</div>`}`}
   </div>`;
 }
 
@@ -3443,6 +3443,8 @@ function useGraphMail(on) {
   const [m, setM] = useState(null);
   useEffect(() => {
     if (!on || !MS.on) { setM(null); return undefined; }
+    // (while the first look is on its way, the card says so instead of asking to sign in again)
+    setM((x) => (x && x.graph ? x : { loading: true }));
     let dead = false, t = 0;
     const go = async () => {
       clearTimeout(t);
@@ -3463,10 +3465,12 @@ function useGraphMail(on) {
 }
 // the Mail card when there's no mail to show: sign in with the work Microsoft account, or open Outlook
 function IslMailSignIn({ m, gm }) {
-  const desk = window.floorboardDesktop, [busy, setBusy] = useState(false), [err, setErr] = useState('');
-  const signIn = async () => { setBusy(true); setErr(''); try { await MS.signIn('mail'); window.dispatchEvent(new Event('fb-mail-signin')); } catch (e) { setErr(String((e && e.message) || e)); } setBusy(false); };
+  const { db, user, update } = useApp(), desk = window.floorboardDesktop, [busy, setBusy] = useState(false), [err, setErr] = useState(''), live = useRef(null);
+  live.current = { db, user };
+  // (the same sign-in does Teams: its card fills in straight away too)
+  const signIn = async () => { setBusy(true); setErr(''); try { await MS.signIn('mail'); window.dispatchEvent(new Event('fb-mail-signin')); teamsPoll(() => live.current, update).catch(() => { }); } catch (e) { setErr(String((e && e.message) || e)); } setBusy(false); };
   const classic = m.classic !== false;
-  return html`<div className="isl-closed"><p>${MS.on ? (gm && gm.error ? 'Email: ' + gm.error : 'See your email here: sign in with your work Microsoft account' + (classic ? ', or open Outlook (the classic one).' : '.'))
+  return html`<div className="isl-closed"><p>${MS.on ? (gm && gm.error ? 'Email: ' + gm.error : 'See your email here: sign in once with your work Microsoft account (it does Teams too). It stays signed in, even with Outlook closed.' + (classic ? ' Or open Outlook (the classic one).' : ''))
       : classic ? 'Open Outlook (the classic one) to see your mail here.' : 'To see your email here, sign in to Outlook (classic) on this computer. (Signing in from here needs Microsoft 365 set up for the store first.)'}</p>
     ${err && html`<small className="isl-err">${err}</small>`}
     <span className="isl-btns">${MS.on && html`<button className="isl-more primary" onClick=${signIn} disabled=${busy}>${busy ? 'Signing in…' : 'Sign in to your email'}</button>`}
@@ -3670,7 +3674,7 @@ function Island() {
   useEffect(() => { if (!opts.demo) return undefined; setDemo({ stage: 0, t0: Date.now() }); const ts = [5000, 10000, 15000].map((ms, i) => setTimeout(() => setDemo((d) => ({ ...d, stage: i + 1 })), ms)); return () => ts.forEach(clearTimeout); }, [!!opts.demo]);
   const comMail = !!(stReal.mail && !stReal.mail.closed), gm = useGraphMail(!opts.demo && !comMail);
   const dm = opts.demo ? islDemo(demo.stage, demo.t0) : null, st = dm ? { ...stReal, whatsapp: dm.whatsapp, mail: dm.mail }
-    : { ...stReal, mail: gm && gm.graph ? gm : stReal.mail || (MS.on ? { closed: true, classic: false, emails: [], count: 0 } : null) };
+    : { ...stReal, mail: gm && gm.graph ? gm : gm && gm.loading ? { loading: true, emails: [], count: 0, from: [] } : stReal.mail || (MS.on ? { closed: true, classic: false, emails: [], count: 0 } : null) };
   const mark = (id) => {
     if (id === 'mail' || id === 'whatsapp') return; // WhatsApp's count clears when you move on from its card (leaveWa); Mail's is Outlook's own
     setSeen((s) => { const n = { ...s, [id]: Date.now() }; islSet('seen', n); return n; });
@@ -8754,7 +8758,8 @@ const MS = (() => {
     },
     async signIn(what) {
       const scopes = what === 'teams' ? TEAMS_SCOPES : MS_SCOPES;
-      if (demo) { if (what === 'teams') { lsSet('floorboard.demoteams.v1', String(Date.now())); return { username: 'you@riverside.example', name: '' }; } lsSet('floorboard.demomail.v1', '1'); return this.account(); }
+      // (the demo, like the Windows app: one sign-in does email and Teams)
+      if (demo) { lsSet('floorboard.demomail.v1', '1'); if (!lsGet('floorboard.demoteams.v1')) lsSet('floorboard.demoteams.v1', String(Date.now())); return what === 'teams' ? { username: 'you@riverside.example', name: '' } : this.account(); }
       const d = desk(); if (d) return unwrap(await d.signIn(cfg, what));
       const p = await web();
       try { return who((await p.loginPopup({ scopes, prompt: 'select_account' })).account); }
@@ -8938,6 +8943,7 @@ function useTeamsSync(active) {
 // connecting: the person's own Microsoft sign-in, then a first look straight away
 async function teamsConnect(live, update) {
   await MS.signIn('teams');
+  window.dispatchEvent(new Event('fb-mail-signin')); // (on the Windows app the same sign-in does email: the Mail card fills in too)
   update((d) => { const p = d.pins[live().user.id] = d.pins[live().user.id] || { posts: [], notes: [] }; p.teams = { ...(p.teams || {}), off: false }; });
   await teamsPoll(live, update);
 }
