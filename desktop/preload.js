@@ -82,6 +82,8 @@ contextBridge.exposeInMainWorld('floorboardDesktop', {
     play: (file) => ipcRenderer.send('rec-play', String(file || '')),
     speechSettings: () => ipcRenderer.send('rec-speech-settings'),
     speechOn: () => ipcRenderer.invoke('rec-speech-on'),
+    working: (on) => ipcRenderer.invoke('rec-working', !!on),
+    waiting: (op, who, list) => ipcRenderer.invoke('rec-waiting', op, who, list), // the minutes still to be made
   },
   // logging in or out here, told to Floorboard's other windows, and hearing theirs
   session: {

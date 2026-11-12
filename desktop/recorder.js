@@ -3,8 +3,33 @@
 // (dictation.ps1) for the minutes. The page records (MediaRecorder) and sends the video here a few seconds at a time;
 // nothing of the video leaves this computer.
 const fs = require('fs'), path = require('path'), { spawn } = require('child_process');
-const { app, desktopCapturer, session, shell } = require('electron');
+const { app, desktopCapturer, session, shell, powerSaveBlocker } = require('electron');
 
+// From Record until the minutes are saved, Windows isn't to sleep (an hour's meeting takes a few minutes to write down after
+// Stop, and sleeping in the middle stalls it); the page says when it's done (working(false)), and it ends by itself after 2 hours.
+let awake = null, working = false, workTimer = null;
+function keepAwake(on) {
+  if (on && awake === null) { try { awake = powerSaveBlocker.start('prevent-app-suspension'); } catch (e) { awake = null; } }
+  if (!on && awake !== null && !cur && !working) { try { powerSaveBlocker.stop(awake); } catch (e) { } awake = null; }
+}
+function setWorking(on) { working = !!on; clearTimeout(workTimer); if (working) workTimer = setTimeout(() => setWorking(false), 2 * 60 * 60 * 1000); keepAwake(working); return true; }
+const busy = () => !!cur || working; // (updates wait while this is true)
+
+// Minutes still to be made after Stop, per person, in a file written at once (so it survives the laptop sleeping, Floorboard
+// being closed, or a crash, and they're finished the next time it's open)
+const waitingFile = () => path.join(app.getPath('userData'), 'minutes-waiting.json');
+function waitingAll() { try { const o = JSON.parse(fs.readFileSync(waitingFile(), 'utf8')); return o && typeof o === 'object' ? o : {}; } catch (e) { return {}; } }
+function waiting(op, who, list) {
+  who = String(who || '').slice(0, 80); if (!who) return [];
+  const all = waitingAll();
+  if (op === 'set') {
+    all[who] = Array.isArray(list) ? list.slice(0, 20) : [];
+    if (!all[who].length) delete all[who];
+    const tmp = waitingFile() + '.part';
+    fs.writeFileSync(tmp, JSON.stringify(all)); fs.renameSync(tmp, waitingFile());
+  }
+  return all[who] || [];
+}
 let cur = null; // { file, out, words: [{ text, at }], ps, speech: 'starting'|'on'|'privacy'|'error: …', started }
 
 const folder = () => path.join(app.getPath('documents'), 'Meeting recordings');
@@ -55,6 +80,7 @@ function start() {
   cur = { file, out: fs.createWriteStream(file), words: [], ps: null, speech: 'starting', started: started.getTime(), wav, wfd: null, wbytes: 0 };
   try { cur.wfd = fs.openSync(wav, 'w'); fs.writeSync(cur.wfd, wavHeader(0)); } catch (e) { cur.wfd = null; }
   cur.ps = listen();
+  keepAwake(true);
   return { ok: true, file, name: path.basename(file) };
 }
 // a few seconds of the video at a time
@@ -146,9 +172,10 @@ async function stop(opts = {}) {
     } else fileWhy = 'the recording had no sound';
     try { fs.unlinkSync(c.wav); } catch (e) { /* already gone */ }
   }
+  keepAwake(false); // (stays awake while the page is still making the minutes)
   return { ok: true, file: c.file, name: path.basename(c.file), folder: folder(), size, transcript, how, speech: c.speech, fileWhy, started: c.started, ended };
 }
-function cancel() { if (!cur) return; const c = cur; cur = null; try { c.ps.kill(); } catch (e) { } c.out.end(() => { try { fs.unlinkSync(c.file); } catch (e) { } }); if (c.wfd !== null) { try { fs.closeSync(c.wfd); fs.unlinkSync(c.wav); } catch (e) { } } }
+function cancel() { if (!cur) return; const c = cur; cur = null; keepAwake(false); try { c.ps.kill(); } catch (e) { } c.out.end(() => { try { fs.unlinkSync(c.file); } catch (e) { } }); if (c.wfd !== null) { try { fs.closeSync(c.wfd); fs.unlinkSync(c.wav); } catch (e) { } } }
 
 // a recording by its full path, or by its name in the Meeting recordings folder (as My files keeps it)
 const where = (file) => (file ? (path.isAbsolute(file) ? file : path.join(folder(), path.basename(file))) : '');
@@ -161,4 +188,4 @@ const speechOn = () => new Promise((ok) => {
   require('child_process').execFile('reg', ['query', 'HKCU\\Software\\Microsoft\\Speech_OneCore\\Settings\\OnlineSpeechPrivacy', '/v', 'HasAccepted'], { windowsHide: true }, (err, out) => ok(!err && /HasAccepted\s+REG_DWORD\s+0x1\b/i.test(String(out))));
 });
 
-module.exports = { allowScreen, start, chunk, sound, status, stop, cancel, openFolder, play, openSpeechSettings, speechOn, writeLength };
+module.exports = { busy, setWorking, waiting, allowScreen, start, chunk, sound, status, stop, cancel, openFolder, play, openSpeechSettings, speechOn, writeLength };

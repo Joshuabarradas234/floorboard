@@ -1956,7 +1956,9 @@ const Blobs = (() => {
     try { const { data, error } = await CLOUD.storage.from('files').download(path || 'att/' + id); if (!error && data) { await put(id, data); mem.delete(id); } } catch (e) { }
   }
   async function clear() { mem.clear(); const d = await open(); if (!d) return; try { d.transaction('b', 'readwrite').objectStore('b').clear(); } catch (e) { } }
-  return { put, get, has, keep, clear };
+  // one file off this device (Minutes' sound and screen pictures, once the minutes are made)
+  async function drop(id) { mem.delete(id); const d = await open(); if (!d) return; try { d.transaction('b', 'readwrite').objectStore('b').delete(id); } catch (e) { } }
+  return { put, get, has, keep, clear, drop };
 })();
 // Files added with no signal: saved on the device straight away, sent to the store's server once there's a connection.
 const UPLOADS_KEY = 'floorboard.uploads.v1';
@@ -9873,6 +9875,9 @@ function RecorderCard() {
   const { db, user, update, toast } = useApp(), desk = window.floorboardDesktop, has = !!(DESKTOP_SHELL && desk && desk.recorder);
   const [st, setSt] = useState(null), [busy, setBusy] = useState(''), [now, setNow] = useState(Date.now()), media = useRef(null);
   const [who, setWho] = useState(null); // the "who's in this meeting?" window: { ids, guests }
+  const [waiting, setWaiting] = useState(''), resumeRef = useRef(null), carrying = useRef(false);
+  // minutes left unfinished (the laptop slept, or Floorboard was closed, after Stop): finished a few seconds after it opens
+  useEffect(() => { if (!has || !CLOUD) return undefined; const t = setTimeout(() => { if (resumeRef.current) resumeRef.current(); }, 5000); return () => clearTimeout(t); }, []);
   useEffect(() => { if (!has) return undefined; const get = () => desk.recorder.status().then(setSt).catch(() => {}); get(); const t = setInterval(() => { get(); setNow(Date.now()); }, 1000); return () => clearInterval(t); }, []);
   // before the first meeting: is Windows' speech recognition on, so what's said gets written down? (checked again every few seconds until it is)
   const [speechOk, setSpeechOk] = useState(true), [quiet, setQuiet] = useState(false);
@@ -9883,6 +9888,9 @@ function RecorderCard() {
   }, [user.recorder]);
   if (!has || !user.recorder) return null;
   const voice = user.recorder === 'voice'; // voice only: the microphone, no screen
+  // the microphone as it is: no noise suppression or automatic volume, which even voices out and make it harder for the speech
+  // service to tell who's speaking (echo cancelling stays, for a call on the speakers)
+  const MIC = { echoCancellation: true, noiseSuppression: false, autoGainControl: false };
   const people = db.users.filter((u) => u.active !== false).sort((a, b) => a.name.localeCompare(b.name));
   const stopTracks = () => {
     const m = media.current; media.current = null; setQuiet(false); if (!m) return;
@@ -9940,7 +9948,7 @@ function RecorderCard() {
     if (!r || r.error) { setBusy(''); toast((r && r.error) || 'Minutes didn’t start recording.', 'warn'); return; }
     const t0 = Date.now(), talk = [], shots = [];
     if (voice) try {
-      const mic = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+      const mic = await navigator.mediaDevices.getUserMedia({ audio: MIC });
       const main = recordInto(mic, ['audio/webm;codecs=opus', 'audio/webm'], { audioBitsPerSecond: 48000 }, talk, true); // the voice recording is also what's sent to be written down
       const ctx = new AudioContext();
       media.current = { rec: main.rec, ctx, streams: [mic], done: main.done, watch: watchMic(ctx, mic), keep: keepSound([mic]), names, talk, shots, t0 };
@@ -9953,7 +9961,7 @@ function RecorderCard() {
     try {
       // the screen and the computer's own sound (a call on the speakers, a video), and the microphone, mixed into one recording
       const screen = await navigator.mediaDevices.getDisplayMedia({ video: { frameRate: 10 }, audio: true });
-      let mic = null; try { mic = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } }); } catch (e) { toast('No microphone: only the screen and the computer’s sound are recorded', 'warn'); }
+      let mic = null; try { mic = await navigator.mediaDevices.getUserMedia({ audio: MIC }); } catch (e) { toast('No microphone: only the screen and the computer’s sound are recorded', 'warn'); }
       const ctx = new AudioContext(), mix = ctx.createMediaStreamDestination();
       [screen, mic].filter((x) => x && x.getAudioTracks().length).forEach((x) => ctx.createMediaStreamSource(x).connect(mix));
       const main = recordInto(new MediaStream([...screen.getVideoTracks(), ...mix.stream.getAudioTracks()]), ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'], { videoBitsPerSecond: 900000, audioBitsPerSecond: 64000 }, null, true);
@@ -9979,6 +9987,119 @@ function RecorderCard() {
     setWho(null); begin(names);
   };
   const stopRec = (r) => new Promise((ok) => { if (!r || r.state === 'inactive') { ok(); return; } r.onstop = ok; try { r.stop(); } catch (e) { ok(); } });
+  const sleep = (ms) => new Promise((ok) => setTimeout(ok, ms));
+  const within = (ms, pr) => Promise.race([pr, new Promise((_, no) => setTimeout(() => no(new Error('no answer from the store’s server')), ms))]);
+  // problems that won't go away by trying again (anything else, like no internet after the laptop woke, is tried again later)
+  const lasting = (e) => /not your recording|not a working key|secret is missing|not signed in|not a member|AssemblyAI said 4|couldn’t be written down|took too long|no sound to send|declined/i.test(String((e && e.message) || e));
+  const again = async (fn, tries = 4) => { let last; for (let i = 0; i < tries; i++) { try { return await fn(); } catch (e) { last = e; if (lasting(e)) throw e; await sleep(3000 * (i + 1)); } } throw last; };
+  // the minutes saved as a PDF into My files › Meeting recordings, and Floorboard opened on them
+  const saveMinutes = async (x) => {
+    const when = new Date(x.started).toLocaleString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) + ' (' + fmtDur(x.ended - x.started) + ')';
+    const title = 'Meeting ' + new Date(x.started).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' });
+    const blob = await minutesPdf(title + ': minutes', when, x.notes || { summary: x.why }, x.transcript, x.name, { names: x.names, shots: x.shots, how: x.how });
+    const name = x.name.replace(/\.webm$/, '') + ' – minutes.pdf', file = new File([blob], name, { type: 'application/pdf' });
+    const [att] = await storeFiles([{ file, name, mime: 'application/pdf', size: file.size, kind: 'pdf', title: title + ' – minutes' }], 'me/' + user.id + '/');
+    const had = ((db.pins[user.id] || {}).myfolders || []).find((f) => /^meeting recordings$/i.test(f.name));
+    const folderId = had ? had.id : uid('mf'), fileId = uid('mf');
+    update((d) => {
+      const p = d.pins[user.id] = d.pins[user.id] || { posts: [], notes: [] };
+      p.myfolders = p.myfolders || [];
+      let fo = p.myfolders.find((f) => f.id === folderId) || p.myfolders.find((f) => /^meeting recordings$/i.test(f.name));
+      if (!fo) { fo = { id: folderId, name: 'Meeting recordings', at: Date.now() }; p.myfolders.push(fo); }
+      p.myfiles = [{ id: fileId, title: title + ' – minutes', att, at: Date.now(), folder: fo.id, video: x.name, ...(x.voice ? { rec: 'voice' } : {}) }, ...(p.myfiles || [])];
+    });
+    const what = x.voice ? 'voice recording' : 'video';
+    toast(x.notes ? 'Saved: the minutes are in My files › Meeting recordings, the ' + what + ' in Documents › Meeting recordings' : 'Saved the ' + what + ' and a PDF (' + x.why + ')');
+    if (desk.openFull) setTimeout(() => desk.openFull('view:files:mf:' + folderId + ':' + fileId), 400); else desk.recorder.openFolder(x.file);
+  };
+  // Minutes still being made, kept on this computer (the list, and the sound and pictures in the device's file store) so that
+  // if the laptop sleeps or Floorboard closes after Stop, they're finished the next time it's open
+  const PENDING = 'floorboard.minutes.pending.v1.' + user.id;
+  const pendingList = async () => {
+    if (desk.recorder.waiting) { try { const l = await desk.recorder.waiting('get', user.id); return Array.isArray(l) ? l : []; } catch (e) { return []; } }
+    try { const l = JSON.parse(localStorage.getItem(PENDING) || '[]'); return Array.isArray(l) ? l : []; } catch (e) { return []; }
+  };
+  const writePending = async (l) => { if (desk.recorder.waiting) { try { await desk.recorder.waiting('set', user.id, l); return; } catch (e) { /* below */ } } try { localStorage.setItem(PENDING, JSON.stringify(l)); } catch (e) { } };
+  const savePending = async (p) => writePending([...(await pendingList()).filter((x) => x.key !== p.key), p]);
+  const dropPending = async (p) => writePending((await pendingList()).filter((x) => x.key !== p.key));
+  // the speech service, then the pictures and Claude's minutes, each step noted as it's done
+  const carryOn = async (p) => {
+    const save = () => savePending(p);
+    let cloudWhy = '';
+    try {
+      if (!p.said) {
+        if (!p.talk) {
+          const talk = await Blobs.get(p.key + '-talk');
+          if (!talk || talk.size < 4000) throw new Error('there was no sound to send');
+          setBusy('Sending the sound to be written down…');
+          const path = p.base + 'talk.webm';
+          await again(async () => { const up = await within(15 * 60000, CLOUD.storage.from('files').upload(path, talk, { contentType: 'audio/webm', upsert: false })); if (up.error && !/exist|duplicate/i.test(up.error.message)) throw new Error(up.error.message); });
+          p.talk = path; await save();
+        }
+        if (!p.id) { const job = await again(() => within(60000, minutesCall({ action: 'transcribe', path: p.talk, speakers: p.names.length }))); p.id = job.id; await save(); }
+        const w0 = Date.now();
+        for (;;) {
+          setBusy('Writing down who said what… ' + fmtDur(Date.now() - w0));
+          const t = await again(() => within(60000, minutesCall({ action: 'transcript', id: p.id })));
+          if (t.status === 'completed') { p.said = (t.utterances || []).map((u) => '[' + fmtDur(u.start) + '] Speaker ' + u.speaker + ': ' + u.text).join('\n') || '-'; await save(); break; }
+          if (t.status === 'error') throw new Error(t.error || 'it couldn’t be written down');
+          if (Date.now() - w0 > 90 * 60000) throw new Error('it took too long');
+          await sleep(5000);
+        }
+      }
+    } catch (e) {
+      if (!lasting(e) && Date.now() - p.ended < 3 * 24 * 60 * 60 * 1000) { p.tries = (p.tries || 0) + 1; await save(); throw e; } // try again in a few minutes
+      cloudWhy = (e && e.message) || String(e);
+    }
+    const transcript = p.said && p.said !== '-' ? p.said : '';
+    let notes = null, why = '', screens = [];
+    if (transcript.length >= 20) {
+      if (p.shots.length) {
+        setBusy('Sending the pictures of the screen…');
+        for (const s of p.shots) {
+          if (s.path) continue;
+          const b = await Blobs.get(s.blob); if (!b) continue;
+          const path = p.base + 's-' + Math.round(s.at / 1000) + '.jpg';
+          try { const up = await within(60000, CLOUD.storage.from('files').upload(path, b, { contentType: 'image/jpeg', upsert: false })); if (!up.error || /exist|duplicate/i.test(up.error.message)) s.path = path; } catch (e) { /* that one's left out */ }
+        }
+        await save();
+        screens = p.shots.filter((s) => s.path).map((s) => ({ at: fmtDur(s.at), path: s.path }));
+      }
+      const ev = { title: 'Meeting', owner: user.id, attendees: [user.id], notes: '' };
+      setBusy(screens.length ? 'Writing the minutes from what was said and shown…' : 'Writing the minutes…');
+      try { notes = (await within(240000, makeNotes(db, ev, dkey(p.started), transcript, { names: p.names, screens }))).notes; }
+      catch (e) {
+        // a very long meeting can be too much in one go with the pictures: then from the words only
+        try { if (!screens.length) throw e; setBusy('Writing the minutes…'); notes = (await within(240000, makeNotes(db, ev, dkey(p.started), transcript, { names: p.names }))).notes; }
+        catch (e2) { if (!lasting(e2) && Date.now() - p.ended < 3 * 24 * 60 * 60 * 1000) { p.tries = (p.tries || 0) + 1; await save(); throw e2; } why = (e2 && e2.message) || 'The minutes couldn’t be written.'; }
+      }
+    } else why = 'Nothing was written down: ' + (cloudWhy ? 'the speech service: ' + cloudWhy : 'no speech was found in the recording') + '.';
+    setBusy('Saving the minutes…');
+    const shots = []; for (const s of p.shots) { const b = await Blobs.get(s.blob); if (b) shots.push({ at: s.at, w: s.w, h: s.h, blob: b }); }
+    await saveMinutes({ started: p.started, ended: p.ended, name: p.name, file: p.file, voice: p.voice, names: p.names, transcript, notes, why, shots,
+      how: transcript ? 'Written down by the speech service, split by voice' : '' });
+    // done: off the server and off this computer
+    const gone = [p.talk, ...p.shots.map((s) => s.path)].filter(Boolean);
+    if (gone.length) Promise.resolve(CLOUD.storage.from('files').remove(gone)).catch(() => {});
+    Blobs.drop(p.key + '-talk'); p.shots.forEach((s) => Blobs.drop(s.blob));
+    await dropPending(p);
+  };
+  // finish whatever is waiting (one at a time), keeping Windows awake and updates off meanwhile; if the server can't be
+  // reached, say so on the card and try again in five minutes
+  const finishWaiting = async () => {
+    if (carrying.current || media.current) return;
+    const list = await pendingList(); if (!list.length) { setWaiting(''); return; }
+    carrying.current = true; setWaiting('');
+    if (desk.recorder.working) desk.recorder.working(true);
+    try { for (const p of list) await carryOn(p); }
+    catch (e) {
+      const at = new Date(list[0].started).toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' });
+      setWaiting('The minutes of the ' + at + ' meeting are still to be made (' + ((e && e.message) || e) + '). Trying again in a few minutes.');
+      setTimeout(() => finishWaiting(), 5 * 60000);
+    }
+    finally { carrying.current = false; setBusy(''); if (desk.recorder.working) desk.recorder.working(false); }
+  };
+  resumeRef.current = finishWaiting;
   const finish = async () => {
     if (!media.current || busy) return;
     setBusy('Saving the recording…');
@@ -9987,81 +10108,31 @@ function RecorderCard() {
     await m.done(); if (m.keep) await m.keep.flush();
     const talk = new Blob(m.talk, { type: 'audio/webm' }), shots = m.shots.slice(), names = m.names || [];
     stopTracks();
-    const base = 'me/' + user.id + '/minutes/' + Date.now() + '/', uploaded = [];
-    const tidy = () => { if (uploaded.length) Promise.resolve(CLOUD.storage.from('files').remove(uploaded)).catch(() => {}); };
-    // 1. the speech service writes it down, split by voice (the store's server, then nothing kept there)
-    let lines = null, cloudWhy = '';
-    if (CLOUD && !LookOnly.on && talk.size > 4000) {
-      try {
-        setBusy('Sending the sound to be written down…');
-        const path = base + 'talk.webm';
-        const up = await CLOUD.storage.from('files').upload(path, talk, { contentType: 'audio/webm', upsert: false });
-        if (up.error) throw new Error(up.error.message);
-        uploaded.push(path);
-        const job = await minutesCall({ action: 'transcribe', path, speakers: names.length });
-        const w0 = Date.now();
-        for (;;) {
-          await new Promise((ok) => setTimeout(ok, 4000));
-          setBusy('Writing down who said what… ' + fmtDur(Date.now() - w0));
-          const t = await minutesCall({ action: 'transcript', id: job.id });
-          if (t.status === 'completed') { lines = t.utterances || []; break; }
-          if (t.status === 'error') throw new Error(t.error || 'it couldn’t be written down');
-          if (Date.now() - w0 > 45 * 60000) throw new Error('it took too long');
-        }
-      } catch (e) { cloudWhy = (e && e.message) || String(e); lines = null; }
+    if (desk.recorder.working) desk.recorder.working(true);
+    const cloud = !!(CLOUD && !LookOnly.on);
+    if (!cloud) setBusy('Writing down what was said…');
+    const r = await desk.recorder.stop({ local: !cloud });
+    if (!r || r.error) { if (desk.recorder.working) desk.recorder.working(false); setBusy(''); toast((r && r.error) || 'The recording didn’t save.', 'warn'); return; }
+    if (!cloud) {
+      // no store's server (the demo): Windows writes down what it can on the computer
+      const transcript = r.transcript || '';
+      let notes = null, why = '';
+      if (transcript.length >= 20) { setBusy('Writing the minutes…'); try { notes = (await makeNotes(db, { title: 'Meeting', owner: user.id, attendees: [user.id], notes: '' }, dkey(r.started), transcript, { names })).notes; } catch (e) { why = (e && e.message) || 'The minutes couldn’t be written.'; } }
+      else { const live = r.speech === 'privacy' ? 'Windows’ online speech recognition is off' : /^error/.test(r.speech || '') ? 'listening live failed (' + r.speech.slice(7) + ')' : r.speech === 'starting' ? 'listening live never started' : 'nothing was heard live'; why = 'Nothing was written down: ' + live + (r.fileWhy ? '; from the recording: ' + r.fileWhy : '') + '.'; }
+      setBusy('Saving the minutes…');
+      try { await saveMinutes({ started: r.started, ended: r.ended, name: r.name, file: r.file, voice, names, transcript, notes, why, shots, how: r.how === 'recording' ? 'Written down on this computer from the recording' : r.how === 'live' ? 'Written down on this computer as it was said' : '' }); }
+      catch (e) { toast('The ' + (voice ? 'voice recording' : 'video') + ' is saved, but the minutes didn’t: ' + ((e && e.message) || e), 'warn'); desk.recorder.openFolder(r.file); }
+      setBusy(''); if (desk.recorder.working) desk.recorder.working(false); return;
     }
-    const said = lines && lines.length ? lines.map((u) => '[' + fmtDur(u.start) + '] Speaker ' + u.speaker + ': ' + u.text).join('\n') : '';
-    // 2. the recording closed (and, without the speech service, Windows writes it down on the computer)
-    setBusy(said ? 'Saving the recording…' : 'Writing down what was said…');
-    const r = await desk.recorder.stop({ local: !said });
-    if (!r || r.error) { tidy(); setBusy(''); toast((r && r.error) || 'The recording didn’t save.', 'warn'); return; }
-    const transcript = said || r.transcript || '';
-    const when = new Date(r.started).toLocaleString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) + ' (' + fmtDur(r.ended - r.started) + ')';
-    const how = said ? 'Written down by the speech service, split by voice'
-      : (r.how === 'recording' ? 'Written down on this computer from the recording' : r.how === 'live' ? 'Written down on this computer as it was said' : '')
-        + (cloudWhy ? (r.how ? '. ' : '') + 'The speech service (who said what) wasn’t used: ' + cloudWhy : '');
-    const title = 'Meeting ' + new Date(r.started).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' });
-    // 3. the pictures of the screen (at most 40, spread over the meeting), then Claude writes the minutes
-    let notes = null, why = '', screens = [];
-    if (transcript.length >= 20) {
-      if (CLOUD && !LookOnly.on && shots.length) {
-        setBusy('Sending the pictures of the screen…');
-        const pick = shots.length <= 40 ? shots : Array.from({ length: 40 }, (_, i) => shots[Math.round(i * (shots.length - 1) / 39)]);
-        for (const s of pick) {
-          const path = base + 's-' + Math.round(s.at / 1000) + '.jpg';
-          try { const up = await CLOUD.storage.from('files').upload(path, s.blob, { contentType: 'image/jpeg', upsert: false }); if (!up.error) { uploaded.push(path); screens.push({ at: fmtDur(s.at), path }); } } catch (e) { /* that one's left out */ }
-        }
-      }
-      setBusy(screens.length ? 'Writing the minutes from what was said and shown…' : 'Writing the minutes…');
-      try { notes = (await makeNotes(db, { title, owner: user.id, attendees: [user.id], notes: '' }, dkey(r.started), transcript, { names, screens })).notes; } catch (e) { why = (e && e.message) || 'The minutes couldn’t be written.'; }
-    } else {
-      // nothing to make minutes from: say why, as plainly as can be told
-      const live = r.speech === 'privacy' ? 'Windows’ online speech recognition is off' : /^error/.test(r.speech || '') ? 'listening live failed (' + r.speech.slice(7) + ')' : r.speech === 'starting' ? 'listening live never started' : 'nothing was heard live';
-      why = 'Nothing was written down: ' + (cloudWhy ? 'the speech service: ' + cloudWhy + '; ' : '') + live + (r.fileWhy ? '; from the recording: ' + r.fileWhy : '') + '.';
-    }
-    tidy();
-    setBusy('Saving the minutes…');
-    try {
-      const blob = await minutesPdf(title + ': minutes', when, notes || { summary: why }, transcript, r.name, { names, shots, how });
-      const name = r.name.replace(/\.webm$/, '') + ' – minutes.pdf', file = new File([blob], name, { type: 'application/pdf' });
-      const [att] = await storeFiles([{ file, name, mime: 'application/pdf', size: file.size, kind: 'pdf', title: title + ' – minutes' }], 'me/' + user.id + '/');
-      const had = ((db.pins[user.id] || {}).myfolders || []).find((x) => /^meeting recordings$/i.test(x.name));
-      const folderId = had ? had.id : uid('mf'), fileId = uid('mf');
-      update((d) => {
-        const p = d.pins[user.id] = d.pins[user.id] || { posts: [], notes: [] };
-        p.myfolders = p.myfolders || [];
-        let fo = p.myfolders.find((x) => x.id === folderId) || p.myfolders.find((x) => /^meeting recordings$/i.test(x.name));
-        if (!fo) { fo = { id: folderId, name: 'Meeting recordings', at: Date.now() }; p.myfolders.push(fo); }
-        p.myfiles = [{ id: fileId, title: title + ' – minutes', att, at: Date.now(), folder: fo.id, video: r.name, ...(voice ? { rec: 'voice' } : {}) }, ...(p.myfiles || [])];
-      });
-      const what = voice ? 'voice recording' : 'video';
-      toast(notes ? 'Saved: the minutes are in My files › Meeting recordings, the ' + what + ' in Documents › Meeting recordings' : 'Saved the ' + what + ' and a PDF (' + why + ')');
-      setBusy('');
-      // straight to them: Floorboard opens on My files › Meeting recordings with the new minutes open
-      if (desk.openFull) setTimeout(() => desk.openFull('view:files:mf:' + folderId + ':' + fileId), 400); else desk.recorder.openFolder(r.file);
-      return;
-    } catch (e) { toast('The ' + (voice ? 'voice recording' : 'video') + ' is saved, but the minutes didn’t: ' + ((e && e.message) || e), 'warn'); }
-    setBusy(''); desk.recorder.openFolder(r.file);
+    // first keep the sound and the pictures on this computer and note the meeting, so nothing is lost if it sleeps or
+    // closes; then carry on (the sound to the speech service, the pictures and the minutes)
+    const key = 'minutes-' + r.started;
+    const pick = shots.length <= 40 ? shots : Array.from({ length: 40 }, (_, i) => shots[Math.round(i * (shots.length - 1) / 39)]);
+    await Blobs.put(key + '-talk', talk);
+    const kept = [];
+    for (const s of pick) { const k = key + '-s-' + s.at; await Blobs.put(k, s.blob); kept.push({ at: s.at, w: s.w, h: s.h, blob: k, path: null }); }
+    await savePending({ v: 1, key, name: r.name, file: r.file, voice, started: r.started, ended: r.ended, names, base: 'me/' + user.id + '/minutes/' + r.started + '/', talk: null, shots: kept, id: null, said: null, tries: 0 });
+    await finishWaiting();
   };
   const on = st && st.on;
   const flip = (id) => setWho((w) => ({ ...w, ids: w.ids.includes(id) ? w.ids.filter((x) => x !== id) : [...w.ids, id] }));
@@ -10073,6 +10144,7 @@ function RecorderCard() {
       ${on ? html`<button className="btn sm primary" onClick=${finish} disabled=${!!busy}>Stop</button>` : html`<button className="btn sm primary" onClick=${start} disabled=${!!busy}>Record</button>`}
     </div>
     ${on && st.speech === 'privacy' && !CLOUD && html`<button className="btn sm ghost" onClick=${() => desk.recorder.speechSettings()}>Open Windows’ speech settings</button>`}
+    ${!busy && waiting && html`<div className="rec-setup rec-warn"><small>${waiting}</small></div>`}
     ${on && !busy && quiet && html`<div className="rec-setup rec-warn"><small><b>Your microphone isn’t hearing anything.</b> Check it isn’t muted (the microphone key on the keyboard, or Windows’ sound settings), or nothing will be written down.</small></div>`}
     ${!on && !speechOk && !CLOUD && html`<div className="rec-setup"><small>One thing before your first meeting: so what’s said is written down, switch on <b>Online speech recognition</b> in Windows (one switch).</small><button className="btn sm" onClick=${() => desk.recorder.speechSettings()}>Switch it on</button></div>`}
     ${who && html`<${Modal} title="Record this meeting" onClose=${() => setWho(null)} footer=${html`<button className="btn" onClick=${() => setWho(null)}>Cancel</button><button className="btn primary" onClick=${go}>Start recording</button>`}>

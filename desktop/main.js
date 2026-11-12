@@ -281,6 +281,8 @@ function recorderIpc() {
   ipcMain.on('rec-open-folder', (e, file) => { if (ours(e)) recorder.openFolder(typeof file === 'string' ? file : ''); });
   ipcMain.on('rec-play', (e, file) => { if (ours(e)) recorder.play(typeof file === 'string' ? file : ''); });
   ipcMain.on('rec-speech-settings', (e) => { if (ours(e)) recorder.openSpeechSettings(); });
+  ipcMain.handle('rec-working', (e, on) => (ours(e) ? recorder.setWorking(!!on) : false));
+  ipcMain.handle('rec-waiting', (e, op, who, list) => { if (!ours(e)) return []; try { return recorder.waiting(op === 'set' ? 'set' : 'get', who, list); } catch (x) { return []; } }); // the minutes are still being made after Stop
   ipcMain.handle('rec-speech-on', (e) => (ours(e) ? recorder.speechOn() : false));
 }
 function sessionIpc() {
@@ -456,7 +458,7 @@ function createSidebar() {
         console.log('SMOKE rec asks', JSON.stringify(await J("(document.querySelector('.modal') || {}).innerText || 'no question'")));
         await J("[...document.querySelectorAll('.modal button')].find((b) => /Start recording/.test(b.innerText)).click(); 1"); await wait(Number(process.env.FLOORBOARD_SMOKE_REC_SECONDS || 10) * 1000);
         console.log('SMOKE rec during', JSON.stringify(await J("document.querySelector('.w-rec').innerText.replace(/\\n+/g, ' | ')")), JSON.stringify(recorder.status()));
-        await J("[...document.querySelectorAll('.w-rec button')].find((b) => b.innerText === 'Stop').click(); 1"); await wait(15000);
+        await J("[...document.querySelectorAll('.w-rec button')].find((b) => b.innerText === 'Stop').click(); 1"); await wait(Number(process.env.FLOORBOARD_SMOKE_REC_AFTER || 15) * 1000);
         console.log('SMOKE rec after', JSON.stringify(await J("document.querySelector('.w-rec').innerText.replace(/\\n+/g, ' | ') + ' || ' + ([...document.querySelectorAll('.toast')].map((t) => t.innerText).join(' / '))")));
         const pins = JSON.parse(await J("JSON.stringify(JSON.parse(localStorage.getItem('floorboard.demo.v5')).pins.u5 || {})"));
         console.log('SMOKE rec my files', JSON.stringify({ folders: (pins.myfolders || []).map((f) => f.name), files: (pins.myfiles || []).slice(0, 2).map((f) => ({ title: f.title, video: f.video, att: f.att && { name: f.att.name, size: f.att.size, mime: f.att.mime }, inFolder: (pins.myfolders || []).some((x) => x.id === f.folder) })) }));
@@ -812,7 +814,7 @@ else {
     loadPrefs();
     // installed with Floorboard-Setup.exe: it starts with Windows from the first run (the tray menu turns it off)
     if (app.isPackaged && !SMOKE && !prefs.startSet) { app.setLoginItemSettings({ openAtLogin: true, ...loginItem() }); prefs.startSet = true; savePrefs(); }
-    updates.init({ holdOff: () => recorder.status().on }); // new versions from GitHub, if the person said it may look (not mid-recording)
+    updates.init({ holdOff: () => recorder.busy() }); // new versions from GitHub, if the person said it may look (not mid-recording)
     session.defaultSession.setPermissionRequestHandler((_wc, permission, done) => done(permission === 'media' || permission === 'notifications'));
     createSidebar();
     createBubble();
