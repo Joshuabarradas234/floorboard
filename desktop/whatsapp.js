@@ -71,12 +71,12 @@ const digits = (jid) => String(jid || '').split('@')[0].replace(/\D/g, '');
 function load() { try { const s = JSON.parse(fs.readFileSync(seenFile(), 'utf8')); if (s && typeof s === 'object') seen = { card: Number(s.card) || 0, chats: s.chats || {} }; } catch (e) { /* first run */ } }
 function save() { try { fs.writeFileSync(seenFile(), JSON.stringify(seen)); } catch (e) { /* kept for now only */ } }
 
-async function call(method, p, query, body) {
+async function call(method, p, query, body, ms) {
   const u = new URL(BASE + p);
   Object.entries(query || {}).forEach(([k, v]) => u.searchParams.set(k, v));
   if (device) u.searchParams.set('device_id', device);
   let res;
-  try { res = await fetch(u, { method, headers: body ? { 'Content-Type': 'application/json' } : {}, body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(10000) }); }
+  try { res = await fetch(u, { method, headers: body ? { 'Content-Type': 'application/json' } : {}, body: body ? JSON.stringify(body) : undefined, signal: AbortSignal.timeout(ms || 10000) }); }
   catch (e) { throw new Error('WhatsApp isn’t connected on this computer.'); }
   let j = null; try { j = await res.json(); } catch (e) { /* not JSON */ }
   if (!res.ok || (j && j.code && !/^SUCCESS$/i.test(j.code) && !j.results)) throw new Error(str((j && j.message) || 'WhatsApp answered ' + res.status + '.', 200));
@@ -101,23 +101,32 @@ async function findDevice() {
 // group: the group's name then comes from the person's own list of groups, and a person's from their contacts (each looked
 // up every 10 minutes); someone who isn't in their contacts shows as their number, written the usual way.
 const groupNames = new Map(), contactNames = new Map(); let namesAt = 0;
-const noName = (n) => !n || /^Group \d+$/i.test(n) || /^[+\d\s()-]{6,}$/.test(n) || /@/.test(n);
+const noName = (n) => !n || /^Group [\d-]+$/i.test(n) || /^[+\d\s()-]{6,}$/.test(n) || /@/.test(n); // (older groups' numbers have a dash: 2782…-1474…)
 function phone(jid) {
   const d = digits(jid); if (!d || /@(lid|g\.us)$/.test(jid || '')) return '';
   return d.length === 11 && d.startsWith('27') ? '+27 ' + d.slice(2, 4) + ' ' + d.slice(4, 7) + ' ' + d.slice(7) : '+' + d;
 }
+// (WhatsApp can take a while to list a lot of groups, over 10 seconds for 200: it's looked up alongside, without holding
+// up the messages, and the group names are kept on this computer so they're there straight away after a restart)
+const namesFile = () => path.join(app.getPath('userData'), 'whatsapp-names.json');
+let namesBusy = false;
+function loadSavedNames() { try { const s = JSON.parse(fs.readFileSync(namesFile(), 'utf8')); Object.entries((s && s.groups) || {}).forEach(([jid, n]) => { if (typeof n === 'string' && n) groupNames.set(jid, n.slice(0, 80)); }); } catch (e) { /* none yet */ } }
 async function loadNames() {
-  if (Date.now() - namesAt < 10 * 60 * 1000) return;
-  namesAt = Date.now();
+  if (namesBusy || Date.now() - namesAt < 10 * 60 * 1000) return;
+  namesBusy = true; namesAt = Date.now();
+  let ok = true;
   try {
-    const r = await call('GET', '/user/my/groups');
+    const r = await call('GET', '/user/my/groups', null, null, 90 * 1000);
     (Array.isArray(r) ? r : r.data || []).forEach((g) => { const jid = str(g && (g.JID || g.jid), 120), n = str(g && (g.Name || g.name), 80).trim(); if (jid && n) groupNames.set(jid, n); });
-  } catch (e) { namesAt = 0; }
+    try { fs.writeFileSync(namesFile(), JSON.stringify({ groups: Object.fromEntries(groupNames) })); } catch (e) { /* kept for now only */ }
+  } catch (e) { ok = false; }
   try {
-    const r = await call('GET', '/user/my/contacts'), list = (Array.isArray(r) ? r : r.data || []).filter((x) => x && x.jid);
+    const r = await call('GET', '/user/my/contacts', null, null, 60 * 1000), list = (Array.isArray(r) ? r : r.data || []).filter((x) => x && x.jid);
     list.forEach((x) => { const n = str(x.name, 80).trim(); if (!noName(n)) contactNames.set(str(x.jid, 120), n); });
     book = list.filter((x) => isPerson(x.jid)).map((x) => ({ jid: str(x.jid, 120), name: str(x.name, 80) })); bookAt = Date.now();
-  } catch (e) { namesAt = 0; }
+  } catch (e) { ok = false; }
+  if (!ok) namesAt = Date.now() - 9 * 60 * 1000; // (tried again in a minute)
+  namesBusy = false;
 }
 function cleanChat(c) {
   const jid = str(c.jid, 120), group = /@g\.us$/.test(jid), n = str(c.name, 80).trim();
@@ -143,7 +152,7 @@ function count(c, ms) {
 async function poll() {
   try {
     if (!device) await findDevice();
-    await loadNames();
+    loadNames(); // (alongside: the names already known are used meanwhile)
     const list = ((await call('GET', '/chats', { limit: '30' })).data || []).map(cleanChat).filter((c) => c.jid);
     chats = list.sort((a, b) => b.at - a.at);
     const day = Date.now() - 24 * 3600 * 1000;
@@ -326,7 +335,7 @@ async function linkStatus() {
   return { linked: false };
 }
 
-function init(onChange) { changed = onChange || changed; load(); if (!seen.card) { seen.card = Date.now(); save(); } if (!timer) { poll(); timer = setInterval(poll, EVERY); } }
+function init(onChange) { changed = onChange || changed; load(); loadSavedNames(); if (!seen.card) { seen.card = Date.now(); save(); } if (!timer) { poll(); timer = setInterval(poll, EVERY); } }
 function stop() { clearInterval(timer); timer = null; if (gateway) { try { gateway.kill(); } catch (e) { /* gone already */ } gateway = null; } }
 
 module.exports = { init, stop, summary, opened, messages, find, send, openApp, webhook, setHook, endCall, install, linkQr, linkStatus };

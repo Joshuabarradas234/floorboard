@@ -742,7 +742,7 @@ html.isl-sleepy .isl-ch:not(.wig):not(.ring) .isl-svg{animation:isl-snooze 3.4s 
 .isl-set b{font-size:11px;color:rgba(233,235,238,.5);text-transform:uppercase;letter-spacing:.05em}
 .isl-tog{display:flex;gap:8px;align-items:center;cursor:pointer}
 .isl-set-cards{display:flex;flex-wrap:wrap;gap:4px 18px}
-.isl-looks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.isl-mypics{display:grid;gap:6px}.isl-set .char-pic b{text-transform:none;letter-spacing:0;color:inherit;font-size:12.5px;margin:0}
+.isl-looks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.isl-mypics{display:grid;gap:6px}.char-pics.over{outline:2px dashed rgba(255,255,255,.7);outline-offset:4px;border-radius:14px}.isl-set .char-pic b{text-transform:none;letter-spacing:0;color:inherit;font-size:12.5px;margin:0}
 .isl-lookpick{flex:1;display:grid;justify-items:center;gap:6px;padding:10px 8px 8px;border-radius:14px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);color:rgba(233,235,238,.8);font:600 12px var(--f-body);cursor:pointer}
 .isl-lookpick.on{border-color:#fff;background:rgba(255,255,255,.1);color:#fff}
 .isl-lookrow{display:flex;gap:6px}
@@ -3706,7 +3706,7 @@ function IslSettings({ opts, setOpts, avail, onDone }) {
     <b>Characters</b>
     <div className="isl-looks">${[['ghost', 'Ghosts'], ['slime', 'Slimes'], ['crew', 'Pirate crew'], ['own', 'My pictures']].map(([k, l]) => html`<button key=${k} className=${'isl-lookpick' + (look === k ? ' on' : '')} onClick=${() => setOpts({ ...opts, look: k })} aria-pressed=${look === k}>
       <span className="isl-lookrow">${ISL_ORDER.map((id) => html`<${IslCharAs} key=${id} look=${k} id=${id}/>`)}</span><span>${l}</span></button>`)}</div>
-    ${look === 'own' && html`<div className="isl-mypics">${charGrid}<small className="isl-note">Pick a picture for each card. One with a see-through background (a PNG) looks best; a card without one stays a ghost. Only you see them.</small></div>`}
+    ${look === 'own' && html`<div className="isl-mypics">${charGrid}<small className="isl-note">Pick a picture for each card, or drag them in: several at once fill Floorboard, Tasks, Teams, Mail and WhatsApp in turn; one dropped on a card sets that card. One with a see-through background (a PNG) looks best; a card without one stays a ghost. Only you see them.</small></div>`}
     <b>Island</b>
     <label className="isl-tog"><input type="checkbox" checked=${!!opts.hover} onChange=${() => flip('hover')}/>Open when the pointer is over it</label>
     <label className="isl-tog"><input type="checkbox" checked=${!opts.quiet} onChange=${() => flip('quiet')}/>A sound when something comes in</label>
@@ -3851,7 +3851,7 @@ function Island() {
     return () => { window.removeEventListener('blur', blur); window.removeEventListener('keydown', key); };
   }, [files.length]);
   // files dragged over the closed island open it on ➕, as Coucou does
-  const dragIn = (e) => { if ([...(e.dataTransfer.types || [])].includes('Files') && (!open || tab !== 'drop')) { e.preventDefault(); setOpen(true); setTabS('drop'); } };
+  const dragIn = (e) => { if (!gear && [...(e.dataTransfer.types || [])].includes('Files') && (!open || tab !== 'drop')) { e.preventDefault(); setOpen(true); setTabS('drop'); } };
   const others = cards.filter((id) => id !== fo).slice(0, 4);
   // closed: the card with the latest news and its number ("WhatsApp 3 new", "Mail 2 new", "Tasks 4 to do"), the others small
   const news = (id) => id !== 'floorboard' && cards.includes(id) && counts[id] > 0;
@@ -10931,9 +10931,9 @@ function Scene({ look }) {
   return html`<div className=${'scene' + (url ? ' photo' : '')} data-scene=${look.scene} style=${style} aria-hidden="true"></div>`;
 }
 // one card's character in Wallpaper & glass: the person's own picture, or the drawn one, with Choose and Remove
-function CharPicSlot({ id, busy, onPick, onRemove }) {
+function CharPicSlot({ id, busy, onPick, onRemove, onDropOne }) {
   const url = useAttUrlMaybe(CHAR_PICS[id] || null);
-  return html`<div className="char-pic"><span className="cp-face">${url ? html`<img src=${url} alt=""/>` : html`<${IslCharAs} id=${id}/>`}</span><b>${ISL[id].name}</b>
+  return html`<div className="char-pic" onDragOver=${(e) => { e.preventDefault(); e.stopPropagation(); }} onDrop=${onDropOne}><span className="cp-face">${url ? html`<img src=${url} alt=""/>` : html`<${IslCharAs} id=${id}/>`}</span><b>${ISL[id].name}</b>
     <button type="button" className="btn sm" onClick=${onPick} disabled=${busy}>${busy ? 'Adding…' : url ? 'Change' : 'Own picture'}</button>
     ${url && html`<button type="button" className="btn sm ghost" onClick=${onRemove}>Remove</button>`}</div>`;
 }
@@ -10941,23 +10941,34 @@ function CharPicSlot({ id, busy, onPick, onRemove }) {
 // background) and kept with the person's look. Used in Wallpaper & glass and in the island's ⚙.
 function useCharPicker() {
   const { look, setLook, toast } = useApp();
-  const ref = useRef(null), [forId, setFor] = useState(''), [busy, setBusy] = useState('');
-  const onChange = async (e) => {
-    const f = e.target.files && e.target.files[0], id = forId; e.target.value = '';
-    if (!f || !id) return;
-    if (!f.type.startsWith('image/')) { toast('Pick a picture, like a PNG or JPG.', 'warn'); return; }
-    setBusy(id);
+  const ref = useRef(null), [forId, setFor] = useState(''), [busy, setBusy] = useState(''), [over, setOver] = useState(false);
+  const small = async (f) => {
+    const url = URL.createObjectURL(f);
     try {
-      const url = URL.createObjectURL(f), img = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = url; });
+      const img = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = url; });
       const k = Math.min(1, 256 / Math.max(img.naturalWidth, img.naturalHeight)), c = document.createElement('canvas');
-      c.width = Math.max(1, Math.round(img.naturalWidth * k)); c.height = Math.max(1, Math.round(img.naturalHeight * k)); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
-      const blob = await new Promise((ok) => c.toBlob(ok, 'image/png'));
-      const [att] = await storeFiles([{ file: blob, name: id + '.png', mime: 'image/png', size: blob.size, kind: 'image' }]);
-      setLook({ chars: { ...(look.chars || {}), [id]: att } }); toast(ISL[id].name + '’s picture is set');
-    } catch (err) { toast('That picture couldn’t be used. Try another one.', 'warn'); }
+      c.width = Math.max(1, Math.round(img.naturalWidth * k)); c.height = Math.max(1, Math.round(img.naturalHeight * k)); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      return await new Promise((ok) => c.toBlob(ok, 'image/png'));
+    } finally { URL.revokeObjectURL(url); }
+  };
+  // [[card, file], …]: all made small and kept, then saved together
+  const put = async (pairs) => {
+    pairs = pairs.filter(([, f]) => f && f.type && f.type.startsWith('image/'));
+    if (!pairs.length) { toast('Pick a picture, like a PNG or JPG.', 'warn'); return; }
+    setBusy(pairs.map(([id]) => id).join(' '));
+    const next = { ...(look.chars || {}) }; let done = 0;
+    for (const [id, f] of pairs) {
+      try { const blob = await small(f); const [att] = await storeFiles([{ file: blob, name: id + '.png', mime: 'image/png', size: blob.size, kind: 'image' }]); next[id] = att; done++; } catch (err) { /* that one is skipped */ }
+    }
+    if (done) setLook({ chars: next });
+    toast(done === pairs.length ? (done === 1 ? ISL[pairs[0][0]].name + '’s picture is set' : done + ' pictures set: ' + pairs.map(([id]) => ISL[id].name).join(', ')) : done ? done + ' of ' + pairs.length + ' pictures set (the others couldn’t be used)' : 'Those pictures couldn’t be used. Try others.', done === pairs.length ? undefined : 'warn');
     setBusy('');
   };
-  return html`<div className="char-pics">${ISL_ORDER.map((id) => html`<${CharPicSlot} key=${id} id=${id} busy=${busy === id} onPick=${() => { setFor(id); if (ref.current) ref.current.click(); }} onRemove=${() => setLook({ chars: { ...(look.chars || {}), [id]: null } })}/>`)}</div>
+  const onChange = (e) => { const f = e.target.files && e.target.files[0], id = forId; e.target.value = ''; if (f && id) put([[id, f]]); };
+  const images = (e) => [...((e.dataTransfer && e.dataTransfer.files) || [])].filter((f) => f.type.startsWith('image/'));
+  const area = { onDragOver: (e) => { e.preventDefault(); e.stopPropagation(); if (!over) setOver(true); }, onDragLeave: (e) => { if (!e.currentTarget.contains(e.relatedTarget)) setOver(false); },
+    onDrop: (e) => { e.preventDefault(); e.stopPropagation(); setOver(false); const fs0 = images(e); if (!fs0.length) { toast('Drop pictures, like PNGs or JPGs.', 'warn'); return; } put(fs0.slice(0, ISL_ORDER.length).map((f, i) => [ISL_ORDER[i], f])); } };
+  return html`<div className=${'char-pics' + (over ? ' over' : '')} ...${area}>${ISL_ORDER.map((id) => html`<${CharPicSlot} key=${id} id=${id} busy=${busy.split(' ').includes(id)} onPick=${() => { setFor(id); if (ref.current) ref.current.click(); }} onDropOne=${(e) => { e.preventDefault(); e.stopPropagation(); setOver(false); const f = images(e)[0]; if (f) put([[id, f]]); else toast('Drop a picture, like a PNG or JPG.', 'warn'); }} onRemove=${() => setLook({ chars: { ...(look.chars || {}), [id]: null } })}/>`)}</div>
     <input type="file" accept="image/*" hidden ref=${ref} onChange=${onChange}/>`;
 }
 function LookModal({ onClose }) {
