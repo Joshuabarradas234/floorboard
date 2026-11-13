@@ -572,6 +572,10 @@ html.bar-mode,html.bar-mode body,html.bar-mode #root{background:transparent!impo
 /* the characters */
 .isl-ch{--ex:0;--ey:0;position:relative;display:block;flex:none;transition:transform .3s cubic-bezier(.3,1.6,.5,1)}
 .isl-svg{display:block;width:100%;height:100%;overflow:visible;filter:drop-shadow(0 1.5px 2px rgba(0,0,0,.35))}
+.isl-pic{display:block;width:100%;height:100%;box-sizing:border-box;padding:5%;object-fit:contain;border-radius:50%;background:#fff;box-shadow:0 1.5px 3px rgba(0,0,0,.35);animation:isl-float 3.8s ease-in-out infinite;animation-delay:var(--bd,0s);-webkit-user-drag:none}
+.isl-ch.busy .isl-pic{animation:isl-bob 2.2s ease-in-out infinite}
+.char-pics{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}.char-pic{display:grid;justify-items:center;gap:6px;padding:10px 6px;border-radius:14px;background:var(--glass);border:1px solid var(--glass-line)}.char-pic b{font-size:12.5px}.char-pic .btn{padding:4px 10px;font-size:12px}
+.char-pic .cp-face{width:44px;height:44px;display:grid;place-items:center}.char-pic .cp-face img{width:44px;height:44px;border-radius:50%;object-fit:contain;background:#fff;padding:2px;box-sizing:border-box}
 .isl-bod{transform-box:fill-box;transform-origin:50% 95%;transform:rotate(calc(var(--ex) * 4deg));transition:transform .25s ease-out}
 .isl-look{transform:translate(calc(var(--ex) * 3.2px), calc(var(--ey) * 3px));transition:transform .12s linear}
 .isl-ch.slime .isl-look{transform:translate(calc(var(--ex) * 3.8px), calc(var(--ey) * 2.6px))}
@@ -1831,6 +1835,8 @@ const NO_FILTERS = { type: 'any', level: 'any', dept: 'any' };
 // The person's theme (Wallpaper & glass): '' for Floorboard's own, or 'voyage', a pirate voyage: a sailing ship on the
 // sea instead of the tree, sea-faring icons (folders are treasure chests), and red, gold and sea blue
 let THEME = '';
+// the person's own pictures for the island's characters (Wallpaper & glass), card by card: kept with their look
+let CHAR_PICS = {};
 const VOYAGE_ICONS = {
   inbox: '<circle cx="12" cy="5" r="2"/><path d="M12 7v13"/><path d="M8.5 10.5h7"/><path d="M4.5 13.5a7.5 7.5 0 0 0 15 0"/><path d="M4.5 13.5 3 15M19.5 13.5 21 15"/>',
   task: '<circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4"/><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.9 2.9M15.5 15.5l2.9 2.9M5.6 18.4l2.9-2.9M15.5 8.5l2.9-2.9"/>',
@@ -3091,7 +3097,7 @@ let islGid = 0;
 const islHeart = (x, y) => html`<path d=${`M${x} ${y + 5.5}C${x - 10} ${y - 1} ${x - 5.5} ${y - 9.5} ${x} ${y - 3.5}C${x + 5.5} ${y - 9.5} ${x + 10} ${y - 1} ${x} ${y + 5.5}Z`} fill="#ff5d7a"/>`;
 function IslChar({ id, s = 44, busy, n, wig, ring, look }) {
   const c = ISL[id], gid = useRef('islg' + (++islGid)).current, lk = look || (THEME === 'voyage' ? 'crew' : ISL_LOOK);
-  const [love, setLove] = useState(0), loveT = useRef(null);
+  const [love, setLove] = useState(0), loveT = useRef(null), picUrl = useAttUrlMaybe(CHAR_PICS[id] || null);
   const tap = () => { setLove(Date.now()); clearTimeout(loveT.current); loveT.current = setTimeout(() => setLove(0), 1600); };
   if (!(id in ISL_BLINK)) ISL_BLINK[id] = (Math.random() * 4).toFixed(2) + 's'; // each blinks in its own time
   const rim = 'color-mix(in srgb, var(--f), #3b2f5c 22%)', shade = html`<defs><radialGradient id=${gid} cx="36%" cy="22%" r="85%"><stop offset="0" stop-color="#fff" stop-opacity=".75"/><stop offset=".45" stop-color="#fff" stop-opacity=".12"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs>`;
@@ -3133,7 +3139,7 @@ function IslChar({ id, s = 44, busy, n, wig, ring, look }) {
   const CREW_FUR = { floorboard: '#F7E3B5', taskboard: '#FFC9A3', teams: '#BFD8FF', mail: '#A8E1F0', whatsapp: '#BDF0C8', jarvis: '#E2C8FF' };
   return html`<span className=${'isl-ch ' + (lk === 'crew' ? 'slime crew' : lk) + (s < 20 ? ' tiny' : '') + (busy ? ' busy' : '') + (wig ? ' wig' : '') + (ring ? ' ring' : '') + (love ? ' love' : '')} style=${{ '--f': lk === 'crew' ? CREW_FUR[id] || c.fur : c.fur, width: s + 'px', height: s + 'px', '--s': s + 'px', '--bd': ISL_BLINK[id] }} aria-hidden="true" onClick=${tap}>
     ${love > 0 && s >= 20 && html`<span key=${love} className="isl-hearts"><i style=${{ '--dx': '-14px', '--dl': '0s' }}>♥</i><i style=${{ '--dx': '4px', '--dl': '.15s' }}>♥</i><i style=${{ '--dx': '16px', '--dl': '.3s' }}>♥</i></span>`}
-    <svg viewBox="0 0 100 100" className="isl-svg">${shade}<g className="isl-bod">${lk === 'slime' ? slime() : lk === 'crew' ? crew() : ghost()}</g></svg>
+    ${picUrl ? html`<img className="isl-pic" src=${picUrl} alt="" draggable="false"/>` : html`<svg viewBox="0 0 100 100" className="isl-svg">${shade}<g className="isl-bod">${lk === 'slime' ? slime() : lk === 'crew' ? crew() : ghost()}</g></svg>`}
     ${lk === 'crew' && (wig || ring) && s >= 20 && html`<span className="isl-bang" aria-hidden="true">!</span>`}
     ${n > 0 && html`<b className="isl-n">${n > 99 ? '99+' : n}</b>`}</span>`;
 }
@@ -10923,6 +10929,13 @@ function Scene({ look }) {
   if (url) { style.backgroundImage = 'url("' + url + '")'; style.filter = 'blur(' + (blur == null ? 14 : blur) + 'px) saturate(112%)'; }
   return html`<div className=${'scene' + (url ? ' photo' : '')} data-scene=${look.scene} style=${style} aria-hidden="true"></div>`;
 }
+// one card's character in Wallpaper & glass: the person's own picture, or the drawn one, with Choose and Remove
+function CharPicSlot({ id, busy, onPick, onRemove }) {
+  const url = useAttUrlMaybe(CHAR_PICS[id] || null);
+  return html`<div className="char-pic"><span className="cp-face">${url ? html`<img src=${url} alt=""/>` : html`<${IslCharAs} id=${id}/>`}</span><b>${ISL[id].name}</b>
+    <button type="button" className="btn sm" onClick=${onPick} disabled=${busy}>${busy ? 'Adding…' : url ? 'Change' : 'Own picture'}</button>
+    ${url && html`<button type="button" className="btn sm ghost" onClick=${onRemove}>Remove</button>`}</div>`;
+}
 function LookModal({ onClose }) {
   const { look, setLook, toast } = useApp();
   const fileRef = useRef(null);
@@ -10943,6 +10956,23 @@ function LookModal({ onClose }) {
     setBusy(false);
   };
   const seg = (key, options) => html`<div className="seg" role="group">${options.map(([k, l]) => html`<button type="button" key=${k} className=${look[key] === k ? 'on' : ''} onClick=${() => setLook({ [key]: k })} aria-pressed=${look[key] === k}>${l}</button>`)}</div>`;
+  // own pictures for the island's characters: each made small (a PNG, so a cut-out keeps its see-through background)
+  const charRef = useRef(null), [charFor, setCharFor] = useState(''), [charBusy, setCharBusy] = useState('');
+  const onChar = async (e) => {
+    const f = e.target.files && e.target.files[0], id = charFor; e.target.value = '';
+    if (!f || !id) return;
+    if (!f.type.startsWith('image/')) { toast('Pick a picture, like a PNG or JPG.', 'warn'); return; }
+    setCharBusy(id);
+    try {
+      const url = URL.createObjectURL(f), img = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = url; });
+      const k = Math.min(1, 256 / Math.max(img.naturalWidth, img.naturalHeight)), c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(img.naturalWidth * k)); c.height = Math.max(1, Math.round(img.naturalHeight * k)); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+      const blob = await new Promise((ok) => c.toBlob(ok, 'image/png'));
+      const [att] = await storeFiles([{ file: blob, name: id + '.png', mime: 'image/png', size: blob.size, kind: 'image' }]);
+      setLook({ chars: { ...(look.chars || {}), [id]: att } }); toast(ISL[id].name + '’s picture is set');
+    } catch (err) { toast('That picture couldn’t be used. Try another one.', 'warn'); }
+    setCharBusy('');
+  };
   const pickTheme = (k) => setLook({ theme: k, ...(k === 'voyage' && !look.photo ? { scene: 'voyage' } : k === '' && look.scene === 'voyage' ? { scene: 'warm' } : {}) });
   return html`<${Modal} title="Wallpaper, glass & language" onClose=${onClose} wide light footer=${html`<button className="btn ghost" style=${{ marginRight: 'auto' }} onClick=${() => setLook({ ...DEFAULT_LOOK, lang: look.lang })}>Back to the original</button><button className="btn primary" onClick=${onClose}>Done</button>`}>
     <div className="field"><span>Theme</span><div className="seg" role="group">${[['', 'Floorboard'], ['voyage', 'Pirate voyage']].map(([k, l]) => html`<button type="button" key=${k || 'own'} className=${(look.theme || '') === k ? 'on' : ''} onClick=${() => pickTheme(k)} aria-pressed=${(look.theme || '') === k}>${l}</button>`)}</div>
@@ -10962,6 +10992,10 @@ function LookModal({ onClose }) {
       <input id="look-dim" className="look-range" type="range" min="0" max="0.7" step="0.05" value=${look.dim} onChange=${(e) => setLook({ dim: +e.target.value })}/>
       <small>Darker makes writing easier to read on a bright photo.</small></label>
     <div className="field"><span>Glass</span>${seg('glass', [['clear', 'Clear (liquid glass)'], ['frosted', 'Frosted'], ['solid', 'Solid']])}<small>Clear shows the most of your wallpaper. Solid is the easiest to read.</small></div>
+    ${DESKTOP_SHELL && html`<div className="field"><span>The characters on the bar at the top</span>
+      <div className="char-pics">${ISL_ORDER.map((id) => html`<${CharPicSlot} key=${id} id=${id} busy=${charBusy === id} onPick=${() => { setCharFor(id); if (charRef.current) charRef.current.click(); }} onRemove=${() => setLook({ chars: { ...(look.chars || {}), [id]: null } })}/>`)}</div>
+      <input type="file" accept="image/*" hidden ref=${charRef} onChange=${onChar}/>
+      <small>Use your own picture for any of them: one with a see-through background (a PNG) looks best. Only you see them.</small></div>`}
     <label className="field"><span>Translate messages into</span>
       <select id="look-lang" className="input" value=${look.lang || 'en'} onChange=${(e) => setLook({ lang: e.target.value })}>${LANGS.map(([k, l]) => html`<option key=${k} value=${k}>${l}</option>`)}</select>
       <small>Tap Translate on a message or post to read it in this language.</small></label>
@@ -11322,6 +11356,7 @@ function App() {
   // a theme an admin chose for this person (People & access) shows until they pick one themselves in Wallpaper & glass
   if (self && self.theme && !(savedLook && savedLook.theme !== undefined)) { look.theme = self.theme; if (self.theme === 'voyage' && !look.photo && look.scene === 'warm') look.scene = 'voyage'; }
   THEME = look.theme === 'voyage' ? 'voyage' : ''; // (set before the rest draws: the icons and the ship read it)
+  CHAR_PICS = look.chars && typeof look.chars === 'object' ? look.chars : {};
   const savedSig = savedLook ? stable(savedLook) : '';
   useEffect(() => { if (savedLook) { setLocalLook(savedLook); lsSet(LOOK_KEY, JSON.stringify(savedLook)); } }, [savedSig]);
   useEffect(() => { document.documentElement.setAttribute('data-glass', look.glass); }, [look.glass]);
