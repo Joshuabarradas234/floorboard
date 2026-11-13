@@ -107,8 +107,21 @@ p{margin:0}
   border-color:rgba(255,255,255,.2);border-top-color:rgba(255,255,255,.42);border-left-color:rgba(255,255,255,.28);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.3),inset 0 0 0 1px rgba(255,255,255,.03),inset 0 -20px 40px rgba(255,255,255,.025),var(--shadow)}
 /* the person's Glass setting */
-:root[data-glass="clear"]{--glass:rgba(255,255,255,.05);--glass-2:rgba(255,255,255,.1);--glass-3:rgba(255,255,255,.18);--glass-deep:rgba(28,20,15,.42);--blur:blur(18px) saturate(190%)}
-:root[data-glass="frosted"]{--glass:rgba(255,255,255,.09);--glass-2:rgba(255,255,255,.15);--glass-3:rgba(255,255,255,.23);--blur:blur(36px) saturate(180%)}
+:root[data-glass="clear"]{--glass:rgba(255,255,255,.035);--glass-2:rgba(255,255,255,.09);--glass-3:rgba(255,255,255,.16);--glass-deep:rgba(28,20,15,.36);--blur:blur(10px) saturate(200%) brightness(1.04);--shadow:0 12px 34px rgba(8,5,3,.22)}
+:root[data-glass="frosted"]{--glass:rgba(255,255,255,.15);--glass-2:rgba(255,255,255,.21);--glass-3:rgba(255,255,255,.28);--blur:blur(44px) saturate(150%) brightness(1.06)}
+/* Clear: like Apple's liquid glass. Barely tinted, so the desktop shows right through; a bright rim where the light
+   catches the edge (strongest along the top), a soft shine across the top corner, and a faint inner edge at the bottom */
+:root[data-glass="clear"] .glass{background-color:rgba(255,255,255,.035);
+  background-image:radial-gradient(130% 70% at 15% -20%,rgba(255,255,255,.2),rgba(255,255,255,0) 55%),linear-gradient(165deg,rgba(255,255,255,.08) 0%,rgba(255,255,255,0) 35%,rgba(255,255,255,0) 72%,rgba(255,255,255,.06) 100%);
+  border-color:rgba(255,255,255,.14);border-top-color:rgba(255,255,255,.6);border-left-color:rgba(255,255,255,.32);border-right-color:rgba(255,255,255,.18);
+  box-shadow:inset 0 1.5px 1px -0.5px rgba(255,255,255,.55),inset 1px 0 1px -0.5px rgba(255,255,255,.22),inset 0 -1px 1px -0.5px rgba(255,255,255,.18),inset 0 -14px 28px -18px rgba(255,255,255,.12),var(--shadow)}
+.native-glass[data-glass="clear"]:has(.scene[data-scene="see"]:not(.photo)) .widget{background:rgba(18,14,12,.10)}
+/* Frosted: milky, like frosted glass in a shower door. Whiter, much more blurred, with a fine grain of frost */
+:root[data-glass="frosted"] .glass{background-color:rgba(255,255,255,.15);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='f'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .11 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23f)'/%3E%3C/svg%3E"),linear-gradient(160deg,rgba(255,255,255,.16) 0%,rgba(255,255,255,.05) 45%,rgba(255,255,255,.11) 100%);
+  border-color:rgba(255,255,255,.3);border-top-color:rgba(255,255,255,.5);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.42),inset 0 0 30px rgba(255,255,255,.08),var(--shadow)}
+.native-glass[data-glass="frosted"]:has(.scene[data-scene="see"]:not(.photo)) .widget{background:rgba(222,230,240,.14)}
 :root[data-glass="solid"]{--glass:rgba(34,26,20,.66);--glass-2:rgba(48,38,30,.74);--glass-3:rgba(64,52,42,.82);--glass-deep:rgba(30,22,17,.93);--blur:blur(40px) saturate(130%)}
 
 /* buttons */
@@ -10804,7 +10817,7 @@ function LookModal({ onClose }) {
     <label className="field"><span>Darken the wallpaper · ${Math.round(look.dim * 100)}%</span>
       <input id="look-dim" className="look-range" type="range" min="0" max="0.7" step="0.05" value=${look.dim} onChange=${(e) => setLook({ dim: +e.target.value })}/>
       <small>Darker makes writing easier to read on a bright photo.</small></label>
-    <div className="field"><span>Glass</span>${seg('glass', [['clear', 'Clear'], ['frosted', 'Frosted'], ['solid', 'Solid']])}<small>Clear shows the most of your wallpaper. Solid is the easiest to read.</small></div>
+    <div className="field"><span>Glass</span>${seg('glass', [['clear', 'Clear (liquid glass)'], ['frosted', 'Frosted'], ['solid', 'Solid']])}<small>Clear shows the most of your wallpaper. Solid is the easiest to read.</small></div>
     <label className="field"><span>Translate messages into</span>
       <select id="look-lang" className="input" value=${look.lang || 'en'} onChange=${(e) => setLook({ lang: e.target.value })}>${LANGS.map(([k, l]) => html`<option key=${k} value=${k}>${l}</option>`)}</select>
       <small>Tap Translate on a message or post to read it in this language.</small></label>
