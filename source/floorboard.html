@@ -742,7 +742,7 @@ html.isl-sleepy .isl-ch:not(.wig):not(.ring) .isl-svg{animation:isl-snooze 3.4s 
 .isl-set b{font-size:11px;color:rgba(233,235,238,.5);text-transform:uppercase;letter-spacing:.05em}
 .isl-tog{display:flex;gap:8px;align-items:center;cursor:pointer}
 .isl-set-cards{display:flex;flex-wrap:wrap;gap:4px 18px}
-.isl-looks{display:flex;gap:10px}
+.isl-looks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.isl-mypics{display:grid;gap:6px}.isl-set .char-pic b{text-transform:none;letter-spacing:0;color:inherit;font-size:12.5px;margin:0}
 .isl-lookpick{flex:1;display:grid;justify-items:center;gap:6px;padding:10px 8px 8px;border-radius:14px;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);color:rgba(233,235,238,.8);font:600 12px var(--f-body);cursor:pointer}
 .isl-lookpick.on{border-color:#fff;background:rgba(255,255,255,.1);color:#fff}
 .isl-lookrow{display:flex;gap:6px}
@@ -3096,7 +3096,7 @@ let islGid = 0;
 // a tap: heart eyes, a happy squish and a few hearts floating up
 const islHeart = (x, y) => html`<path d=${`M${x} ${y + 5.5}C${x - 10} ${y - 1} ${x - 5.5} ${y - 9.5} ${x} ${y - 3.5}C${x + 5.5} ${y - 9.5} ${x + 10} ${y - 1} ${x} ${y + 5.5}Z`} fill="#ff5d7a"/>`;
 function IslChar({ id, s = 44, busy, n, wig, ring, look }) {
-  const c = ISL[id], gid = useRef('islg' + (++islGid)).current, lk = look || (THEME === 'voyage' ? 'crew' : ISL_LOOK);
+  const c = ISL[id], gid = useRef('islg' + (++islGid)).current, lk = look || ISL_LOOK;
   const [love, setLove] = useState(0), loveT = useRef(null), picUrl = useAttUrlMaybe(CHAR_PICS[id] || null);
   const tap = () => { setLove(Date.now()); clearTimeout(loveT.current); loveT.current = setTimeout(() => setLove(0), 1600); };
   if (!(id in ISL_BLINK)) ISL_BLINK[id] = (Math.random() * 4).toFixed(2) + 's'; // each blinks in its own time
@@ -3137,9 +3137,9 @@ function IslChar({ id, s = 44, busy, n, wig, ring, look }) {
   };
   const crew = () => html`${slime()}${GEAR[id] || GEAR.floorboard}`;
   const CREW_FUR = { floorboard: '#F7E3B5', taskboard: '#FFC9A3', teams: '#BFD8FF', mail: '#A8E1F0', whatsapp: '#BDF0C8', jarvis: '#E2C8FF' };
-  return html`<span className=${'isl-ch ' + (lk === 'crew' ? 'slime crew' : lk) + (s < 20 ? ' tiny' : '') + (busy ? ' busy' : '') + (wig ? ' wig' : '') + (ring ? ' ring' : '') + (love ? ' love' : '')} style=${{ '--f': lk === 'crew' ? CREW_FUR[id] || c.fur : c.fur, width: s + 'px', height: s + 'px', '--s': s + 'px', '--bd': ISL_BLINK[id] }} aria-hidden="true" onClick=${tap}>
+  return html`<span className=${'isl-ch ' + (lk === 'crew' ? 'slime crew' : lk === 'own' ? (picUrl ? 'own' : 'ghost') : lk) + (s < 20 ? ' tiny' : '') + (busy ? ' busy' : '') + (wig ? ' wig' : '') + (ring ? ' ring' : '') + (love ? ' love' : '')} style=${{ '--f': lk === 'crew' ? CREW_FUR[id] || c.fur : c.fur, width: s + 'px', height: s + 'px', '--s': s + 'px', '--bd': ISL_BLINK[id] }} aria-hidden="true" onClick=${tap}>
     ${love > 0 && s >= 20 && html`<span key=${love} className="isl-hearts"><i style=${{ '--dx': '-14px', '--dl': '0s' }}>♥</i><i style=${{ '--dx': '4px', '--dl': '.15s' }}>♥</i><i style=${{ '--dx': '16px', '--dl': '.3s' }}>♥</i></span>`}
-    ${picUrl ? html`<img className="isl-pic" src=${picUrl} alt="" draggable="false"/>` : html`<svg viewBox="0 0 100 100" className="isl-svg">${shade}<g className="isl-bod">${lk === 'slime' ? slime() : lk === 'crew' ? crew() : ghost()}</g></svg>`}
+    ${picUrl && lk === 'own' ? html`<img className="isl-pic" src=${picUrl} alt="" draggable="false"/>` : html`<svg viewBox="0 0 100 100" className="isl-svg">${shade}<g className="isl-bod">${lk === 'slime' ? slime() : lk === 'crew' ? crew() : ghost()}</g></svg>`}
     ${lk === 'crew' && (wig || ring) && s >= 20 && html`<span className="isl-bang" aria-hidden="true">!</span>`}
     ${n > 0 && html`<b className="isl-n">${n > 99 ? '99+' : n}</b>`}</span>`;
 }
@@ -3701,11 +3701,12 @@ function IslDrop({ j, files, setFiles }) {
 function IslCharAs({ look, id }) { return html`<${IslChar} id=${id} s=${28} look=${look}/>`; }
 function IslSettings({ opts, setOpts, avail, onDone }) {
   const flip = (k) => setOpts({ ...opts, [k]: !opts[k] }), hide = opts.hide || {};
-  const look = opts.look || 'ghost';
+  const look = opts.look || (THEME === 'voyage' ? 'crew' : 'ghost'), charGrid = useCharPicker();
   return html`<div className="isl-set">
     <b>Characters</b>
-    <div className="isl-looks">${[['ghost', 'Ghosts'], ['slime', 'Slimes']].map(([k, l]) => html`<button key=${k} className=${'isl-lookpick' + (look === k ? ' on' : '')} onClick=${() => setOpts({ ...opts, look: k })} aria-pressed=${look === k}>
+    <div className="isl-looks">${[['ghost', 'Ghosts'], ['slime', 'Slimes'], ['crew', 'Pirate crew'], ['own', 'My pictures']].map(([k, l]) => html`<button key=${k} className=${'isl-lookpick' + (look === k ? ' on' : '')} onClick=${() => setOpts({ ...opts, look: k })} aria-pressed=${look === k}>
       <span className="isl-lookrow">${ISL_ORDER.map((id) => html`<${IslCharAs} key=${id} look=${k} id=${id}/>`)}</span><span>${l}</span></button>`)}</div>
+    ${look === 'own' && html`<div className="isl-mypics">${charGrid}<small className="isl-note">Pick a picture for each card. One with a see-through background (a PNG) looks best; a card without one stays a ghost. Only you see them.</small></div>`}
     <b>Island</b>
     <label className="isl-tog"><input type="checkbox" checked=${!!opts.hover} onChange=${() => flip('hover')}/>Open when the pointer is over it</label>
     <label className="isl-tog"><input type="checkbox" checked=${!opts.quiet} onChange=${() => flip('quiet')}/>A sound when something comes in</label>
@@ -3776,7 +3777,7 @@ function Island() {
   // the card with the latest news: the closed island shows it (and switches, with a spin, when news comes elsewhere)
   const [recent, setRecent] = useState(() => islGet('recent', ''));
   const setOpts = (o) => { setOptsS(o); islSet('opts', o); };
-  ISL_LOOK = opts.look || 'ghost'; // ghosts or slimes, as chosen in ⚙
+  ISL_LOOK = opts.look || (THEME === 'voyage' ? 'crew' : 'ghost'); // ghosts, slimes or the pirate crew, as chosen in ⚙
   // the Demo (⚙): sample news arriving a few seconds apart
   const [demo, setDemo] = useState({ stage: 0, t0: Date.now() });
   useEffect(() => { if (!opts.demo) return undefined; setDemo({ stage: 0, t0: Date.now() }); const ts = [5000, 10000, 15000].map((ms, i) => setTimeout(() => setDemo((d) => ({ ...d, stage: i + 1 })), ms)); return () => ts.forEach(clearTimeout); }, [!!opts.demo]);
@@ -10936,6 +10937,29 @@ function CharPicSlot({ id, busy, onPick, onRemove }) {
     <button type="button" className="btn sm" onClick=${onPick} disabled=${busy}>${busy ? 'Adding…' : url ? 'Change' : 'Own picture'}</button>
     ${url && html`<button type="button" className="btn sm ghost" onClick=${onRemove}>Remove</button>`}</div>`;
 }
+// own pictures for the island's characters, card by card: each made small (a PNG, so a cut-out keeps its see-through
+// background) and kept with the person's look. Used in Wallpaper & glass and in the island's ⚙.
+function useCharPicker() {
+  const { look, setLook, toast } = useApp();
+  const ref = useRef(null), [forId, setFor] = useState(''), [busy, setBusy] = useState('');
+  const onChange = async (e) => {
+    const f = e.target.files && e.target.files[0], id = forId; e.target.value = '';
+    if (!f || !id) return;
+    if (!f.type.startsWith('image/')) { toast('Pick a picture, like a PNG or JPG.', 'warn'); return; }
+    setBusy(id);
+    try {
+      const url = URL.createObjectURL(f), img = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = url; });
+      const k = Math.min(1, 256 / Math.max(img.naturalWidth, img.naturalHeight)), c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(img.naturalWidth * k)); c.height = Math.max(1, Math.round(img.naturalHeight * k)); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
+      const blob = await new Promise((ok) => c.toBlob(ok, 'image/png'));
+      const [att] = await storeFiles([{ file: blob, name: id + '.png', mime: 'image/png', size: blob.size, kind: 'image' }]);
+      setLook({ chars: { ...(look.chars || {}), [id]: att } }); toast(ISL[id].name + '’s picture is set');
+    } catch (err) { toast('That picture couldn’t be used. Try another one.', 'warn'); }
+    setBusy('');
+  };
+  return html`<div className="char-pics">${ISL_ORDER.map((id) => html`<${CharPicSlot} key=${id} id=${id} busy=${busy === id} onPick=${() => { setFor(id); if (ref.current) ref.current.click(); }} onRemove=${() => setLook({ chars: { ...(look.chars || {}), [id]: null } })}/>`)}</div>
+    <input type="file" accept="image/*" hidden ref=${ref} onChange=${onChange}/>`;
+}
 function LookModal({ onClose }) {
   const { look, setLook, toast } = useApp();
   const fileRef = useRef(null);
@@ -10956,23 +10980,6 @@ function LookModal({ onClose }) {
     setBusy(false);
   };
   const seg = (key, options) => html`<div className="seg" role="group">${options.map(([k, l]) => html`<button type="button" key=${k} className=${look[key] === k ? 'on' : ''} onClick=${() => setLook({ [key]: k })} aria-pressed=${look[key] === k}>${l}</button>`)}</div>`;
-  // own pictures for the island's characters: each made small (a PNG, so a cut-out keeps its see-through background)
-  const charRef = useRef(null), [charFor, setCharFor] = useState(''), [charBusy, setCharBusy] = useState('');
-  const onChar = async (e) => {
-    const f = e.target.files && e.target.files[0], id = charFor; e.target.value = '';
-    if (!f || !id) return;
-    if (!f.type.startsWith('image/')) { toast('Pick a picture, like a PNG or JPG.', 'warn'); return; }
-    setCharBusy(id);
-    try {
-      const url = URL.createObjectURL(f), img = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = no; i.src = url; });
-      const k = Math.min(1, 256 / Math.max(img.naturalWidth, img.naturalHeight)), c = document.createElement('canvas');
-      c.width = Math.max(1, Math.round(img.naturalWidth * k)); c.height = Math.max(1, Math.round(img.naturalHeight * k)); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(url);
-      const blob = await new Promise((ok) => c.toBlob(ok, 'image/png'));
-      const [att] = await storeFiles([{ file: blob, name: id + '.png', mime: 'image/png', size: blob.size, kind: 'image' }]);
-      setLook({ chars: { ...(look.chars || {}), [id]: att } }); toast(ISL[id].name + '’s picture is set');
-    } catch (err) { toast('That picture couldn’t be used. Try another one.', 'warn'); }
-    setCharBusy('');
-  };
   const pickTheme = (k) => setLook({ theme: k, ...(k === 'voyage' && !look.photo ? { scene: 'voyage' } : k === '' && look.scene === 'voyage' ? { scene: 'warm' } : {}) });
   return html`<${Modal} title="Wallpaper, glass & language" onClose=${onClose} wide light footer=${html`<button className="btn ghost" style=${{ marginRight: 'auto' }} onClick=${() => setLook({ ...DEFAULT_LOOK, lang: look.lang })}>Back to the original</button><button className="btn primary" onClick=${onClose}>Done</button>`}>
     <div className="field"><span>Theme</span><div className="seg" role="group">${[['', 'Floorboard'], ['voyage', 'Pirate voyage']].map(([k, l]) => html`<button type="button" key=${k || 'own'} className=${(look.theme || '') === k ? 'on' : ''} onClick=${() => pickTheme(k)} aria-pressed=${(look.theme || '') === k}>${l}</button>`)}</div>
@@ -10992,10 +10999,6 @@ function LookModal({ onClose }) {
       <input id="look-dim" className="look-range" type="range" min="0" max="0.7" step="0.05" value=${look.dim} onChange=${(e) => setLook({ dim: +e.target.value })}/>
       <small>Darker makes writing easier to read on a bright photo.</small></label>
     <div className="field"><span>Glass</span>${seg('glass', [['clear', 'Clear (liquid glass)'], ['frosted', 'Frosted'], ['solid', 'Solid']])}<small>Clear shows the most of your wallpaper. Solid is the easiest to read.</small></div>
-    ${DESKTOP_SHELL && html`<div className="field"><span>The characters on the bar at the top</span>
-      <div className="char-pics">${ISL_ORDER.map((id) => html`<${CharPicSlot} key=${id} id=${id} busy=${charBusy === id} onPick=${() => { setCharFor(id); if (charRef.current) charRef.current.click(); }} onRemove=${() => setLook({ chars: { ...(look.chars || {}), [id]: null } })}/>`)}</div>
-      <input type="file" accept="image/*" hidden ref=${charRef} onChange=${onChar}/>
-      <small>Use your own picture for any of them: one with a see-through background (a PNG) looks best. Only you see them.</small></div>`}
     <label className="field"><span>Translate messages into</span>
       <select id="look-lang" className="input" value=${look.lang || 'en'} onChange=${(e) => setLook({ lang: e.target.value })}>${LANGS.map(([k, l]) => html`<option key=${k} value=${k}>${l}</option>`)}</select>
       <small>Tap Translate on a message or post to read it in this language.</small></label>
