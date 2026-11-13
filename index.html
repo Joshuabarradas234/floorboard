@@ -5252,6 +5252,9 @@ function PersonModal({ personId, onClose, onAdded }) {
     <div className="field"><span>Departments they manage</span><div className="checks">${db.depts.map((d) => html`<label key=${d.id} className=${v.role === 'staff' ? 'dis' : ''}><input type="checkbox" disabled=${v.role === 'staff'} checked=${v.manages.includes(d.id)} onChange=${() => flip('manages', d.id)}/>${d.name}</label>`)}</div><small>Managers see the progress of everyone in these teams and can edit the team’s tools.</small></div>
     <label className="field"><span>Minutes on their sidebar (Windows)</span><select id="pm-minutes" className="select" value=${v.recorder === 'voice' ? 'voice' : v.recorder ? 'screen' : ''} onChange=${(e) => set('recorder', e.target.value === 'voice' ? 'voice' : e.target.value === 'screen')}>
       <option value="">Off</option><option value="voice">Voice only: records what’s said and writes the minutes and a summary</option><option value="screen">Screen and voice: also records the screen as a video</option></select></label>
+    <label className="field"><span>Theme</span><select id="pm-theme" className="select" value=${v.theme === 'voyage' ? 'voyage' : ''} onChange=${(e) => set('theme', e.target.value === 'voyage' ? 'voyage' : '')}>
+      <option value="">Floorboard</option><option value="voyage">Pirate voyage: a ship on the waves, a pirate crew on the top bar, sea-faring icons</option></select>
+      <small>Shows on their sidebar and top bar as soon as their Floorboard has the newest version. They can still change it themselves in Wallpaper & glass.</small></label>
     <label className="field"><span>Ask Floorboard for them</span><select id="pm-assistant" className="select" value=${v.assistant === 'personal' ? 'personal' : ''} onChange=${(e) => set('assistant', e.target.value === 'personal' ? 'personal' : '')}>
       <option value="">Work assistant: their work questions, files, tasks and email</option><option value="personal">Personal assistant: anything they ask, documents and screenshots they add, and the web</option></select>
       <small>A personal assistant is theirs alone, like their own Claude: their questions aren’t noted for the admins. It knows Floorboard too. Documents, screenshots and web searches cost a little more to run.</small></label>
@@ -11323,6 +11326,8 @@ function App() {
   }, [user && user.id]);
   const savedLook = self && db.pins && db.pins[self.id] && db.pins[self.id].look;
   const look = { ...DEFAULT_LOOK, ...(savedLook || localLook) };
+  // a theme an admin chose for this person (People & access) shows until they pick one themselves in Wallpaper & glass
+  if (self && self.theme && !(savedLook && savedLook.theme !== undefined)) { look.theme = self.theme; if (self.theme === 'voyage' && !look.photo && look.scene === 'warm') look.scene = 'voyage'; }
   THEME = look.theme === 'voyage' ? 'voyage' : ''; // (set before the rest draws: the icons and the ship read it)
   const savedSig = savedLook ? stable(savedLook) : '';
   useEffect(() => { if (savedLook) { setLocalLook(savedLook); lsSet(LOOK_KEY, JSON.stringify(savedLook)); } }, [savedSig]);
