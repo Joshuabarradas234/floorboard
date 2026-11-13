@@ -85,6 +85,11 @@ p{margin:0}
     radial-gradient(34% 30% at 60% 72%, #e0794a 0%, rgba(224,121,74,0) 70%),
     radial-gradient(30% 28% at 30% 80%, #3e8a4f 0%, rgba(62,138,79,0) 70%),
     linear-gradient(180deg,#5d8a4e 0%,#3b6236 60%,#1f3520 100%)}
+[data-scene="voyage"]{--scene-bg:
+    radial-gradient(16% 20% at 80% 16%, rgba(255,240,180,.95) 0%, rgba(255,214,120,0) 70%),
+    radial-gradient(42% 14% at 26% 20%, rgba(255,255,255,.55) 0%, rgba(255,255,255,0) 70%),
+    radial-gradient(36% 11% at 62% 31%, rgba(255,255,255,.4) 0%, rgba(255,255,255,0) 70%),
+    linear-gradient(180deg,#3f93d8 0%,#68b9ec 40%,#2d86c6 50%,#1c6aa6 68%,#0f4677 100%)}
 [data-scene="ocean"]{--scene-bg:
     radial-gradient(32% 40% at 20% 25%, #5fd0e0 0%, rgba(95,208,224,0) 70%),
     radial-gradient(30% 36% at 80% 30%, #2f6fd0 0%, rgba(47,111,208,0) 70%),
@@ -138,6 +143,7 @@ p{margin:0}
   border-color:rgba(255,255,255,.3);border-top-color:rgba(255,255,255,.5);
   box-shadow:inset 0 1px 0 rgba(255,255,255,.42),inset 0 0 30px rgba(255,255,255,.08),var(--shadow)}
 .native-glass[data-glass="frosted"]:has(.scene[data-scene="see"]:not(.photo)) .widget{background:rgba(222,230,240,.14)}
+:root[data-theme="voyage"]{--sky:#FFD36B;--sky-soft:rgba(255,211,107,.22)}
 :root[data-glass="solid"]{--glass:rgba(34,26,20,.66);--glass-2:rgba(48,38,30,.74);--glass-3:rgba(64,52,42,.82);--glass-deep:rgba(30,22,17,.93);--blur:blur(40px) saturate(130%)}
 
 /* buttons */
@@ -1835,6 +1841,23 @@ const TILE_ICONS = ['🍞', '🥐', '🎂', '🔥', '🌡️', '🥕', '🍌', '
 const TILE_COLORS = ['#9A6B2F', '#D0622B', '#3F8A2E', '#2F7FB8', '#0F8A8A', '#8A4FB8', '#3D4A5C', '#B8860B', '#C2415A', '#6F7D1F'];
 const NO_FILTERS = { type: 'any', level: 'any', dept: 'any' };
 
+// The person's theme (Wallpaper & glass): '' for Floorboard's own, or 'voyage', a pirate voyage: a sailing ship on the
+// sea instead of the tree, sea-faring icons (folders are treasure chests), and red, gold and sea blue
+let THEME = '';
+const VOYAGE_ICONS = {
+  inbox: '<circle cx="12" cy="5" r="2"/><path d="M12 7v13"/><path d="M8.5 10.5h7"/><path d="M4.5 13.5a7.5 7.5 0 0 0 15 0"/><path d="M4.5 13.5 3 15M19.5 13.5 21 15"/>',
+  task: '<circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4"/><path d="M12 3v4M12 17v4M3 12h4M17 12h4M5.6 5.6l2.9 2.9M15.5 15.5l2.9 2.9M5.6 18.4l2.9-2.9M15.5 8.5l2.9-2.9"/>',
+  chat: '<path d="M10 3h4"/><path d="M10.5 3v4.2C8.5 8 7 9.6 7 12v7.5A1.5 1.5 0 0 0 8.5 21h7a1.5 1.5 0 0 0 1.5-1.5V12c0-2.4-1.5-4-3.5-4.8V3"/><path d="M10 13.5h4M10 16.5h3"/>',
+  list: '<path d="M3.5 6.5 9 4.5l6 2 5.5-2v13l-5.5 2-6-2-5.5 2z"/><path d="M9 4.5v13M15 6.5v13"/><path d="m10.8 10.2 2.4 2.4M13.2 10.2l-2.4 2.4"/>',
+  send: '<path d="M3 15.5h18l-2.6 4.5H5.6z"/><path d="M12 15.5V3.5l6 9.5h-6"/><path d="M12 6 7.5 13H12"/>',
+  eye: '<path d="m3 14.5 11.5-6 2 3.8L5 18.3z"/><path d="m14.5 8.5 3.2-1.6 1.6 3.1-2.8 1.5"/><path d="m8.5 16.4-1 4.6M10.5 15.4l2 5.6"/>',
+  archive: '<path d="M4 10.5A3.5 3.5 0 0 1 7.5 7h9a3.5 3.5 0 0 1 3.5 3.5V19H4z"/><path d="M4 12.5h16"/><path d="M10.8 11.5h2.4v3h-2.4z"/><path d="M8 7.2V19M16 7.2V19"/>',
+  folder: '<path d="M4 10.5A3.5 3.5 0 0 1 7.5 7h9a3.5 3.5 0 0 1 3.5 3.5V19H4z"/><path d="M4 12.5h16"/><path d="M10.8 11.5h2.4v3h-2.4z"/><path d="M8 7.2V19M16 7.2V19"/>',
+  diary: '<circle cx="12" cy="12" r="9"/><path d="m15.6 8.4-2.2 5-5 2.2 2.2-5z"/><path d="M12 3v1.5M12 19.5V21M3 12h1.5M19.5 12H21"/>',
+  calendar: '<circle cx="12" cy="12" r="9"/><path d="m15.6 8.4-2.2 5-5 2.2 2.2-5z"/><path d="M12 3v1.5M12 19.5V21M3 12h1.5M19.5 12H21"/>',
+  stamp: '<circle cx="12" cy="10.5" r="6"/><path d="m12 7.3 1 2.1 2.3.3-1.7 1.6.4 2.3L12 12.5l-2 1.1.4-2.3-1.7-1.6 2.3-.3z"/><path d="m8.4 15.3-1.6 5.2 3-1.4M15.6 15.3l1.6 5.2-3-1.4"/>',
+  pin: '<path d="M5.5 21V3.5"/><path d="M5.5 4h12.5l-3.2 4 3.2 4H5.5"/>',
+};
 const ICONS = {
   diary: '<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="M7.5 14h2M11.5 14h2M15.5 14h1M7.5 17.5h2M11.5 17.5h2"/>',
   print: '<path d="M7 9V3.5h10V9"/><rect x="3.5" y="9" width="17" height="8" rx="2"/><path d="M7 14h10v6.5H7z"/>',
@@ -2539,7 +2562,7 @@ const useApp = () => useContext(Ctx);
 
 /* ---------------- small components ---------------- */
 function Icon({ n, s = 18 }) {
-  return html`<svg className="ic" width=${s} height=${s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" dangerouslySetInnerHTML=${{ __html: ICONS[n] || '' }}></svg>`;
+  return html`<svg className="ic" width=${s} height=${s} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" dangerouslySetInnerHTML=${{ __html: (THEME === 'voyage' && VOYAGE_ICONS[n]) || ICONS[n] || '' }}></svg>`;
 }
 function Avatar({ u, s = 28 }) {
   const { db, user } = useApp();
@@ -3080,7 +3103,7 @@ let islGid = 0;
 // a tap: heart eyes, a happy squish and a few hearts floating up
 const islHeart = (x, y) => html`<path d=${`M${x} ${y + 5.5}C${x - 10} ${y - 1} ${x - 5.5} ${y - 9.5} ${x} ${y - 3.5}C${x + 5.5} ${y - 9.5} ${x + 10} ${y - 1} ${x} ${y + 5.5}Z`} fill="#ff5d7a"/>`;
 function IslChar({ id, s = 44, busy, n, wig, ring, look }) {
-  const c = ISL[id], gid = useRef('islg' + (++islGid)).current, lk = look || ISL_LOOK;
+  const c = ISL[id], gid = useRef('islg' + (++islGid)).current, lk = look || (THEME === 'voyage' ? 'crew' : ISL_LOOK);
   const [love, setLove] = useState(0), loveT = useRef(null);
   const tap = () => { setLove(Date.now()); clearTimeout(loveT.current); loveT.current = setTimeout(() => setLove(0), 1600); };
   if (!(id in ISL_BLINK)) ISL_BLINK[id] = (Math.random() * 4).toFixed(2) + 's'; // each blinks in its own time
@@ -3110,9 +3133,19 @@ function IslChar({ id, s = 44, busy, n, wig, ring, look }) {
       <ellipse className="x-o" cx="50" cy="68" rx="4.6" ry="5.6" fill="#C8504D"/>
       <g className="x-grin"><path d="M39 62Q50 65 61 62Q60 79 50 79Q40 79 39 62Z" fill="#C8504D"/><path d="M44 73Q50 70 56 73Q54 79 50 79Q46 79 44 73Z" fill="#F08C88"/></g>`;
   };
-  return html`<span className=${'isl-ch ' + lk + (s < 20 ? ' tiny' : '') + (busy ? ' busy' : '') + (wig ? ' wig' : '') + (ring ? ' ring' : '') + (love ? ' love' : '')} style=${{ '--f': c.fur, width: s + 'px', height: s + 'px', '--s': s + 'px', '--bd': ISL_BLINK[id] }} aria-hidden="true" onClick=${tap}>
+  const GOLD = '#E0AC45', kerchief = (col, dark) => html`<path d="M12 40Q16 16 50 14Q84 16 88 40Q70 32 50 32Q30 32 12 40Z" fill=${col}/>${[[24, 26], [40, 20], [60, 20], [76, 26]].map(([x, y]) => html`<circle cx=${x} cy=${y} r="2" fill="#fff" opacity=".7"/>`)}<path d="M86 36l10-4-4 9z" fill=${dark}/><path d="M86 36l9 6-9 2z" fill=${dark} opacity=".85"/>`;
+  const GEAR = {
+    floorboard: html`<path d="M12 35Q18 13 50 11Q82 13 88 35Q70 27 50 28Q30 27 12 35Z" fill="#2a2230"/><path d="M17 31Q34 23.5 50 24.5Q66 23.5 83 31" stroke=${GOLD} strokeWidth="3" fill="none"/><circle cx="50" cy="18" r="3.2" fill=${GOLD}/>`,
+    taskboard: kerchief('#D84A3A', '#B0352A'),
+    jarvis: kerchief('#9B59D0', '#7A3FB0'),
+    teams: html`<path d="M24 19Q50 33 76 19L76 25.5Q50 37 24 25.5Z" fill="#1F3A68"/><ellipse cx="50" cy="17" rx="27" ry="7.5" fill="#fff" stroke="#d7dde8" strokeWidth="1"/><circle cx="50" cy="17" r="2.2" fill="#1F3A68"/>`,
+    mail: html`<path d="M16 36Q18 10 50 9Q82 10 84 36Q66 30 50 30Q34 30 16 36Z" fill="#2F6FB5"/><path d="M19.5 26.5Q50 17 80.5 26.5" stroke="#fff" strokeWidth="4" fill="none"/><path d="M17.5 32.5Q50 23.5 82.5 32.5" stroke="#E8EEF7" strokeWidth="2.6" fill="none"/><circle cx="50" cy="8.5" r="6" fill="#fff"/>`,
+    whatsapp: html`<path d="M9 42L91 35" stroke="#1b1b1b" strokeWidth="2.6"/><ellipse cx="65" cy="54" rx="10.5" ry="10" fill="#1b1b1b"/><circle cx="11" cy="72" r="4.6" fill="none" stroke=${GOLD} strokeWidth="2.4"/>`,
+  };
+  const crew = () => html`${slime()}${GEAR[id] || GEAR.floorboard}`;
+  return html`<span className=${'isl-ch ' + (lk === 'crew' ? 'slime crew' : lk) + (s < 20 ? ' tiny' : '') + (busy ? ' busy' : '') + (wig ? ' wig' : '') + (ring ? ' ring' : '') + (love ? ' love' : '')} style=${{ '--f': c.fur, width: s + 'px', height: s + 'px', '--s': s + 'px', '--bd': ISL_BLINK[id] }} aria-hidden="true" onClick=${tap}>
     ${love > 0 && s >= 20 && html`<span key=${love} className="isl-hearts"><i style=${{ '--dx': '-14px', '--dl': '0s' }}>♥</i><i style=${{ '--dx': '4px', '--dl': '.15s' }}>♥</i><i style=${{ '--dx': '16px', '--dl': '.3s' }}>♥</i></span>`}
-    <svg viewBox="0 0 100 100" className="isl-svg">${shade}<g className="isl-bod">${lk === 'slime' ? slime() : ghost()}</g></svg>
+    <svg viewBox="0 0 100 100" className="isl-svg">${shade}<g className="isl-bod">${lk === 'slime' ? slime() : lk === 'crew' ? crew() : ghost()}</g></svg>
     ${n > 0 && html`<b className="isl-n">${n > 99 ? '99+' : n}</b>`}</span>`;
 }
 // Where the pointer is, in the island window's own coordinates: the Windows app sends it from anywhere on the screen,
@@ -6352,6 +6385,7 @@ function treeVoxels(season) {
 let treeLift = null;
 // Draws the tree once into its own canvas; the animation then only adds what falls.
 function renderTree(season, W, tight) {
+  if (THEME === 'voyage') return renderShip(W, tight);
   const N = TREE_N, a = W / (2 * N + 4), b = a / 2, h = a * 1.08, V = treeVoxels(season);
   if (treeLift === null) { treeLift = 0; for (const k of SEASON_KEYS) for (const v of treeVoxels(k).values()) treeLift = Math.max(treeLift, (v.z + 1) * 1.08 - (v.x + v.y) * 0.5); }
   // tight: the small version, with less room round the edges
@@ -6374,6 +6408,97 @@ function renderTree(season, W, tight) {
     if (v.leaf && z > 9) leaves.push(P(x + 0.5, y + 0.5, z));
   }
   return { canvas: cv, W, H, dpr, unit: a / 7, leaves, P, N, tight: !!tight };
+}
+// The pirate voyage's ship, in place of the tree: Floorboard's own design (a wooden hull with a gold trim and cannon
+// ports, a stern cabin with lit windows, one big cream sail with a gold compass star, a red pennant), on a slab of sea.
+// The sea and the ship are separate pictures, so the ship can ride the waves.
+function shipVoxels() {
+  const N = TREE_N, sea = new Map(), ship = new Map(), cy = 14.5;
+  const put = (M, x, y, z, hex, f) => { const c = hexRgb(hex); M.set(x + ',' + y + ',' + z, { x, y, z, c: f ? c.map((v) => v * f) : c }); };
+  const WATER = ['#3fa3d6', '#4bb0e0', '#379acf', '#58bbe6', '#44a9dc'], FOAM = '#eaf7fd', WOOD = '#5a3820', PLANK = ['#7b4a27', '#6c4022', '#86532e'];
+  for (let x = 0; x < N; x++) for (let y = 0; y < N; y++) { put(sea, x, y, 0, '#1b5a86'); put(sea, x, y, 1, '#236c9c'); put(sea, x, y, 2, pickBy(WATER, vhash(x, y, 2, 32))); }
+  // the hull: pointed at the bow (towards you, bottom right), narrower towards the keel, a gold trim along the deck
+  const half = (x) => (x < 7 || x > 23 ? 0 : x <= 9 ? 3.3 + (x - 7) * 0.35 : x >= 20 ? 4 - (x - 20) * 0.9 : 4);
+  for (let x = 7; x <= 23; x++) {
+    const w = half(x); if (w < 0.5) continue;
+    for (let z = 2; z <= 6; z++) {
+      const wz = Math.max(0.6, w - (6 - z) * 0.45), y0 = Math.ceil(cy - wz), y1 = Math.ceil(cy + wz) - 1;
+      for (let y = y0; y <= y1; y++) {
+        const edge = y === y0 || y === y1 || x === 7 || half(x + 1) < 0.5;
+        put(ship, x, y, z, z === 6 ? (edge ? '#e0ac45' : pickBy(['#c99d66', '#bf9259', '#d1a771'], vhash(x, y, z, 34))) : z === 5 && edge ? '#4a2c17' : pickBy(PLANK, vhash(x, y, z, 33)));
+      }
+      if (z === 6) for (let y = y0; y <= y1; y++) if ((y === y0 || y === y1) && x % 2 === 0) put(ship, x, y, 7, PLANK[1]); // the railing
+    }
+  }
+  [11, 14, 17].forEach((x) => put(ship, x, 18, 4, '#24160d')); // cannon ports on the near side
+  // the stern cabin, with lit windows
+  for (let x = 7; x <= 10; x++) for (let y = 12; y <= 17; y++) for (let z = 7; z <= 9; z++) put(ship, x, y, z, (y === 17 && z === 8 && (x === 8 || x === 9)) || (x === 10 && z === 8 && (y === 13 || y === 16)) ? '#ffd27a' : PLANK[(x + y + z) % 3]);
+  for (let x = 7; x <= 10; x++) for (let y = 12; y <= 17; y++) put(ship, x, y, 10, x === 7 || x === 10 || y === 12 || y === 17 ? '#e0ac45' : '#c99d66');
+  // the mast, the yards and the sail (billowing towards the bow), with a gold compass star
+  for (let z = 7; z <= 24; z++) { put(ship, 15, 14, z, WOOD); put(ship, 15, 15, z, WOOD, 0.92); }
+  for (let y = 8; y <= 21; y++) { put(ship, 16, y, 22, WOOD); put(ship, 16, y, 10, WOOD); }
+  for (let z = 11; z <= 21; z++) for (let y = 9; y <= 20; y++) {
+    const dy = y + 0.5 - 15, dz = z + 0.5 - 16.5, billow = Math.abs(dy) < 4.5 && z > 12 && z < 20 ? 1 : 0;
+    const star = (Math.abs(dy) <= 0.5 && Math.abs(dz) <= 3) || (Math.abs(dz) <= 0.5 && Math.abs(dy) <= 3) || (Math.abs(Math.abs(dy) - Math.abs(dz)) < 0.6 && Math.abs(dy) <= 1.5);
+    put(ship, 16 + billow, y, z, star ? '#d99a2b' : pickBy(['#f4e7c4', '#ecdcb3', '#f7ecd0'], vhash(y, z, 0, 35)));
+  }
+  for (let y = 16; y <= 19; y++) put(ship, 15, y, 24, '#d84a3a'); // the pennant
+  for (let y = 16; y <= 17; y++) put(ship, 15, y, 25, '#c23d30');
+  for (let i = 0; i < 4; i++) put(ship, 24 + i, 14, 7 + Math.floor(i / 2), WOOD); // the bowsprit
+  put(ship, 23, 14, 7, '#e0ac45'); put(ship, 23, 15, 7, '#e0ac45'); // a gold scroll on the bow
+  // foam where the hull meets the sea, and a wake behind
+  for (const v of ship.values()) if (v.z === 2) [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dx, dy]) => { const k = v.x + dx + ',' + (v.y + dy) + ',2'; if (!ship.has(k) && sea.has(k) && vhash(v.x + dx, v.y + dy, 2, 36) < 0.7) put(sea, v.x + dx, v.y + dy, 2, FOAM); });
+  for (let x = 2; x <= 6; x++) for (let y = 12; y <= 17; y++) if (vhash(x, y, 2, 37) < 0.55 - (6 - x) * 0.08) put(sea, x, y, 2, FOAM);
+  return { sea, ship };
+}
+let shipLift = null;
+function renderShip(W, tight) {
+  const N = TREE_N, a = W / (2 * N + 4), b = a / 2, h = a * 1.08, { sea, ship } = shipVoxels();
+  if (shipLift === null) { shipLift = 0; for (const v of ship.values()) shipLift = Math.max(shipLift, (v.z + 1) * 1.08 - (v.x + v.y) * 0.5); }
+  const top = Math.ceil(shipLift * a) + (tight ? 3 : 10), H = Math.ceil(top + 2 * N * b + (tight ? 9 : 22)), ox = W / 2;
+  const P = (x, y, z) => [ox + (x - y) * a, top + (x + y) * b - z * h];
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const paint = (V, shadow) => {
+    const cv = document.createElement('canvas'); cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+    const g = cv.getContext('2d'); g.scale(dpr, dpr); g.lineJoin = 'round'; g.lineWidth = 0.6;
+    const face = (pts, col) => { g.beginPath(); pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y))); g.closePath(); g.fillStyle = col; g.strokeStyle = col; g.fill(); g.stroke(); };
+    if (shadow) { g.save(); g.filter = 'blur(10px)'; face([P(0, 0, -0.6), P(N, 0, -0.6), P(N, N, -0.6), P(0, N, -0.6)].map(([x, y]) => [x, y + 10]), 'rgba(10,40,70,.22)'); g.restore(); }
+    for (const v of [...V.values()].sort((p, q) => p.x + p.y + p.z - (q.x + q.y + q.z))) {
+      const { x, y, z, c } = v;
+      if (!V.has(x + ',' + y + ',' + (z + 1))) face([P(x, y, z + 1), P(x + 1, y, z + 1), P(x + 1, y + 1, z + 1), P(x, y + 1, z + 1)], rgbCss(c, 1));
+      if (!V.has(x + ',' + (y + 1) + ',' + z)) face([P(x, y + 1, z + 1), P(x + 1, y + 1, z + 1), P(x + 1, y + 1, z), P(x, y + 1, z)], rgbCss(c, 0.86));
+      if (!V.has(x + 1 + ',' + y + ',' + z)) face([P(x + 1, y, z + 1), P(x + 1, y + 1, z + 1), P(x + 1, y + 1, z), P(x + 1, y, z)], rgbCss(c, 0.73));
+    }
+    return cv;
+  };
+  const cv = paint(sea, true), shipCv = paint(ship, false);
+  return { canvas: cv, ship: shipCv, W, H, dpr, unit: a / 7, leaves: [], P, N, tight: !!tight, voyage: true, bow: P(26, 14.5, 7.5), mid: P(15.5, 14.5, 2.5) };
+}
+// The sea moving: little glints of sun on the water, ripples drifting along, and spray off the bow as the ship rides it
+function stepSea(L, sc, dt, g, alpha) {
+  L.t = (L.t || 0) + dt; L.glints = L.glints || []; L.ripples = L.ripples || []; L.spray = L.spray || [];
+  const u = sc.unit, onHull = (x, y) => x > 5 && x < 25 && y > 9 && y < 20;
+  L.ga = (L.ga || 0) + dt * 7; while (L.ga >= 1) { L.ga -= 1; const x = Math.random() * sc.N, y = Math.random() * sc.N; if (!onHull(x, y) && L.glints.length < 40) { const [px, py] = sc.P(x, y, 3); L.glints.push({ x: px, y: py, t: 0, life: 0.7 + Math.random() * 0.9, s: (1.6 + Math.random() * 1.6) * u * 7 / 7 }); } }
+  L.ra = (L.ra || 0) + dt * 2.2; while (L.ra >= 1) { L.ra -= 1; const x = Math.random() * (sc.N - 4), y = Math.random() * sc.N; if (!onHull(x, y) && L.ripples.length < 14) L.ripples.push({ x, y, t: 0, life: 2.2 + Math.random() * 1.4 }); }
+  const bobV = Math.cos(L.t * 1.7); // the bow dips: spray
+  L.sa = (L.sa || 0) + dt * (bobV > 0.2 ? 26 : 3); while (L.sa >= 1) { L.sa -= 1; if (L.spray.length < 60) L.spray.push({ x: sc.bow[0] + (Math.random() - 0.5) * 6 * u, y: sc.bow[1] + (L.bob || 0) + 4 * u, vx: (14 + Math.random() * 26) * u, vy: -(26 + Math.random() * 34) * u, t: 0, life: 0.7 + Math.random() * 0.5, s: (0.9 + Math.random() * 1.4) * u }); }
+  g.save();
+  g.strokeStyle = '#ffffff'; g.lineCap = 'round';
+  for (const r of L.ripples) { // a short white wave, drifting towards the bow side
+    r.t += dt; r.x += dt * 0.9;
+    const k = r.t / r.life, a0 = Math.sin(Math.PI * Math.min(1, k)) * 0.55, [px, py] = sc.P(r.x, r.y, 3), w = 5 * u;
+    g.globalAlpha = alpha * a0; g.lineWidth = Math.max(0.8, 1.1 * u);
+    g.beginPath(); g.moveTo(px - w, py); g.quadraticCurveTo(px - w / 2, py - 2 * u, px, py); g.quadraticCurveTo(px + w / 2, py + 2 * u, px + w, py); g.stroke();
+  }
+  for (const s of L.glints) { // a four-pointed glint of sun
+    s.t += dt; const k = Math.sin(Math.PI * Math.min(1, s.t / s.life));
+    g.globalAlpha = alpha * k * 0.9; g.lineWidth = Math.max(0.6, 0.8 * u);
+    g.beginPath(); g.moveTo(s.x - s.s * k, s.y); g.lineTo(s.x + s.s * k, s.y); g.moveTo(s.x, s.y - s.s * k * 1.4); g.lineTo(s.x, s.y + s.s * k * 1.4); g.stroke();
+  }
+  g.fillStyle = '#ffffff';
+  for (const p of L.spray) { p.t += dt; p.vy += 130 * u * dt; p.x += p.vx * dt; p.y += p.vy * dt; g.globalAlpha = alpha * Math.max(0, 1 - p.t / p.life) * 0.85; g.beginPath(); g.arc(p.x, p.y, p.s, 0, Math.PI * 2); g.fill(); }
+  g.restore();
+  L.glints = L.glints.filter((s) => s.t < s.life); L.ripples = L.ripples.filter((r) => r.t < r.life); L.spray = L.spray.filter((p) => p.t < p.life);
 }
 // where something falling at screen x comes to rest on the paving (or nowhere, past its edge)
 function landY(sc, x) {
@@ -6512,8 +6637,14 @@ function drawTreeFrame(L, g, cv, S, dt, calm, qrInk) {
     g.globalAlpha = ta;
     if (L.prev) { g.drawImage(L.prev.canvas, 0, 0); g.globalAlpha = ta * L.fadeT; }
     g.drawImage(sc.canvas, 0, 0);
+    if (sc.voyage) { // the ship bobs and rocks a little on the swell
+      L.t = (L.t || 0) + (calm ? 0 : dt); L.bob = calm ? 0 : Math.sin(L.t * 1.7) * sc.unit * 7 * 0.32;
+      const ang = calm ? 0 : Math.sin(L.t * 1.7 + 0.9) * 0.012, cx = sc.mid[0] * sc.dpr, cy = sc.mid[1] * sc.dpr;
+      g.save(); g.translate(cx, cy + L.bob * sc.dpr); g.rotate(ang); g.translate(-cx, -cy); g.drawImage(sc.ship, 0, 0); g.restore();
+    }
     g.setTransform(s * sc.dpr, 0, 0, s * sc.dpr, ex, ey);
-    if (!calm) { g.globalAlpha = ta; stepRain(L, sc, dt, g, S.rain); stepFallers(L, sc, S, dt, g, ta); }
+    if (!calm && sc.voyage) stepSea(L, sc, dt, g, ta);
+    else if (!calm) { g.globalAlpha = ta; stepRain(L, sc, dt, g, S.rain); stepFallers(L, sc, S, dt, g, ta); }
     g.globalAlpha = 1;
   }
   if (k > 0 && L.qr) drawQrMorph(g, sc, L.qr, qrInk, k);
@@ -6594,7 +6725,7 @@ function PhoneModal({ onClose }) {
     const ro = new ResizeObserver(() => { if (Math.abs(box.clientWidth - lastW) > 8) { lastW = box.clientWidth; L.scene = null; build(); } });
     ro.observe(box);
     return () => { cancelAnimationFrame(raf); ro.disconnect(); };
-  }, [season]);
+  }, [season, THEME]);
   useEffect(() => { if (sound) Ambience.start(S.rain ? 'rain' : season === 'winter' ? 'wind' : 'breeze'); else Ambience.stop(); }, [sound, season]);
   useEffect(() => () => Ambience.stop(), []);
   const flip = () => setShowQr((v) => !v);
@@ -6608,7 +6739,7 @@ function PhoneModal({ onClose }) {
       onClick=${flip} onKeyDown=${(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); } }}>
       <canvas ref=${sceneCv} aria-hidden="true"></canvas>
     </div>
-    <p className="qr-hint">${showQr ? 'Point the phone’s camera at the code · tap it to see the tree again' : 'Tap the tree to see the QR code'}</p>
+    <p className="qr-hint">${showQr ? 'Point the phone’s camera at the code · tap it to see the ' + (THEME === 'voyage' ? 'ship' : 'tree') + ' again' : 'Tap the ' + (THEME === 'voyage' ? 'ship' : 'tree') + ' to see the QR code'}</p>
     <div className="qr-link">
       <input id="qr-link" value=${link} onChange=${(e) => setLink(e.target.value)} aria-label="Link in the QR code" spellCheck="false"/>
       <button type="button" className="qr-share" onClick=${share} aria-label="Share or copy the link" title="Share or copy the link"><${Icon} n="share" s=${17}/></button>
@@ -6616,7 +6747,7 @@ function PhoneModal({ onClose }) {
     <div className="qr-tabs qr-view" role="group" aria-label="What the phone opens"><span>Opens as</span>
       <button type="button" className=${board ? 'on' : ''} aria-pressed=${board} onClick=${() => pickView(true)}><${Icon} n="sidebar" s=${15}/>Sidebar view</button>
       <button type="button" className=${!board ? 'on' : ''} aria-pressed=${!board} onClick=${() => pickView(false)}><${Icon} n="expand" s=${15}/>Full app</button></div>
-    <div className="qr-tabs" role="group" aria-label="Season">
+    <div className="qr-tabs" role="group" aria-label="Season" hidden=${THEME === 'voyage'}>
       ${SEASON_KEYS.map((k) => html`<button type="button" key=${k} className=${season === k ? 'on' : ''} aria-pressed=${season === k} onClick=${() => setSeason(k)}><${Icon} n=${SEASONS[k].icon} s=${15}/>${SEASONS[k].label}</button>`)}
       <button type="button" className="snd" onClick=${() => setSound((v) => !v)} aria-pressed=${sound} aria-label=${sound ? 'Turn the sound off' : 'Turn the sound on'} title=${sound ? 'Sound on' : 'Sound off'}><${Icon} n=${sound ? 'sound' : 'mute'} s=${16}/></button>
     </div>
@@ -6669,7 +6800,7 @@ function MiniTree() {
     };
     raf = requestAnimationFrame(frame);
     return () => cancelAnimationFrame(raf);
-  }, [season]);
+  }, [season, THEME]);
   return html`<button ref=${btnRef} type="button" className=${'mini-tree season-' + season + (qrOn ? ' qr' : '')} style=${lift ? { transform: lift } : null} onClick=${() => setQrOn((v) => !v)} aria-pressed=${qrOn}
     title=${qrOn ? 'Tap to see the tree again' : 'Tap for a QR code that opens Floorboard on a phone'} aria-label=${qrOn ? 'Show the tree again' : 'Show a QR code that opens Floorboard on a phone'}><canvas ref=${cvRef} aria-hidden="true"></canvas></button>`;
 }
@@ -10775,7 +10906,7 @@ function MonthEndView() {
 // and on this device too, so the login screen already looks like theirs.
 const LOOK_KEY = 'floorboard.look.v1';
 const DEFAULT_LOOK = { scene: 'warm', photo: null, dim: 0.3, blur: 'soft', glass: 'frosted', lang: 'en' };
-const WALLPAPERS = [['warm', 'Back office'], ['night', 'Night shift'], ['fresh', 'Fresh produce'], ['ocean', 'Ocean'], ['sunset', 'Sunset'], ['blossom', 'Blossom'], ['graphite', 'Graphite'], ['aurora', 'Aurora']];
+const WALLPAPERS = [['warm', 'Back office'], ['night', 'Night shift'], ['fresh', 'Fresh produce'], ['ocean', 'Ocean'], ['voyage', 'Open sea'], ['sunset', 'Sunset'], ['blossom', 'Blossom'], ['graphite', 'Graphite'], ['aurora', 'Aurora']];
 function readLocalLook() {
   try { const l = JSON.parse(localStorage.getItem(LOOK_KEY)); if (l && typeof l === 'object') return { ...DEFAULT_LOOK, ...l }; } catch (e) { }
   const s = lsGet(SCENE_KEY); // the older backdrop setting
@@ -10820,7 +10951,10 @@ function LookModal({ onClose }) {
     setBusy(false);
   };
   const seg = (key, options) => html`<div className="seg" role="group">${options.map(([k, l]) => html`<button type="button" key=${k} className=${look[key] === k ? 'on' : ''} onClick=${() => setLook({ [key]: k })} aria-pressed=${look[key] === k}>${l}</button>`)}</div>`;
+  const pickTheme = (k) => setLook({ theme: k, ...(k === 'voyage' && !look.photo ? { scene: 'voyage' } : k === '' && look.scene === 'voyage' ? { scene: 'warm' } : {}) });
   return html`<${Modal} title="Wallpaper, glass & language" onClose=${onClose} wide light footer=${html`<button className="btn ghost" style=${{ marginRight: 'auto' }} onClick=${() => setLook({ ...DEFAULT_LOOK, lang: look.lang })}>Back to the original</button><button className="btn primary" onClick=${onClose}>Done</button>`}>
+    <div className="field"><span>Theme</span><div className="seg" role="group">${[['', 'Floorboard'], ['voyage', 'Pirate voyage']].map(([k, l]) => html`<button type="button" key=${k || 'own'} className=${(look.theme || '') === k ? 'on' : ''} onClick=${() => pickTheme(k)} aria-pressed=${(look.theme || '') === k}>${l}</button>`)}</div>
+      <small>Pirate voyage: a ship riding the waves instead of the tree, a pirate crew on the bar at the top, sea-faring icons (folders are treasure chests) and the Open sea wallpaper. Only you see it.</small></div>
     <div className="field"><span>Wallpaper</span>
       <div className="wall-grid">
         <button type="button" className=${'wall own' + (look.photo ? ' on has-photo' : '')} onClick=${() => fileRef.current && fileRef.current.click()} style=${photoUrl ? { backgroundImage: 'url("' + photoUrl + '")' } : null} disabled=${busy}>
@@ -11189,9 +11323,11 @@ function App() {
   }, [user && user.id]);
   const savedLook = self && db.pins && db.pins[self.id] && db.pins[self.id].look;
   const look = { ...DEFAULT_LOOK, ...(savedLook || localLook) };
+  THEME = look.theme === 'voyage' ? 'voyage' : ''; // (set before the rest draws: the icons and the ship read it)
   const savedSig = savedLook ? stable(savedLook) : '';
   useEffect(() => { if (savedLook) { setLocalLook(savedLook); lsSet(LOOK_KEY, JSON.stringify(savedLook)); } }, [savedSig]);
   useEffect(() => { document.documentElement.setAttribute('data-glass', look.glass); }, [look.glass]);
+  useEffect(() => { document.documentElement.setAttribute('data-theme', THEME); }, [look.theme]);
   const setLook = (patch) => {
     const next = { ...look, ...patch };
     setLocalLook(next); lsSet(LOOK_KEY, JSON.stringify(next));
