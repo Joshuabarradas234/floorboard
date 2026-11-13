@@ -144,6 +144,42 @@ const TOOLS: Anthropic.Tool[] = [
   },
 ];
 
+// How Floorboard works, so either assistant can help someone do something in it
+const GUIDE = 'How Floorboard works (to help people find their way; you cannot do these things for them). '
+  + 'Posts: the New post button (or + on the phone) makes a task, a feedback request, a heads-up ("look at this"), a vote or an approval; you tag people or whole departments, '
+  + 'pick how urgent it is (red ASAP, amber soon, green normal) and an optional due date, and can attach files. People open a task to set how far they are (a percentage) and mark it done. '
+  + 'Needs you lists what is waiting on you, most urgent first; Sent (or Sent & tracking in the full window) lists what you handed out and how far each person is, '
+  + 'with a reminder after 2 days without an update; Everything is every post you were tagged in; Chats are department chats, groups and direct messages. '
+  + 'On Windows: the glass sidebar on the edge of the screen holds Needs you, Chats, the cards and Ask; the full window opens from the sidebar. '
+  + 'The island (the bar at the top of the screen) has cards: Floorboard, Tasks (tasks given out, with how far each person is, and tasks sent to you), Mail (Outlook), '
+  + 'Teams (what people asked of you in Teams), WhatsApp (linked with the phone by scanning a code), and the chat; files dropped on it go to My files. '
+  + 'Minutes (Windows sidebar, when switched on for the person): Record, tick who is in the meeting, Start; Stop when done; the minutes, with who said what, a summary, decisions '
+  + 'and to-dos, open by themselves in My files, Meeting recordings, and the video is kept in Documents, Meeting recordings. '
+  + 'Files: My files (your own) and department archives; Sort my files tidies them. Task board: each department\'s tasks for the week, with the team\'s progress for its head. '
+  + 'My week: daily tasks. Calendar: meetings, with notes. Approvals: invoices to approve, then paid or not approved. Quote drop box (Admin), petrol and expense slips, and month end (Finance). '
+  + 'People & access (admins): add people and departments, setup codes and PIN resets, what each department has switched on, Minutes and the assistant for each person. '
+  + 'It works with no signal and catches up when the signal is back. Phones: the app icon on the home screen, and a widget. ';
+
+// A personal assistant (switched on for a person in People & access): theirs alone, like their own Claude
+const PERSONAL = 'You are the personal assistant of one person who works at a South African retail store, inside Floorboard, the app the staff use instead of WhatsApp groups. '
+  + 'You are their own assistant, like having Claude to themselves: help with anything they ask, at work or not. Questions on any subject, writing and rewriting '
+  + '(emails, letters, messages, notices, reports), planning, sums and money, explaining things, ideas and advice, and the documents, spreadsheets and screenshots they add. '
+  + 'When they add a screenshot, read it closely and say what matters in it; if it shows Floorboard or another app, help them with what is on the screen, step by step. '
+  + 'When they add a document or spreadsheet, answer from what is in it, and say so when the answer is not there. '
+  + 'Search the web for anything current or that you are not sure of (news, prices, opening hours, products, laws and rates that may have changed), and name where the answer came from. '
+  + 'You also know their Floorboard: use the tools to look up their files, tasks and how far people are with them, what needs them, posts, chats, meetings, people and their email. '
+  + 'Look things up before answering about the store; never guess names, numbers, dates or who has done what. You only see what this person can see in Floorboard. '
+  + 'You can\'t change anything in Floorboard: when they want something done there, tell them exactly where to tap. '
+  + GUIDE
+  + 'Answer in plain, friendly English. Keep everyday answers short (a sentence or two, then a short list when there are several things); go longer when they ask for '
+  + 'a draft, a document or an explanation. Use people\'s first names. Amounts are in rand (R). Dates like "Tue 4 Nov". Do not use tables or headings unless they ask. '
+  + 'Say when something needs a professional (an attorney, accountant, doctor or the relevant authority), and never invent laws, section numbers, rates or figures you are not sure of.';
+// what only a personal assistant has: the web (search, and reading a page from a link they give)
+const WEB: any[] = [
+  { type: 'web_search_20260209', name: 'web_search', max_uses: 5, user_location: { type: 'approximate', country: 'ZA', timezone: 'Africa/Johannesburg' } },
+  { type: 'web_fetch_20260209', name: 'web_fetch', max_uses: 5 },
+];
+
 const SYSTEM = 'You are Ask Floorboard, the assistant inside Floorboard, the app the staff of a South African retail store use instead of WhatsApp groups. '
   + 'You help one person at a time find their documents, see how far people are with tasks, find emails and messages, and answer questions about the store\'s work. '
   + 'Look things up with the tools before answering; never guess names, numbers, dates or who has done what. '
@@ -152,6 +188,7 @@ const SYSTEM = 'You are Ask Floorboard, the assistant inside Floorboard, the app
   + 'Name files by their title and say where they are (My files, a folder, or a department archive). Use people\'s first names. '
   + 'Amounts are in rand (R). Dates like "Tue 4 Nov". Do not use tables or headings. '
   + 'You can\'t change anything in Floorboard: if they ask you to, tell them where to do it in the app. '
+  + GUIDE
   + 'You are also their work assistant, like a knowledgeable colleague in their field. Answer questions about their job and their field from your own knowledge, '
   + 'fitted to their title, departments and what they do (for example, someone in property gets South African answers about leases, the Rental Housing Act, the '
   + 'Consumer Protection Act, sectional title, municipal rates, deposits, inspections and tenant matters, with examples from managing retail space; someone in '
@@ -191,9 +228,13 @@ Deno.serve(async (req) => {
     const mem = (await rest('members?select=staff_id&auth_uid=eq.' + encodeURIComponent(user.id)))[0];
     if (!mem) return json({ error: 'not a member of this store' }, 403);
 
+    // a personal assistant or the work one: what an admin chose for this person in People & access (read here, not from the app)
+    const rec = (await rest('records?select=assistant:data->>assistant&coll=eq.users&id=eq.' + encodeURIComponent(mem.staff_id)))[0];
+    const personal = !!(rec && rec.assistant === 'personal');
+
     stage = 'reading the question';
     const raw = await req.text();
-    if (raw.length > 600_000) return json({ error: 'the conversation is too long; start a new one', stage }, 413);
+    if (raw.length > 2_000_000) return json({ error: 'the conversation is too long; start a new one', stage }, 413);
     const body = JSON.parse(raw || '{}');
     // Teams: which of these messages to the person ask something of them, and the line for their Needs you
     if (Array.isArray(body.sortTeams)) {
@@ -228,7 +269,8 @@ Deno.serve(async (req) => {
     stage = 'asking Claude';
     const client = new Anthropic({ apiKey });
     // a new question gets the quick work check alongside the answer; one that clearly isn't about work is noted for admins
-    const q = newQuestion(messages).trim();
+    // (not for a personal assistant: anything goes there, and nothing is noted)
+    const q = personal ? '' : newQuestion(messages).trim();
     const checked = q ? checkWork(client, q, String(c.name || 'a staff member').slice(0, 80) + (c.title ? ' (' + String(c.title).slice(0, 60) + ')' : ''))
       .then((r) => (r.work ? null : restAdd('ask_flags', { staff_id: mem.staff_id, name: String(c.name || '').slice(0, 80), title: String(c.title || '').slice(0, 60), question: q.slice(0, 1000), why: r.why })))
       .catch((e) => console.log('work check: ' + (e?.message || e))) : Promise.resolve();
@@ -237,9 +279,9 @@ Deno.serve(async (req) => {
       max_tokens: 16000,
       betas: ['server-side-fallback-2026-07-01'],
       fallbacks: 'default',
-      output_config: { effort: 'low' },
-      system: [{ type: 'text', text: SYSTEM, cache_control: { type: 'ephemeral' } }, { type: 'text', text: about }],
-      tools: TOOLS,
+      output_config: { effort: personal ? 'medium' : 'low' },
+      system: [{ type: 'text', text: personal ? PERSONAL : SYSTEM, cache_control: { type: 'ephemeral' } }, { type: 'text', text: about }],
+      tools: (personal ? [...TOOLS, ...WEB] : TOOLS) as any,
       messages,
     });
     await checked;

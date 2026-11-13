@@ -674,6 +674,9 @@ html.isl-sleepy .isl-ch:not(.wig):not(.ring) .isl-svg{animation:isl-snooze 3.4s 
 .isl-empty{margin:6px 2px;color:rgba(233,235,238,.55);font-size:12px}
 .isl-gh{margin:6px 6px 2px;font-size:11.5px;font-weight:700;color:rgba(233,235,238,.6)}
 .isl-group{display:grid;gap:1px}
+.isl-sw{display:flex;gap:6px;margin:0 2px 4px}.isl-sw button{border:0;border-radius:12px;padding:3px 10px;font:inherit;font-size:11.5px;font-weight:600;background:rgba(255,255,255,.07);color:rgba(233,235,238,.8);cursor:pointer}.isl-sw button.on{background:#fff;color:#0d0f12}
+.isl-bar{flex:none;display:inline-block;width:44px;height:5px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden;margin-left:auto}.isl-bar i{display:block;height:100%;border-radius:3px;background:#8fd3ff}.isl-bar.full i{background:#8fe3a8}
+.isl-pct{flex:none;font-size:11.5px;min-width:30px;text-align:right}.isl-late{color:#ffcf85 !important}
 .isl-from{margin:0 2px;font-size:12px;color:rgba(233,235,238,.75);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:none}
 .isl-more{border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);color:#e9ebee;border-radius:999px;padding:5px 12px;font:600 12px var(--f-body);cursor:pointer;justify-self:start}
 .isl-more:hover{background:rgba(255,255,255,.12)}
@@ -700,6 +703,8 @@ html.isl-sleepy .isl-ch:not(.wig):not(.ring) .isl-svg{animation:isl-snooze 3.4s 
 .isl-ask-in input{flex:1;min-width:0;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.06);border-radius:16px;padding:0 12px;height:32px;color:#fff;outline:none;font:inherit}
 .isl-ask-in button{width:32px;height:32px;border-radius:16px;border:0;background:#fff;color:#0d0f12;display:grid;place-items:center;cursor:pointer}
 .isl-ask-in button:disabled{opacity:.4}
+.isl-ask-in .isl-clip{background:rgba(255,255,255,.1);color:#fff}.isl-q{white-space:pre-wrap}
+.isl-ask .ask-files{padding:6px 8px 0}
 .isl-who{background:rgba(255,255,255,.06);color:#fff;border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:0 8px;height:32px}
 /* ➕ */
 .isl-drop{display:flex;align-items:center;gap:26px;height:124px;box-sizing:border-box;border:1.5px dashed rgba(74,222,128,.45);border-radius:20px;padding:0 34px;background:radial-gradient(ellipse at 50% 130%,rgba(74,222,128,.16),transparent 70%),#0b0d0e;cursor:pointer;flex:none}
@@ -1462,6 +1467,7 @@ td.mono{white-space:nowrap}
 @keyframes ask-b{0%,100%{opacity:.3;transform:translateY(0)}50%{opacity:1;transform:translateY(-2px)}}
 .ask-form{display:flex;gap:6px;align-items:center}
 .ask-form .input{flex:1;min-width:0}
+.ask-files{display:flex;flex-wrap:wrap;gap:5px;margin:0 0 6px}.ask-file{display:inline-flex;align-items:center;gap:4px;max-width:100%;padding:2px 4px 2px 9px;border-radius:12px;background:rgba(127,127,127,.16);font-size:12px}.ask-file>span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:190px}.ask-file button{border:0;background:none;color:inherit;font-size:15px;line-height:1;cursor:pointer;padding:0 4px;opacity:.7}
 @media (prefers-reduced-motion:reduce){.ask-dots i{animation:none}}
 .fdesk.mini{padding:2px 12px 14px;border-radius:16px}
 .fdesk.mini .fgrid{grid-template-columns:1fr 1fr;gap:26px 12px;padding-top:24px}
@@ -3215,7 +3221,12 @@ function islDemo(stage, t0) {
     teams,
     whatsapp: { connected: true, error: '', chats, count: chats.reduce((a, c) => a + c.unread, 0), latest, ringing: null },
     mail: { closed: false, error: '', emails, count: emails.filter((e) => e.unread).length, from: Object.entries(from).sort((a, b) => b[1] - a[1]).map(([name, n]) => ({ name, n })) },
-    tasks: { board: [], todo: [], sent: tasks, by: Object.entries(tally).sort((a, b) => b[1] - a[1]), left: tasks.length, demo: true },
+    tasks: { board: [], todo: [], sent: tasks, by: Object.entries(tally).sort((a, b) => b[1] - a[1]), left: tasks.length, demo: true,
+      given: { posts: 4, people: [ // (tasks you gave out, and how far each person is)
+        { id: 'demo-p1', name: 'Pieter', open: 1, pct: 0, behind: 1, tasks: [{ id: 'demo-g1', no: 2090, title: 'Order new till rolls', status: 'todo', pct: 0, seen: false, late: true, due: addDays(dkey(), -1), demo: true }] },
+        { id: 'demo-p2', name: 'Thandi', open: 2, pct: 45, behind: 1, tasks: [{ id: 'demo-g2', no: 2093, title: 'Re-price the winter range', status: 'doing', pct: 70, seen: true, due: addDays(dkey(), 1), demo: true },
+          { id: 'demo-g3', no: 2087, title: 'Clear out the back store room', status: 'doing', pct: 20, seen: true, quiet: true, demo: true }] },
+        { id: 'demo-p3', name: 'Johan', open: 0, pct: 100, behind: 0, tasks: [{ id: 'demo-g4', no: 2085, title: 'Fix the trolley bay sign', status: 'done', pct: 100, seen: true, demo: true }] }] } },
   };
 }
 const demoBody = (e) => 'Hi,\n\nThis is a sample email for showing Floorboard\'s island: "' + e.subject + '".\n\nNothing here is real, and nothing is sent.\n\nKind regards,\n' + e.from;
@@ -3229,15 +3240,55 @@ function islTasks(db, user) {
   const by = Object.entries(tally).sort((a, b) => b[1] - a[1]);
   return { board, todo: board.filter((t) => tbPct(t, user.id) < 100), sent, by, left: sent.length };
 }
+// the tasks this person has given out that aren't finished, by who they went to, with how far each one is
+function islGiven(db, user) {
+  const open = db.posts.filter((p) => p.type === 'task' && p.author === user.id && !p.closed && Object.values(p.recips).some((r) => r.status !== 'done'));
+  const by = {};
+  open.forEach((p) => Object.entries(p.recips).forEach(([id, r]) => {
+    const u = id !== user.id && userById(db, id); if (!u) return;
+    const k = by[id] || (by[id] = { id, name: firstName(u), tasks: [] });
+    k.tasks.push({ id: p.id, no: p.no, title: p.title, due: p.due, status: r.status, pct: r.status === 'done' ? 100 : r.pct || 0, seen: !!r.seen, late: isOverdue(p, id), quiet: isStale(p, id) });
+  }));
+  const people = Object.values(by).map((k) => {
+    const todo = k.tasks.filter((t) => t.status !== 'done');
+    return { ...k, open: todo.length, behind: todo.filter((t) => t.late || t.quiet).length, pct: Math.round(k.tasks.reduce((a, t) => a + t.pct, 0) / k.tasks.length) };
+  }).sort((a, b) => b.behind - a.behind || b.open - a.open || a.name.localeCompare(b.name));
+  return { posts: open.length, people };
+}
 function IslTaskboard({ big, setBig, demo }) {
   const { db, user } = useApp(), desk = window.floorboardDesktop;
   const wk = weekOf(), depts = tbDepts(db, user), tk = demo ? demo.tasks : islTasks(db, user), mine = tk.board;
+  const gv = (demo ? demo.tasks.given : islGiven(db, user)) || { posts: 0, people: [] }, openOut = gv.people.reduce((a, k) => a + k.open, 0);
+  // what she's handed out comes first when there is some; what's sent to her is the other side of the switch
+  const [tab, setTab] = useState(() => (gv.posts ? 'given' : 'mine')), [person, setPerson] = useState('');
+  const given = tab === 'given' && gv.posts > 0;
   const led = depts.filter((d) => user.manages.includes(d.id));
   const full = (t) => (desk && desk.openFull ? desk.openFull(t) : (location.hash = 'go-' + t));
   const who = (p) => p.who || firstName(userById(db, p.author)) || 'Someone';
   const row = (p) => html`<button key=${p.id} className="isl-row" onClick=${() => { if (!p.demo) full('post:' + p.id); }}><${Icon} n="task" s=${14}/><span><b>#${p.no} ${p.title}</b><small>${[p.due ? 'due ' + fmtKey(p.due) : '', p.level === 'red' ? 'ASAP' : '', p.recips && p.recips[user.id] && p.recips[user.id].pct ? p.recips[user.id].pct + '% done' : ''].filter(Boolean).join(' · ') || shortTime(p.createdAt)}</small></span></button>`;
+  const bar = (pct) => html`<span className=${'isl-bar' + (pct >= 100 ? ' full' : '')}><i style=${{ width: pct + '%' }}></i></span>`;
+  const state = (t) => [t.status === 'done' ? 'Done' : t.pct ? t.pct + '% done' : t.seen ? 'Not started' : 'Not opened yet',
+    t.late ? 'overdue (was due ' + fmtKey(t.due) + ')' : t.due && t.status !== 'done' ? 'due ' + fmtKey(t.due) : '', t.quiet && !t.late ? 'no update for 2+ days' : ''].filter(Boolean).join(' · ');
+  const trow = (t) => html`<button key=${t.id} className="isl-row" onClick=${() => { if (!t.demo) full('post:' + t.id); }}><${Icon} n="task" s=${14}/><span><b>#${t.no} ${t.title}</b><small className=${t.late || t.quiet ? 'isl-late' : ''}>${state(t)}</small></span>${bar(t.pct)}</button>`;
+  const prow = (k) => html`<button key=${k.id} className="isl-row isl-who-row" onClick=${() => { setPerson(k.id); setBig(true); }}>
+    <span className="isl-wa-av" style=${{ background: ISL.taskboard.fur, color: '#2a2230' }}>${(String(k.name).replace(/[^\p{L}\p{N}]/gu, '')[0] || '?').toUpperCase()}</span>
+    <span><b>${k.name}</b><small className=${k.behind ? 'isl-late' : ''}>${k.open ? k.open + (k.open === 1 ? ' task' : ' tasks') + ' open' + (k.behind ? ' · ' + k.behind + ' behind' : '') : 'All done'}</small></span>${bar(k.pct)}<b className="isl-pct">${k.pct}%</b></button>`;
+  const sw = gv.posts > 0 && html`<div className="isl-sw" role="tablist">
+    <button role="tab" aria-selected=${tab === 'given'} className=${tab === 'given' ? 'on' : ''} onClick=${() => { setTab('given'); setPerson(''); }}>Given out · ${openOut}</button>
+    <button role="tab" aria-selected=${tab === 'mine'} className=${tab === 'mine' ? 'on' : ''} onClick=${() => { setTab('mine'); setPerson(''); }}>To you · ${tk.left}</button></div>`;
+  if (given) return html`<div className=${'isl-big' + (big ? ' tall' : '')}>
+    <${IslCardHead} id="taskboard" sub="Given out" count=${openOut ? openOut + ' open' : 'All done'} onOpen=${() => full('view:sent')}/>
+    ${sw}
+    ${big ? html`<div className="isl-list">
+      ${gv.people.filter((k) => !person || k.id === person).map((k) => html`<div key=${k.id} className="isl-group"><p className="isl-gh">${k.name}: ${k.open ? k.open + ' open' : 'all done'} · ${k.pct}% of the way${k.behind ? ' · ' + k.behind + ' behind' : ''}</p>${k.tasks.map(trow)}</div>`)}
+      ${person && html`<button className="isl-more sm" onClick=${() => setPerson('')}>Everyone</button>`}
+      <button className="isl-more" onClick=${() => { setBig(false); setPerson(''); }}>Less</button></div>`
+    : html`<div className="isl-list short">${gv.people.slice(0, gv.people.length > 3 ? 2 : 3).map(prow)}
+      ${gv.people.length > 3 && html`<button className="isl-more sm" onClick=${() => { setPerson(''); setBig(true); }}>and ${gv.people.length - 2} more</button>`}</div>`}
+  </div>`;
   return html`<div className=${'isl-big' + (big ? ' tall' : '')}>
     <${IslCardHead} id="taskboard" sub="Sent to you" count=${tk.left ? tk.left + ' to do' : 'All done'} onOpen=${() => full('view:taskboard')}/>
+    ${sw}
     ${big ? html`<div className="isl-list">
       ${tk.by.map(([n, k]) => html`<div key=${n} className="isl-group"><p className="isl-gh">${k} ${k === 1 ? 'task' : 'tasks'} from ${n}</p>${tk.sent.filter((p) => who(p) === n).map(row)}</div>`)}
       ${!tk.sent.length && html`<p className="isl-empty">No tasks waiting on you.</p>`}
@@ -3529,33 +3580,47 @@ function IslWaThread({ c, onBack }) {
 /* 💬: Ask Floorboard (or JARVIS), right in the island */
 // the line under Ask Floorboard: what it's for, and that questions that clearly aren't about work are noted for admins
 const ASK_WORK = 'For your work: questions about your job and your field, the store, your files, tasks and emails. Questions that clearly aren’t about work are noted for the admins.';
+// for someone with a personal assistant: it's theirs, it takes files, and nothing they ask is noted for anyone
+const ASK_MINE = 'Your own assistant: ask it anything, work or not. Add a document or a screenshot with the paperclip, or paste a screenshot in. It can look things up online, and it knows Floorboard: ask it how to do something. Nothing you ask is shown to anyone else.';
+const ASK_MINE_HI = 'Ask me anything: about Floorboard, your work, or anything else. Add a document or screenshot and I’ll read it.';
+// the question as it's sent: its words, and the files added to it (put in the person's own folder first)
+async function askQuestion(q, files, u, setBusy) {
+  if (!files.length) return q;
+  setBusy(files.length === 1 ? 'Reading ' + (files[0].name || 'the screenshot') + '…' : 'Reading your ' + files.length + ' files…');
+  const { blocks } = await askBlocks(files, u);
+  return { text: q, blocks };
+}
+const askShown = (q, files) => [q, ...files.map((f) => '📎 ' + (f.name || 'Screenshot'))].filter(Boolean).join('\n');
 function IslAsk({ j }) {
   const { db, user } = useApp(), desk = window.floorboardDesktop;
   const [who, setWho] = useState('floorboard'), [turns, setTurns] = useState([]), [text, setText] = useState(''), [busy, setBusy] = useState(''), convo = useRef(null), live = useRef({ db, user }), box = useRef(null);
   live.current = { db, user };
+  const af = useAskFiles(user), mine = af.on && who !== 'jarvis';
   useEffect(() => { const el = box.current; if (el) el.scrollTop = el.scrollHeight; }, [turns.length, busy]);
   const go = async (e) => {
-    e.preventDefault(); const q = text.trim(); if (!q || busy) return;
-    setText(''); setTurns((t) => [...t, { me: true, text: q }]); setBusy('Thinking…');
+    e.preventDefault(); const q = text.trim(), files = mine ? af.files : []; if ((!q && !files.length) || busy) return;
+    setText(''); af.clear(); setTurns((t) => [...t, { me: true, text: askShown(q, files) }]); setBusy('Thinking…');
     try {
       if (who === 'jarvis') { const a = await desk.jarvis.ask(q, turns.filter((t) => t.who === 'jarvis' || t.me).slice(-8).map((t) => ({ role: t.me ? 'user' : 'assistant', text: t.text }))); setTurns((t) => [...t, { who: 'jarvis', text: a }]); }
       else {
         if (!convo.current || Date.now() - convo.current.at > 30 * MIN) convo.current = await newConvo(db, user);
-        const r = await askFloorboard(convo.current, q, setBusy, () => live.current); setTurns((t) => [...t, { ...r, who: 'floorboard' }]);
+        const r = await askFloorboard(convo.current, await askQuestion(q, files, user, setBusy), setBusy, () => live.current); setTurns((t) => [...t, { ...r, who: 'floorboard' }]);
       }
     } catch (x) { setTurns((t) => [...t, { who, text: String((x && x.message) || x), err: true }]); }
     setBusy('');
   };
-  return html`<div className="isl-ask">
+  return html`<div className="isl-ask" ...${mine ? af.drop : {}}>
     <div className="isl-ask-msgs" ref=${box}>
-      ${!turns.length && html`<p className="isl-empty">${who === 'jarvis' ? 'Ask JARVIS how far it is with something, what needs you, or for the morning brief.' : 'Ask Floorboard about your work: how something works in your field, a checklist or practice questions, a draft email, a document, how far a team is, or what needs you.'}</p>`}
-      ${!turns.length && who !== 'jarvis' && html`<small className="isl-askwork">${ASK_WORK}</small>`}
+      ${!turns.length && html`<p className="isl-empty">${who === 'jarvis' ? 'Ask JARVIS how far it is with something, what needs you, or for the morning brief.' : mine ? ASK_MINE_HI : 'Ask Floorboard about your work: how something works in your field, a checklist or practice questions, a draft email, a document, how far a team is, or what needs you.'}</p>`}
+      ${!turns.length && who !== 'jarvis' && html`<small className="isl-askwork">${mine ? ASK_MINE : ASK_WORK}</small>`}
       ${turns.map((t, k) => html`<div key=${k} className=${t.me ? 'isl-q' : 'isl-a' + (t.err ? ' err' : '')}>${t.me ? t.text : html`<${AskText} text=${t.text}/>`}</div>`)}
       ${busy && html`<div className="isl-a busy">${busy}</div>`}</div>
+    ${mine && af.chips}
     <form className="isl-ask-in" onSubmit=${go}>
       ${j && j.mine && html`<select className="isl-who" value=${who} onChange=${(e) => setWho(e.target.value)} aria-label="Who to ask"><option value="floorboard">Floorboard</option><option value="jarvis">JARVIS</option></select>`}
-      <input autoFocus value=${text} onChange=${(e) => setText(e.target.value)} placeholder=${who === 'jarvis' ? 'Ask JARVIS…' : 'Ask Floorboard…'} aria-label="Your question" autoComplete="off"/>
-      <button aria-label="Ask" disabled=${!!busy || !text.trim()}><${Icon} n="send" s=${15}/></button></form>
+      ${mine && af.input}${mine && af.button('isl-clip')}
+      <input autoFocus value=${text} onChange=${(e) => setText(e.target.value)} onPaste=${mine ? af.paste : undefined} placeholder=${who === 'jarvis' ? 'Ask JARVIS…' : mine ? 'Ask me anything…' : 'Ask Floorboard…'} aria-label="Your question" autoComplete="off"/>
+      <button aria-label="Ask" disabled=${!!busy || (!text.trim() && !(mine && af.files.length))}><${Icon} n="send" s=${15}/></button></form>
   </div>`;
 }
 
@@ -3680,7 +3745,7 @@ function Island() {
     setSeen((s) => { const n = { ...s, [id]: Date.now() }; islSet('seen', n); return n; });
   };
   // which cards this person has here
-  const tk = dm ? dm.tasks : islTasks(db, user), tb = !!dm || tbDepts(db, user).length > 0 || tk.sent.length > 0;
+  const tk = dm ? dm.tasks : islTasks(db, user), tb = !!dm || tbDepts(db, user).length > 0 || tk.sent.length > 0 || islGiven(db, user).posts > 0;
   const avail = { floorboard: true, taskboard: tb, teams: true, jarvis: !!(j && j.mine && (j.found || j.installed)),
     mail: !!st.mail, whatsapp: !!st.whatsapp }; // (on any computer: they offer signing in when they're not connected)
   const cards = ISL_ORDER.filter((id) => avail[id] && !(opts.hide || {})[id] || id === 'floorboard');
@@ -5110,6 +5175,9 @@ function PersonModal({ personId, onClose, onAdded }) {
     <div className="field"><span>Departments they manage</span><div className="checks">${db.depts.map((d) => html`<label key=${d.id} className=${v.role === 'staff' ? 'dis' : ''}><input type="checkbox" disabled=${v.role === 'staff'} checked=${v.manages.includes(d.id)} onChange=${() => flip('manages', d.id)}/>${d.name}</label>`)}</div><small>Managers see the progress of everyone in these teams and can edit the team’s tools.</small></div>
     <label className="field"><span>Minutes on their sidebar (Windows)</span><select id="pm-minutes" className="select" value=${v.recorder === 'voice' ? 'voice' : v.recorder ? 'screen' : ''} onChange=${(e) => set('recorder', e.target.value === 'voice' ? 'voice' : e.target.value === 'screen')}>
       <option value="">Off</option><option value="voice">Voice only: records what’s said and writes the minutes and a summary</option><option value="screen">Screen and voice: also records the screen as a video</option></select></label>
+    <label className="field"><span>Ask Floorboard for them</span><select id="pm-assistant" className="select" value=${v.assistant === 'personal' ? 'personal' : ''} onChange=${(e) => set('assistant', e.target.value === 'personal' ? 'personal' : '')}>
+      <option value="">Work assistant: their work questions, files, tasks and email</option><option value="personal">Personal assistant: anything they ask, documents and screenshots they add, and the web</option></select>
+      <small>A personal assistant is theirs alone, like their own Claude: their questions aren’t noted for the admins. It knows Floorboard too. Documents, screenshots and web searches cost a little more to run.</small></label>
     ${p && p.id !== user.id && html`<label className="sm" style=${{ display: 'flex', gap: 8, alignItems: 'center' }}><input type="checkbox" checked=${v.active === false} onChange=${(e) => set('active', !e.target.checked)}/>Deactivated: can’t log in and won’t be tagged</label>`}
     ${err && html`<p className="err">${err}</p>`}
   <//>`;
@@ -9221,15 +9289,125 @@ const ASK_RUN = { find_files: askFiles, task_progress: askTasks, needs_me: askNe
 const ASK_STEP = { find_files: 'Looking through files', task_progress: 'Checking tasks', needs_me: 'Checking what needs you', search_posts: 'Searching the board', search_chats: 'Searching chats', calendar: 'Checking the calendar', people: 'Looking up people', search_email: 'Searching email' };
 const askStep = (name, input) => (ASK_STEP[name] || 'Looking it up') + (input && (input.query || input.person) ? ': ' + String(input.query || input.person).slice(0, 40) : '');
 
+/* A personal assistant (People & access → Ask Floorboard for them: Personal) takes documents and screenshots too. Pictures
+   and PDFs go to the person's own folder (me/<them>/ask/, only they can open it) for the conversation, and Claude reads them
+   from a link that works for a day; Word, Excel and text files are read here and sent as their text. Files from an earlier
+   conversation are cleared away when a new one starts. */
+const askPersonal = (u) => !!(u && u.assistant === 'personal');
+const ASK_FILES = 'image/*,.pdf,.docx,.xlsx,.txt,.csv,.md,.json,.html,.xml,.log';
+const ASK_MAX = 25 * 1048576;
+// a screenshot or photo, at most 1600 px on its longest side (as a JPEG when it had to be made smaller)
+async function askShrink(file) {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise((ok, no) => { const i = new Image(); i.onload = () => ok(i); i.onerror = () => no(new Error((file.name || 'That picture') + ' couldn’t be opened.')); i.src = url; });
+    const s = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
+    if (s === 1 && file.size < 1.5 * 1048576 && /^image\/(png|jpeg|gif|webp)$/.test(file.type)) return file;
+    const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(img.naturalWidth * s)); c.height = Math.max(1, Math.round(img.naturalHeight * s));
+    const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height); g.drawImage(img, 0, 0, c.width, c.height);
+    return await new Promise((ok) => c.toBlob((b) => ok(b || file), 'image/jpeg', 0.86));
+  } finally { URL.revokeObjectURL(url); }
+}
+// Word and Excel files are zips of XML: read the parts needed, here on the device
+async function askZip(buf) {
+  const v = new DataView(buf), at = {};
+  let e = buf.byteLength - 22; while (e >= 0 && v.getUint32(e, true) !== 0x06054b50) e--;
+  if (e < 0) throw new Error('not a zip');
+  for (let i = 0, p = v.getUint32(e + 16, true), n = v.getUint16(e + 10, true); i < n; i++) {
+    const nl = v.getUint16(p + 28, true);
+    at[new TextDecoder().decode(new Uint8Array(buf, p + 46, nl))] = { method: v.getUint16(p + 10, true), size: v.getUint32(p + 20, true), off: v.getUint32(p + 42, true) };
+    p += 46 + nl + v.getUint16(p + 30, true) + v.getUint16(p + 32, true);
+  }
+  const read = async (name) => {
+    const f = at[name]; if (!f) return '';
+    const data = new Uint8Array(buf, f.off + 30 + v.getUint16(f.off + 26, true) + v.getUint16(f.off + 28, true), f.size);
+    return f.method === 0 ? new TextDecoder().decode(data) : new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text();
+  };
+  return { names: Object.keys(at), read };
+}
+const askXml = (s) => new DOMParser().parseFromString(s, 'application/xml');
+async function askDocx(file) {
+  const z = await askZip(await file.arrayBuffer()), d = askXml(await z.read('word/document.xml'));
+  return [...d.getElementsByTagName('w:p')].map((p) => [...p.getElementsByTagName('*')].map((n) => (n.tagName === 'w:t' ? n.textContent : n.tagName === 'w:tab' ? '\t' : n.tagName === 'w:br' ? '\n' : '')).join('')).join('\n').replace(/\n{3,}/g, '\n\n').trim();
+}
+async function askXlsx(file) {
+  const z = await askZip(await file.arrayBuffer()), shared = [...askXml(await z.read('xl/sharedStrings.xml') || '<sst/>').getElementsByTagName('si')].map((si) => [...si.getElementsByTagName('t')].map((t) => t.textContent).join(''));
+  const names = [...askXml(await z.read('xl/workbook.xml')).getElementsByTagName('sheet')].map((s) => s.getAttribute('name'));
+  const sheets = z.names.filter((n) => /^xl\/worksheets\/sheet\d+\.xml$/.test(n)).sort((a, b) => parseInt(a.replace(/\D/g, ''), 10) - parseInt(b.replace(/\D/g, ''), 10));
+  const col = (r) => { let n = 0; for (const ch of String(r || '').replace(/\d/g, '')) n = n * 26 + ch.charCodeAt(0) - 64; return n - 1; };
+  const out = [];
+  for (let i = 0; i < sheets.length; i++) {
+    const rows = [...askXml(await z.read(sheets[i])).getElementsByTagName('row')].map((row) => {
+      const cells = [];
+      [...row.getElementsByTagName('c')].forEach((c) => { const t = c.getAttribute('t'), v = (c.getElementsByTagName('v')[0] || {}).textContent; cells[col(c.getAttribute('r'))] = t === 's' ? shared[Number(v)] || '' : t === 'inlineStr' ? [...c.getElementsByTagName('t')].map((x) => x.textContent).join('') : v || ''; });
+      return Array.from(cells, (x) => (x == null ? '' : String(x).replace(/\s+/g, ' '))).join('\t').replace(/\t+$/, '');
+    }).filter(Boolean);
+    out.push('Sheet: ' + (names[i] || 'Sheet ' + (i + 1)) + '\n' + rows.join('\n'));
+  }
+  return out.join('\n\n');
+}
+// each file as what Claude reads: a picture, a PDF, or a document's text
+async function askBlocks(files, u) {
+  const blocks = [], paths = [];
+  const up = async (blob, name, type) => {
+    const path = 'me/' + u.id + '/ask/' + Date.now() + '-' + Math.random().toString(36).slice(2, 7) + '-' + (name.replace(/[^\w.-]+/g, '_').slice(-60) || 'file');
+    const { error } = await CLOUD.storage.from('files').upload(path, blob, { contentType: type, upsert: false });
+    if (error) throw new Error(name + ' couldn’t be sent: ' + error.message);
+    paths.push(path);
+    const { data, error: e2 } = await CLOUD.storage.from('files').createSignedUrl(path, DAY / 1000);
+    if (e2 || !data) throw new Error(name + ' couldn’t be sent: ' + ((e2 && e2.message) || 'no link'));
+    return data.signedUrl;
+  };
+  for (const f of files) {
+    const name = f.name || 'Screenshot.png', low = name.toLowerCase();
+    if (f.size > ASK_MAX) throw new Error(name + ' is too big (over 25 MB).');
+    if (/^image\//.test(f.type || '') || /\.(png|jpe?g|gif|webp|bmp)$/.test(low)) {
+      const b = await askShrink(f); blocks.push({ type: 'image', source: { type: 'url', url: await up(b, name, b.type || 'image/jpeg') } });
+    } else if (f.type === 'application/pdf' || /\.pdf$/.test(low)) {
+      blocks.push({ type: 'document', title: name.slice(0, 200), source: { type: 'url', url: await up(f, name, 'application/pdf') } });
+    } else {
+      let text;
+      try { text = /\.docx$/.test(low) ? await askDocx(f) : /\.xlsx$/.test(low) ? await askXlsx(f) : /\.(txt|csv|md|json|html?|xml|log|tsv)$/.test(low) || /^text\//.test(f.type || '') ? await f.text() : null; }
+      catch (e) { throw new Error(name + ' couldn’t be read. Save it as a PDF and add it again.'); }
+      if (text == null) throw new Error(name + ': I can read pictures, PDFs, Word (.docx), Excel (.xlsx) and text files. Save it as a PDF and add it again.');
+      if (!text.trim()) throw new Error(name + ' has no text in it. If it’s a scan, add it as a PDF or a picture.');
+      blocks.push({ type: 'document', title: name.slice(0, 200), source: { type: 'text', media_type: 'text/plain', data: text.slice(0, 200000) } });
+    }
+  }
+  return { blocks, paths };
+}
+// files from earlier conversations (over two hours old) are cleared from the person's ask folder
+function askTidy(u) {
+  if (!CLOUD || !askPersonal(u)) return;
+  const dir = 'me/' + u.id + '/ask';
+  Promise.resolve(CLOUD.storage.from('files').list(dir, { limit: 100 })).then(({ data }) => {
+    const old = (data || []).filter((x) => x.name && x.created_at && Date.now() - Date.parse(x.created_at) > 2 * HOUR).map((x) => dir + '/' + x.name);
+    if (old.length) return CLOUD.storage.from('files').remove(old);
+  }).catch(() => { });
+}
+// the files picked, pasted or dropped for the next question: what's added, and the ways to add them
+function useAskFiles(u) {
+  const [files, setFiles] = useState([]), pick = useRef(null), on = !!(CLOUD && askPersonal(u));
+  const add = (list) => { const got = [...(list || [])].filter((f) => f && f.size); if (got.length) setFiles((x) => [...x, ...got].slice(0, 10)); };
+  const paste = (e) => { if (!on) return; const fs = [...((e.clipboardData && e.clipboardData.files) || [])]; if (fs.length) { e.preventDefault(); add(fs.map((f, i) => (f.name && f.name !== 'image.png' ? f : new File([f], 'Screenshot' + (i ? ' ' + (i + 1) : '') + '.png', { type: f.type || 'image/png' })))); } };
+  const drop = { onDragOver: (e) => { if (on) e.preventDefault(); }, onDrop: (e) => { if (!on) return; e.preventDefault(); add(e.dataTransfer && e.dataTransfer.files); } };
+  const input = on && html`<input ref=${pick} type="file" multiple accept=${ASK_FILES} hidden onChange=${(e) => { add(e.target.files); e.target.value = ''; }}/>`;
+  const button = (cls) => on && html`<button type="button" className=${cls} onClick=${() => pick.current && pick.current.click()} title="Add a document or screenshot" aria-label="Add a document or screenshot"><${Icon} n="clip" s=${15}/></button>`;
+  const chips = files.length > 0 && html`<div className="ask-files">${files.map((f, i) => html`<span key=${i} className="ask-file"><span>${f.name || 'Screenshot'}</span><button type="button" onClick=${() => setFiles((x) => x.filter((_, j) => j !== i))} aria-label=${'Take off ' + (f.name || 'the screenshot')}>×</button></span>`)}</div>`;
+  return { on, files, clear: () => setFiles([]), paste, drop, input, button, chips };
+}
 // one conversation: who's asking and when, set once (Claude's earlier thinking is tied to it), and every turn as it was
 async function newConvo(db, u) {
   const names = (ids) => ids.map((id) => deptById(db, id).name).join(', ');
   const email = !!((MS.on && await MS.account().catch(() => null)) || (window.floorboardDesktop && window.floorboardDesktop.outlook));
+  askTidy(u);
   return { at: Date.now(), messages: [], context: { name: u.name, title: u.title || '', job: u.job || '', role: u.role, departments: names(u.depts), manages: names(u.manages), now: new Date().toLocaleString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }), email } };
 }
-// live() gives the newest data each time, since it can change while Floorboard works
-async function askFloorboard(convo, question, onStep, live) {
-  convo.messages.push({ role: 'user', content: question });
+// live() gives the newest data each time, since it can change while Floorboard works. The question is its words, or
+// { text, blocks } with the documents and screenshots added to it
+async function askFloorboard(convo, question0, onStep, live) {
+  const question = typeof question0 === 'string' ? question0 : String(question0.text || ''), blocks = (question0 && question0.blocks) || [];
+  convo.messages.push({ role: 'user', content: blocks.length ? [...blocks, { type: 'text', text: question || 'Have a look at this, please.' }] : question });
   convo.at = Date.now();
   const quick = async (why, detail) => { const r = await askLocally(live(), question, onStep); convo.messages.push({ role: 'assistant', content: [{ type: 'text', text: r }] }); return { text: r, how: 'quick', why, detail }; };
   if (!CLOUD) return quick('demo');
@@ -9263,7 +9441,9 @@ async function askFloorboard(convo, question, onStep, live) {
     if (data.stop_reason === 'pause_turn') continue;
     if (data.stop_reason === 'refusal') return { text: 'I can’t help with that one. Try asking another way.', how: 'ai' };
     const text = data.content.filter((b) => b.type === 'text').map((b) => b.text).join('').trim();
-    return { text: text || 'I couldn’t find an answer to that.', how: 'ai' };
+    // what it found on the web, when it looked: where the answer came from
+    const seen = new Set(), sources = data.content.flatMap((b) => (b.type === 'text' && b.citations) || []).filter((c) => c.url && !seen.has(c.url) && seen.add(c.url)).slice(0, 4);
+    return { text: (text || 'I couldn’t find an answer to that.') + (sources.length ? '\n\nSources:\n' + sources.map((c) => '- ' + (c.title ? c.title + ': ' : '') + c.url).join('\n') : ''), how: 'ai' };
   }
   return { text: 'That took too many steps. Try a narrower question, like one supplier or one person.', how: 'ai' };
 }
@@ -9335,11 +9515,12 @@ function useInCoucou() {
   return on;
 }
 const ASK_IDEAS = ['What needs me today?', 'How far is everyone with their tasks?', 'Find the last Highveld invoice', 'Quiz me on something from my job'];
+const ASK_IDEAS_MINE = ['How far is everyone with the tasks I gave out?', 'What needs me today?', 'How do I hand out a task in Floorboard?', 'Help me write an email'];
 function AskCard({ compact }) {
   const { db, user } = useApp();
   const [open, setOpen] = useFold('floorboard.ask.fold.v1'), inCoucou = useInCoucou();
   const [q, setQ] = useState(''), [turns, setTurns] = useState([]), [busy, setBusy] = useState('');
-  const convo = useRef(null), live = useRef(null), thread = useRef(null), box = useRef(null);
+  const convo = useRef(null), live = useRef(null), thread = useRef(null), box = useRef(null), af = useAskFiles(user);
   live.current = { db, user };
   useEffect(() => { if (thread.current) thread.current.scrollTop = thread.current.scrollHeight; }, [turns.length, busy]);
   // opened from the slim rail: unfold and put the cursor in the box
@@ -9348,33 +9529,36 @@ function AskCard({ compact }) {
     window.addEventListener('floorboard-ask', go); return () => window.removeEventListener('floorboard-ask', go);
   }, []);
   const ask = async (text) => {
-    text = String(text || '').trim(); if (!text || busy) return;
-    setQ('');
+    text = String(text || '').trim(); const files = af.on ? af.files : []; if ((!text && !files.length) || busy) return;
+    setQ(''); af.clear();
     // a new conversation after half an hour, so "today" stays today
     if (!convo.current || Date.now() - convo.current.at > 30 * MIN) { convo.current = await newConvo(db, user); setTurns([]); }
-    setTurns((t) => [...t, { me: true, text }]); setBusy('Thinking');
-    try { const r = await askFloorboard(convo.current, text, setBusy, () => live.current); setTurns((t) => [...t, r]); }
+    setTurns((t) => [...t, { me: true, text: askShown(text, files) }]); setBusy('Thinking');
+    try { const r = await askFloorboard(convo.current, await askQuestion(text, files, user, (s) => setBusy(String(s).replace(/…$/, ''))), setBusy, () => live.current); setTurns((t) => [...t, r]); }
     catch (e) { setTurns((t) => [...t, { text: 'Sorry, I couldn’t finish that: ' + ((e && e.message) || e), err: true }]); convo.current = null; }
     finally { setBusy(''); }
   };
-  const fresh = () => { convo.current = null; setTurns([]); setQ(''); };
+  const fresh = () => { convo.current = null; setTurns([]); setQ(''); af.clear(); };
   if (inCoucou) return null;
-  if (!open) return html`<div className="w-ask glass" id="ask"><${FoldBar} icon="spark" kind="ask" title="Ask Floorboard" onOpen=${() => setOpen(true)}/></div>`;
-  return html`<div className=${'w-ask glass' + (compact ? ' compact' : '')} id="ask">
-    <div className="w-files-h"><span className="eyebrow ask-eb"><${Icon} n="spark" s=${14}/>Ask Floorboard</span><span className="w-card-a">
-      ${turns.length > 0 && !busy && html`<button className="linkish sm" onClick=${fresh}>New question</button>`}<${FoldBtn} what="Ask Floorboard" onFold=${() => setOpen(false)}/></span></div>
-    ${turns.length === 0 && !busy ? html`<div className="ask-ideas">${ASK_IDEAS.map((s) => html`<button key=${s} className="ask-idea" onClick=${() => ask(s)}>${s}</button>`)}</div>`
+  const title = af.on ? 'Your assistant' : 'Ask Floorboard';
+  if (!open) return html`<div className="w-ask glass" id="ask"><${FoldBar} icon="spark" kind="ask" title=${title} onOpen=${() => setOpen(true)}/></div>`;
+  return html`<div className=${'w-ask glass' + (compact ? ' compact' : '')} id="ask" ...${af.drop}>
+    <div className="w-files-h"><span className="eyebrow ask-eb"><${Icon} n="spark" s=${14}/>${title}</span><span className="w-card-a">
+      ${turns.length > 0 && !busy && html`<button className="linkish sm" onClick=${fresh}>${af.on ? 'New chat' : 'New question'}</button>`}<${FoldBtn} what=${title} onFold=${() => setOpen(false)}/></span></div>
+    ${turns.length === 0 && !busy ? html`<div className="ask-ideas">${(af.on ? ASK_IDEAS_MINE : ASK_IDEAS).map((s) => html`<button key=${s} className="ask-idea" onClick=${() => ask(s)}>${s}</button>`)}</div>`
       : html`<div className="ask-thread" ref=${thread} aria-live="polite">
         ${turns.map((t, i) => (t.me ? html`<div key=${i} className="ask-me">${t.text}</div>`
           : html`<div key=${i} className=${'ask-fb' + (t.err ? ' err' : '')}><${AskText} text=${t.text}/>
             ${askNote(t) && html`<small className="ask-note">${askNote(t)}</small>`}</div>`))}
         ${busy && html`<div className="ask-busy"><span className="ask-dots" aria-hidden="true"><i/><i/><i/></span>${busy}…</div>`}
       </div>`}
+    ${af.chips}
     <form className="ask-form" onSubmit=${(e) => { e.preventDefault(); ask(q); }}>
-      <input ref=${box} className="input" value=${q} onChange=${(e) => setQ(e.target.value)} placeholder="Ask about your work, files, tasks, emails…" aria-label="Ask Floorboard" maxLength="600"/>
-      <button className="icon-btn solid" type="submit" disabled=${!q.trim() || !!busy} title="Ask" aria-label="Ask"><${Icon} n="send" s=${15}/></button>
+      ${af.input}${af.button('icon-btn ask-clip')}
+      <input ref=${box} className="input" value=${q} onChange=${(e) => setQ(e.target.value)} onPaste=${af.paste} placeholder=${af.on ? 'Ask me anything, or add a file…' : 'Ask about your work, files, tasks, emails…'} aria-label=${title} maxLength=${af.on ? '4000' : '600'}/>
+      <button className="icon-btn solid" type="submit" disabled=${(!q.trim() && !af.files.length) || !!busy} title="Ask" aria-label="Ask"><${Icon} n="send" s=${15}/></button>
     </form>
-    ${turns.length === 0 && !busy && html`<small className="ask-work">${ASK_WORK}</small>`}
+    ${turns.length === 0 && !busy && html`<small className="ask-work">${af.on ? ASK_MINE : ASK_WORK}</small>`}
   </div>`;
 }
 // the Windows app hands over questions from Coucou's chat; they're answered here, where the data and the sign-in are
