@@ -594,6 +594,11 @@ html.bar-mode,html.bar-mode body,html.bar-mode #root{background:transparent!impo
 .isl-lid{transform-box:fill-box;transform-origin:50% 55%;animation:isl-blink 5.6s infinite;animation-delay:var(--bd,0s);transition:transform .2s}
 /* faces: a smile most of the time */
 .isl-ch .x-shut,.isl-ch .x-o,.isl-ch .x-grin,.isl-ch .x-heart{display:none}
+/* the pirate crew: a big grin as their everyday face, and a speech bubble with a "!" that pops up when news comes in */
+.isl-ch.crew:not(.wig):not(.ring):not(.love) .x-smile{display:none}.isl-ch.crew:not(.wig):not(.ring):not(.love) .x-grin{display:inline}
+.isl-bang{position:absolute;right:-12%;top:-16%;min-width:calc(var(--s) * .42);height:calc(var(--s) * .42);display:grid;place-items:center;border-radius:50%;background:#fff;color:#d84a3a;font:900 calc(var(--s) * .3)/1 var(--f-display);box-shadow:0 2px 6px rgba(0,0,0,.25);animation:isl-bang .9s cubic-bezier(.3,1.6,.5,1) both;pointer-events:none;z-index:2}
+.isl-bang::after{content:'';position:absolute;left:12%;bottom:-8%;width:30%;height:30%;background:#fff;transform:rotate(45deg);border-radius:2px;z-index:-1}
+@keyframes isl-bang{0%{transform:scale(0) rotate(-20deg);opacity:0}60%{transform:scale(1.15) rotate(6deg);opacity:1}100%{transform:scale(1) rotate(0)}}
 /* tapped: heart eyes, a grin, a happy squish and hearts floating up */
 .isl-ch.love .x-open,.isl-ch.love .x-shut,.isl-ch.love .x-smile,.isl-ch.love .x-o{display:none!important}
 .isl-ch.love .x-heart,.isl-ch.love .x-grin{display:inline!important}
@@ -3143,9 +3148,11 @@ function IslChar({ id, s = 44, busy, n, wig, ring, look }) {
     whatsapp: html`<path d="M9 42L91 35" stroke="#1b1b1b" strokeWidth="2.6"/><ellipse cx="65" cy="54" rx="10.5" ry="10" fill="#1b1b1b"/><circle cx="11" cy="72" r="4.6" fill="none" stroke=${GOLD} strokeWidth="2.4"/>`,
   };
   const crew = () => html`${slime()}${GEAR[id] || GEAR.floorboard}`;
-  return html`<span className=${'isl-ch ' + (lk === 'crew' ? 'slime crew' : lk) + (s < 20 ? ' tiny' : '') + (busy ? ' busy' : '') + (wig ? ' wig' : '') + (ring ? ' ring' : '') + (love ? ' love' : '')} style=${{ '--f': c.fur, width: s + 'px', height: s + 'px', '--s': s + 'px', '--bd': ISL_BLINK[id] }} aria-hidden="true" onClick=${tap}>
+  const CREW_FUR = { floorboard: '#F7E3B5', taskboard: '#FFC9A3', teams: '#BFD8FF', mail: '#A8E1F0', whatsapp: '#BDF0C8', jarvis: '#E2C8FF' };
+  return html`<span className=${'isl-ch ' + (lk === 'crew' ? 'slime crew' : lk) + (s < 20 ? ' tiny' : '') + (busy ? ' busy' : '') + (wig ? ' wig' : '') + (ring ? ' ring' : '') + (love ? ' love' : '')} style=${{ '--f': lk === 'crew' ? CREW_FUR[id] || c.fur : c.fur, width: s + 'px', height: s + 'px', '--s': s + 'px', '--bd': ISL_BLINK[id] }} aria-hidden="true" onClick=${tap}>
     ${love > 0 && s >= 20 && html`<span key=${love} className="isl-hearts"><i style=${{ '--dx': '-14px', '--dl': '0s' }}>♥</i><i style=${{ '--dx': '4px', '--dl': '.15s' }}>♥</i><i style=${{ '--dx': '16px', '--dl': '.3s' }}>♥</i></span>`}
     <svg viewBox="0 0 100 100" className="isl-svg">${shade}<g className="isl-bod">${lk === 'slime' ? slime() : lk === 'crew' ? crew() : ghost()}</g></svg>
+    ${lk === 'crew' && (wig || ring) && s >= 20 && html`<span className="isl-bang" aria-hidden="true">!</span>`}
     ${n > 0 && html`<b className="isl-n">${n > 99 ? '99+' : n}</b>`}</span>`;
 }
 // Where the pointer is, in the island window's own coordinates: the Windows app sends it from anywhere on the screen,
