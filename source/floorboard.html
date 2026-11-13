@@ -2767,7 +2767,7 @@ function WidgetItem({ p, tab }) {
   return html`<article className=${'witem' + (p.level === 'red' ? ' is-red' : '')} role="button" tabIndex="0" aria-label=${p.title} onClick=${() => openPost(p.id)} onKeyDown=${(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPost(p.id); } }}>
     <div className="witem-top"><${LevelTag} l=${p.level}/><span>${TYPES[p.type].label}</span><span className="mono">#${p.no}</span></div>
     <div className="witem-t">${r && !r.seen && html`<span className="dot-new" title="New"></span>`}<span>${p.title}</span></div>
-    ${p.approval && p.approval.sticky && html`<p className="card-sticky">${p.approval.sticky}</p>`}
+    ${((p.approval && p.approval.sticky) || p.sticky) && html`<p className="card-sticky">${(p.approval && p.approval.sticky) || p.sticky}</p>`}
     <div className="witem-m"><span>${tab === 'sent' ? 'To ' + toLabel(db, p) : 'From ' + firstName(a)}</span>${p.due && html`<${DueTag} p=${p} uid=${r ? user.id : null}/>`}<span style=${{ marginLeft: 'auto' }}>${tab === 'sent' || !r ? html`<${Overall} p=${p}/>` : html`<${MyState} p=${p} who=${user.id}/>`}</span></div>
     ${tab !== 'sent' && html`<${QuickActions} p=${p}/>`}
   </article>`;
@@ -3898,7 +3898,7 @@ function PostCard({ p, mode }) {
   return html`<article className=${'card' + (p.level === 'red' ? ' is-red' : '') + (openId === p.id ? ' is-open' : '') + (p.closed ? ' is-closed' : '')} tabIndex="0" role="button" aria-label=${p.title} onClick=${open} onKeyDown=${(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); open(); } }}>
     <div className="card-top"><${LevelTag} l=${p.level}/><${TypeChip} t=${p.type}/><${DeptTag} id=${p.about}/><span className="when"><span className="mono">#${p.no}</span> · ${ago(p.createdAt)}</span></div>
     <h3 className="card-title">${r && !r.seen && html`<span className="dot-new" title="New"></span>`}<span>${p.title}</span></h3>
-    ${p.approval && p.approval.sticky && html`<p className="card-sticky">${p.approval.sticky}</p>`}
+    ${((p.approval && p.approval.sticky) || p.sticky) && html`<p className="card-sticky">${(p.approval && p.approval.sticky) || p.sticky}</p>`}
     ${p.body && html`<p className="card-body">${p.body}</p>`}
     <div className="card-meta">
       <span className="from"><${Avatar} u=${a} s=${20}/><span><b>${firstName(a)}</b> → ${toLabel(db, p)}</span></span>
@@ -4124,6 +4124,7 @@ function PostDetail({ id }) {
       ${p.closed && html`<div className="notice"><${Icon} n="archive" s=${16}/>Closed. No more updates are needed.</div>`}
       ${p.escalatedAt && html`<div className="notice esc"><${Icon} n="flag" s=${16}/><span>Escalated ${ago(p.escalatedAt)}${(p.escalatedTo || []).length ? ' to ' + p.escalatedTo.map((x) => firstName(userById(db, x))).join(', ') : ''}: nobody opened this ASAP item within 30 minutes.</span></div>`}
       ${p.type === 'approval' && p.approval && html`<${ApprovalFacts} p=${p}/>`}
+      ${p.sticky && p.type !== 'approval' && html`<div className="ap-sticky sm"><span>${p.sticky}</span><small>Side note from ${firstName(userById(db, p.author))}</small></div>`}
       ${p.body && html`<div className="d-text">${p.body}</div>`}
       <${TranslateLink} text=${[p.title, p.body].filter(Boolean).join('\n\n')}/>
       ${p.attachments.length > 0 && html`<${Attachments} items=${p.attachments}/>`}
@@ -4143,7 +4144,7 @@ function Composer({ preset, onClose }) {
   const [q, setQ] = useState(''); const [open, setOpen] = useState(false); const [hi, setHi] = useState(0);
   const [about, setAbout] = useState(preset.about || '');
   const [level, setLevel] = useState(preset.level || 'amber');
-  const [title, setTitle] = useState(preset.title || ''); const [body, setBody] = useState(preset.body || ''); const [due, setDue] = useState(preset.due || '');
+  const [title, setTitle] = useState(preset.title || ''); const [body, setBody] = useState(preset.body || ''); const [due, setDue] = useState(preset.due || ''), [sticky, setSticky] = useState('');
   const [files, setFiles] = useState(() => (preset.files || []).map((f) => ({ tmp: uid('t'), ...f, url: f.kind !== 'doc' ? URL.createObjectURL(f.file) : null })));
   const [ap, setAp] = useState(() => ({ kind: 'Invoice', party: '', amount: '', ref: '', rule: 'any', ...(preset.ap || {}) }));
   const setA = (k, v) => { setAp((o) => ({ ...o, [k]: v })); setErr(''); };
@@ -4187,9 +4188,9 @@ function Composer({ preset, onClose }) {
       const chats = toDepts.map((td) => d.chats.find((c) => c.dept === td)).filter(Boolean);
       chats.forEach((c) => d.messages.push({ id: uid('m'), chat: c.id, user: user.id, at: now, text: '', attachments: [], mentions: [], replyTo: null, postId: pid, kind: 'msg' }));
       d.posts.unshift({ id: pid, chat: chats[0] ? chats[0].id : null, no: d.counter, type, title: type === 'approval' && !title.trim() ? apTitle(ap.kind, ap.party.trim(), amount) : title.trim(), body: body.trim(), author: user.id, createdAt: now, toUsers, toDepts,
-        about: about || user.depts[0], level, due: (type === 'task' || type === 'approval') && due ? due : null, attachments: atts, recips, activity: [],
+        about: about || user.depts[0], level, due: (type === 'task' || type === 'approval') && due ? due : null, attachments: atts, recips, activity: [], ...(sticky.trim() && type !== 'approval' ? { sticky: sticky.trim() } : {}),
         poll: type === 'vote' ? { multi, closes, options: options.map((t, i) => ({ id: 'o' + (i + 1), text: t })), votes: {} } : null, closed: false,
-        ...(type === 'approval' ? { approval: { kind: ap.kind, party: ap.party.trim(), amount, ref: ap.ref.trim(), rule: Object.keys(recips).length > 1 ? ap.rule : 'any', approvers: Object.keys(recips), paidAt: null, paidBy: null, payNote: '' } } : {}) });
+        ...(type === 'approval' ? { approval: { kind: ap.kind, party: ap.party.trim(), amount, ref: ap.ref.trim(), rule: Object.keys(recips).length > 1 ? ap.rule : 'any', approvers: Object.keys(recips), sticky: sticky.trim(), paidAt: null, paidBy: null, payNote: '' } } : {}) });
       // sent for payment from a document in a chat: the chat shows it went, so nobody sends it twice
       const fm = preset.fromMsg && d.messages.find((x) => x.id === preset.fromMsg);
       if (fm) { fm.payPost = pid; d.messages.push({ id: uid('m'), chat: fm.chat, user: user.id, at: now + 1, kind: 'system', text: firstName(user) + ' sent it for payment as #' + d.counter, attachments: [], mentions: [], replyTo: null, postId: null }); }
@@ -4233,12 +4234,13 @@ function Composer({ preset, onClose }) {
     </div>
     <label className="field"><span>${type === 'approval' ? 'Title (optional)' : 'Title'}</span><input id="c-title" className="input" value=${title} onChange=${(e) => { setTitle(e.target.value); setErr(''); }} placeholder=${type === 'approval' ? apTitle(ap.kind, ap.party.trim() || 'Supplier', amount) : { task: 'e.g. Restock the bread shelf on aisle 1', feedback: 'e.g. Should we move the banana stand?', look: 'e.g. New prices from Monday', vote: 'e.g. Pick a date for the year-end function' }[type]} maxLength="140"/></label>
     <label className="field"><span>Details</span><textarea id="c-body" rows="3" value=${body} onChange=${(e) => setBody(e.target.value)} placeholder=${type === 'approval' ? 'What it’s for, e.g. tomatoes and peppers delivered Monday, checked against the delivery note.' : 'Anything people need to know to act on it.'}></textarea></label>
+    ${(type === 'task' || type === 'approval') && html`<label className="field"><span>Side note (optional)</span><textarea id="c-sticky" className="qd-sticky" rows="2" maxLength="200" value=${sticky} onChange=${(e) => setSticky(e.target.value)} placeholder=${type === 'approval' ? 'Sticks on it where they see it, e.g. Please pay before Friday: the supplier is waiting' : 'Sticks on it where they see it, e.g. The supplier called twice'}></textarea></label>`}
     ${type === 'vote' && html`<div className="field"><span>Options</span><div className="poll-edit">
       ${opts.map((o, i) => html`<div className="poll-row" key=${i}><input id=${'opt-' + i} className="input" value=${o} onChange=${(e) => setOpts((arr) => arr.map((x, j) => (j === i ? e.target.value : x)))} placeholder=${'Option ' + (i + 1)}/>${opts.length > 2 && html`<button type="button" className="icon-btn" aria-label="Remove option" onClick=${() => setOpts((arr) => arr.filter((_, j) => j !== i))}><${Icon} n="close" s=${15}/></button>`}</div>`)}
       <div style=${{ display: 'flex', gap: 14, alignItems: 'center', flexWrap: 'wrap' }}><button type="button" className="btn sm" onClick=${() => setOpts((arr) => [...arr, ''])}><${Icon} n="plus" s=${14}/>Add option</button>
       <label className="sm" style=${{ display: 'flex', gap: 6, alignItems: 'center' }}><input type="checkbox" checked=${multi} onChange=${(e) => setMulti(e.target.checked)}/>People can pick more than one</label></div>
     </div></div>`}
-    <div className="field"><span>${type === 'approval' ? 'Photo or PDF of the invoice or slip' : 'Photos, videos or documents'}</span>
+    <div className="field"><span>${type === 'approval' ? 'The documents: invoice, quote, statement, proof of payment or delivery (add as many as you need)' : 'Photos, videos or documents'}</span>
       ${(preset.atts || []).length > 0 && html`<small className="muted"><${Icon} n="clip" s=${12}/> From the chat: ${preset.atts.map((a) => a.name).join(', ')}</small>`}<${AttachPicker} files=${files} setFiles=${setFiles}/></div>
     ${err && html`<p className="err" role="alert">${err}</p>`}
   <//>`;

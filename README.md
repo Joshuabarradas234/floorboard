@@ -347,7 +347,7 @@ Or set it up by hand: it uses the same registration in your company's Microsoft 
 
 ## Approvals (Finance)
 
-Switch it on in **People & access**: under Finance, turn on **Approvals**. Anyone can then pick **Approval** as the kind of post: what it is (quote, invoice, payment, expense claim), the supplier, the amount, the invoice number, a photo or PDF of it, and who approves it (any one of them, or all of them).
+Switch it on in **People & access**: under Finance, turn on **Approvals**. Anyone can then pick **Approval** as the kind of post: what it is (quote, invoice, payment, expense claim), the supplier, the amount, the invoice number, the documents (as many as needed: the invoice, a quote, a statement, proof of payment or delivery), a title, the details, a **side note** (a yellow sticky on the approver's card, like "Please pay before Friday"), and who approves it (any one of them, or all of them). When someone has to do the paying themselves rather than OK it, send them a **Task** instead: it takes the same documents and side note and lands in their Tasks.
 
 - Approvers get it in Needs you and on their phones, and choose **Approve** (they sign on screen, and can keep their signature for next time), **Don't approve** (with a reason) or **Query**. A query goes back to whoever asked for approval until they answer it.
 - The **Approvals** page shows what's waiting, what's approved, what's paid and what wasn't approved, with rand totals. Finance and the admins see everything there and **Mark paid**, with the payment reference if they like. The person who asked hears when it's paid or not approved.
