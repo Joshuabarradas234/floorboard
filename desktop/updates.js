@@ -1,13 +1,14 @@
 // Updates for the Windows app: it asks once whether it may check GitHub for new versions. If yes, it looks when it
-// starts and every few hours; a newer version is one click, then it swaps its files and restarts. Settings and logins
-// live in the app's own data folder, so an update never touches them.
-const { app, ipcMain, BrowserWindow } = require('electron');
+// starts, every hour and when the computer wakes up; a newer version is one click (the installed app takes it by itself),
+// then it swaps its files and restarts. "Check for updates" in the sidebar's menu looks straight away. Settings and
+// logins live in the app's own data folder, so an update never touches them.
+const { app, ipcMain, BrowserWindow, powerMonitor } = require('electron');
 const path = require('path'), fs = require('fs'), os = require('os');
 const { execFile } = require('child_process');
 
 const ROOT = process.env.FLOORBOARD_UPDATE_ROOT || path.join(__dirname, '..'); // the folder Floorboard runs from
 const NOGIT = process.env.FLOORBOARD_UPDATE_NOGIT === '1';
-const EVERY = 6 * 60 * 60 * 1000;
+const EVERY = 60 * 60 * 1000;
 
 let repo = 'Joshuabarradas234/floorboard', saved = { answer: null }, timer = null;
 let state = { ask: true, on: false, current: '', latest: '', available: false, busy: '', error: '', checkedAt: 0 };
@@ -107,9 +108,12 @@ function init(opts) {
   ipcMain.handle('upd-state', () => state);
   ipcMain.handle('upd-answer', (_e, yes) => { answer(!!yes); return state; });
   ipcMain.handle('upd-check', () => check());
-  ipcMain.handle('upd-install', () => install());
+  // (never in the middle of a recording: it then updates by itself once the recording has stopped)
+  ipcMain.handle('upd-install', () => (holdOff && holdOff() ? (set({ error: 'A meeting is being recorded: Floorboard updates by itself once it has stopped.' }), state) : install()));
   schedule();
   if (state.on) setTimeout(check, 10000);
+  // a laptop that slept through the hourly look checks when it wakes up
+  try { powerMonitor.on('resume', () => setTimeout(check, 30000)); } catch (e) { /* the hourly look is enough */ }
 }
 
 module.exports = { init, check, install, answer, getState: () => state };

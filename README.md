@@ -108,6 +108,8 @@ Without the speech service (not set up yet, or no internet), Windows writes down
 
 ### Keeping it up to date (Windows)
 
+The installed app looks for a new version every hour and when the computer wakes up, and takes it by itself (never in the middle of a Minutes recording): it restarts with your settings and login as they were. To get the newest straight away, open the sidebar's menu (the grid button at the top) and click **Check for updates**: it says **You have the newest version**, or updates and restarts.
+
 The first time, the sidebar asks whether Floorboard may check GitHub for new versions. If you say yes, it looks when it starts and every few hours. When there's a newer version, the sidebar shows **A new version of Floorboard is ready** with **Update now**: one click and it updates, restarts and keeps your settings and logins. You can switch the checking on or off, or check straight away, from the tray icon's menu.
 
 New versions only arrive once they've been pushed to GitHub. A copy with changes that aren't on GitHub yet isn't updated, so nothing is lost.

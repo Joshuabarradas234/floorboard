@@ -1114,6 +1114,7 @@ td.mono{white-space:nowrap}
 .sdock-i b{font-family:var(--f-mono);font-weight:500;font-size:11.5px;background:var(--red-dot);color:#fff;border-radius:99px;padding:0 6px;line-height:17px}
 .sdock-i b.g{background:var(--green-dot);color:#0b2a17}
 .sdock-sep{height:1px;background:var(--glass-line);margin:4px 12px;flex:none}
+.sdock-upd span small{display:block;font-weight:500;font-size:11.5px;color:var(--ink-3);white-space:normal;margin-top:1px}.sdock-upd span small.bad{color:var(--red-dot)}.sdock-upd:disabled{opacity:.75;cursor:default}
 .sdock-new{display:flex;align-items:center;gap:11px;border:0;background:transparent;color:var(--ink);font-weight:700;font-size:14px;padding:6px 8px;margin-top:4px;border-radius:999px;text-align:left}
 .sdock-new:hover{background:var(--glass-2)}
 .sdock-new .plus{width:42px;height:42px;border-radius:50%;background:#fff;color:var(--accent-ink);display:grid;place-items:center;box-shadow:0 6px 20px rgba(0,0,0,.3);flex:none}
@@ -2794,6 +2795,7 @@ function SideDock({ onClose, onNeeds }) {
       <span className="sdock-sep"></span>
       <button className="sdock-i" onClick=${() => { onClose(); openPhone(); }}><${Icon} n="phone" s=${18}/><span>Get it on your phone</span></button>
       <button className="sdock-i" onClick=${() => { onClose(); openLook(); }}><${Icon} n="palette" s=${18}/><span>Wallpaper & glass</span></button>
+      <${UpdateRow}/>
       <button className="sdock-new" onClick=${() => { onClose(); compose(); }}><span className="plus"><${Icon} n="plus" s=${22}/></span>New post</button>
     </nav>`;
 }
@@ -3835,6 +3837,25 @@ function Island() {
 /* ---------------- new versions (Windows app) ---------------- */
 // Asked once whether it may check GitHub; after that, a newer version shows here and is one click to install.
 const UPD = (() => { const d = window.floorboardDesktop; return d && d.updates ? d.updates : null; })();
+// Check for updates (the sidebar's menu, Windows app): looks on GitHub now and, when there's a newer version, takes it
+// (it restarts by itself, settings and login kept). It also looks every hour and when the computer wakes up.
+const updWhen = (v) => { const m = /^(\d{4})\.(\d\d)(\d\d)\.(\d\d)(\d\d)$/.exec(String(v || '')); return m ? new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]).toLocaleString('en-ZA', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : String(v || ''); };
+let updAsked = 0; // when Check for updates was last pressed (kept while the menu closes and opens)
+function UpdateRow() {
+  const [st, setSt] = useState(null), [, redraw] = useState(0);
+  useEffect(() => { if (!UPD) return undefined; UPD.state().then(setSt).catch(() => {}); return UPD.onState(setSt); }, []);
+  if (!UPD || !st) return null;
+  const go = async () => {
+    updAsked = Date.now(); redraw((n) => n + 1);
+    let s = st.ask || !st.on ? await UPD.answer(true) : await UPD.check();
+    for (let i = 0; i < 20 && s && s.busy === 'Checking…'; i++) { await new Promise((ok) => setTimeout(ok, 500)); s = await UPD.state(); }
+    if (s && s.available && !s.busy) s = await UPD.install(); // (the installed app has usually started on it already)
+    if (s) setSt(s);
+  };
+  const asked = updAsked && st.checkedAt >= updAsked - 1000;
+  const line = st.busy ? st.busy : asked && st.error ? st.error : asked && !st.available ? 'You have the newest version' : st.available ? 'A new version is ready' : 'This version: ' + updWhen(st.current);
+  return html`<button className="sdock-i sdock-upd" onClick=${go} disabled=${!!st.busy} title="Look for a new version of Floorboard now"><${Icon} n="refresh" s=${18}/><span>Check for updates<small className=${asked && st.error ? 'bad' : ''}>${line}</small></span></button>`;
+}
 function UpdateNotice() {
   const [st, setSt] = useState(null), [tried, setTried] = useState(false);
   useEffect(() => { if (!UPD) return undefined; UPD.state().then(setSt).catch(() => {}); return UPD.onState(setSt); }, []);
