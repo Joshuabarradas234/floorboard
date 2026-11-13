@@ -529,7 +529,7 @@ html.bar-mode,html.bar-mode body,html.bar-mode #root{background:transparent!impo
 .w-rec{flex:none;padding:10px 12px;border-radius:22px;display:grid;gap:8px}.rec-row{display:flex;align-items:center;gap:10px}.rec-t{flex:1;min-width:0;display:grid}.rec-t small{font-size:11.5px;color:var(--ink-3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rec-who{display:grid;grid-template-columns:1fr 1fr;gap:6px 12px;margin:4px 0 12px}.rec-who label{display:flex;gap:8px;align-items:center;font-size:14px}
 .rec-setup{display:grid;gap:6px}.rec-setup small{font-size:12px;color:var(--ink-2);line-height:1.35}.rec-setup .btn{justify-self:start}.rec-warn small{color:#f59e0b}
-.rec-dot{width:12px;height:12px;border-radius:50%;background:rgba(127,127,127,.5);flex:none}.rec-dot.live{background:#ef4444;box-shadow:0 0 0 4px rgba(239,68,68,.25);animation:rec-pulse 1.4s ease-in-out infinite}@keyframes rec-pulse{50%{box-shadow:0 0 0 7px rgba(239,68,68,.08)}}
+.rec-dot{width:12px;height:12px;border-radius:50%;background:rgba(127,127,127,.5);flex:none}.rec-dot.paused{background:#f5b84b;box-shadow:0 0 0 4px rgba(245,184,75,.22)}.rec-btns{display:flex;gap:6px;flex:none}.rec-dot.live{background:#ef4444;box-shadow:0 0 0 4px rgba(239,68,68,.25);animation:rec-pulse 1.4s ease-in-out infinite}@keyframes rec-pulse{50%{box-shadow:0 0 0 7px rgba(239,68,68,.08)}}
 .isl-mini{display:grid;grid-template-columns:repeat(2,12px);gap:2px 3px;flex:none}
 .isl-mini-b{display:block;width:12px;height:12px;padding:0;border:0;background:none;cursor:pointer}.isl-mini-b .isl-ch{transition:transform .2s}.isl-mini-b:hover .isl-ch{transform:scale(1.35)}
 .isl-panel{width:640px;box-sizing:border-box;background:var(--isl-bg,#000);border-radius:0 0 30px 30px;padding:8px 10px 10px;box-shadow:0 14px 40px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:8px}
@@ -10077,27 +10077,27 @@ function RecorderCard() {
     const ctx = new AudioContext({ sampleRate: 16000 }), proc = ctx.createScriptProcessor(4096, 1, 1), mute = ctx.createGain();
     mute.gain.value = 0; proc.connect(mute); mute.connect(ctx.destination);
     streams.filter((x) => x && x.getAudioTracks().length).forEach((x) => ctx.createMediaStreamSource(x).connect(proc));
-    let parts = [], n = 0, chain = Promise.resolve();
+    let parts = [], n = 0, chain = Promise.resolve(), held = false;
     const send = () => { if (!n) return; const out = new Int16Array(n); let o = 0; parts.forEach((p) => { out.set(p, o); o += p.length; }); parts = []; n = 0; chain = chain.then(() => desk.recorder.sound(out.buffer)).catch(() => {}); };
-    proc.onaudioprocess = (e) => { const f = e.inputBuffer.getChannelData(0), s = new Int16Array(f.length); for (let i = 0; i < f.length; i++) { const v = Math.max(-1, Math.min(1, f[i])); s[i] = v < 0 ? v * 0x8000 : v * 0x7fff; } parts.push(s); n += s.length; if (n >= 32000) send(); };
-    return { flush: () => { send(); return chain; }, close: () => { try { proc.disconnect(); ctx.close(); } catch (e) { } } };
+    proc.onaudioprocess = (e) => { if (held) return; const f = e.inputBuffer.getChannelData(0), s = new Int16Array(f.length); for (let i = 0; i < f.length; i++) { const v = Math.max(-1, Math.min(1, f[i])); s[i] = v < 0 ? v * 0x8000 : v * 0x7fff; } parts.push(s); n += s.length; if (n >= 32000) send(); };
+    return { hold: (on) => { held = !!on; }, flush: () => { send(); return chain; }, close: () => { try { proc.disconnect(); ctx.close(); } catch (e) { } } };
   };
   // a muted microphone records silence without any error: listen to it, and say so when it has heard nothing for 15 seconds
-  const watchMic = (ctx, mic) => {
+  const watchMic = (ctx, mic, held) => {
     const an = ctx.createAnalyser(); ctx.createMediaStreamSource(mic).connect(an);
     const buf = new Float32Array(an.fftSize); let heard = Date.now();
-    return setInterval(() => { an.getFloatTimeDomainData(buf); let peak = 0; for (const v of buf) peak = Math.max(peak, Math.abs(v)); if (peak > 0.003) heard = Date.now(); setQuiet(Date.now() - heard > 15000); }, 1000);
+    return setInterval(() => { if (held()) { heard = Date.now(); setQuiet(false); return; } an.getFloatTimeDomainData(buf); let peak = 0; for (const v of buf) peak = Math.max(peak, Math.abs(v)); if (peak > 0.003) heard = Date.now(); setQuiet(Date.now() - heard > 15000); }, 1000);
   };
   // pictures of the screen for the minutes: every 20 seconds, kept only when the screen has changed (or 3 minutes went by)
-  const watchScreen = (screen, t0, shots) => {
+  const watchScreen = (screen, elapsed, shots, held) => {
     const vid = document.createElement('video'); vid.muted = true; vid.srcObject = new MediaStream(screen.getVideoTracks()); vid.play().catch(() => {});
     const tiny = document.createElement('canvas'); tiny.width = 48; tiny.height = 27; const tc = tiny.getContext('2d', { willReadFrequently: true });
     let last = null, lastAt = -1e9;
     const snap = () => {
-      if (!vid.videoWidth) return;
+      if (!vid.videoWidth || held()) return;
       tc.drawImage(vid, 0, 0, 48, 27); const px = tc.getImageData(0, 0, 48, 27).data;
       let diff = 1; if (last) { let s = 0; for (let i = 0; i < px.length; i += 4) s += Math.abs(px[i] - last[i]) + Math.abs(px[i + 1] - last[i + 1]) + Math.abs(px[i + 2] - last[i + 2]); diff = s / (48 * 27 * 3 * 255); }
-      const at = Date.now() - t0;
+      const at = elapsed(); // (the time into the recording, without the pauses, so it matches what was said)
       if (diff < 0.015 && at - lastAt < 180000) return;
       last = px; lastAt = at;
       const w = Math.min(1280, vid.videoWidth), h = Math.round(vid.videoHeight * w / vid.videoWidth), c = document.createElement('canvas');
@@ -10118,12 +10118,13 @@ function RecorderCard() {
     setBusy('Starting…');
     const r = await desk.recorder.start();
     if (!r || r.error) { setBusy(''); toast((r && r.error) || 'Minutes didn’t start recording.', 'warn'); return; }
-    const t0 = Date.now(), talk = [], shots = [];
+    const t0 = Date.now(), talk = [], shots = [], hold = { at: 0, ms: 0 };
+    const held = () => !!hold.at, elapsed = () => Date.now() - t0 - hold.ms - (hold.at ? Date.now() - hold.at : 0);
     if (voice) try {
       const mic = await navigator.mediaDevices.getUserMedia({ audio: MIC });
       const main = recordInto(mic, ['audio/webm;codecs=opus', 'audio/webm'], { audioBitsPerSecond: 48000 }, talk, true); // the voice recording is also what's sent to be written down
       const ctx = new AudioContext();
-      media.current = { rec: main.rec, ctx, streams: [mic], done: main.done, watch: watchMic(ctx, mic), keep: keepSound([mic]), names, talk, shots, t0 };
+      media.current = { rec: main.rec, ctx, streams: [mic], done: main.done, watch: watchMic(ctx, mic, held), keep: keepSound([mic]), names, talk, shots, t0, hold };
       main.rec.start(4000);
       setBusy(''); return;
     } catch (e) {
@@ -10138,7 +10139,7 @@ function RecorderCard() {
       [screen, mic].filter((x) => x && x.getAudioTracks().length).forEach((x) => ctx.createMediaStreamSource(x).connect(mix));
       const main = recordInto(new MediaStream([...screen.getVideoTracks(), ...mix.stream.getAudioTracks()]), ['video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'], { videoBitsPerSecond: 900000, audioBitsPerSecond: 64000 }, null, true);
       const side = recordInto(new MediaStream(mix.stream.getAudioTracks()), ['audio/webm;codecs=opus', 'audio/webm'], { audioBitsPerSecond: 32000 }, talk, false); // a small sound-only copy, to be written down
-      media.current = { rec: main.rec, talkRec: side.rec, ctx, streams: [screen, mic].filter(Boolean), done: main.done, watch: mic ? watchMic(ctx, mic) : null, keep: keepSound([screen, mic]), names, talk, shots, t0, snapTimer: watchScreen(screen, t0, shots) };
+      media.current = { rec: main.rec, talkRec: side.rec, ctx, streams: [screen, mic].filter(Boolean), done: main.done, watch: mic ? watchMic(ctx, mic, held) : null, keep: keepSound([screen, mic]), names, talk, shots, t0, hold, snapTimer: watchScreen(screen, elapsed, shots, held) };
       main.rec.start(4000); side.rec.start(10000);
       screen.getVideoTracks()[0].addEventListener('ended', () => finish()); // stopped from Windows' own "stop sharing"
       setBusy('');
@@ -10158,6 +10159,15 @@ function RecorderCard() {
     try { localStorage.setItem(MINUTES_WHO, JSON.stringify(who.ids)); } catch (e) { /* not kept */ }
     setWho(null); begin(names);
   };
+  // Pause and Resume (someone steps out, a five-minute break): the video, the sound copy, the screen pictures and the
+  // writing down all wait, and the paused time is left out of the recording and the minutes
+  const hold = async (on) => {
+    const m = media.current; if (!m || busy || !desk.recorder.pause) return;
+    if (m.keep) m.keep.hold(on);
+    [m.rec, m.talkRec].forEach((r) => { try { if (r && on && r.state === 'recording') r.pause(); else if (r && !on && r.state === 'paused') r.resume(); } catch (e) { } });
+    if (on && !m.hold.at) m.hold.at = Date.now(); else if (!on && m.hold.at) { m.hold.ms += Date.now() - m.hold.at; m.hold.at = 0; }
+    const s = await desk.recorder.pause(on); if (s && s.on) setSt(s);
+  };
   const stopRec = (r) => new Promise((ok) => { if (!r || r.state === 'inactive') { ok(); return; } r.onstop = ok; try { r.stop(); } catch (e) { ok(); } });
   const sleep = (ms) => new Promise((ok) => setTimeout(ok, ms));
   const within = (ms, pr) => Promise.race([pr, new Promise((_, no) => setTimeout(() => no(new Error('no answer from the store’s server')), ms))]);
@@ -10166,7 +10176,7 @@ function RecorderCard() {
   const again = async (fn, tries = 4) => { let last; for (let i = 0; i < tries; i++) { try { return await fn(); } catch (e) { last = e; if (lasting(e)) throw e; await sleep(3000 * (i + 1)); } } throw last; };
   // the minutes saved as a PDF into My files › Meeting recordings, and Floorboard opened on them
   const saveMinutes = async (x) => {
-    const when = new Date(x.started).toLocaleString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) + ' (' + fmtDur(x.ended - x.started) + ')';
+    const when = new Date(x.started).toLocaleString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) + ' (' + fmtDur(x.length || x.ended - x.started) + ')';
     const title = 'Meeting ' + new Date(x.started).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' });
     const blob = await minutesPdf(title + ': minutes', when, x.notes || { summary: x.why }, x.transcript, x.name, { names: x.names, shots: x.shots, how: x.how });
     const name = x.name.replace(/\.webm$/, '') + ' – minutes.pdf', file = new File([blob], name, { type: 'application/pdf' });
@@ -10248,7 +10258,7 @@ function RecorderCard() {
     } else why = 'Nothing was written down: ' + (cloudWhy ? 'the speech service: ' + cloudWhy : 'no speech was found in the recording') + '.';
     setBusy('Saving the minutes…');
     const shots = []; for (const s of p.shots) { const b = await Blobs.get(s.blob); if (b) shots.push({ at: s.at, w: s.w, h: s.h, blob: b }); }
-    await saveMinutes({ started: p.started, ended: p.ended, name: p.name, file: p.file, voice: p.voice, names: p.names, transcript, notes, why, shots,
+    await saveMinutes({ started: p.started, ended: p.ended, length: p.length, name: p.name, file: p.file, voice: p.voice, names: p.names, transcript, notes, why, shots,
       how: transcript ? 'Written down by the speech service, split by voice' : '' });
     // done: off the server and off this computer
     const gone = [p.talk, ...p.shots.map((s) => s.path)].filter(Boolean);
@@ -10292,7 +10302,7 @@ function RecorderCard() {
       if (transcript.length >= 20) { setBusy('Writing the minutes…'); try { notes = (await makeNotes(db, { title: 'Meeting', owner: user.id, attendees: [user.id], notes: '' }, dkey(r.started), transcript, { names })).notes; } catch (e) { why = (e && e.message) || 'The minutes couldn’t be written.'; } }
       else { const live = r.speech === 'privacy' ? 'Windows’ online speech recognition is off' : /^error/.test(r.speech || '') ? 'listening live failed (' + r.speech.slice(7) + ')' : r.speech === 'starting' ? 'listening live never started' : 'nothing was heard live'; why = 'Nothing was written down: ' + live + (r.fileWhy ? '; from the recording: ' + r.fileWhy : '') + '.'; }
       setBusy('Saving the minutes…');
-      try { await saveMinutes({ started: r.started, ended: r.ended, name: r.name, file: r.file, voice, names, transcript, notes, why, shots, how: r.how === 'recording' ? 'Written down on this computer from the recording' : r.how === 'live' ? 'Written down on this computer as it was said' : '' }); }
+      try { await saveMinutes({ started: r.started, ended: r.ended, length: r.length, name: r.name, file: r.file, voice, names, transcript, notes, why, shots, how: r.how === 'recording' ? 'Written down on this computer from the recording' : r.how === 'live' ? 'Written down on this computer as it was said' : '' }); }
       catch (e) { toast('The ' + (voice ? 'voice recording' : 'video') + ' is saved, but the minutes didn’t: ' + ((e && e.message) || e), 'warn'); desk.recorder.openFolder(r.file); }
       setBusy(''); if (desk.recorder.working) desk.recorder.working(false); return;
     }
@@ -10303,21 +10313,21 @@ function RecorderCard() {
     await Blobs.put(key + '-talk', talk);
     const kept = [];
     for (const s of pick) { const k = key + '-s-' + s.at; await Blobs.put(k, s.blob); kept.push({ at: s.at, w: s.w, h: s.h, blob: k, path: null }); }
-    await savePending({ v: 1, key, name: r.name, file: r.file, voice, started: r.started, ended: r.ended, names, base: 'me/' + user.id + '/minutes/' + r.started + '/', talk: null, shots: kept, id: null, said: null, tries: 0 });
+    await savePending({ v: 1, key, name: r.name, file: r.file, voice, started: r.started, ended: r.ended, length: r.length, names, base: 'me/' + user.id + '/minutes/' + r.started + '/', talk: null, shots: kept, id: null, said: null, tries: 0 });
     await finishWaiting();
   };
-  const on = st && st.on;
+  const on = st && st.on, paused = !!(on && st.paused);
   const flip = (id) => setWho((w) => ({ ...w, ids: w.ids.includes(id) ? w.ids.filter((x) => x !== id) : [...w.ids, id] }));
   return html`<div className=${'w-rec glass' + (on ? ' on' : '')}>
     <div className="rec-row">
-      <span className=${'rec-dot' + (on && !busy ? ' live' : '')}></span>
-      <span className="rec-t"><b>${on && !busy ? 'Recording · ' + fmtDur(now - st.started) : 'Minutes'}</b>
-        <small>${(busy === 'Writing down what was said…' && st && st.writing ? 'Writing down what was said… ' + fmtDur(st.writing.at * 1000) + ' of ' + fmtDur(st.writing.total * 1000) : busy) || (on ? (st.speech === 'privacy' ? 'Writing down is off: switch on Windows’ online speech recognition' : st.speech === 'on' ? (st.words ? st.words + ' things written down' + (st.last ? ': “' + st.last.slice(0, 60) + '”' : '') : 'Listening…') : st.speech === 'starting' ? 'Starting to listen…' : String(st.speech || '')) : voice ? 'Voice, minutes and a summary' : 'Screen, voice and minutes')}</small></span>
-      ${on ? html`<button className="btn sm primary" onClick=${finish} disabled=${!!busy}>Stop</button>` : html`<button className="btn sm primary" onClick=${start} disabled=${!!busy}>Record</button>`}
+      <span className=${'rec-dot' + (on && !busy ? (paused ? ' paused' : ' live') : '')}></span>
+      <span className="rec-t"><b>${on && !busy ? (paused ? 'Paused · ' : 'Recording · ') + fmtDur(now - st.started - (st.pausedMs || 0)) : 'Minutes'}</b>
+        <small>${paused && !busy ? 'Nothing is recorded until you press Resume' : (busy === 'Writing down what was said…' && st && st.writing ? 'Writing down what was said… ' + fmtDur(st.writing.at * 1000) + ' of ' + fmtDur(st.writing.total * 1000) : busy) || (on ? (st.speech === 'privacy' ? 'Writing down is off: switch on Windows’ online speech recognition' : st.speech === 'on' ? (st.words ? st.words + ' things written down' + (st.last ? ': “' + st.last.slice(0, 60) + '”' : '') : 'Listening…') : st.speech === 'starting' ? 'Starting to listen…' : String(st.speech || '')) : voice ? 'Voice, minutes and a summary' : 'Screen, voice and minutes')}</small></span>
+      ${on ? html`<span className="rec-btns">${desk.recorder.pause && html`<button className="btn sm" onClick=${() => hold(!paused)} disabled=${!!busy}>${paused ? 'Resume' : 'Pause'}</button>`}<button className="btn sm primary" onClick=${finish} disabled=${!!busy}>Stop</button></span>` : html`<button className="btn sm primary" onClick=${start} disabled=${!!busy}>Record</button>`}
     </div>
     ${on && st.speech === 'privacy' && !CLOUD && html`<button className="btn sm ghost" onClick=${() => desk.recorder.speechSettings()}>Open Windows’ speech settings</button>`}
     ${!busy && waiting && html`<div className="rec-setup rec-warn"><small>${waiting}</small></div>`}
-    ${on && !busy && quiet && html`<div className="rec-setup rec-warn"><small><b>Your microphone isn’t hearing anything.</b> Check it isn’t muted (the microphone key on the keyboard, or Windows’ sound settings), or nothing will be written down.</small></div>`}
+    ${on && !busy && quiet && !paused && html`<div className="rec-setup rec-warn"><small><b>Your microphone isn’t hearing anything.</b> Check it isn’t muted (the microphone key on the keyboard, or Windows’ sound settings), or nothing will be written down.</small></div>`}
     ${!on && !speechOk && !CLOUD && html`<div className="rec-setup"><small>One thing before your first meeting: so what’s said is written down, switch on <b>Online speech recognition</b> in Windows (one switch).</small><button className="btn sm" onClick=${() => desk.recorder.speechSettings()}>Switch it on</button></div>`}
     ${who && html`<${Modal} title="Record this meeting" onClose=${() => setWho(null)} footer=${html`<button className="btn" onClick=${() => setWho(null)}>Cancel</button><button className="btn primary" onClick=${go}>Start recording</button>`}>
       <p className="sm">${voice

@@ -276,6 +276,7 @@ function recorderIpc() {
   ipcMain.handle('rec-chunk', (e, buf) => (ours(e) ? recorder.chunk(buf) : false));
   ipcMain.handle('rec-sound', (e, buf) => (ours(e) ? recorder.sound(buf) : false));
   ipcMain.handle('rec-status', (e) => (ours(e) ? recorder.status() : {}));
+  ipcMain.handle('rec-pause', (e, on) => (ours(e) ? recorder.pause(!!on) : { error: 'no' }));
   ipcMain.handle('rec-stop', (e, o) => (ours(e) ? recorder.stop(o && typeof o === 'object' ? { local: o.local !== false } : {}) : { error: 'no' }));
   ipcMain.handle('rec-cancel', (e) => { if (ours(e)) recorder.cancel(); return true; });
   ipcMain.on('rec-open-folder', (e, file) => { if (ours(e)) recorder.openFolder(typeof file === 'string' ? file : ''); });
@@ -458,6 +459,15 @@ function createSidebar() {
         console.log('SMOKE rec asks', JSON.stringify(await J("(document.querySelector('.modal') || {}).innerText || 'no question'")));
         await J("[...document.querySelectorAll('.modal button')].find((b) => /Start recording/.test(b.innerText)).click(); 1"); await wait(Number(process.env.FLOORBOARD_SMOKE_REC_SECONDS || 10) * 1000);
         console.log('SMOKE rec during', JSON.stringify(await J("document.querySelector('.w-rec').innerText.replace(/\\n+/g, ' | ')")), JSON.stringify(recorder.status()));
+        if (process.env.FLOORBOARD_SMOKE_REC_PAUSE) { // Pause for a while, then Resume: the paused time is left out
+          const card = () => J("document.querySelector('.w-rec').innerText.replace(/\\n+/g, ' | ')");
+          await J("[...document.querySelectorAll('.w-rec button')].find((b) => b.innerText === 'Pause').click(); 1"); await wait(1500);
+          console.log('SMOKE rec paused', JSON.stringify(await card()), JSON.stringify(recorder.status()));
+          await wait(Number(process.env.FLOORBOARD_SMOKE_REC_PAUSE) * 1000);
+          console.log('SMOKE rec still paused', JSON.stringify(await card()));
+          await J("[...document.querySelectorAll('.w-rec button')].find((b) => b.innerText === 'Resume').click(); 1"); await wait(4000);
+          console.log('SMOKE rec resumed', JSON.stringify(await card()), JSON.stringify(recorder.status()));
+        }
         await J("[...document.querySelectorAll('.w-rec button')].find((b) => b.innerText === 'Stop').click(); 1"); await wait(Number(process.env.FLOORBOARD_SMOKE_REC_AFTER || 15) * 1000);
         console.log('SMOKE rec after', JSON.stringify(await J("document.querySelector('.w-rec').innerText.replace(/\\n+/g, ' | ') + ' || ' + ([...document.querySelectorAll('.toast')].map((t) => t.innerText).join(' / '))")));
         const pins = JSON.parse(await J("JSON.stringify(JSON.parse(localStorage.getItem('floorboard.demo.v5')).pins.u5 || {})"));

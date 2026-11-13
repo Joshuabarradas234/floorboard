@@ -87,6 +87,8 @@ For the people an admin switches it on for (People & access → the person → *
 - **Voice only:** records the microphone, not the screen, for the minutes and a summary (so nobody has to take notes).
 - **Screen and voice:** records the whole screen with the microphone and the computer's own sound (so the other side of a Teams or Zoom call is in the video too).
 
+While it records, the card has **Pause** and **Stop**. Pause (someone steps out, a five-minute break) stops everything: the video, the sound, the screen pictures and the writing down; the dot turns amber and the time stands still until **Resume**. The paused time is left out of the recording and the minutes.
+
 **Record** first asks **who's in the meeting** (the store's people to tick, last time's ticked already, and a box for anyone else, like a supplier), so the minutes can say who said what; make sure everyone knows it's being recorded. While recording, Minutes keeps a small copy of the sound and, with the screen, takes a picture of it whenever it changes (at most one every 20 seconds). If the microphone hears nothing for 15 seconds (muted), the card says so. **Stop** ends it, makes two things, and opens Floorboard on **My files › Meeting recordings** with the new minutes open:
 
 - **The minutes:** one PDF in **My files › Meeting recordings** (the folder is made the first time) with: who was there, and which voice was whom; the meeting summary; **What we went through**, in order: what was on the screen (with the picture) and what was said, suggested or decided about it; decisions; the to-do list (who and by when); things to approve; follow-ups; and the full notes of everything that was said, with names instead of "Speaker A".

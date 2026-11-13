@@ -57,7 +57,7 @@ function listen() {
       try {
         const m = JSON.parse(line);
         if (m.t === 'ready') cur.speech = 'on';
-        else if (m.t === 'text' && m.text) cur.words.push({ text: String(m.text).slice(0, 2000), at: Number(m.at) || Date.now() });
+        else if (m.t === 'text' && m.text && !cur.pausedAt) cur.words.push({ text: String(m.text).slice(0, 2000), at: Number(m.at) || Date.now() });
         else if (m.t === 'error') cur.speech = m.why === 'privacy' ? 'privacy' : 'error: ' + String(m.why || '').slice(0, 160);
       } catch (e) { /* not a line of ours */ }
     }
@@ -77,7 +77,7 @@ function start() {
   fs.mkdirSync(folder(), { recursive: true });
   const started = new Date(), file = path.join(folder(), 'Meeting ' + stamp(started) + '.webm');
   const wav = path.join(app.getPath('temp'), 'floorboard-meeting-' + started.getTime() + '.wav');
-  cur = { file, out: fs.createWriteStream(file), words: [], ps: null, speech: 'starting', started: started.getTime(), wav, wfd: null, wbytes: 0 };
+  cur = { file, out: fs.createWriteStream(file), words: [], ps: null, speech: 'starting', started: started.getTime(), wav, wfd: null, wbytes: 0, pausedAt: null, pausedMs: 0 };
   try { cur.wfd = fs.openSync(wav, 'w'); fs.writeSync(cur.wfd, wavHeader(0)); } catch (e) { cur.wfd = null; }
   cur.ps = listen();
   keepAwake(true);
@@ -87,7 +87,16 @@ function start() {
 function chunk(buf) { if (cur && cur.out && buf && buf.byteLength) cur.out.write(Buffer.from(buf)); return true; }
 // a few seconds of the sound at a time, as 16-bit samples at 16 kHz, for writing it down after
 function sound(buf) { if (cur && cur.wfd !== null && buf && buf.byteLength) { const b = Buffer.from(buf); try { fs.writeSync(cur.wfd, b); cur.wbytes += b.length; } catch (e) { /* the video still records */ } } return true; }
-const status = () => (cur ? { on: true, speech: cur.speech, words: cur.words.length, last: (cur.words[cur.words.length - 1] || {}).text || '', started: cur.started, name: path.basename(cur.file) } : { on: false, writing });
+// Pause (someone steps out, a five-minute break): nothing is recorded or written down until Resume, and the time paused
+// is left out of the recording's length
+const pausedFor = (c) => c.pausedMs + (c.pausedAt ? Date.now() - c.pausedAt : 0);
+function pause(on) {
+  if (!cur) return { error: 'Nothing is being recorded.' };
+  if (on && !cur.pausedAt) cur.pausedAt = Date.now();
+  if (!on && cur.pausedAt) { cur.pausedMs += Date.now() - cur.pausedAt; cur.pausedAt = null; }
+  return status();
+}
+const status = () => (cur ? { on: true, speech: cur.speech, words: cur.words.length, last: (cur.words[cur.words.length - 1] || {}).text || '', started: cur.started, name: path.basename(cur.file), paused: !!cur.pausedAt, pausedMs: pausedFor(cur) } : { on: false, writing });
 
 // write down what's said in the WAV, with Windows' own speech engine on this computer
 function transcribeFile(wav, total) {
@@ -157,7 +166,8 @@ async function stop(opts = {}) {
   const c = cur; cur = null;
   try { c.ps.kill(); } catch (e) { /* already ended */ }
   await new Promise((ok) => c.out.end(ok));
-  try { await writeLength(c.file, Date.now() - c.started); } catch (e) { try { fs.unlinkSync(c.file + '.part'); } catch (x) { } } // it still plays without it
+  const length = Date.now() - c.started - pausedFor(c); // how long was recorded (without the pauses)
+  try { await writeLength(c.file, length); } catch (e) { try { fs.unlinkSync(c.file + '.part'); } catch (x) { } } // it still plays without it
   let size = 0; try { size = fs.statSync(c.file).size; } catch (e) { /* none */ }
   const ended = Date.now(), live = c.words.map((w) => w.text).join('\n');
   // and from the recording itself: used when it caught clearly more than listening live did (or live caught nothing)
@@ -173,7 +183,7 @@ async function stop(opts = {}) {
     try { fs.unlinkSync(c.wav); } catch (e) { /* already gone */ }
   }
   keepAwake(false); // (stays awake while the page is still making the minutes)
-  return { ok: true, file: c.file, name: path.basename(c.file), folder: folder(), size, transcript, how, speech: c.speech, fileWhy, started: c.started, ended };
+  return { ok: true, file: c.file, name: path.basename(c.file), folder: folder(), size, transcript, how, speech: c.speech, fileWhy, started: c.started, ended, length };
 }
 function cancel() { if (!cur) return; const c = cur; cur = null; keepAwake(false); try { c.ps.kill(); } catch (e) { } c.out.end(() => { try { fs.unlinkSync(c.file); } catch (e) { } }); if (c.wfd !== null) { try { fs.closeSync(c.wfd); fs.unlinkSync(c.wav); } catch (e) { } } }
 
@@ -188,4 +198,4 @@ const speechOn = () => new Promise((ok) => {
   require('child_process').execFile('reg', ['query', 'HKCU\\Software\\Microsoft\\Speech_OneCore\\Settings\\OnlineSpeechPrivacy', '/v', 'HasAccepted'], { windowsHide: true }, (err, out) => ok(!err && /HasAccepted\s+REG_DWORD\s+0x1\b/i.test(String(out))));
 });
 
-module.exports = { busy, setWorking, waiting, allowScreen, start, chunk, sound, status, stop, cancel, openFolder, play, openSpeechSettings, speechOn, writeLength };
+module.exports = { busy, setWorking, waiting, allowScreen, start, chunk, sound, status, pause, stop, cancel, openFolder, play, openSpeechSettings, speechOn, writeLength };
