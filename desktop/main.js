@@ -127,6 +127,21 @@ function slideTo(open, { focus = true } = {}) {
 const showSidebar = () => (prefs.slim ? setSlim(null, false) : slideTo(true));
 const hideSidebar = () => slideTo(false);
 const toggleSidebar = () => (prefs.slim ? setSlim(null, false) : slideTo(!opened));
+// Folding by itself: when the open sidebar loses the focus to another program (a browser tab, Outlook, Excel), it folds
+// into the slim bar straight away, so it's never left covering things. Not when the focus went to one of Floorboard's own
+// windows (the bar at the top, the full window), and not while something is open in it (writing a post, a window) or a
+// file is being picked: the page says so. Switched off in the tray menu.
+let foldAt = 0;
+function foldAway() {
+  if (prefs.autoFold === false || !sidebar || sidebar.isDestroyed() || !opened || slide) return;
+  const at = foldAt = Date.now();
+  setTimeout(async () => {
+    if (at !== foldAt || !sidebar || sidebar.isDestroyed() || !opened || slide || sidebar.isFocused()) return;
+    const f = BrowserWindow.getFocusedWindow(); if (f && f !== sidebar) return; // (one of Floorboard's own windows)
+    let stay = false; try { stay = !!(await sidebar.webContents.executeJavaScript('window.floorboardStay ? window.floorboardStay() : false')); } catch (e) { stay = false; }
+    if (!stay && at === foldAt && opened && !sidebar.isFocused()) setSlim(null, true);
+  }, 350);
+}
 
 // The floating button: while the sidebar is closed, one small button floats in front of every window, wherever it was
 // dragged to (bottom right at first). Click it and the whole sidebar opens; while the sidebar is open the button steps aside.
@@ -431,7 +446,8 @@ function createSidebar() {
   sidebar.on('close', (e) => { if (!app.isQuitting) { e.preventDefault(); hideSidebar(); } });
   // if it's ever closed for good anyway (the page closing itself, a crash), make it again, tucked away behind the floating button
   sidebar.on('closed', () => { if (app.isQuitting) return; clearInterval(slide); slide = null; createSidebar(); opened = false; sendBubble(); placeBubble(); });
-  sidebar.on('focus', () => { sidebar.flashFrame(false); if (bubble) bubble.moveTop(); });
+  sidebar.on('focus', () => { foldAt = 0; sidebar.flashFrame(false); if (bubble) bubble.moveTop(); });
+  sidebar.on('blur', foldAway);
   // remember the width someone drags it to: 'resized' only fires when a person finishes resizing it, not for the app's own moves
   sidebar.on('resized', () => { if (slide) return; prefs.width = sidebar.getBounds().width; savePrefs(); });
   if (SMOKE) {
@@ -788,6 +804,7 @@ function trayMenu() {
     { label: 'Open the full app', click: openFull },
     { type: 'separator' },
     { label: 'Keep the sidebar on top', type: 'checkbox', checked: prefs.onTop, click: (i) => setOnTop(i.checked) },
+    { label: 'Fold the sidebar into the slim bar when I click another window', type: 'checkbox', checked: prefs.autoFold !== false, click: (i) => { prefs.autoFold = i.checked; savePrefs(); } },
     { label: 'Show the floating button when the sidebar is closed', type: 'checkbox', checked: prefs.bubble, click: (i) => setBubble(i.checked) },
     { label: 'Show the bar at the top of the screen', type: 'checkbox', checked: prefs.bar, click: (i) => setBar(i.checked) },
     { label: 'Floorboard’s own island at the top (instead of Coucou)', type: 'checkbox', checked: !!prefs.island, click: (i) => setIsland(i.checked) },

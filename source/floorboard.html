@@ -3840,6 +3840,14 @@ const UPD = (() => { const d = window.floorboardDesktop; return d && d.updates ?
 // Check for updates (the sidebar's menu, Windows app): looks on GitHub now and, when there's a newer version, takes it
 // (it restarts by itself, settings and login kept). It also looks every hour and when the computer wakes up.
 const updWhen = (v) => { const m = /^(\d{4})\.(\d\d)(\d\d)\.(\d\d)(\d\d)$/.exec(String(v || '')); return m ? new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]).toLocaleString('en-ZA', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : String(v || ''); };
+// The Windows sidebar folds into its slim bar by itself when another program takes the focus, but not while something
+// is open in it (a post being written, a window) or a file is being picked (Windows' file window takes the focus)
+let pickingUntil = 0;
+if (window.floorboardDesktop) {
+  document.addEventListener('click', (e) => { if (e.target && e.target.matches && e.target.matches('input[type=file]')) pickingUntil = Date.now() + 2 * MIN; }, true);
+  window.addEventListener('focus', () => { pickingUntil = 0; });
+  window.floorboardStay = () => !!document.querySelector('.modal') || Date.now() < pickingUntil;
+}
 let updAsked = 0; // when Check for updates was last pressed (kept while the menu closes and opens)
 function UpdateRow() {
   const [st, setSt] = useState(null), [, redraw] = useState(0);
