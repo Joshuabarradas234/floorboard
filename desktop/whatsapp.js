@@ -97,9 +97,35 @@ async function findDevice() {
   device = str(d.id || d.device_id, 120); me = str(d.jid, 120);
 }
 
-function cleanChat(c) { return { jid: str(c.jid, 120), name: str(c.name, 80) || '+' + digits(c.jid), at: when(c.last_message_time), group: /@g\.us$/.test(c.jid || '') }; }
+// Names as WhatsApp shows them. The gateway sometimes has only "Group 1203…" for a group, or a number for someone in a
+// group: the group's name then comes from the person's own list of groups, and a person's from their contacts (each looked
+// up every 10 minutes); someone who isn't in their contacts shows as their number, written the usual way.
+const groupNames = new Map(), contactNames = new Map(); let namesAt = 0;
+const noName = (n) => !n || /^Group \d+$/i.test(n) || /^[+\d\s()-]{6,}$/.test(n) || /@/.test(n);
+function phone(jid) {
+  const d = digits(jid); if (!d || /@(lid|g\.us)$/.test(jid || '')) return '';
+  return d.length === 11 && d.startsWith('27') ? '+27 ' + d.slice(2, 4) + ' ' + d.slice(4, 7) + ' ' + d.slice(7) : '+' + d;
+}
+async function loadNames() {
+  if (Date.now() - namesAt < 10 * 60 * 1000) return;
+  namesAt = Date.now();
+  try {
+    const r = await call('GET', '/user/my/groups');
+    (Array.isArray(r) ? r : r.data || []).forEach((g) => { const jid = str(g && (g.JID || g.jid), 120), n = str(g && (g.Name || g.name), 80).trim(); if (jid && n) groupNames.set(jid, n); });
+  } catch (e) { namesAt = 0; }
+  try {
+    const r = await call('GET', '/user/my/contacts'), list = (Array.isArray(r) ? r : r.data || []).filter((x) => x && x.jid);
+    list.forEach((x) => { const n = str(x.name, 80).trim(); if (!noName(n)) contactNames.set(str(x.jid, 120), n); });
+    book = list.filter((x) => isPerson(x.jid)).map((x) => ({ jid: str(x.jid, 120), name: str(x.name, 80) })); bookAt = Date.now();
+  } catch (e) { namesAt = 0; }
+}
+function cleanChat(c) {
+  const jid = str(c.jid, 120), group = /@g\.us$/.test(jid), n = str(c.name, 80).trim();
+  return { jid, name: noName(n) ? (group ? groupNames.get(jid) || 'WhatsApp group' : contactNames.get(jid) || phone(jid) || n || 'Someone') : n, at: when(c.last_message_time), group };
+}
 function cleanMsg(m) {
-  return { id: str(m.id, 120), fromMe: !!m.is_from_me, who: m.is_from_me ? 'You' : str(m.sender_display_name, 60) || '+' + digits(m.sender_jid),
+  const said = str(m.sender_display_name, 60).trim(), from = str(m.sender_jid, 120);
+  return { id: str(m.id, 120), fromMe: !!m.is_from_me, who: m.is_from_me ? 'You' : noName(said) ? contactNames.get(from) || phone(from) || said || 'Someone' : said,
     text: str(m.content, 4000), at: when(m.timestamp), media: str(m.media_type, 20), file: str(m.filename, 120) };
 }
 
@@ -117,6 +143,7 @@ function count(c, ms) {
 async function poll() {
   try {
     if (!device) await findDevice();
+    await loadNames();
     const list = ((await call('GET', '/chats', { limit: '30' })).data || []).map(cleanChat).filter((c) => c.jid);
     chats = list.sort((a, b) => b.at - a.at);
     const day = Date.now() - 24 * 3600 * 1000;
@@ -146,7 +173,7 @@ function summary() {
 }
 
 // what the gateway told Floorboard: a message (look now rather than at the next turn) or a call ringing
-function nameOf(jid) { const c = chats.find((x) => x.jid === jid) || (book || []).find((x) => x.jid === jid); return c ? c.name : '+' + digits(jid); }
+function nameOf(jid) { const c = chats.find((x) => x.jid === jid); return c ? c.name : contactNames.get(jid) || phone(jid) || 'Someone'; }
 function webhook(key, body) {
   if (!hookUrl || key !== hookUrl.split('k=')[1]) return false;
   const ev = String((body && body.event) || ''), p = (body && body.payload) || {};
