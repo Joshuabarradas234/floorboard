@@ -10983,6 +10983,10 @@ function LookModal({ onClose }) {
 /* ---------------- shortcuts: round glass buttons for the things people do every day ---------------- */
 // Personal ones live with the person's pins; department and whole-store ones are shared, set by managers and admins.
 const SC_ICONS = ['⭐', '🧯', '⚠️', '🧹', '📦', '🚚', '🧾', '💰', '📋', '✅', '📅', '📞', '🔗', '🌦️', '🛒', '🏷️', '🍞', '🍌', '🔥', '🧊', '🌡️', '📸', '🎥', '💬', '📢', '🔧', '💡', '🕒', '📈', '🗂️', '🔑', '❤️'];
+// with the Pirate voyage theme: sea-faring icons to pick from, and the usual ones shown as their sea-faring stand-ins
+const SC_ICONS_VOYAGE = ['🏴‍☠️', '⚓', '🧭', '🗺️', '⛵', '🚢', '🦜', '🦀', '🐙', '🐚', '🌊', '🏝️', '🌴', '🔭', '📜', '🪙', '💰', '💎', '🗝️', '🧰', '⚔️', '💣', '🪝', '🎣', '🦈', '🐳', '☠️', '🔔', '⏳', '🪣', '🧺', '⭐'];
+const VOYAGE_SC = { '⭐': '🏴‍☠️', '🧯': '🪣', '⚠️': '☠️', '🧹': '🪣', '📦': '🧰', '🚚': '⛵', '🧾': '📜', '💰': '🪙', '📋': '🗺️', '✅': '⚓', '📅': '🧭', '📞': '🐚', '🔗': '🪝', '🌦️': '🌊', '🛒': '🧺', '🏷️': '💎', '🍌': '🏝️', '🔥': '💣', '🌡️': '🔭', '📸': '🔭', '💬': '🦜', '📢': '🔔', '🔧': '⚔️', '💡': '🗝️', '🕒': '⏳', '📈': '🗺️', '🗂️': '🧰', '🔑': '🗝️' };
+const scIcon = (ic) => (THEME === 'voyage' && VOYAGE_SC[ic]) || ic;
 const SC_KINDS = [['link', 'Open a website'], ['post', 'Start a post'], ['chat', 'Open a chat'], ['page', 'Open a page']];
 const scopeLabel = (db, s) => (s === 'me' ? 'Just me' : s === 'all' ? 'Everyone in the store' : 'Everyone in ' + deptById(db, s.slice(5)).name);
 function canEditShortcut(u, sc) {
@@ -11004,7 +11008,7 @@ function ShortcutModal({ sc, onClose }) {
   const { db, user, update, toast, ask } = useApp();
   const scopes = [['me', 'Just me'], ...db.depts.filter((d) => isManagerOf(user, d.id)).map((d) => ['dept:' + d.id, 'Everyone in ' + d.name]), user.role === 'admin' && ['all', 'Everyone in the store']].filter(Boolean);
   const [v, setV] = useState(() => (sc ? { ...sc, post: { type: 'task', level: 'amber', to: '', title: '', ...(sc.post || {}) } }
-    : { icon: '⭐', label: '', kind: 'link', url: '', page: 'needs', chat: '', post: { type: 'task', level: 'amber', to: '', title: '' }, scope: 'me' }));
+    : { icon: THEME === 'voyage' ? '🏴‍☠️' : '⭐', label: '', kind: 'link', url: '', page: 'needs', chat: '', post: { type: 'task', level: 'amber', to: '', title: '' }, scope: 'me' }));
   const [err, setErr] = useState('');
   const set = (k, x) => { setV((o) => ({ ...o, [k]: x })); setErr(''); };
   const setPost = (k, x) => setV((o) => ({ ...o, post: { ...o.post, [k]: x } }));
@@ -11037,12 +11041,12 @@ function ShortcutModal({ sc, onClose }) {
   const remove = () => ask({ title: 'Remove “' + sc.label + '”?', body: sc.scope === 'me' ? 'It goes from your shortcuts.' : 'It goes for ' + scopeLabel(db, sc.scope).toLowerCase() + '.', confirm: 'Remove', danger: true,
     onConfirm: () => { update((d) => { if (d.pins[user.id]) d.pins[user.id].shortcuts = (d.pins[user.id].shortcuts || []).filter((s) => s.id !== sc.id); d.shortcuts = (d.shortcuts || []).filter((s) => s.id !== sc.id); }); onClose(); toast('Shortcut removed'); } });
   return html`<${Modal} title=${sc ? 'Edit shortcut' : 'Add a shortcut'} onClose=${onClose} wide footer=${html`${sc && html`<button className="btn danger" style=${{ marginRight: 'auto' }} onClick=${remove}>Remove</button>`}<button className="btn" onClick=${onClose}>Cancel</button><button className="btn primary" onClick=${save}>${sc ? 'Save' : 'Add'}</button>`}>
-    <div className="sc-preview"><span className="sc-ic">${v.icon}</span><small>${v.label.trim() || 'Name'}</small></div>
+    <div className="sc-preview"><span className="sc-ic">${scIcon(v.icon)}</span><small>${v.label.trim() || 'Name'}</small></div>
     <div className="row2">
       <label className="field"><span>Name</span><input id="sc-label" className="input" value=${v.label} maxLength="24" onChange=${(e) => set('label', e.target.value)} placeholder="e.g. Weather"/></label>
       <label className="field"><span>Who gets it</span><select id="sc-scope" className="select" value=${v.scope} onChange=${(e) => set('scope', e.target.value)}>${scopes.map(([k, l]) => html`<option key=${k} value=${k}>${l}</option>`)}</select></label>
     </div>
-    <div className="field"><span>Icon</span><div className="iconpick">${SC_ICONS.map((ic) => html`<button type="button" key=${ic} className=${v.icon === ic ? 'on' : ''} onClick=${() => set('icon', ic)} aria-label=${'Icon ' + ic}>${ic}</button>`)}</div></div>
+    <div className="field"><span>Icon</span><div className="iconpick">${(THEME === 'voyage' ? SC_ICONS_VOYAGE : SC_ICONS).map((ic) => html`<button type="button" key=${ic} className=${v.icon === ic ? 'on' : ''} onClick=${() => set('icon', ic)} aria-label=${'Icon ' + ic}>${ic}</button>`)}</div></div>
     <div className="field"><span>What it does</span><div className="seg" role="group">${SC_KINDS.map(([k, l]) => html`<button type="button" key=${k} className=${v.kind === k ? 'on' : ''} onClick=${() => set('kind', k)}>${l}</button>`)}</div></div>
     ${v.kind === 'link' && html`<label className="field"><span>Website address</span><input id="sc-url" className="input" inputMode="url" value=${v.url} onChange=${(e) => set('url', e.target.value)} placeholder="e.g. www.weathersa.co.za"/><small>Opens in the browser. A phone number works too, like tel:0123456789.</small></label>`}
     ${v.kind === 'page' && html`<label className="field"><span>Page</span><select id="sc-page" className="select" value=${v.page} onChange=${(e) => set('page', e.target.value)}>${pageOptions(db, user).map(([k, l]) => html`<option key=${k} value=${k}>${l}</option>`)}</select></label>`}
@@ -11069,7 +11073,7 @@ function Shortcuts({ compact }) {
     if (s.kind === 'page') jump('view:' + s.page);
   };
   const button = (s) => {
-    const inner = html`<span className="sc-ic">${s.icon}</span><small>${s.label}</small>${editing && canEditShortcut(user, s) && html`<span className="sc-badge"><${Icon} n="edit" s=${11}/></span>`}`;
+    const inner = html`<span className="sc-ic">${scIcon(s.icon)}</span><small>${s.label}</small>${editing && canEditShortcut(user, s) && html`<span className="sc-badge"><${Icon} n="edit" s=${11}/></span>`}`;
     const title = s.label + (s.scope === 'me' ? '' : ' · ' + scopeLabel(db, s.scope));
     if (editing) return html`<button key=${s.id} className=${'sc-b' + (canEditShortcut(user, s) ? '' : ' locked')} onClick=${() => canEditShortcut(user, s) && setModal(s)} title=${title}>${inner}</button>`;
     if (s.kind === 'link') return html`<a key=${s.id} className="sc-b" href=${s.url} target="_blank" rel="noopener noreferrer" title=${title}>${inner}</a>`;
