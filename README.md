@@ -290,6 +290,16 @@ Switch it on in **People & access**: under Finance, turn on **Month end**. A **M
 - **Ask managers for invoices** sends every manager a task to hand in the month's invoices, so Finance can see who is still outstanding.
 - Before pasting a new month, remove last month's lists with the bin on each list (**By list** view).
 
+## Training (lessons, practice labs and tests)
+
+**Training** is in the menu (the graduation cap), and in the sidebar's menu. Each team has its own lessons and tests; Finance comes first.
+
+- **Lessons**: a **video walkthrough** (upload a screen recording up to 300 MB, for example one made with Minutes, or paste a OneDrive or YouTube link), **written steps**, a **quiz**, or a **practice lab**. Whoever manages the team adds them with **Add a lesson**; everyone in the team sees them and what they've done.
+- **Practice labs** open a practice desktop that fills the window: Mail, and the **Xero practice**, a practice copy of Xero's steps (in Floorboard's own look; nothing in it is real). A checklist ticks off each step as it's done right. Finance has two: **capture a supplier bill** from an emailed tax invoice, and **reconcile the bank** (five statement lines, with two SunPack payments that look alike).
+- **Tests** (**New test**, for whoever manages the team): pick which quizzes and labs are in it, the pass mark, the time limit, the level, a description, an optional video walkthrough, the wait before someone can try again after not passing, and who takes it by when. It isn't put in their tasks: they find it under **Your tests** on their Training page.
+- **Taking a test** works like a certification exam lab. First six short steps: your details, the test rules (agree to go on), the video walkthrough, before you begin, the practice desktop, start. Then everything else closes down: on the Windows app, Floorboard's other windows are hidden and every other program is minimised, the test fills the screen, nothing can come in front of it, and each time someone tries to leave it is noted. When it's handed in, it all comes back. The parts (A, B, C…) are on the left, in any order, or in order if the test says so. A practice part has **Open Xero practice**, and **Check** says how many of its checks are right (not which), as often as you like. **Test resources** has the names and amounts needed, with copy buttons. Copy and paste work inside the test only. The clock and **End test** are at the top; when the time runs out it's handed in.
+- **The result**: passed or not, the time taken, the soonest retake date, lessons to go over, and each part as **Proficient** or **Needs improvement**. Whoever manages the team sees everyone's results and lessons done under **Results**.
+
 ## Petrol & expense slips
 
 The Finance team sends its petrol slips (or parking and tolls, or anything else they paid for the store) to the team that handles claims: the **Petrol & expense slips** card in the sidebar → **Send a slip**. The card shows only for people in a department named Finance (or Accounts), not for admins.

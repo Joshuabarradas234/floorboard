@@ -292,6 +292,38 @@ function recorderIpc() {
   ipcMain.handle('rec-sound', (e, buf) => (ours(e) ? recorder.sound(buf) : false));
   ipcMain.handle('rec-status', (e) => (ours(e) ? recorder.status() : {}));
   ipcMain.handle('rec-pause', (e, on) => (ours(e) ? recorder.pause(!!on) : { error: 'no' }));
+  // Training tests: when a test starts, everything else closes down (Floorboard's other windows are hidden and every other
+  // program is minimised), and the window running it fills the screen and stays in front of everything until it's handed in.
+  // When something takes the focus away, it comes straight back and the page is told (the result notes it). Afterwards it all comes back.
+  const allWindows = (how) => (process.platform !== 'win32' || process.env.FLOORBOARD_SMOKE ? Promise.resolve() // (never on a test copy)
+    : new Promise((ok) => { require('child_process').execFile('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', '(New-Object -ComObject Shell.Application).' + how + '()'], { windowsHide: true, timeout: 6000 }, () => ok()); }));
+  ipcMain.handle('training-lock', async (e, on) => {
+    if (!ours(e)) return false;
+    const w = BrowserWindow.fromWebContents(e.sender); if (!w || w.isDestroyed()) return false;
+    if (on) {
+      if (w.trLock) return true;
+      w.trLock = () => { if (w.isDestroyed()) return; w.webContents.send('training-left'); setTimeout(() => { if (!w.isDestroyed() && w.trLock) { w.show(); w.focus(); } }, 80); };
+      w.trHid = [rail, bubble, bar, sidebar, full].filter((x) => x && x !== w && !x.isDestroyed() && x.isVisible());
+      w.trHid.forEach((x) => x.hide());
+      await allWindows('MinimizeAll');
+      if (w.isDestroyed() || !w.trLock) return false; // handed in already
+      // a window that can't usually fill the screen (the sidebar) can for the test, and gets its limits back after
+      w.trWas = { fs: w.isFullScreenable(), max: w.getMaximumSize(), bounds: w.getBounds() };
+      w.setMaximumSize(0, 0); w.setFullScreenable(true);
+      if (w.isMinimized()) w.restore();
+      w.setAlwaysOnTop(true, 'screen-saver', 1); w.setKiosk(true); w.show(); w.focus();
+      w.on('blur', w.trLock);
+    } else if (w.trLock) {
+      w.removeListener('blur', w.trLock); w.trLock = null;
+      w.setKiosk(false); w.setAlwaysOnTop(w === sidebar ? !!prefs.onTop : false);
+      const was = w.trWas; w.trWas = null;
+      if (was) { w.setFullScreenable(was.fs); const [mw, mh] = was.max; if (mw || mh) w.setMaximumSize(mw, mh); setTimeout(() => { if (!w.isDestroyed() && !w.isKiosk()) w.setBounds(was.bounds); }, 150); }
+      const hid = w.trHid || []; w.trHid = null;
+      hid.forEach((x) => { if (!x.isDestroyed()) x.showInactive(); });
+      allWindows('UndoMinimizeALL').then(() => { if (!w.isDestroyed()) { w.show(); w.focus(); } }); // the other programs back, the result still in front
+    }
+    return true;
+  });
   ipcMain.handle('rec-stop', (e, o) => (ours(e) ? recorder.stop(o && typeof o === 'object' ? { local: o.local !== false } : {}) : { error: 'no' }));
   ipcMain.handle('rec-cancel', (e) => { if (ours(e)) recorder.cancel(); return true; });
   ipcMain.on('rec-open-folder', (e, file) => { if (ours(e)) recorder.openFolder(typeof file === 'string' ? file : ''); });
@@ -661,7 +693,8 @@ function createSidebar() {
         await U('answer(true)'); await wait(1500); console.log('SMOKE upd checked', brief(await U('state()')));
         console.log('SMOKE upd installed', brief(await U('install()')));
       }
-      app.isQuitting = true; app.quit();
+      console.log('SMOKE done');
+      if (!process.env.FLOORBOARD_SMOKE_STAY) { app.isQuitting = true; app.quit(); } // (a longer test drives it on after)
     }, 1500));
   } else {
     sidebar.once('ready-to-show', () => (prefs.slim ? setSlim(null, true) : showSidebar())); // opens as it was left: folded or open

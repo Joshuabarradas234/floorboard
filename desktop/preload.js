@@ -70,6 +70,11 @@ contextBridge.exposeInMainWorld('floorboardDesktop', {
     onOpen: (fn) => { const h = () => fn(); ipcRenderer.on('mfs-open', h); return () => ipcRenderer.removeListener('mfs-open', h); },
   },
   // Floorboard's own island at the top: WhatsApp (through the WhatsApp gateway on this computer) and Mail (Outlook classic)
+  // Training tests: full screen and locked while a test runs; told each time something took the focus away
+  training: {
+    lock: (on) => ipcRenderer.invoke('training-lock', !!on),
+    onLeft: (fn) => { const h = () => fn(); ipcRenderer.on('training-left', h); return () => ipcRenderer.removeListener('training-left', h); },
+  },
   // the sidebar's meeting recorder (the video stays on this computer)
   recorder: {
     start: () => ipcRenderer.invoke('rec-start'),

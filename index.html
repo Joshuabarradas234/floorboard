@@ -702,6 +702,156 @@ html.isl-sleepy .isl-ch:not(.wig):not(.ring) .isl-svg{animation:isl-snooze 3.4s 
 .isl-empty{margin:6px 2px;color:rgba(233,235,238,.55);font-size:12px}
 .isl-gh{margin:6px 6px 2px;font-size:11.5px;font-weight:700;color:rgba(233,235,238,.6)}
 .isl-group{display:grid;gap:1px}
+/* Training */
+.tr-sec{margin:18px 0}.tr-sec h3{margin:0 0 10px;font-size:16px;display:flex;gap:10px;align-items:baseline}
+.tr-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.tr-card{border-radius:18px;padding:14px;display:grid;gap:6px;align-content:start}.tr-card b{font-size:15px}.tr-card small{color:var(--ink-3)}
+.tr-card.done{opacity:.85}.tr-card .tr-ok{color:var(--green)}.tr-card-a{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.tr-kind{display:inline-flex;gap:6px;align-items:center;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)}
+.tr-res{display:inline-block;border:0;border-radius:999px;padding:3px 10px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}.tr-res.pass{background:var(--green-soft);color:var(--green)}.tr-res.fail{background:var(--red-soft);color:var(--red)}
+.tr-restab{margin:10px 0 16px}.tr-table{width:100%;border-collapse:collapse;margin-top:6px}.tr-table td{padding:7px 8px;border-top:1px solid var(--glass-line);font-size:13.5px}
+.tr-part{margin:10px 0}.tr-checks{list-style:none;padding:0;margin:6px 0;display:grid;gap:4px;font-size:13px}.tr-checks .ok{color:var(--green)}.tr-checks .no{color:var(--red)}
+.tr-video{width:100%;max-height:60vh;border-radius:12px;background:#000}.tr-text{white-space:pre-wrap;line-height:1.55;margin:10px 0}
+.tr-labcard{display:grid;gap:10px;justify-items:start}
+.tr-quiz{display:grid;gap:14px}.tr-q{display:grid;gap:6px}.tr-opt{display:flex;gap:8px;align-items:center;padding:6px 10px;border-radius:10px;background:var(--glass);cursor:pointer}.tr-opt.right{background:var(--green-soft)}.tr-opt.wrong{background:var(--red-soft)}.tr-mark{margin:0}
+.tr-qedit{display:grid;gap:6px;padding:10px;border-radius:12px;background:var(--glass);margin-bottom:8px}.tr-optedit{display:flex;gap:8px;align-items:center}.tr-qbtns{display:flex;gap:6px}
+.tr-run{position:fixed;inset:0;z-index:400;background:#121722;color:#fff;display:flex;flex-direction:column}
+.tr-run-h{display:flex;align-items:center;gap:14px;padding:10px 18px;background:#0b0f16;border-bottom:1px solid rgba(255,255,255,.08);font-size:14px}
+.tr-run-b{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column}.tr-run-b>.lab-desk{flex:1}
+.tr-sum,.tr-qwrap{max-width:720px;margin:30px auto;padding:0 20px;display:grid;gap:12px;width:100%;box-sizing:border-box}
+.tr-big{font:800 64px/1 var(--f-display)}.tr-big.pass{color:#7fe0a3}.tr-big.fail{color:#ff9a8a}.tr-parts{list-style:none;padding:0;margin:0;display:grid;gap:6px}.tr-parts li{display:flex;justify-content:space-between;gap:10px;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,.06)}
+.tr-note{background:rgba(255,207,133,.12);border-radius:10px;padding:10px 12px;font-size:13.5px}.tr-warn{color:#ffcf85;font-weight:700}
+.tr-card-d{margin:0;font-size:12.5px;line-height:1.45;opacity:.82;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.tr-opt-l{display:flex;gap:8px;align-items:flex-start;line-height:1.4}.tr-opt-l input{margin-top:3px}
+/* a test, before it starts: what it is on the left, six steps on the right */
+.tr-prep{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:22px;padding:26px;max-width:1240px;margin:0 auto;width:100%;box-sizing:border-box;align-items:start}
+.tr-prep-card{background:#1b2232;border-radius:14px;padding:22px;display:grid;gap:14px}.tr-prep-card h2{margin:0;font-size:22px}
+.tr-kick{font:700 11px/1 var(--f-mono);letter-spacing:.12em;color:rgba(255,255,255,.6);text-transform:uppercase}
+.tr-prep-box{background:#232b3d;border-radius:10px;padding:14px 16px;display:grid;gap:10px;font-size:13.5px}.tr-prep-time{font-size:17px}
+.tr-alert{display:flex;gap:8px;align-items:flex-start;font-size:13px;color:#ffe2a8}.tr-alert i{flex:none;width:18px;height:18px;border-radius:50%;background:#f5c84b;color:#1b2232;font:800 12px/18px sans-serif;text-align:center;font-style:normal}
+.tr-desc{line-height:1.55;color:rgba(255,255,255,.82);white-space:pre-wrap;max-height:220px;overflow:auto}
+.tr-rec{margin:0;padding-left:18px;display:grid;gap:6px;font-size:13.5px}.tr-rec li.done{color:#7fe0a3}.tr-rec small{opacity:.7}
+.tr-steps{display:grid;gap:8px}.tr-step{background:#1b2232;border-radius:12px;padding:12px 16px}
+.tr-step-h{width:100%;display:flex;align-items:center;gap:12px;background:none;border:0;padding:0;color:rgba(255,255,255,.6);font:700 14.5px var(--f-body);text-align:left;cursor:default}
+.tr-step.done .tr-step-h{color:#7fe0a3;cursor:pointer}.tr-step.on .tr-step-h{color:#8fb6ff}
+.tr-num{flex:none;width:28px;height:28px;border-radius:50%;border:2px solid currentColor;display:grid;place-items:center;font-size:13px}
+.tr-mins{background:#24407a;color:#dfe8ff;border-radius:6px;padding:3px 10px;font-size:12px}
+.tr-step-b{margin:12px 0 4px 13px;padding-left:26px;border-left:2px solid #4c7fe0;display:grid;gap:10px;font-size:13.5px;line-height:1.5;color:rgba(255,255,255,.86)}
+.tr-step-b p{margin:0}.tr-step-b dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0}.tr-step-b dt{color:rgba(255,255,255,.55)}.tr-step-b dd{margin:0;font-weight:700}
+.tr-step-b ol,.tr-step-b ul{margin:0;padding-left:18px;display:grid;gap:5px}
+.tr-step-a{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;align-items:center}.tr-agree{display:flex;gap:8px;align-items:center;font-weight:700}
+/* a test, running: the bar at the top, the parts on the left, the guide, the practice desktop or the questions on the right */
+.tr-x{position:fixed;inset:0;z-index:400;display:flex;flex-direction:column;background:#141a26;color:#fff}
+.tr-x-top{display:flex;align-items:center;gap:22px;padding:8px 18px;background:#0d1220;border-bottom:1px solid rgba(255,255,255,.08)}
+.tr-x-t{display:grid;gap:3px;min-width:0}.tr-x-t small{font:700 10px/1 var(--f-mono);letter-spacing:.1em;color:rgba(255,255,255,.55)}.tr-x-t b{font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tr-x-prog{display:flex;align-items:center;gap:12px}.tr-x-prog>b{font-size:19px}
+.tr-x-segs{display:flex;gap:4px}.tr-x-segs i{width:44px;height:10px;border-radius:6px;background:rgba(255,255,255,.22)}.tr-x-segs i.on{background:#5fcf8f}
+.tr-x-time{display:flex;align-items:center;gap:10px;background:#1f2738;border-radius:10px;padding:6px 14px}.tr-x-time small{display:block;font:700 9.5px/1 var(--f-mono);letter-spacing:.08em;color:rgba(255,255,255,.6)}
+.tr-x-time b{font:800 21px/1.15 var(--f-mono)}.tr-x-time.low b{color:#ffb38a}
+.tr-x-end{display:flex;align-items:center;gap:8px;background:#3d9a62;color:#fff;border:0;border-radius:8px;padding:9px 16px;font:700 14px var(--f-body);cursor:pointer}
+.tr-x-main{flex:1;min-height:0;display:grid;grid-template-columns:minmax(340px,500px) minmax(0,1fr)}
+.tr-x-main.wide{grid-template-columns:minmax(0,1fr)}.tr-x-main.wide .tr-x-side{display:none}
+.tr-x-side{background:#e9edf4;color:#1c2333;display:flex;flex-direction:column;min-height:0;border-right:1px solid #cdd4e1}
+.tr-x-tools{display:flex;align-items:center;gap:8px;padding:10px 12px;background:#fff;border-bottom:1px solid #d5dbe6;flex-wrap:wrap}
+.tr-x-tool{display:inline-flex;align-items:center;gap:6px;background:#3f6fd8;color:#fff;border:0;border-radius:6px;padding:7px 12px;font:700 13px var(--f-body);cursor:pointer;box-shadow:0 2px 0 #2a4ea3}
+.tr-x-tool:disabled{opacity:.45;cursor:default}.tr-x-tool.sq{padding:7px 9px}.tr-x-tool.big{font-size:16px;padding:12px 22px}
+.tr-x-tool.ghost{background:transparent;box-shadow:none;border:1.5px solid #6d8fe0;color:#cddcff}
+.tr-x-nav{display:flex;align-items:center;gap:6px;margin:0 auto}
+.tr-x-arrow{background:#e3e8f2;border:0;border-radius:4px;color:#3f6fd8;width:30px;height:30px;cursor:pointer;font-size:13px}
+.tr-x-cur{width:30px;height:30px;border-radius:50%;border:2px solid #3f6fd8;display:grid;place-items:center;font-weight:800;color:#3f6fd8}
+.tr-x-list{flex:1;overflow:auto;padding:14px 14px 30px}.tr-x-hint{font-size:13px;font-weight:700;margin:0 0 14px}
+.tr-x-parts{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.tr-x-part{display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px;align-items:start;position:relative}
+.tr-x-parts.ordered .tr-x-part:not(.guide):not(:last-child)::after{content:'';position:absolute;left:17px;top:38px;bottom:-12px;width:2px;background:#4c7fe0}
+.tr-x-part.shut .tr-x-card{opacity:.55}
+.tr-x-l{position:relative;width:34px;height:34px;box-sizing:border-box;border-radius:50%;border:2px solid #9aa3b5;background:#fff;color:#5a6378;display:grid;place-items:center;font-weight:800;font-size:13px;flex:none}
+.tr-x-l.answered,.tr-x-l.q{background:#3f6fd8;border-color:#3f6fd8;color:#fff}.tr-x-l.ok,.tr-x-l.err{border-color:#3f6fd8;color:#3f6fd8}
+.tr-x-l i{position:absolute;right:-5px;top:-5px;width:16px;height:16px;border-radius:50%;font:800 9px/16px sans-serif;font-style:normal;color:#fff;text-align:center}
+.tr-x-l.ok i{background:#3d9a62}.tr-x-l.err i{background:#d4483b}
+.tr-x-card{background:#f6f8fb;border:1px solid #cfd6e2;border-radius:6px;box-shadow:0 1px 2px rgba(0,0,0,.06);min-width:0}
+.tr-x-part.on .tr-x-card{background:#fff;border-color:#3f6fd8;box-shadow:0 2px 8px rgba(63,111,216,.18)}
+.tr-x-head{width:100%;display:flex;align-items:center;gap:10px;background:none;border:0;padding:10px 12px;text-align:left;cursor:pointer;color:inherit;font:inherit;min-height:44px}
+.tr-x-head b{flex:1;font-size:14px}.tr-x-part.on .tr-x-head b{color:#2f5fc4}.tr-x-head:disabled{cursor:not-allowed}
+.tr-x-chip{border:1.5px solid #8d96a8;border-radius:3px;padding:1px 6px;font:700 10.5px/1.4 var(--f-mono);color:#6b7489}.tr-x-chev{color:#6b7489}
+.tr-x-body{padding:0 14px 14px;display:grid;gap:10px;font-size:13.5px;line-height:1.55}.tr-x-body p{margin:0}.tr-x-body ul{margin:0;padding-left:18px;display:grid;gap:3px}
+.tr-x-row{display:flex;gap:8px;flex-wrap:wrap}
+.tr-x-check{justify-self:start;background:#3f6fd8;color:#fff;border:0;border-radius:6px;padding:10px 28px;font:800 16px var(--f-body);cursor:pointer;box-shadow:0 3px 0 #2a4ea3}
+.tr-x-said{border:1.5px solid #1c2333;border-radius:6px;padding:8px 10px;font-weight:700;font-size:12.5px}
+.tr-x-said.ok{border-color:#3d9a62;color:#2c7a4b}.tr-x-said.err{border-color:#d4483b;color:#b33a2f}
+.tr-x-said.sm{border-color:rgba(255,255,255,.35);color:#fff;padding:5px 9px}.tr-x-said.sm.ok{border-color:#5fcf8f;color:#7fe0a3}.tr-x-said.sm.err{border-color:#ff8a7a;color:#ffb0a5}
+.tr-x-view{min-height:0;overflow:auto;display:flex;flex-direction:column;background:#252d3e}.tr-x-view>.lab-screen{flex:1;min-height:480px}
+.tr-x-bar{display:flex;align-items:center;gap:10px;padding:8px 14px;background:#1b2232;font-size:13.5px;border-bottom:1px solid rgba(255,255,255,.08);flex-wrap:wrap}.tr-x-dim{color:rgba(255,255,255,.65)}
+.tr-x-doc{max-width:900px;margin:22px auto;padding:0 22px 30px;display:grid;gap:18px;width:100%;box-sizing:border-box}
+.tr-x-panel{background:#1b2232;border-radius:10px;padding:20px 24px;display:grid;gap:12px}.tr-x-panel h3{margin:0;color:#7ea6ff;font-size:18px}
+.tr-x-panel p{margin:0;font-size:14px;line-height:1.55;color:rgba(255,255,255,.86);white-space:pre-wrap}.tr-mine{font-size:13px;color:#a9c3ff}
+.tr-x-res{width:100%;border-collapse:collapse;font-size:13px}.tr-x-res th{text-align:left;color:rgba(255,255,255,.6);font-weight:600;padding:6px 8px;background:#232b3d}
+.tr-x-res td{padding:6px 8px;border-top:1px solid rgba(255,255,255,.06);vertical-align:middle}
+.tr-x-val{display:flex;gap:8px;align-items:center}.tr-x-val>span{flex:1;border:1px solid #4c7fe0;border-radius:6px;padding:5px 8px;background:#121826}
+.tr-x-copy{background:none;border:0;color:#7ea6ff;cursor:pointer;padding:2px;display:grid;place-items:center}
+.tr-x-sym{display:grid;grid-template-columns:1fr 1fr;gap:14px 20px;font-size:13.5px}.tr-x-sym>span{display:flex;align-items:center;gap:12px}
+.tr-x-pair{display:grid;justify-items:center}.tr-x-pair>i{width:2px;height:10px;background:#4c7fe0}
+.tr-flow{display:grid;gap:10px}.tr-flow-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:none;border:0;color:inherit;cursor:pointer;padding:0;text-align:left;font:inherit}.tr-flow-row:disabled{opacity:.5;cursor:default}
+.tr-flow-box{background:#2a3347;border:1px solid rgba(255,255,255,.12);border-radius:8px;padding:7px 10px;font-size:12.5px}.tr-flow-arrow{color:#7ea6ff;font-weight:800}
+.tr-x-sure{position:absolute;inset:0;background:rgba(5,8,14,.62);display:grid;place-items:center;z-index:5;padding:20px}
+.tr-x-pop{position:relative;background:#1b2232;border-radius:14px;padding:26px 30px;width:min(980px,100%);max-height:86vh;overflow:auto;display:grid;gap:12px;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+.tr-x-pop.sm{width:min(440px,100%)}.tr-x-pop h3{margin:0;color:#7ea6ff;font-size:18px}.tr-x-pop p{margin:0;font-size:14px;line-height:1.55}
+.tr-x-close{position:absolute;right:14px;top:12px;width:30px;height:30px;border-radius:50%;border:2px solid #fff;background:none;color:#fff;font-size:18px;line-height:1;cursor:pointer}
+/* a test, afterwards: passed or not, the soonest retake, and how each part went */
+.tr-out{max-width:920px;margin:26px auto;padding:0 20px 40px;display:grid;gap:18px;width:100%;box-sizing:border-box}
+.tr-out-card{display:grid;grid-template-columns:minmax(0,1fr) 130px;border-radius:12px;overflow:hidden;background:#1b2232;border:2px solid #d4574a}.tr-out-card.pass{border-color:#3d9a62}
+.tr-out-main{padding:22px 28px;display:grid;gap:12px}.tr-out-main h2{margin:0;font-size:22px;color:#ff8a7a}.tr-out-card.pass .tr-out-main h2{color:#7fe0a3}
+.tr-out-main p{margin:0;font-size:14px;line-height:1.55;color:rgba(255,255,255,.86)}.tr-out-main h3{margin:6px 0 0;font-size:16px;color:#7ea6ff}
+.tr-out-dl{display:grid;grid-template-columns:auto 1fr;gap:7px 16px;margin:6px 0;font-size:13.5px}
+.tr-out-dl dt{text-align:right;font-weight:800;text-transform:uppercase;font-size:12px;letter-spacing:.04em;color:rgba(255,255,255,.75);padding-top:1px}.tr-out-dl dd{margin:0}
+.tr-out-dl dd.r{color:#ff8a7a;font-weight:800}.tr-out-card.pass .tr-out-dl dd.r{color:#7fe0a3}
+.tr-out-band{background:#d4574a;display:grid;place-items:center}.tr-out-card.pass .tr-out-band{background:#3d9a62}
+.tr-out-band span{width:66px;height:66px;border:3px solid #fff;border-radius:18px;display:grid;place-items:center;font:800 30px/1 sans-serif;color:#fff}
+.tr-out-rep{background:#1b2232;border-radius:12px;padding:20px 24px}.tr-out-rep h3{margin:0 0 10px;color:#7ea6ff;font-size:18px}
+.tr-out-rep table{width:100%;border-collapse:separate;border-spacing:0 6px;font-size:13.5px}.tr-out-rep th{text-align:left;padding:6px 14px;color:rgba(255,255,255,.75)}
+.tr-out-rep td{padding:12px 14px;background:#232b3d}.tr-out-r{width:190px;font-weight:800;color:#fff}.tr-out-rep td.tr-out-r.weak{background:#d4782e}.tr-out-rep td.tr-out-r.good{background:#3d9a62}
+@media (max-width:860px){.tr-prep{grid-template-columns:1fr;padding:14px}.tr-x-main{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr)}.tr-x-side{max-height:46vh}
+  .tr-x-top{flex-wrap:wrap;gap:10px}.tr-x-segs i{width:18px}.tr-x-sym{grid-template-columns:1fr}.tr-out-card{grid-template-columns:1fr}.tr-out-band{padding:14px}.tr-out-r{width:auto}}
+/* the practice desktop */
+.lab-desk{display:grid;grid-template-columns:320px minmax(0,1fr);min-height:560px;height:100%}
+.lab-brief{background:#1b2232;padding:18px;display:flex;flex-direction:column;gap:12px;overflow:auto;border-right:1px solid rgba(255,255,255,.08)}
+.lab-brief-h{display:flex;justify-content:space-between;gap:8px;align-items:baseline}.lab-brief-h b{font-size:16px}.lab-brief p{margin:0;font-size:13.5px;line-height:1.5;color:rgba(255,255,255,.82)}
+.lab-time{font:700 13px var(--f-mono);color:#ffcf85;white-space:nowrap}
+.lab-checks{list-style:none;margin:0;padding:0;display:grid;gap:9px}.lab-checks li{display:flex;gap:10px;align-items:flex-start;font-size:13.5px;color:rgba(255,255,255,.72)}.lab-checks li.ok{color:#a8ecc2}
+.lab-tick{flex:none;width:20px;height:20px;border-radius:50%;border:2px solid rgba(255,255,255,.3);display:grid;place-items:center;font-size:12px;font-weight:800;box-sizing:border-box}.lab-checks li.ok .lab-tick{background:#2fb36a;border-color:#2fb36a;color:#fff}
+.lab-score{display:grid;gap:6px;font-size:13px;color:rgba(255,255,255,.7)}.lab-bar{height:6px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden}.lab-bar i{display:block;height:100%;background:#2fb36a;border-radius:3px;transition:width .3s}
+.lab-btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
+.lab-screen{display:flex;flex-direction:column;background:radial-gradient(120% 80% at 70% 10%,#3d6fa6,#1c3456 60%,#13233b);min-width:0}
+.lab-win{flex:1;margin:18px 18px 10px;border-radius:12px;background:#f5f7fa;color:#1d232b;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 22px 50px rgba(0,0,0,.4);min-height:0}
+.lab-win-h{padding:8px 14px;background:#e3e7ed;font-weight:700;font-size:13px;display:flex;gap:8px;align-items:center;color:#2b333d}
+.lab-win-b{flex:1;overflow:auto;min-height:0}
+.lab-taskbar{display:flex;gap:6px;padding:6px 10px;background:rgba(8,12,18,.78);align-items:center}
+.lab-taskbar button{position:relative;display:flex;gap:6px;align-items:center;border:0;border-radius:8px;padding:6px 12px;background:transparent;color:#fff;font:inherit;font-size:13px;cursor:pointer}.lab-taskbar button.on{background:rgba(255,255,255,.16)}
+.lab-dot{position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:#ff6b57}.lab-clock{margin-left:auto;color:rgba(255,255,255,.7);font-size:12.5px}
+.lab-empty{color:#6b7480;padding:16px;margin:0}.lab-muted{color:#6b7480}.lab-pre{white-space:pre-wrap;line-height:1.5}
+.lab-mail{display:grid;grid-template-columns:260px minmax(0,1fr);height:100%}.lab-mail-list{border-right:1px solid #dde2e8;overflow:auto}
+.lab-mail-row{display:grid;gap:2px;width:100%;text-align:left;border:0;border-bottom:1px solid #e6e9ee;background:#fff;padding:10px 12px;font:inherit;font-size:13px;cursor:pointer;color:#1d232b}.lab-mail-row.on{background:#e3eefc}.lab-mail-row.new b::before{content:'● ';color:#1f6feb}.lab-mail-row small{color:#6b7480}
+.lab-mail-read{padding:16px 20px;overflow:auto}.lab-mail-read h3{margin:0 0 4px}.lab-attach{font-size:13px;color:#3b4552;margin:10px 0 4px}
+.lab-doc{background:#fff;border:1px solid #d6dbe2;border-radius:6px;padding:20px;max-width:580px;font-size:13px;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+.lab-doc-h{display:flex;justify-content:space-between;gap:12px;margin-bottom:12px}.lab-doc-co{font-size:16px;display:block}.lab-doc-h small{color:#6b7480}.lab-doc-t{font-size:18px;letter-spacing:.06em;color:#3b4552}
+.lab-doc-meta{display:flex;gap:18px;flex-wrap:wrap;margin-bottom:10px;color:#3b4552}.lab-doc-tot{display:grid;grid-template-columns:1fr auto;gap:4px 18px;max-width:260px;margin:10px 0 0 auto}
+.lab-table{width:100%;border-collapse:collapse;font-size:13px}.lab-table th{text-align:left;font-weight:700;color:#4a5462;border-bottom:2px solid #dde2e8;padding:6px 8px}.lab-table td{border-bottom:1px solid #e6e9ee;padding:6px 8px}.lab-table .n{text-align:right}
+.lab-table.click tbody tr{cursor:pointer}.lab-table.click tbody tr:hover,.lab-table tr.on{background:#eef4fd}
+.lab-books{display:grid;grid-template-columns:190px minmax(0,1fr);height:100%}
+.lab-nav{background:#eaeef3;padding:12px;display:flex;flex-direction:column;gap:4px}.lab-books-t{font-size:15px;color:#0b4fb3;margin:2px 6px 8px}
+.lab-nav button:not(.lab-btn){text-align:left;border:0;background:none;padding:8px 10px;border-radius:6px;font:inherit;font-size:13px;cursor:pointer;color:#1d232b}.lab-nav button.on{background:#d6e4fb;color:#0b4fb3;font-weight:700}
+.lab-pane{padding:16px 18px;overflow:auto}.lab-pane h3{margin:0 0 10px;font-size:16px}
+.lab-btn{background:#1f6feb;color:#fff;border:0;border-radius:6px;padding:7px 14px;font:inherit;font-size:13px;font-weight:700;cursor:pointer}.lab-btn.ghost{background:#e3e7ed;color:#1d232b}.lab-btn.sm{padding:5px 10px;font-size:12.5px}.lab-btn:disabled{opacity:.45;cursor:default}
+.lab-nav .lab-btn{margin-top:10px}.lab-link{border:0;background:none;color:#1f6feb;font:inherit;font-size:12.5px;cursor:pointer;text-decoration:underline}
+.lab-row-h{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}.lab-row-h.end{justify-content:flex-end;margin:12px 0 0}
+.lab-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin-bottom:12px}.lab-grid label{display:grid;gap:4px;font-size:12px;font-weight:700;color:#4a5462}
+.lab-in{border:1px solid #c5ccd5;border-radius:6px;padding:6px 8px;font:inherit;font-size:13px;background:#fff;color:#1d232b;width:100%;box-sizing:border-box;min-width:0}.lab-in.n{text-align:right}.lab-in:disabled{background:#f0f2f5;color:#4a5462}
+.lab-lines td{padding:4px}.lab-lines td:nth-child(1){min-width:160px}.lab-lines td:nth-child(2),.lab-lines td:nth-child(3){width:90px}.lab-x{border:0;background:none;font-size:18px;cursor:pointer;color:#8a939f}
+.lab-tot{display:grid;grid-template-columns:1fr auto;gap:4px 18px;max-width:280px;margin:12px 0 0 auto;font-size:13.5px}.lab-tot b:last-child{font-size:15px}
+.lab-bals{display:flex;gap:20px;flex-wrap:wrap;margin-bottom:12px;font-size:13.5px}.lab-bals b{margin-left:6px}.lab-bals b.good{color:#1a8a4a}
+.lab-done{color:#1a8a4a;font-size:12.5px}.lab-recon{margin-top:14px;padding:14px;border:1px solid #c9d6ea;border-radius:10px;background:#f2f7ff;display:grid;gap:10px}
+.lab-seg{display:flex;gap:4px}.lab-seg button{border:1px solid #c5ccd5;background:#fff;border-radius:6px;padding:5px 14px;font:inherit;font-size:13px;cursor:pointer}.lab-seg button.on{background:#1f6feb;color:#fff;border-color:#1f6feb}
+.lab-cands{display:grid;gap:6px}.lab-cand{display:grid;grid-template-columns:auto 90px 1fr 1.4fr auto;gap:10px;align-items:center;background:#fff;border:1px solid #dde2e8;border-radius:6px;padding:7px 10px;font-size:13px;cursor:pointer}
+@media (max-width:860px){.lab-desk{grid-template-columns:1fr}.lab-books,.lab-mail{grid-template-columns:1fr}.lab-cand{grid-template-columns:auto 1fr auto}}
 .isl-sw{display:flex;gap:6px;margin:0 2px 4px}.isl-sw button{border:0;border-radius:12px;padding:3px 10px;font:inherit;font-size:11.5px;font-weight:600;background:rgba(255,255,255,.07);color:rgba(233,235,238,.8);cursor:pointer}.isl-sw button.on{background:#fff;color:#0d0f12}
 .isl-bar{flex:none;display:inline-block;width:44px;height:5px;border-radius:3px;background:rgba(255,255,255,.12);overflow:hidden;margin-left:auto}.isl-bar i{display:block;height:100%;border-radius:3px;background:#8fd3ff}.isl-bar.full i{background:#8fe3a8}
 .isl-pct{flex:none;font-size:11.5px;min-width:30px;text-align:right}.isl-late{color:#ffcf85 !important}
@@ -1870,6 +2020,8 @@ const VOYAGE_ICONS = {
   pin: '<path d="M5.5 21V3.5"/><path d="M5.5 4h12.5l-3.2 4 3.2 4H5.5"/>',
 };
 const ICONS = {
+  learn: '<path d="M2.5 9.2 12 4.8l9.5 4.4L12 13.6z"/><path d="M6.5 11.3v4.6c0 1.3 2.5 2.9 5.5 2.9s5.5-1.6 5.5-2.9v-4.6"/><path d="M21.5 9.2v5.3"/>',
+  calc: '<rect x="5" y="2.8" width="14" height="18.4" rx="2.2"/><path d="M8.3 6.5h7.4v3.2H8.3z"/><path d="M8.6 13h.01M12 13h.01M15.4 13h.01M8.6 16.6h.01M12 16.6h.01M15.4 16.6h.01"/>',
   diary: '<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="M7.5 14h2M11.5 14h2M15.5 14h1M7.5 17.5h2M11.5 17.5h2"/>',
   print: '<path d="M7 9V3.5h10V9"/><rect x="3.5" y="9" width="17" height="8" rx="2"/><path d="M7 14h10v6.5H7z"/>',
   stamp: '<path d="M10 3.5h4A1.5 1.5 0 0 1 15.5 5c0 2-1.5 3-1.5 5.5V12h3.5a2 2 0 0 1 2 2v2.5h-15V14a2 2 0 0 1 2-2H10v-1.5C10 8 8.5 7 8.5 5A1.5 1.5 0 0 1 10 3.5z"/><path d="M5 20.5h14"/>',
@@ -2536,6 +2688,7 @@ function seed() {
   demoUnsorted(db, T);
   db.events = demoEvents(T);
   db.wtasks = []; demoWeekly(db, T);
+  seedTraining(db, T);
   return db;
 }
 function loadDb() {
@@ -2552,6 +2705,7 @@ function loadDb() {
         if (!Object.values(d.pins || {}).some((p) => p && (p.myfiles || []).some((f) => /^mf-.*-u\d+$/.test(f.id)))) demoUnsorted(d);
         if (!(d.messages || []).some((m) => m.id === 'm-spot1')) demoSpotted(d);
         if (!Array.isArray(d.wtasks)) { d.wtasks = []; demoWeekly(d); } // demo stores saved before the task board
+        if (!Array.isArray(d.trlessons)) seedTraining(d, Date.now()); // and before Training
         if (!(d.depts || []).some((x) => x.features && 'outlook' in x.features)) (d.depts || []).forEach((x) => { if (x.id === 'finance' || x.id === 'admin') x.features = { ...(x.features || {}), outlook: true }; });
         if (!d.plans) { const f = (d.depts || []).find((x) => x.id === 'finance'); if (f) f.features = { ...(f.features || {}), planner: true }; demoPlanner(d); }
         if (!(d.depts || []).some((x) => x.features && 'quotes' in x.features)) {
@@ -2785,6 +2939,7 @@ function Rail() {
     ${myDepts.map((d) => item('dept:' + d.id, html`<i className="sq" style=${{ '--c': d.color }}></i>`, d.name))}
     ${item('teams', html`<${Icon} n="store"/>`, 'All departments')}
     ${item('calendar', html`<${Icon} n="diary"/>`, 'Calendar')}
+    ${trDepts(db, user).length > 0 && item('training', html`<${Icon} n="learn"/>`, 'Training')}
     ${tbDepts(db, user).length > 0 && item('taskboard', html`<${Icon} n="task"/>`, 'Task board')}
     ${canSeePlanner(db, user) && item('week', html`<${Icon} n="list"/>`, 'My week')}
     ${outlookOn(db, user) && item('mail', html`<${Icon} n="at"/>`, 'Outlook')}
@@ -2849,7 +3004,7 @@ function SideDock({ onClose, onNeeds }) {
   const unreadChats = myChats(db, user.id).filter((ch) => unreadIn(db, ch, user.id) > 0).length;
   const toApprove = db.posts.filter((p) => p.type === 'approval' && needsMe(p, user.id)).length;
   const main = [['chats', 'chat', 'Chats', unreadChats], ['needs', 'inbox', 'Needs you', c.mine.length], ['all', 'list', 'Everything'], ['sent', 'send', 'Sent'],
-    user.role !== 'staff' && ['team', 'team', 'Team'], filesOn(db, user) && ['files', 'archive', 'Files'], db.drives.some((d) => driveOn(db, d)) && ['drive', 'folder', 'Drive'], ['pins', 'pin', 'Pins'], ['calendar', 'diary', 'Calendar']].filter(Boolean);
+    user.role !== 'staff' && ['team', 'team', 'Team'], filesOn(db, user) && ['files', 'archive', 'Files'], db.drives.some((d) => driveOn(db, d)) && ['drive', 'folder', 'Drive'], ['pins', 'pin', 'Pins'], ['calendar', 'diary', 'Calendar'], trDepts(db, user).length > 0 && ['training', 'learn', 'Training']].filter(Boolean);
   const finance = [canSeeME(db, user) && ['monthend', 'calendar', 'Month end'], canSeeAP(db, user) && ['approvals', 'stamp', 'Approvals', toApprove]].filter(Boolean);
   const go = (id) => { onClose(); if (id === 'needs') onNeeds(); else jump('view:' + id); };
   const row = ([id, icon, label, n]) => html`<button key=${id} className="sdock-i" onClick=${() => go(id)} title=${id === 'needs' ? 'Show Needs you here' : 'Open ' + label + ' in the full app'}><${Icon} n=${icon} s=${18}/><span>${label}</span>${n > 0 && html`<b className=${id === 'chats' ? 'g' : ''}>${n}</b>`}</button>`;
@@ -4231,6 +4386,7 @@ function PostDetail({ id }) {
       ${p.closed && html`<div className="notice"><${Icon} n="archive" s=${16}/>Closed. No more updates are needed.</div>`}
       ${p.escalatedAt && html`<div className="notice esc"><${Icon} n="flag" s=${16}/><span>Escalated ${ago(p.escalatedAt)}${(p.escalatedTo || []).length ? ' to ' + p.escalatedTo.map((x) => firstName(userById(db, x))).join(', ') : ''}: nobody opened this ASAP item within 30 minutes.</span></div>`}
       ${p.type === 'approval' && p.approval && html`<${ApprovalFacts} p=${p}/>`}
+      ${p.training && html`<button className="btn primary" onClick=${openTraining}><${Icon} n="learn" s=${16}/>Open Training to take the test</button>`}
       ${p.sticky && p.type !== 'approval' && html`<div className="ap-sticky sm"><span>${p.sticky}</span><small>Side note from ${firstName(userById(db, p.author))}</small></div>`}
       ${p.body && html`<div className="d-text">${p.body}</div>`}
       <${TranslateLink} text=${[p.title, p.body].filter(Boolean).join('\n\n')}/>
@@ -5956,7 +6112,7 @@ const STAFF_DOMAIN = '@staff.floorboard.app';
 const pinPassword = (pin) => 'fb-' + pin + '-FB';
 const PIN_LEN = CLOUD ? 6 : 4;
 const CACHE_KEY = 'floorboard.cloud.cache.v1', STORE_CODE_KEY = 'floorboard.storecode.v1';
-function emptyDb() { return { v: 2, store: 'Your store', counter: 1000, depts: [], users: [], groups: [], shortcuts: [], drives: [], folders: [], files: [], tiles: [], pins: {}, status: {}, chats: [], messages: [], posts: [], deadlines: [], events: [], marks: {}, plans: {}, ptasks: [], pdone: {}, wtasks: [] }; }
+function emptyDb() { return { v: 2, store: 'Your store', counter: 1000, depts: [], users: [], groups: [], shortcuts: [], drives: [], folders: [], files: [], tiles: [], pins: {}, status: {}, chats: [], messages: [], posts: [], deadlines: [], events: [], marks: {}, plans: {}, ptasks: [], pdone: {}, wtasks: [], trlessons: [], trtests: [], trres: [] }; }
 
 // Same data, written with sorted keys, so a record that came back from the server compares equal to ours.
 function stable(v) {
@@ -5983,6 +6139,9 @@ function toRecs(db) {
   Object.entries(db.marks || {}).forEach(([k, v]) => put('marks', k, v));
   Object.entries(db.plans || {}).forEach(([who, v]) => put('plans', who, v));
   (db.ptasks || []).forEach((t) => put('ptasks', t.id, t));
+  (db.trlessons || []).forEach((l) => put('trlessons', l.id, l));
+  (db.trtests || []).forEach((t) => put('trtests', t.id, t));
+  (db.trres || []).forEach((r) => put('trres', r.id, r));
   Object.entries(db.pdone || {}).forEach(([k, v]) => put('pdone', k, v));
   (db.deadlines || []).forEach((x) => { const { done, ...rest } = x; put('deadlines', x.id, rest); Object.entries(done || {}).forEach(([k, v]) => put('dltick', x.id + '|' + k, { ...v, dl: x.id, key: k })); });
   (db.wtasks || []).forEach((t) => { const { progress, ...rest } = t; put('wtasks', t.id, rest); Object.entries(progress || {}).forEach(([who, v]) => put('wprog', t.id + '|' + who, { ...v, task: t.id, user: who })); });
@@ -6012,6 +6171,7 @@ function fromRecs(list) {
   (by.marks || []).forEach((r) => { db.marks[r.id] = r.data; });
   (by.plans || []).forEach((r) => { db.plans[r.id] = r.data; });
   db.ptasks = of('ptasks');
+  db.trlessons = of('trlessons'); db.trtests = of('trtests'); db.trres = of('trres');
   (by.pdone || []).forEach((r) => { db.pdone[r.id] = r.data; });
   const dls = {}; db.deadlines = of('deadlines').map((x) => (dls[x.id] = { ...x, done: {} }));
   (by.dltick || []).forEach(({ data: x }) => { const t = dls[x.dl]; if (t) { const { dl, key, ...v } = x; t.done[key] = v; } });
@@ -10844,6 +11004,607 @@ function WeekView() {
     ${staples && html`<${StaplesModal} key=${who} who=${who} onClose=${() => setStaples(false)}/>`}
   <//>`;
 }
+/* ---------------- Training: lessons, practice labs and tests, department by department ---------------- */
+// Each department's training (Finance first): lessons (a video walkthrough or written steps), quizzes, and hands-on
+// practice labs: a practice desktop where the person does the job, and a checklist ticks off each step as soon as it's
+// right (like an online course's labs). A manager or admin builds tests from the quizzes and labs (a pass mark, a time
+// limit, who takes it and by when): a test lands on each person's Needs you and, on the Windows app, runs full screen and
+// locked (copy and paste are off, and each time they try to leave is noted). Results go to whoever manages the department.
+// The practice Books app teaches the steps of the store's accounting system (Xero) in Floorboard's own look.
+const TR_KINDS = { video: ['Video walkthrough', 'play'], steps: ['Written steps', 'list'], quiz: ['Quiz', 'vote'], lab: ['Practice lab', 'learn'] };
+const trDepts = (db, u) => db.depts.filter((d) => u.role === 'admin' || u.depts.includes(d.id) || u.manages.includes(d.id));
+const trLessons = (db, dept) => (db.trlessons || []).filter((l) => l.dept === dept).sort((a, b) => (a.order || 0) - (b.order || 0) || (a.at || 0) - (b.at || 0));
+const trTests = (db, dept) => (db.trtests || []).filter((t) => t.dept === dept).sort((a, b) => (b.at || 0) - (a.at || 0));
+const trRes = (db, item, uid0) => (db.trres || []).find((r) => r.id === item + '|' + uid0);
+const openTraining = () => { const d = window.floorboardDesktop; if (d && d.openFull) d.openFull('view:training'); else location.hash = 'go-view:training'; };
+// keep (or improve) a person's result for a lesson or a test
+function saveTr(update, uid0, item, data) {
+  update((d) => {
+    d.trres = d.trres || [];
+    const id = item + '|' + uid0, i = d.trres.findIndex((r) => r.id === id), old = i >= 0 ? d.trres[i] : null;
+    const rec = { ...(old || {}), ...data, id, item, user: uid0, at: Date.now(), tries: ((old && old.tries) || 0) + 1 };
+    if (old && old.kind === 'lesson' && old.max && data.max) rec.best = Math.max(old.best || old.score || 0, data.score || 0);
+    if (i >= 0) d.trres[i] = rec; else d.trres.push(rec);
+  });
+}
+const pctOf = (score, max) => (max ? Math.round((score / max) * 100) : 0);
+
+/* the practice labs: what's on the practice desktop at the start, the brief, and the checks */
+const LAB_ACCOUNTS = [['200', 'Sales'], ['300', 'Purchases'], ['404', 'Bank fees'], ['429', 'General expenses'], ['445', 'Electricity and water'], ['461', 'Printing and stationery'], ['469', 'Rent'], ['489', 'Telephone and internet'], ['610', 'Accounts receivable'], ['800', 'Accounts payable'], ['820', 'VAT']];
+const LAB_TAX = [['15', 'Standard rate (15%)', 0.15], ['0', 'Zero rated (0%)', 0], ['none', 'No VAT (exempt)', 0]];
+const LAB_APPS = { mail: { name: 'Mail', icon: 'inbox' }, books: { name: 'Xero practice', icon: 'calc' } };
+const r2 = (n) => Math.round(n * 100) / 100;
+const labDay = (k) => { const m = /^(\d{4})-(\d\d)-(\d\d)$/.exec(k || ''); return m ? new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString('en-ZA', { day: 'numeric', month: 'short', year: 'numeric' }) : ''; };
+const labR = (n) => 'R ' + (Number(n) || 0).toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+// a bill's totals as Books works them out: VAT added on (tax exclusive), inside the amounts (inclusive), or none
+function billTotals(b) {
+  let sub = 0, vat = 0;
+  (b.lines || []).forEach((l) => {
+    const amt = r2((Number(l.qty) || 0) * (Number(l.price) || 0)), rate = (LAB_TAX.find((t) => t[0] === l.tax) || [0, 0, 0])[2];
+    if (b.amounts === 'incl') { const v = r2(amt - amt / (1 + rate)); vat += v; sub += amt - v; } else if (b.amounts === 'none') sub += amt; else { sub += amt; vat += r2(amt * rate); }
+  });
+  return { sub: r2(sub), vat: r2(vat), total: r2(sub + vat) };
+}
+const LAB_INVOICE = { supplier: 'SunPack Produce', address: '14 Market Road, Epping', vatNo: '4120 345 678', no: 'INV-20931', date: '2026-11-03', due: '2026-12-03', lines: [['Tomatoes, 10 kg box', 30, 189], ['Peppers, mixed, 5 kg box', 20, 286.3]] };
+const labBookBal = (s) => r2(s.bank.opening + s.bank.lines.reduce((a, l) => { const x = s.bank.done[l.id]; if (!x) return a; if (x.match) { const t = s.bank.txns.find((y) => y.id === x.match); return a + (t ? t.amt : 0); } return a + l.amt; }, 0));
+const labBill = (s) => s.bills.find((x) => x.contact === 'SunPack Produce') || s.bills.find((x) => /inv-?20931/i.test(x.ref || ''));
+const labLine = (b, q, p) => (b.lines || []).some((l) => Math.abs((Number(l.qty) || 0) - q) < 0.001 && Math.abs((Number(l.price) || 0) - p) < 0.005);
+const labUsed = (b) => (b.lines || []).filter((l) => Number(l.qty) || Number(l.price));
+const LABS = {
+  'bill-capture': {
+    title: 'Capture a supplier bill', minutes: 15, apps: ['mail', 'books'],
+    flow: ['Supplier emails a tax invoice', 'Mail: read the invoice', 'Xero practice: new bill', 'Lines, account and VAT', 'Approve it for payment'],
+    resources: [['Supplier', 'SunPack Produce'], ['Supplier’s email', 'accounts@sunpack.example'], ['The invoice', 'In Mail, attached to SunPack’s email']],
+    brief: 'SunPack Produce has emailed a tax invoice. Capture it in the Xero practice as a bill, exactly as on the invoice: who it’s from, the invoice number, the dates, every line, the account and the VAT. Then approve it so it can be paid.',
+    start: () => ({
+      mail: [{ id: 'm1', from: 'SunPack Produce', email: 'accounts@sunpack.example', subject: 'Tax invoice INV-20931', when: 'Tue 3 Nov, 09:14', read: false, doc: LAB_INVOICE,
+        text: 'Good morning,\n\nPlease find our tax invoice INV-20931 for the produce delivered on 3 November. Payment is due within 30 days.\n\nKind regards,\nSunPack Produce accounts' }],
+      contacts: ['Coldline Services', 'Riverside Properties', 'Sasko Flour', 'SunPack Produce'], bills: [], bank: null,
+    }),
+    checks: [
+      ['read', 'Open SunPack’s email and look at the invoice', (s) => s.mail.some((m) => m.id === 'm1' && m.read)],
+      ['contact', 'Start a new bill from SunPack Produce', (s) => !!labBill(s) && labBill(s).contact === 'SunPack Produce'],
+      ['ref', 'Reference: the invoice number', (s) => !!labBill(s) && String(labBill(s).ref || '').trim().toUpperCase() === 'INV-20931'],
+      ['dates', 'The invoice date and due date, as on the invoice', (s) => !!labBill(s) && labBill(s).date === '2026-11-03' && labBill(s).due === '2026-12-03'],
+      ['lines', 'Every line, with its quantity and unit price', (s) => { const b = labBill(s); return !!b && labUsed(b).length === 2 && labLine(b, 30, 189) && labLine(b, 20, 286.3); }],
+      ['account', 'The lines coded to the right account', (s) => { const b = labBill(s); return !!b && labUsed(b).length > 0 && labUsed(b).every((l) => l.account === '300'); }],
+      ['vat', 'The VAT done the way the invoice shows it, so the totals match', (s) => { const b = labBill(s); if (!b) return false; const t = billTotals(b); return Math.abs(t.total - 13105.4) < 0.01 && Math.abs(t.vat - 1709.4) < 0.01; }],
+      ['approve', 'Approve the bill', (s) => !!labBill(s) && labBill(s).status === 'approved'],
+    ],
+  },
+  'bank-recon': {
+    title: 'Reconcile the bank account', minutes: 20, apps: ['books'],
+    flow: ['Statement lines come in', 'Xero practice: Bank account', 'Match what’s already there', 'Create what isn’t', 'Balance = statement'],
+    resources: [['Bank account', 'Business account (practice)'], ['Opening balance', 'R 52,300.00'], ['Statement lines', '5, from 3 to 12 November 2026']],
+    brief: 'Five lines have come in on the bank statement. In the Xero practice, open Bank account and reconcile each one: match it to the payment or deposit that’s already there, or create it when there isn’t one (pick the right account and VAT). Two SunPack payments look alike, so check the amounts. When you’re done, its balance should be the same as the statement’s.',
+    start: () => ({
+      mail: [], contacts: ['Card sales', 'Coldline Services', 'Petty cash', 'Riverside Properties', 'Sasko Flour', 'SunPack Produce', 'The bank'], bills: [],
+      bank: {
+        opening: 52300, done: {},
+        lines: [{ id: 's1', date: '2026-11-03', text: 'COLDLINE SERVICES EFT', amt: -6200 }, { id: 's2', date: '2026-11-05', text: 'CARD SALES SETTLEMENT', amt: 18450.75 }, { id: 's3', date: '2026-11-07', text: 'MONTHLY SERVICE FEES', amt: -187.5 },
+          { id: 's4', date: '2026-11-10', text: 'SUNPACK PRODUCE EFT', amt: -9870 }, { id: 's5', date: '2026-11-12', text: 'RIVERSIDE PROPERTIES RENT', amt: -24000 }],
+        txns: [{ id: 't1', date: '2026-11-03', who: 'Coldline Services', text: 'Bill payment Q-1182', amt: -6200 }, { id: 't2', date: '2026-11-04', who: 'Card sales', text: 'Card takings, 4 Nov', amt: 18450.75 },
+          { id: 't3', date: '2026-11-10', who: 'SunPack Produce', text: 'Bill payment INV-20877', amt: -9870 }, { id: 't4', date: '2026-11-11', who: 'SunPack Produce', text: 'Bill payment INV-20902', amt: -9780 },
+          { id: 't5', date: '2026-11-12', who: 'Petty cash', text: 'Petty cash top-up', amt: -1500 }],
+      },
+    }),
+    checks: [
+      ['coldline', 'Match the Coldline payment', (s) => (s.bank.done.s1 || {}).match === 't1'],
+      ['card', 'Match the card sales deposit', (s) => (s.bank.done.s2 || {}).match === 't2'],
+      ['sunpack', 'Match the SunPack payment to the right one (two look alike)', (s) => (s.bank.done.s4 || {}).match === 't3'],
+      ['fees', 'Create the service fees, with the right account and VAT', (s) => { const c = (s.bank.done.s3 || {}).create; return !!c && c.account === '404' && c.tax === 'none'; }],
+      ['rent', 'Create the rent, with the right account and VAT', (s) => { const c = (s.bank.done.s5 || {}).create; return !!c && c.account === '469' && c.tax === '15'; }],
+      ['all', 'All five lines reconciled, and the balance the same as the statement', (s) => ['s1', 's2', 's3', 's4', 's5'].every((k) => s.bank.done[k]) && Math.abs(labBookBal(s) - r2(s.bank.opening + s.bank.lines.reduce((a, l) => a + l.amt, 0))) < 0.01],
+    ],
+  },
+};
+
+/* the practice desktop: the brief and the checklist on the left, the practice apps on the right */
+function LabDesk({ labKey, title, deadline, onFinish, onLeave, finishLabel }) {
+  const L = LABS[labKey];
+  const [s, setS] = useState(() => (L ? L.start() : null)), [now, setNow] = useState(Date.now()), done = useRef(false);
+  const set = (fn) => setS((x) => { const y = JSON.parse(JSON.stringify(x)); fn(y); return y; });
+  useEffect(() => { const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, []);
+  if (!L) return html`<div className="lab-desk"><p className="lab-empty">This practice lab isn’t in this version of Floorboard.</p></div>`;
+  const res = L.checks.map(([id, label, fn]) => { let ok = false; try { ok = !!fn(s); } catch (e) { ok = false; } return { id, label, ok }; });
+  const passed = res.filter((r) => r.ok).length;
+  const finish = () => { if (done.current) return; done.current = true; onFinish({ score: passed, max: res.length, checks: Object.fromEntries(res.map((r) => [r.id, r.ok])) }); };
+  useEffect(() => { if (deadline && now >= deadline) finish(); }, [deadline && now >= deadline]);
+  return html`<div className="lab-desk">
+    <aside className="lab-brief">
+      <div className="lab-brief-h"><b>${title || L.title}</b>${deadline && html`<span className="lab-time">${fmtDur(Math.max(0, deadline - now))} left</span>`}</div>
+      <p>${L.brief}</p>
+      <ol className="lab-checks">${res.map((r) => html`<li key=${r.id} className=${r.ok ? 'ok' : ''}><span className="lab-tick">${r.ok ? '✓' : ''}</span><span>${r.label}</span></li>`)}</ol>
+      <div className="lab-score"><span className="lab-bar"><i style=${{ width: pctOf(passed, res.length) + '%' }}></i></span>${passed} of ${res.length} done</div>
+      <div className="lab-btns"><button className="btn primary" onClick=${finish}>${finishLabel || 'I’m done'}</button>${onLeave && html`<button className="btn ghost" onClick=${onLeave}>Leave</button>`}</div>
+    </aside>
+    <${LabScreen} L=${L} s=${s} set=${set} now=${now}/>
+  </div>`;
+}
+// the practice desktop: one app window at a time, and the taskbar to switch
+function LabScreen({ L, s, set, now }) {
+  const [app, setApp] = useState(L.apps[0]);
+  return html`<section className="lab-screen">
+      <div className="lab-win"><div className="lab-win-h"><${Icon} n=${LAB_APPS[app].icon} s=${14}/><span>${LAB_APPS[app].name}</span></div>
+        <div className="lab-win-b">${app === 'mail' ? html`<${LabMail} s=${s} set=${set}/>` : html`<${LabBooks} s=${s} set=${set}/>`}</div></div>
+      <nav className="lab-taskbar">${L.apps.map((a) => html`<button key=${a} className=${app === a ? 'on' : ''} onClick=${() => setApp(a)}><${Icon} n=${LAB_APPS[a].icon} s=${16}/>${LAB_APPS[a].name}${a === 'mail' && s.mail.some((m) => !m.read) && html`<i className="lab-dot"></i>`}</button>`)}
+        <span className="lab-clock">${new Date(now).toLocaleTimeString('en-ZA', { hour: '2-digit', minute: '2-digit' })}</span></nav>
+    </section>`;
+}
+function LabMail({ s, set }) {
+  const [open, setOpen] = useState(null), m = s.mail.find((x) => x.id === open);
+  if (!s.mail.length) return html`<p className="lab-empty">No email.</p>`;
+  return html`<div className="lab-mail"><div className="lab-mail-list">${s.mail.map((x) => html`<button key=${x.id} className=${'lab-mail-row' + (x.id === open ? ' on' : '') + (x.read ? '' : ' new')} onClick=${() => { setOpen(x.id); set((y) => { y.mail.find((z) => z.id === x.id).read = true; }); }}>
+      <b>${x.from}</b><span>${x.subject}</span><small>${x.when}</small></button>`)}</div>
+    <div className="lab-mail-read">${m ? html`<h3>${m.subject}</h3><small className="lab-muted">From ${m.from} (${m.email}) · ${m.when}</small><p className="lab-pre">${m.text}</p>${m.doc && html`<div className="lab-attach">📎 ${m.doc.no}.pdf</div><${LabInvoice} d=${m.doc}/>`}`
+      : html`<p className="lab-empty">Choose an email to read it.</p>`}</div></div>`;
+}
+function LabInvoice({ d }) {
+  const lines = d.lines.map(([desc, q, p]) => ({ desc, q, p, amt: r2(q * p) })), sub = r2(lines.reduce((a, l) => a + l.amt, 0)), vat = r2(sub * 0.15);
+  return html`<div className="lab-doc"><div className="lab-doc-h"><div><b className="lab-doc-co">${d.supplier}</b><small>${d.address}<br/>VAT no. ${d.vatNo}</small></div><b className="lab-doc-t">TAX INVOICE</b></div>
+    <div className="lab-doc-meta"><span>Invoice no. <b>${d.no}</b></span><span>Date <b>${labDay(d.date)}</b></span><span>Due <b>${labDay(d.due)}</b></span></div>
+    <table className="lab-table"><thead><tr><th>Description</th><th className="n">Qty</th><th className="n">Unit price</th><th className="n">Amount</th></tr></thead>
+      <tbody>${lines.map((l, i) => html`<tr key=${i}><td>${l.desc}</td><td className="n">${l.q}</td><td className="n">${labR(l.p)}</td><td className="n">${labR(l.amt)}</td></tr>`)}</tbody></table>
+    <div className="lab-doc-tot"><span>Subtotal (excl. VAT)</span><b>${labR(sub)}</b><span>VAT 15%</span><b>${labR(vat)}</b><span>Total due</span><b>${labR(sub + vat)}</b></div></div>`;
+}
+/* Books: bills to pay, the bank account, contacts and the chart of accounts */
+function LabBooks({ s, set }) {
+  const [tab, setTab] = useState(s.bank ? 'bank' : 'bills'), [edit, setEdit] = useState(null);
+  const tabs = [['bills', 'Bills to pay'], s.bank && ['bank', 'Bank account'], ['contacts', 'Contacts'], ['accounts', 'Chart of accounts']].filter(Boolean);
+  const newBill = () => { const id = 'b' + Date.now().toString(36); set((y) => { y.bills.push({ id, contact: '', date: '', due: '', ref: '', amounts: 'excl', status: 'draft', lines: [{ desc: '', qty: '', price: '', account: '', tax: '15' }] }); }); setEdit(id); setTab('bills'); };
+  return html`<div className="lab-books"><nav className="lab-nav"><b className="lab-books-t">Xero practice</b>${tabs.map(([k, l]) => html`<button key=${k} className=${tab === k ? 'on' : ''} onClick=${() => { setTab(k); setEdit(null); }}>${l}</button>`)}
+      <button className="lab-btn sm" onClick=${newBill}>+ New bill</button></nav>
+    <div className="lab-pane">${tab === 'bills' ? (edit && s.bills.some((b) => b.id === edit) ? html`<${LabBill} s=${s} set=${set} id=${edit} onClose=${() => setEdit(null)}/>` : html`<${LabBills} s=${s} onOpen=${setEdit} onNew=${newBill}/>`)
+      : tab === 'bank' ? html`<${LabBank} s=${s} set=${set}/>`
+      : tab === 'contacts' ? html`<h3>Contacts</h3><table className="lab-table"><tbody>${s.contacts.map((c) => html`<tr key=${c}><td>${c}</td></tr>`)}</tbody></table>`
+      : html`<h3>Chart of accounts</h3><table className="lab-table"><thead><tr><th>Code</th><th>Name</th></tr></thead><tbody>${LAB_ACCOUNTS.map(([c, n]) => html`<tr key=${c}><td>${c}</td><td>${n}</td></tr>`)}</tbody></table>`}</div></div>`;
+}
+function LabBills({ s, onOpen, onNew }) {
+  return html`<div><div className="lab-row-h"><h3>Bills to pay</h3><button className="lab-btn" onClick=${onNew}>+ New bill</button></div>
+    ${s.bills.length ? html`<table className="lab-table click"><thead><tr><th>From</th><th>Reference</th><th>Date</th><th>Due</th><th className="n">Total</th><th>Status</th></tr></thead>
+      <tbody>${s.bills.map((b) => html`<tr key=${b.id} onClick=${() => onOpen(b.id)}><td>${b.contact || '(no contact)'}</td><td>${b.ref}</td><td>${labDay(b.date)}</td><td>${labDay(b.due)}</td><td className="n">${labR(billTotals(b).total)}</td><td>${b.status === 'approved' ? 'Awaiting payment' : 'Draft'}</td></tr>`)}</tbody></table>`
+      : html`<p className="lab-empty">No bills yet. Click New bill to capture one.</p>`}</div>`;
+}
+function LabBill({ s, set, id, onClose }) {
+  const b = s.bills.find((x) => x.id === id), t = billTotals(b), ro = b.status === 'approved';
+  const upd = (fn) => set((y) => fn(y.bills.find((x) => x.id === id)));
+  const line = (i, k, v) => upd((x) => { x.lines[i][k] = v; });
+  return html`<div className="lab-bill"><div className="lab-row-h"><h3>${ro ? 'Bill (approved)' : 'New bill'}</h3><button className="lab-btn ghost" onClick=${onClose}>Back to bills</button></div>
+    <div className="lab-grid">
+      <label>From<input className="lab-in" list="lab-contacts" value=${b.contact} disabled=${ro} onChange=${(e) => upd((x) => { x.contact = e.target.value; })} placeholder="Supplier"/></label>
+      <label>Date<input className="lab-in" type="date" value=${b.date} disabled=${ro} onChange=${(e) => upd((x) => { x.date = e.target.value; })}/></label>
+      <label>Due date<input className="lab-in" type="date" value=${b.due} disabled=${ro} onChange=${(e) => upd((x) => { x.due = e.target.value; })}/></label>
+      <label>Reference<input className="lab-in" value=${b.ref} disabled=${ro} onChange=${(e) => upd((x) => { x.ref = e.target.value; })} placeholder="Their invoice number"/></label>
+      <label>Amounts are<select className="lab-in" value=${b.amounts} disabled=${ro} onChange=${(e) => upd((x) => { x.amounts = e.target.value; })}><option value="excl">Tax exclusive</option><option value="incl">Tax inclusive</option><option value="none">No tax</option></select></label>
+    </div>
+    <datalist id="lab-contacts">${s.contacts.map((c) => html`<option key=${c} value=${c}/>`)}</datalist>
+    <table className="lab-table lab-lines"><thead><tr><th>Description</th><th className="n">Qty</th><th className="n">Unit price</th><th>Account</th><th>VAT</th><th className="n">Amount</th><th></th></tr></thead>
+      <tbody>${b.lines.map((l, i) => html`<tr key=${i}>
+        <td><input className="lab-in" value=${l.desc} disabled=${ro} onChange=${(e) => line(i, 'desc', e.target.value)}/></td>
+        <td><input className="lab-in n" inputMode="decimal" value=${l.qty} disabled=${ro} onChange=${(e) => line(i, 'qty', e.target.value)}/></td>
+        <td><input className="lab-in n" inputMode="decimal" value=${l.price} disabled=${ro} onChange=${(e) => line(i, 'price', e.target.value)}/></td>
+        <td><select className="lab-in" value=${l.account} disabled=${ro} onChange=${(e) => line(i, 'account', e.target.value)}><option value="">Choose…</option>${LAB_ACCOUNTS.map(([c, n]) => html`<option key=${c} value=${c}>${c} ${n}</option>`)}</select></td>
+        <td><select className="lab-in" value=${l.tax} disabled=${ro || b.amounts === 'none'} onChange=${(e) => line(i, 'tax', e.target.value)}>${LAB_TAX.map(([k, n]) => html`<option key=${k} value=${k}>${n}</option>`)}</select></td>
+        <td className="n">${labR(r2((Number(l.qty) || 0) * (Number(l.price) || 0)))}</td>
+        <td>${!ro && b.lines.length > 1 && html`<button className="lab-x" onClick=${() => upd((x) => { x.lines.splice(i, 1); })} aria-label="Remove this line">×</button>`}</td></tr>`)}</tbody></table>
+    ${!ro && html`<button className="lab-btn ghost sm" onClick=${() => upd((x) => { x.lines.push({ desc: '', qty: '', price: '', account: '', tax: '15' }); })}>+ Add a line</button>`}
+    <div className="lab-tot"><span>Subtotal</span><b>${labR(t.sub)}</b><span>VAT</span><b>${labR(t.vat)}</b><span>Total</span><b>${labR(t.total)}</b></div>
+    ${!ro && html`<div className="lab-row-h end"><button className="lab-btn ghost" onClick=${onClose}>Save as draft</button><button className="lab-btn" onClick=${() => { upd((x) => { x.status = 'approved'; }); onClose(); }}>Approve</button></div>`}
+  </div>`;
+}
+function LabBank({ s, set }) {
+  const b = s.bank, [sel, setSel] = useState(null), [mode, setMode] = useState('match'), [pick, setPick] = useState(''), [mk, setMk] = useState({ who: '', account: '', tax: '15', text: '' });
+  const stmt = r2(b.opening + b.lines.reduce((a, l) => a + l.amt, 0)), books = labBookBal(s), used = Object.values(b.done).map((x) => x.match).filter(Boolean);
+  const line = b.lines.find((l) => l.id === sel);
+  const ok = () => {
+    if (mode === 'match') { if (!pick) return; set((y) => { y.bank.done[sel] = { match: pick }; }); }
+    else { if (!mk.account) return; set((y) => { y.bank.done[sel] = { create: { ...mk } }; }); }
+    setSel(null); setPick(''); setMk({ who: '', account: '', tax: '15', text: '' });
+  };
+  const said = (x) => { if (x.match) { const t = b.txns.find((y) => y.id === x.match); return t ? 'Matched: ' + t.who + ', ' + t.text + ' (' + labR(t.amt) + ')' : 'Matched'; } const a = LAB_ACCOUNTS.find((c) => c[0] === x.create.account); return 'Created: ' + (x.create.who || 'no contact') + ' · ' + (a ? a[0] + ' ' + a[1] : '') + ' · ' + (LAB_TAX.find((t) => t[0] === x.create.tax) || [0, ''])[1]; };
+  return html`<div className="lab-bank"><h3>Bank account: reconcile</h3>
+    <div className="lab-bals"><span>Statement balance <b>${labR(stmt)}</b></span><span>Balance in Xero practice <b className=${Math.abs(stmt - books) < 0.01 ? 'good' : ''}>${labR(books)}</b></span></div>
+    <table className="lab-table"><thead><tr><th>Date</th><th>Statement line</th><th className="n">Amount</th><th>Reconciled</th></tr></thead>
+      <tbody>${b.lines.map((l) => { const x = b.done[l.id]; return html`<tr key=${l.id} className=${sel === l.id ? 'on' : ''}><td>${labDay(l.date)}</td><td>${l.text}</td><td className="n">${labR(l.amt)}</td>
+        <td>${x ? html`<span className="lab-done">✓ ${said(x)}</span> <button className="lab-link" onClick=${() => set((y) => { delete y.bank.done[l.id]; })}>Undo</button>` : html`<button className="lab-btn sm" onClick=${() => { setSel(l.id); setMode('match'); setPick(''); }}>Reconcile</button>`}</td></tr>`; })}</tbody></table>
+    ${line && html`<div className="lab-recon"><b>${labDay(line.date)} · ${line.text} · ${labR(line.amt)}</b>
+      <div className="lab-seg"><button className=${mode === 'match' ? 'on' : ''} onClick=${() => setMode('match')}>Match</button><button className=${mode === 'create' ? 'on' : ''} onClick=${() => setMode('create')}>Create</button></div>
+      ${mode === 'match' ? html`<div className="lab-cands">${b.txns.filter((t) => Math.sign(t.amt) === Math.sign(line.amt) && !used.includes(t.id)).map((t) => html`<label key=${t.id} className="lab-cand"><input type="radio" name="lab-pick" checked=${pick === t.id} onChange=${() => setPick(t.id)}/><span>${labDay(t.date)}</span><span>${t.who}</span><span>${t.text}</span><b>${labR(t.amt)}</b></label>`)}
+          ${!b.txns.some((t) => Math.sign(t.amt) === Math.sign(line.amt) && !used.includes(t.id)) && html`<p className="lab-empty">Nothing there to match. Use Create.</p>`}</div>`
+        : html`<div className="lab-grid">
+          <label>Who<input className="lab-in" list="lab-contacts2" value=${mk.who} onChange=${(e) => setMk({ ...mk, who: e.target.value })}/></label>
+          <label>Account<select className="lab-in" value=${mk.account} onChange=${(e) => setMk({ ...mk, account: e.target.value })}><option value="">Choose…</option>${LAB_ACCOUNTS.map(([c, n]) => html`<option key=${c} value=${c}>${c} ${n}</option>`)}</select></label>
+          <label>VAT<select className="lab-in" value=${mk.tax} onChange=${(e) => setMk({ ...mk, tax: e.target.value })}>${LAB_TAX.map(([k, n]) => html`<option key=${k} value=${k}>${n}</option>`)}</select></label>
+          <label>Description<input className="lab-in" value=${mk.text} onChange=${(e) => setMk({ ...mk, text: e.target.value })}/></label></div>
+          <datalist id="lab-contacts2">${s.contacts.map((c) => html`<option key=${c} value=${c}/>`)}</datalist>`}
+      <div className="lab-row-h end"><button className="lab-btn ghost" onClick=${() => setSel(null)}>Cancel</button><button className="lab-btn" onClick=${ok} disabled=${mode === 'match' ? !pick : !mk.account}>OK</button></div></div>`}
+  </div>`;
+}
+
+/* a quiz: multiple choice; marked when sent (the answers shown only outside a test) */
+function QuizRun({ quiz, reveal, deadline, onFinish, initial, onPick }) {
+  const [ans, setAns] = useState(() => ({ ...(initial || {}) })), [done, setDone] = useState(null), [now, setNow] = useState(Date.now()), sent = useRef(false);
+  useEffect(() => { if (!deadline) return undefined; const t = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(t); }, [deadline]);
+  const send = () => { if (sent.current) return; sent.current = true; const score = quiz.filter((x, i) => ans[i] === x.answer).length; setDone(score); onFinish({ score, max: quiz.length, answers: { ...ans } }); };
+  useEffect(() => { if (deadline && now >= deadline) send(); }, [deadline && now >= deadline]);
+  return html`<div className="tr-quiz">${quiz.map((x, i) => html`<div key=${i} className="tr-q"><b>${i + 1}. ${x.q}</b>
+      ${x.options.map((o, j) => html`<label key=${j} className=${'tr-opt' + (done != null && reveal ? (j === x.answer ? ' right' : ans[i] === j ? ' wrong' : '') : '')}><input type="radio" name=${'q' + i} checked=${ans[i] === j} disabled=${done != null} onChange=${() => { const n = { ...ans, [i]: j }; setAns(n); if (onPick) onPick(n); }}/>${o}</label>`)}</div>`)}
+    ${done == null ? html`<button className="btn primary" onClick=${send} disabled=${Object.keys(ans).length < quiz.length && !deadline}>${Object.keys(ans).length < quiz.length ? 'Answer every question' : 'Send my answers'}</button>`
+      : reveal && html`<p className="tr-mark"><b>${done} of ${quiz.length}</b> right${done === quiz.length ? '. Well done!' : '. The right answers are in green.'}</p>`}</div>`;
+}
+
+/* a lesson: watch or read it, take its quiz, or do its practice lab */
+function LessonView({ lesson, onClose }) {
+  const { user, update, db, toast } = useApp(), url = useAttUrlMaybe(lesson.video || null), [lab, setLab] = useState(false);
+  const mine = trRes(db, lesson.id, user.id);
+  const done = (extra) => saveTr(update, user.id, lesson.id, { kind: 'lesson', done: true, ...(extra || {}) });
+  const watched = (e) => { const v = e.target; if (!mine && v.duration && v.currentTime / v.duration > 0.9) done(); };
+  if (lab) return ReactDOM.createPortal(html`<div className="tr-run"><${LabDesk} labKey=${lesson.lab} title=${lesson.title} finishLabel="I’m done: mark it" onLeave=${() => setLab(false)}
+    onFinish=${(r) => { done({ score: r.score, max: r.max, checks: r.checks }); setLab(false); toast(r.score + ' of ' + r.max + ' steps right' + (r.score === r.max ? '. Well done!' : '')); }}/></div>`, document.body);
+  return html`<${Modal} title=${lesson.title} onClose=${onClose} wide footer=${html`${mine && mine.done ? html`<span className="muted sm">✓ Done${mine.max ? ' · ' + mine.score + ' of ' + mine.max : ''}</span>` : (lesson.kind === 'steps' || (lesson.kind === 'video' && !url)) && html`<button className="btn" onClick=${() => { done(); toast('Marked as done'); }}>Mark as done</button>`}<button className="btn primary" onClick=${onClose}>Close</button>`}>
+    ${lesson.kind === 'video' && (url ? html`<video className="tr-video" src=${url} controls onTimeUpdate=${watched}></video>` : lesson.link ? html`<p><a className="btn" href=${lesson.link} target="_blank" rel="noopener">Watch the video</a></p>` : html`<p className="muted">The video is still uploading, or wasn’t added.</p>`)}
+    ${lesson.text && html`<div className="tr-text">${lesson.text}</div>`}
+    ${lesson.kind === 'quiz' && html`<${QuizRun} quiz=${lesson.quiz || []} reveal=${true} onFinish=${(r) => done({ score: r.score, max: r.max })}/>`}
+    ${lesson.kind === 'lab' && html`<div className="tr-labcard"><p>${(LABS[lesson.lab] || {}).brief || ''}</p><button className="btn primary" onClick=${() => setLab(true)}>Start the practice lab</button><small className="muted">It opens a practice desktop. A checklist ticks off each step as you get it right. Nothing real is changed.</small></div>`}
+  <//>`;
+}
+
+/* a test, run like a certification exam lab: six short steps before it starts (your details, the rules, a video walkthrough…), then the parts
+   in any order (or in order), each practice part in the Xero practice with Check as you go, the clock and End test at the top, and a result
+   that says how you did on each part. Full screen and locked on the Windows app. */
+const TR_RULES = [
+  'It’s your own work. No help from anyone else, and no notes, phone or other programs.',
+  'The test fills the screen until you finish. Each time you leave it, that’s noted in your result.',
+  'Copy and paste work inside the test only. Nothing from outside it can be pasted in.',
+  'It can’t be paused. When the time runs out, or you end it, what you’ve done is handed in and marked.',
+  'The practice desktop isn’t real: no bill is paid and no bank account is touched.',
+];
+const trLetter = (i) => String.fromCharCode(65 + i);
+const trClock = (ms) => { const s = Math.max(0, Math.floor(ms / 1000)); return [Math.floor(s / 3600), Math.floor(s / 60) % 60, s % 60].map((n) => String(n).padStart(2, '0')).join(':'); };
+const trWhen = (t) => new Date(t).toLocaleString('en-ZA', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+// what was selected, in a box or on the page (a date or number box has no selection to read)
+const trSelText = (e) => { const t = e.target; try { if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA') && t.selectionStart != null) return String(t.value || '').slice(t.selectionStart, t.selectionEnd); } catch (x) { /* no selection */ } return String(window.getSelection() || ''); };
+const trDesc = (test, items) => test.desc || ('This test checks you can do the work on your own. It has ' + items.length + (items.length === 1 ? ' part: ' : ' parts: ') + items.map((it) => it.title).join(', ') + '. The pass mark is ' + (test.pass || 0) + '%.');
+const trFlow = (it) => (it.kind === 'lab' ? ((LABS[it.lab] || {}).flow || [it.title]) : ['Read each question', 'Choose one answer', 'Send your answers']);
+function TestRun({ test, onClose }) {
+  const { db, user, update } = useApp(), desk = window.floorboardDesktop;
+  const items = (test.items || []).map((id) => (db.trlessons || []).find((l) => l.id === id)).filter((l) => l && (l.kind === 'quiz' || l.kind === 'lab'));
+  const video = test.video ? (db.trlessons || []).find((l) => l.id === test.video && l.kind === 'video') : null, vurl = useAttUrlMaybe((video && video.video) || null);
+  const dept = (db.depts || []).find((d) => d.id === test.dept), canCheck = test.check !== false;
+  const before = trLessons(db, test.dept).filter((l) => !(test.items || []).includes(l.id));
+  const prev = trRes(db, test.id, user.id);
+  const waitUntil = prev && prev.kind === 'test' && !prev.pass && test.wait > 0 && !isManagerOf(user, test.dept) ? (prev.ended || prev.at || 0) + test.wait * 86400000 : 0;
+  const [phase, setPhase] = useState('prep'), [prep, setPrep] = useState(0), [agree, setAgree] = useState(false), [watch, setWatch] = useState(false);
+  const [sel, setSel] = useState('guide'), [wide, setWide] = useState(false), [open, setOpen] = useState({}), [ending, setEnding] = useState(false), [resOpen, setResOpen] = useState(false);
+  const [labs, setLabs] = useState({}), [answers, setAnswers] = useState({}), [sent, setSent] = useState({}), [checked, setChecked] = useState({}), [handled, setHandled] = useState({}), [marked, setMarked] = useState({});
+  const [left, setLeft] = useState(0), [now, setNow] = useState(Date.now()), [summary, setSummary] = useState(null);
+  const starts = useMemo(() => items.map((it) => (it.kind === 'lab' && LABS[it.lab] ? LABS[it.lab].start() : null)), []);
+  const started = useRef(0), deadline = useRef(0), locked = useRef(false), copied = useRef(''), ended = useRef(false);
+  const lock = async (on) => {
+    locked.current = on;
+    if (desk && desk.training) { try { await desk.training.lock(on); } catch (e) { /* still runs */ } return; }
+    try { if (on) await document.documentElement.requestFullscreen(); else if (document.fullscreenElement) await document.exitFullscreen(); } catch (e) { /* not allowed here */ }
+  };
+  // each part: its practice desktop, its answers, and whether it's been checked since it last changed
+  const labOf = (i) => labs[i] || starts[i];
+  const setLab = (i) => (fn) => {
+    setLabs((all) => { const y = JSON.parse(JSON.stringify(all[i] || starts[i])); fn(y); return { ...all, [i]: y }; });
+    setChecked((c) => { if (!c[i]) return c; const n = { ...c }; delete n[i]; return n; });
+  };
+  const labRes = (i) => { const L = LABS[items[i].lab]; if (!L) return []; const s = labOf(i); return L.checks.map(([id, label, fn]) => { let ok = false; try { ok = !!fn(s); } catch (e) { ok = false; } return { id, label, ok }; }); };
+  const quizScore = (i) => (items[i].quiz || []).filter((x, k) => (answers[i] || {})[k] === x.answer).length;
+  const status = (i) => (items[i].kind === 'quiz' ? (sent[i] ? 'answered' : 'todo') : checked[i] ? (checked[i].ok ? 'ok' : 'err') : marked[i] ? 'answered' : 'todo');
+  const isDone = (i) => ['ok', 'answered'].includes(status(i));
+  const isOpen = (i) => !test.ordered || items.slice(0, i).every((_, j) => sent[j] || handled[j] || marked[j]);
+  const said = (i) => (checked[i] ? (checked[i].ok ? 'No errors: ' : 'Has errors: ') + checked[i].n + ' of ' + checked[i].max + ' checks right' : 'Not checked yet');
+  const check = (i) => { const r = labRes(i), n = r.filter((x) => x.ok).length; setChecked((c) => ({ ...c, [i]: { ok: n === r.length, n, max: r.length } })); setHandled((h) => ({ ...h, [i]: true })); };
+  const handIn = (timeUp) => {
+    if (ended.current) return; ended.current = true;
+    const parts = items.map((it, i) => {
+      if (it.kind === 'quiz') return { item: it.id, kind: 'quiz', score: quizScore(i), max: (it.quiz || []).length, answers: { ...(answers[i] || {}) }, sent: !!sent[i] };
+      const r = labRes(i); return { item: it.id, kind: 'lab', score: r.filter((x) => x.ok).length, max: r.length, checks: Object.fromEntries(r.map((x) => [x.id, x.ok])) };
+    });
+    const score = parts.reduce((a, p) => a + p.score, 0), max = parts.reduce((a, p) => a + p.max, 0), pct = pctOf(score, max), pass = pct >= (test.pass || 0);
+    const rec = { kind: 'test', test: test.id, score, max, pct, pass, started: started.current, ended: Date.now(), left, timeUp: !!timeUp, parts };
+    saveTr(update, user.id, test.id, rec);
+    update((d) => { d.posts.filter((p) => p.training && p.training.test === test.id && p.recips[user.id]).forEach((p) => { const r0 = p.recips[user.id]; r0.status = 'done'; r0.pct = 100; r0.updatedAt = Date.now(); r0.seen = r0.seen || Date.now(); }); });
+    lock(false); setEnding(false); setResOpen(false); setSummary(rec); setPhase('done');
+  };
+  const begin = () => { started.current = Date.now(); deadline.current = test.minutes ? Date.now() + test.minutes * 60000 : 0; if (test.locked !== false) lock(true); setNow(Date.now()); setPhase('exam'); };
+  // while it runs: the clock, copy and paste inside the test only, no right-click menu, and every time it's left
+  useEffect(() => {
+    if (phase !== 'exam') return undefined;
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    const same = (x) => x.replace(/\s+/g, ' ').trim() === copied.current.replace(/\s+/g, ' ').trim();
+    const copy = (e) => { copied.current = trSelText(e); };
+    const paste = (e) => { const x = (e.clipboardData && e.clipboardData.getData('text')) || ''; if (x && !same(x)) e.preventDefault(); };
+    const drop = (e) => { const x = (e.dataTransfer && e.dataTransfer.getData('text')) || ''; if (x && !same(x)) e.preventDefault(); };
+    const menu = (e) => e.preventDefault();
+    const away = () => { if (locked.current) setLeft((n) => n + 1); };
+    const on = [['copy', copy], ['cut', copy], ['paste', paste], ['drop', drop], ['contextmenu', menu]];
+    on.forEach(([k, f]) => document.addEventListener(k, f, true));
+    const offMain = desk && desk.training && desk.training.onLeft ? desk.training.onLeft(away) : null;
+    const vis = () => { if (document.hidden) away(); };
+    const full = () => { if (!document.fullscreenElement) away(); };
+    if (!offMain) { window.addEventListener('blur', away); document.addEventListener('visibilitychange', vis); document.addEventListener('fullscreenchange', full); }
+    return () => { clearInterval(t); on.forEach(([k, f]) => document.removeEventListener(k, f, true)); if (offMain) offMain(); window.removeEventListener('blur', away); document.removeEventListener('visibilitychange', vis); document.removeEventListener('fullscreenchange', full); };
+  }, [phase === 'exam']);
+  useEffect(() => () => { if (locked.current) lock(false); }, []);
+  const timeUp = phase === 'exam' && deadline.current > 0 && now >= deadline.current;
+  useEffect(() => { if (timeUp) handIn(true); }, [timeUp]);
+
+  // before it starts: what the test is, and six short steps
+  if (phase === 'prep') {
+    const steps = [['Your details', 1], ['Test rules', 2], ['Video walkthrough', video ? 3 : 1], ['Before you begin', 1], ['The practice desktop', 1], ['Start the test', 1]];
+    const next = () => setPrep((p) => Math.min(p + 1, steps.length - 1));
+    const go = html`<div className="tr-step-a"><button className="btn primary" onClick=${next}>Next</button></div>`;
+    const body = (k) => {
+      if (k === 0) return html`<p>Check that this is you before you start.</p><dl><dt>Name</dt><dd>${user.name}</dd><dt>Team</dt><dd>${dept ? dept.name : ''}</dd><dt>Test</dt><dd>${test.title}</dd></dl>
+        <div className="tr-step-a"><button className="btn primary" onClick=${next}>Confirm</button></div>`;
+      if (k === 1) return html`<ol>${TR_RULES.map((r, i) => html`<li key=${i}>${r}</li>`)}</ol><label className="tr-agree"><input type="checkbox" checked=${agree} onChange=${(e) => setAgree(e.target.checked)}/>I agree to these rules</label>
+        <div className="tr-step-a"><button className="btn primary" disabled=${!agree} onClick=${next}>Next</button></div>`;
+      if (k === 2) return html`${video ? html`<p>${video.title}: a short video that walks you through the work in this test.</p>
+          ${watch && (vurl ? html`<video className="tr-video" src=${vurl} controls autoPlay></video>` : video.link ? html`<p><a className="btn" href=${video.link} target="_blank" rel="noopener">Open the video</a></p>` : html`<p className="muted">The video is still uploading.</p>`)}`
+        : html`<p>How the test screen works: the parts are listed on the left (A, B, C…). Open one to read what to do. A practice part has Open Xero practice, which opens the practice desktop on the right${canCheck ? ', and Check, which tells you how many of that part’s checks are right so far' : ''}. A quiz part opens its questions on the right. The clock and End test are at the top.</p>`}
+        <div className="tr-step-a">${video && !watch && html`<button className="btn" onClick=${() => setWatch(true)}>Watch the walkthrough</button>`}<button className="btn primary" onClick=${next}>Next</button></div>`;
+      if (k === 3) return html`<ul><li>${test.minutes ? 'You have ' + test.minutes + ' minutes from when you start. The clock is at the top.' : 'There’s no time limit.'}</li>
+          <li>${test.ordered ? 'Do the parts in order: each one opens when the one before it is done.' : 'Do the parts in any order you like.'}</li>
+          <li>It can’t be paused. When you’re finished, press End test.${test.minutes ? ' When the time runs out, it’s handed in for you.' : ''}</li>
+          <li>The pass mark is ${test.pass || 0}%.${test.wait > 0 ? ' If you don’t pass, you can take it again after ' + test.wait + (test.wait === 1 ? ' day.' : ' days.') : ''}</li></ul>${go}`;
+      if (k === 4) return html`<p>Practice parts happen on a practice desktop: Mail, and a practice copy of Xero with the same steps as the real one. It’s made fresh for this test, so nothing real is changed, and every step is marked by the computer.</p>
+        <p>Names and amounts you’ll need are under Test resources.${canCheck ? ' Press Check on a part to see how many of its checks are right. You can check as often as you like.' : ''}</p>${go}`;
+      if (waitUntil > Date.now()) return html`<p className="tr-warn">You can take this test again from ${trWhen(waitUntil)}.</p><div className="tr-step-a"><button className="btn" onClick=${onClose}>Close</button></div>`;
+      return html`<p>${test.locked !== false ? 'When you start, the test fills the screen' + (desk && desk.training ? ' and other programs can’t come in front of it.' : '.') : 'The clock starts when you press Start the test.'}</p>
+        ${!items.length && html`<p className="err">This test has nothing in it yet.</p>`}
+        <div className="tr-step-a"><button className="btn ghost" onClick=${onClose}>Not now</button><button className="btn primary" onClick=${begin} disabled=${!items.length}>Start the test</button></div>`;
+    };
+    return ReactDOM.createPortal(html`<div className="tr-run"><div className="tr-run-h"><b>Training test</b><span className="grow"></span><button className="btn ghost sm" onClick=${onClose}>Close</button></div>
+      <div className="tr-run-b"><div className="tr-prep">
+        <div className="tr-prep-card"><span className="tr-kick">Training test${dept ? ' · ' + dept.name : ''}</span><h2>${test.title}</h2>
+          <div className="tr-prep-box"><span className="tr-prep-time">${test.minutes ? html`Time to complete the test: <b>${test.minutes} minutes</b>` : 'No time limit'}</span>
+            ${test.wait > 0 && html`<span className="tr-alert"><i>!</i>If you don’t pass, you’ll need to wait ${test.wait} ${test.wait === 1 ? 'day' : 'days'} before taking it again.</span>`}
+            <b>Description</b><div className="tr-desc">${trDesc(test, items)}</div></div>
+          ${before.length > 0 && html`<div className="tr-prep-box"><b>Lessons to do before this test</b><ul className="tr-rec">${before.map((l) => { const r = trRes(db, l.id, user.id); return html`<li key=${l.id} className=${r && r.done ? 'done' : ''}>${l.title} <small>(${TR_KINDS[l.kind][0]}${r && r.done ? ', done ✓' : ''})</small></li>`; })}</ul><small className="muted">They’re on the Training page.</small></div>`}
+        </div>
+        <div className="tr-steps">${steps.map(([t, m], k) => html`<div key=${k} className=${'tr-step' + (k === prep ? ' on' : k < prep ? ' done' : '')}>
+            <button className="tr-step-h" onClick=${() => { if (k < prep) setPrep(k); }}><span className="tr-num">${k < prep ? '✓' : k + 1}</span><span className="grow">${t}</span><span className="tr-mins">${m} min</span></button>
+            ${k === prep && html`<div className="tr-step-b">${body(k)}</div>`}</div>`)}</div>
+      </div></div></div>`, document.body);
+  }
+
+  // the result: passed or not, the soonest retake, the lessons to go over, and how each part went
+  if (phase === 'done' && summary) {
+    const until = !summary.pass && test.wait > 0 ? summary.ended + test.wait * 86400000 : 0;
+    const weak = summary.parts.filter((p) => !(p.max > 0 && pctOf(p.score, p.max) >= (test.pass || 70))).map((p) => items.find((x) => x.id === p.item)).filter(Boolean);
+    const review = summary.pass ? weak : [...before, ...weak]; // the lessons, and the parts that need work (to practise again)
+    return ReactDOM.createPortal(html`<div className="tr-run"><div className="tr-run-h"><b>${test.title}</b><span className="grow"></span><button className="btn ghost sm" onClick=${onClose}>Close</button></div>
+      <div className="tr-run-b"><div className="tr-out">
+        <div className=${'tr-out-card ' + (summary.pass ? 'pass' : 'fail')}>
+          <div className="tr-out-main"><small className="muted">${user.name}${dept ? ' · ' + dept.name : ''}</small>
+            <h2>${summary.pass ? 'Test passed' : 'Test not passed'}</h2>
+            <p>${summary.pass ? 'Well done. You reached the pass mark, and your result has gone to whoever manages the team.' : 'You finished the test, but didn’t reach the pass mark.' + (until ? ' You can take it again after ' + test.wait + (test.wait === 1 ? ' day.' : ' days.') : ' You can take it again when you’re ready.')}</p>
+            <dl className="tr-out-dl"><dt>Result</dt><dd className="r">${summary.pass ? 'Passed' : 'Not passed'} · ${summary.pct}%</dd><dt>Test</dt><dd>${test.title}</dd><dt>Pass mark</dt><dd>${test.pass || 0}%</dd>
+              <dt>Time taken</dt><dd>${fmtDur(summary.ended - summary.started)}${summary.timeUp ? ' (the time ran out)' : ''}</dd>
+              ${until > 0 && html`<dt>Soonest retake</dt><dd className="r">${trWhen(until)}</dd>`}${summary.left > 0 && html`<dt>Left the test</dt><dd>${summary.left} ${summary.left === 1 ? 'time' : 'times'}</dd>`}</dl>
+            ${!summary.pass && html`<p>Go over the lessons below, look at the parts that need work, and try again when you feel ready.</p>`}
+            ${review.length > 0 && html`<h3>${summary.pass ? 'Worth another look' : 'Lessons to go over'}</h3><ul className="tr-rec">${review.map((l) => html`<li key=${l.id}>${l.title} <small>(${TR_KINDS[l.kind][0]})</small></li>`)}</ul>`}</div>
+          <div className="tr-out-band"><span>${summary.pass ? '✓' : '✕'}</span></div></div>
+        <div className="tr-out-rep"><h3>How you did on each part</h3><table><thead><tr><th>Part</th><th>Result</th></tr></thead>
+          <tbody>${summary.parts.map((p, i) => { const it = items.find((x) => x.id === p.item), good = p.max > 0 && pctOf(p.score, p.max) >= (test.pass || 70); return html`<tr key=${i}><td>${trLetter(i)} · ${it ? it.title : 'Part ' + (i + 1)}</td><td className=${'tr-out-r ' + (good ? 'good' : 'weak')}>${good ? 'Proficient' : 'Needs improvement'}</td></tr>`; })}</tbody></table></div>
+        <div className="tr-step-a"><button className="btn primary" onClick=${onClose}>Close</button></div>
+      </div></div></div>`, document.body);
+  }
+
+  // the test itself: the parts on the left, the guide, the practice desktop or the questions on the right
+  const cur = typeof sel === 'number' ? sel : -1, lab = cur >= 0 && items[cur].kind === 'lab';
+  const pick = (i) => { setSel(i); setOpen((o) => ({ ...o, [i]: true })); };
+  const go = (d) => { let k = cur + d; while (k >= 0 && k < items.length && !isOpen(k)) k += d; if (k < 0) { setSel('guide'); return; } if (k < items.length) pick(k); };
+  const doneN = items.filter((_, i) => isDone(i)).length, lowTime = deadline.current > 0 && deadline.current - now < 5 * 60000;
+  const resources = items.map((it, i) => ({ i, rows: it.kind === 'lab' ? ((LABS[it.lab] || {}).resources || []) : [] })).filter((x) => x.rows.length);
+  const copyVal = (v) => { copied.current = v; try { navigator.clipboard.writeText(v).catch(() => { }); } catch (e) { /* the copy button only works where the clipboard does */ } };
+  const resPanel = html`<h3>Test resources</h3><p>Everything you need is on the practice desktop: Mail and the Xero practice. It’s made fresh for this test, and nothing in it is real. Names and amounts you’ll need are below; the copy button copies one so you can paste it in the test.</p>
+    <table className="tr-x-res"><thead><tr><th>Part</th><th>Name</th><th>Value</th></tr></thead><tbody>${resources.flatMap(({ i, rows }) => rows.map(([n, v], k) => html`<tr key=${i + '-' + k}><td>${k === 0 ? trLetter(i) : ''}</td><td>${n}</td><td><span className="tr-x-val"><span>${v}</span><button className="tr-x-copy" onClick=${() => copyVal(v)} aria-label=${'Copy ' + n} title="Copy"><${Icon} n="copy" s=${15}/></button></span></td></tr>`))}</tbody></table>`;
+  const symbols = html`<div className="tr-x-sym"><span><span className="tr-x-l todo">A</span>Not checked yet</span><span><span className="tr-x-l ok">A<i>✓</i></span>Checked: no errors</span>
+    <span><span className="tr-x-l err">A<i>✕</i></span>Checked: has errors</span><span><span className="tr-x-l answered">A</span>Answered, or marked as finished</span>
+    ${test.ordered && html`<span><span className="tr-x-pair"><span className="tr-x-l todo">A</span><i></i><span className="tr-x-l todo">B</span></span>The line: B opens when A is done</span>`}</div>`;
+  const partRow = (it, i) => {
+    const st = status(i), shut = !isOpen(i), L = it.kind === 'lab' ? LABS[it.lab] : null;
+    return html`<li key=${it.id} className=${'tr-x-part' + (sel === i ? ' on' : '') + (shut ? ' shut' : '')}>
+      <span className=${'tr-x-l ' + st}>${trLetter(i)}${st === 'ok' ? html`<i>✓</i>` : st === 'err' ? html`<i>✕</i>` : ''}</span>
+      <div className="tr-x-card"><button className="tr-x-head" disabled=${shut} onClick=${() => { setSel(i); setOpen((o) => ({ ...o, [i]: sel === i ? !o[i] : true })); }}><b>${it.title}</b><span className="tr-x-chip">${it.kind === 'lab' ? 'PRACTICE' : 'QUIZ'}</span><span className="tr-x-chev">${open[i] && !shut ? '▴' : '▾'}</span></button>
+        ${open[i] && !shut && html`<div className="tr-x-body">${it.kind === 'lab' ? (L ? html`<p>${L.brief}</p><b className="tr-x-sub">What’s checked</b><ul>${L.checks.map(([id, label]) => html`<li key=${id}>${label}</li>`)}</ul>
+            <div className="tr-x-row"><button className="tr-x-tool" onClick=${() => { setSel(i); setWide(true); }}><${Icon} n="calc" s=${15}/>Open Xero practice</button></div>
+            ${canCheck ? html`<button className="tr-x-check" onClick=${() => { setSel(i); check(i); }}>Check</button><div className=${'tr-x-said ' + st}>${said(i)}</div>`
+              : html`<label className="tr-agree"><input type="checkbox" checked=${!!marked[i]} onChange=${(e) => { const on = e.target.checked; setMarked((m) => ({ ...m, [i]: on })); }}/>I’ve finished this part</label>`}`
+            : html`<p>This practice lab isn’t in this version of Floorboard.</p>`)
+          : html`<p>${(it.quiz || []).length} questions. Choose one answer for each, then send them. You can send them once.</p><div className="tr-x-row"><button className="tr-x-tool" onClick=${() => setSel(i)}>${sent[i] ? 'See my answers' : 'Answer the questions'}</button></div>`}</div>`}
+      </div></li>`;
+  };
+  const view = () => {
+    if (cur < 0) return html`<div className="tr-x-doc">
+      <div className="tr-x-panel"><h3>About this test</h3><p>${trDesc(test, items)}</p></div>
+      <div className="tr-x-panel"><h3>How the parts fit together</h3><div className="tr-flow">${items.map((it, i) => html`<button key=${it.id} className="tr-flow-row" disabled=${!isOpen(i)} onClick=${() => pick(i)}><span className=${'tr-x-l ' + status(i)}>${trLetter(i)}</span>${trFlow(it).map((x, k) => html`<${React.Fragment} key=${k}>${k > 0 && html`<span className="tr-flow-arrow">→</span>`}<span className="tr-flow-box">${x}</span><//>`)}</button>`)}</div></div>
+      ${resources.length > 0 && html`<div className="tr-x-panel">${resPanel}</div>`}
+      ${video && html`<div className="tr-x-panel"><h3>Video walkthrough</h3>${vurl ? (watch ? html`<video className="tr-video" src=${vurl} controls></video>` : html`<div><button className="tr-x-tool big" onClick=${() => setWatch(true)}><${Icon} n="play" s=${16}/>Watch the walkthrough</button></div>`) : html`<p>${video.link ? 'This walkthrough is a link, so it can’t open during the test.' : 'The video is still uploading.'}</p>`}</div>`}
+      <div className="tr-x-panel"><h3>Symbols guide</h3>${symbols}</div></div>`;
+    const it = items[cur];
+    if (it.kind === 'quiz') return html`<div className="tr-x-doc"><div className="tr-x-panel"><h3>Part ${trLetter(cur)}: ${it.title}</h3>
+      ${sent[cur] ? html`<p>Your answers are sent. They’re marked when the test is handed in.</p>${(it.quiz || []).map((x, k) => html`<div key=${k} className="tr-q"><b>${k + 1}. ${x.q}</b><span className="tr-mine">Your answer: ${x.options[(answers[cur] || {})[k]] || 'none'}</span></div>`)}`
+        : html`<${QuizRun} key=${cur} quiz=${it.quiz || []} reveal=${false} initial=${answers[cur]} onPick=${(n) => setAnswers((a) => ({ ...a, [cur]: n }))} onFinish=${(r) => { setAnswers((a) => ({ ...a, [cur]: r.answers })); setSent((x) => ({ ...x, [cur]: true })); }}/>`}</div></div>`;
+    const L = LABS[it.lab];
+    return html`<div className="tr-x-bar"><${Icon} n="calc" s=${15}/><b>Xero practice</b><span className="tr-x-dim">Part ${trLetter(cur)}: ${it.title}</span><span className="grow"></span>
+        ${wide && canCheck && html`<span className=${'tr-x-said sm ' + status(cur)}>${said(cur)}</span><button className="tr-x-tool" onClick=${() => check(cur)}>Check</button>`}
+        ${wide ? html`<button className="tr-x-tool ghost" onClick=${() => setWide(false)}>Show the parts</button>` : html`<button className="tr-x-tool ghost" onClick=${() => setWide(true)}>Fill the screen</button>`}</div>
+      ${L ? html`<${LabScreen} key=${cur} L=${L} s=${labOf(cur)} set=${setLab(cur)} now=${now}/>` : html`<p className="lab-empty">This practice lab isn’t in this version of Floorboard.</p>`}`;
+  };
+  return ReactDOM.createPortal(html`<div className="tr-x">
+    <header className="tr-x-top"><div className="tr-x-t"><small>TRAINING TEST</small><b>${test.title}</b></div>
+      <div className="tr-x-prog" title="Parts done"><b>${doneN}/${items.length}</b><span className="tr-x-segs">${items.map((_, i) => html`<i key=${i} className=${isDone(i) ? 'on' : ''}></i>`)}</span></div>
+      ${left > 0 && html`<span className="tr-warn">Left the test ${left} ${left === 1 ? 'time' : 'times'}</span>`}<span className="grow"></span>
+      ${deadline.current > 0 && html`<div className=${'tr-x-time' + (lowTime ? ' low' : '')}><${Icon} n="clock" s=${22}/><span><small>TIME REMAINING</small><b>${trClock(deadline.current - now)}</b></span></div>`}
+      <button className="tr-x-end" onClick=${() => setEnding(true)}><${Icon} n="check" s=${16}/>End test</button></header>
+    <div className=${'tr-x-main' + (wide ? ' wide' : '')}>
+      <aside className="tr-x-side"><div className="tr-x-tools"><button className="tr-x-tool" onClick=${() => setResOpen(true)} disabled=${!resources.length}>Test resources</button>
+          <span className="tr-x-nav"><button className="tr-x-arrow" onClick=${() => go(-1)} aria-label="Previous part">◀</button><span className="tr-x-cur">${cur >= 0 ? trLetter(cur) : '?'}</span><button className="tr-x-arrow" onClick=${() => go(1)} aria-label="Next part">▶</button></span>
+          ${lab && html`<button className="tr-x-tool" onClick=${() => setWide(true)}><${Icon} n="calc" s=${15}/>Open Xero practice</button>`}
+          <button className="tr-x-tool sq" onClick=${() => setWide(true)} aria-label="Make the right side fill the screen" title="Fill the screen"><${Icon} n="expand" s=${15}/></button></div>
+        <div className="tr-x-list"><p className="tr-x-hint">${test.ordered ? 'Do the parts in order: each one opens when the one before it is done. The lines show which parts depend on each other.' : 'Do the parts in any order you like within the time limit.'}</p>
+          <ol className=${'tr-x-parts' + (test.ordered ? ' ordered' : '')}>
+            <li className=${'tr-x-part guide' + (cur < 0 ? ' on' : '')}><span className="tr-x-l q">?</span><div className="tr-x-card"><button className="tr-x-head" onClick=${() => setSel('guide')}><b>Test guide</b></button></div></li>
+            ${items.map(partRow)}</ol></div></aside>
+      <section className="tr-x-view">${!lab && wide && html`<div className="tr-x-bar"><span className="grow"></span><button className="tr-x-tool ghost" onClick=${() => setWide(false)}>Show the parts</button></div>`}${view()}</section></div>
+    ${resOpen && html`<div className="tr-x-sure" onMouseDown=${(e) => { if (e.target === e.currentTarget) setResOpen(false); }}><div className="tr-x-pop"><button className="tr-x-close" onClick=${() => setResOpen(false)} aria-label="Close">×</button>${resPanel}</div></div>`}
+    ${ending && html`<div className="tr-x-sure"><div className="tr-x-pop sm"><h3>End the test and hand it in?</h3><p>${doneN} of ${items.length} parts are done. Whatever you’ve done is marked; anything not done counts as 0.</p>
+      <div className="tr-step-a"><button className="btn" onClick=${() => setEnding(false)}>Keep going</button><button className="btn primary" onClick=${() => handIn(false)}>End and hand in</button></div></div></div>`}
+  </div>`, document.body);
+}
+function TrClock({ until }) { const [n, setN] = useState(Date.now()); useEffect(() => { const t = setInterval(() => setN(Date.now()), 1000); return () => clearInterval(t); }, []); return html`<span className="lab-time">${fmtDur(Math.max(0, until - n))} left</span>`; }
+
+/* building: a lesson (video, written steps, quiz or practice lab) */
+function TrLessonModal({ dept, lesson, onClose }) {
+  const { update, user, toast, ask } = useApp();
+  const [v, setV] = useState(() => lesson ? JSON.parse(JSON.stringify(lesson)) : { kind: 'video', title: '', text: '', link: '', video: null, quiz: [{ q: '', options: ['', ''], answer: 0 }], lab: 'bill-capture' });
+  const [file, setFile] = useState(null), [busy, setBusy] = useState(false), [err, setErr] = useState('');
+  const set = (k, x) => { setV((o) => ({ ...o, [k]: x })); setErr(''); };
+  const setQ = (i, fn) => setV((o) => { const q = JSON.parse(JSON.stringify(o.quiz)); fn(q[i]); return { ...o, quiz: q }; });
+  const save = async () => {
+    const title = (v.title || (v.kind === 'lab' && LABS[v.lab] ? LABS[v.lab].title : '')).trim();
+    if (!title) return setErr('Give the lesson a title.');
+    if (v.kind === 'quiz') { const bad = v.quiz.findIndex((x) => !x.q.trim() || x.options.filter((o) => o.trim()).length < 2); if (bad >= 0) return setErr('Question ' + (bad + 1) + ' needs its question and at least two answers.'); }
+    if (v.kind === 'video' && !file && !v.video && !(v.link || '').trim()) return setErr('Add the video, or a link to it.');
+    if (file && file.size > 300 * 1048576) return setErr('That video is over 300 MB. Use a link to it instead (OneDrive or YouTube), or a shorter video.');
+    setBusy(true);
+    let video = v.video;
+    if (file) { try { [video] = await storeFiles([{ file, name: file.name, mime: file.type || 'video/mp4', size: file.size, kind: 'video' }]); } catch (e) { setBusy(false); return setErr('The video couldn’t be uploaded: ' + ((e && e.message) || e)); } }
+    const rec = { id: (lesson && lesson.id) || uid('tl'), dept, kind: v.kind, title, text: (v.text || '').trim(), link: (v.link || '').trim(), video: video || null,
+      quiz: v.kind === 'quiz' ? v.quiz.map((x) => ({ q: x.q.trim(), options: x.options.map((o) => o.trim()).filter(Boolean), answer: Math.min(x.answer, x.options.filter((o) => o.trim()).length - 1) })) : undefined,
+      lab: v.kind === 'lab' ? v.lab : undefined, by: (lesson && lesson.by) || user.id, at: (lesson && lesson.at) || Date.now(), order: (lesson && lesson.order) || Date.now() };
+    update((d) => { d.trlessons = d.trlessons || []; const i = d.trlessons.findIndex((x) => x.id === rec.id); if (i >= 0) d.trlessons[i] = rec; else d.trlessons.push(rec); });
+    setBusy(false); toast(lesson ? 'Lesson saved' : 'Lesson added'); onClose();
+  };
+  const remove = () => ask({ title: 'Remove this lesson?', body: 'It’s taken out of the training and out of any test it’s in. Results already given stay.', confirm: 'Remove', danger: true,
+    onConfirm: () => { update((d) => { d.trlessons = (d.trlessons || []).filter((x) => x.id !== lesson.id); (d.trtests || []).forEach((t) => { t.items = (t.items || []).filter((x) => x !== lesson.id); }); }); onClose(); } });
+  return html`<${Modal} title=${lesson ? 'Edit lesson' : 'Add a lesson'} onClose=${onClose} wide footer=${html`${lesson && html`<button className="btn ghost" style=${{ marginRight: 'auto' }} onClick=${remove}>Remove</button>`}<button className="btn" onClick=${onClose}>Cancel</button><button className="btn primary" onClick=${save} disabled=${busy}>${busy ? 'Saving…' : 'Save'}</button>`}>
+    <div className="field"><span>What kind</span><div className="seg" role="group">${Object.entries(TR_KINDS).map(([k, [l]]) => html`<button type="button" key=${k} className=${v.kind === k ? 'on' : ''} onClick=${() => set('kind', k)}>${l}</button>`)}</div></div>
+    ${v.kind === 'lab' && html`<label className="field"><span>Which practice lab</span><select id="tr-lab" className="select" value=${v.lab} onChange=${(e) => set('lab', e.target.value)}>${Object.entries(LABS).map(([k, L]) => html`<option key=${k} value=${k}>${L.title} (${L.minutes} min)</option>`)}</select><small>${(LABS[v.lab] || {}).brief}</small></label>`}
+    <label className="field"><span>Title</span><input id="tr-title" className="input" value=${v.title} onChange=${(e) => set('title', e.target.value)} placeholder=${v.kind === 'lab' ? (LABS[v.lab] || {}).title : 'e.g. How a supplier bill gets paid'}/></label>
+    ${v.kind === 'video' && html`<div className="field"><span>The video</span><input type="file" accept="video/*" onChange=${(e) => setFile(e.target.files && e.target.files[0])}/>
+      <small>${v.video && !file ? 'A video is added. Choose another to replace it. ' : ''}A screen recording from Minutes works well (Documents › Meeting recordings), up to 300 MB. Or paste a link instead:</small>
+      <input id="tr-link" className="input" value=${v.link} onChange=${(e) => set('link', e.target.value)} placeholder="https://… (OneDrive, YouTube)"/></div>`}
+    <label className="field"><span>${v.kind === 'steps' ? 'The steps' : 'Notes (optional)'}</span><textarea id="tr-text" className="input" rows=${v.kind === 'steps' ? 8 : 3} value=${v.text} onChange=${(e) => set('text', e.target.value)} placeholder=${v.kind === 'steps' ? '1. Open the email from the supplier…\n2. …' : 'What to look out for'}></textarea></label>
+    ${v.kind === 'quiz' && html`<div className="field"><span>Questions</span>${v.quiz.map((x, i) => html`<div key=${i} className="tr-qedit">
+        <input className="input" value=${x.q} onChange=${(e) => setQ(i, (q) => { q.q = e.target.value; })} placeholder=${'Question ' + (i + 1)}/>
+        ${x.options.map((o, j) => html`<label key=${j} className="tr-optedit"><input type="radio" name=${'right' + i} checked=${x.answer === j} onChange=${() => setQ(i, (q) => { q.answer = j; })} title="The right answer"/><input className="input" value=${o} onChange=${(e) => setQ(i, (q) => { q.options[j] = e.target.value; })} placeholder=${'Answer ' + (j + 1)}/></label>`)}
+        <span className="tr-qbtns">${x.options.length < 5 && html`<button type="button" className="btn sm ghost" onClick=${() => setQ(i, (q) => { q.options.push(''); })}>+ Answer</button>`}${v.quiz.length > 1 && html`<button type="button" className="btn sm ghost" onClick=${() => setV((o) => ({ ...o, quiz: o.quiz.filter((_, k) => k !== i) }))}>Remove question</button>`}</span></div>`)}
+      <small>Tick the circle next to the right answer.</small><button type="button" className="btn sm" onClick=${() => setV((o) => ({ ...o, quiz: [...o.quiz, { q: '', options: ['', ''], answer: 0 }] }))}>+ Question</button></div>`}
+    ${err && html`<p className="err">${err}</p>`}
+  <//>`;
+}
+/* building: a test from the department's quizzes and labs, given to people by a date */
+function TrTestModal({ dept, test, onClose }) {
+  const { db, update, user, toast, ask } = useApp();
+  const pool = trLessons(db, dept).filter((l) => l.kind === 'quiz' || l.kind === 'lab'), people = deptMembers(db, dept).map((id) => userById(db, id)).filter((u) => u && u.active !== false);
+  const videos = trLessons(db, dept).filter((l) => l.kind === 'video');
+  const [v, setV] = useState(() => test ? JSON.parse(JSON.stringify(test)) : { title: '', desc: '', level: '', items: pool.map((l) => l.id), pass: 70, minutes: 45, locked: true, check: true, ordered: false, video: '', wait: 0, to: [], due: keyPlus(7) });
+  const [err, setErr] = useState('');
+  const set = (k, x) => { setV((o) => ({ ...o, [k]: x })); setErr(''); };
+  const flip = (k, id) => set(k, v[k].includes(id) ? v[k].filter((x) => x !== id) : [...v[k], id]);
+  const save = () => {
+    const title = v.title.trim(); if (!title) return setErr('Give the test a name, like Finance: month-end test.');
+    if (!v.items.length) return setErr('Tick at least one quiz or practice lab for the test.');
+    const id = (test && test.id) || uid('tt'), rec = { ...v, id, dept, title, pass: Math.max(0, Math.min(100, Number(v.pass) || 0)), minutes: Math.max(0, Number(v.minutes) || 0), wait: Math.max(0, Math.round(Number(v.wait) || 0)), desc: (v.desc || '').trim(), by: (test && test.by) || user.id, at: (test && test.at) || Date.now() };
+    update((d) => {
+      d.trtests = d.trtests || []; const i = d.trtests.findIndex((x) => x.id === id);
+      // who's taking it finds it under Your tests on their Training page; it isn't put in their tasks
+      if (i >= 0) d.trtests[i] = rec; else d.trtests.push(rec);
+    });
+    toast(rec.to.length ? 'Test saved: ' + rec.to.length + (rec.to.length === 1 ? ' person sees' : ' people see') + ' it under Your tests in Training' : 'Test saved'); onClose();
+  };
+  const remove = () => ask({ title: 'Remove this test?', body: 'It’s taken off Training. Results already given stay.', confirm: 'Remove', danger: true, onConfirm: () => { update((d) => { d.trtests = (d.trtests || []).filter((x) => x.id !== test.id); }); onClose(); } });
+  return html`<${Modal} title=${test ? 'Edit test' : 'New test'} onClose=${onClose} wide footer=${html`${test && html`<button className="btn ghost" style=${{ marginRight: 'auto' }} onClick=${remove}>Remove</button>`}<button className="btn" onClick=${onClose}>Cancel</button><button className="btn primary" onClick=${save}>Save</button>`}>
+    <label className="field"><span>Name</span><input id="tt-title" className="input" value=${v.title} onChange=${(e) => set('title', e.target.value)} placeholder="e.g. Finance: bills and bank test"/></label>
+    <label className="field"><span>Description (shown before it starts)</span><textarea id="tt-desc" className="input" rows="3" value=${v.desc || ''} onChange=${(e) => set('desc', e.target.value)} placeholder="What the test covers, and what someone who passes can do"></textarea></label>
+    <div className="field"><span>What’s in it</span>${pool.length ? html`<div className="checks">${pool.map((l) => html`<label key=${l.id}><input type="checkbox" checked=${v.items.includes(l.id)} onChange=${() => flip('items', l.id)}/>${l.title} <small className="muted">${TR_KINDS[l.kind][0]}</small></label>`)}</div>` : html`<small>Add quizzes or practice labs to this department first.</small>`}</div>
+    <div className="row2"><label className="field"><span>Pass mark (%)</span><input id="tt-pass" className="input" type="number" min="0" max="100" value=${v.pass} onChange=${(e) => set('pass', e.target.value)}/></label>
+      <label className="field"><span>Time limit (minutes, 0 for none)</span><input id="tt-min" className="input" type="number" min="0" value=${v.minutes} onChange=${(e) => set('minutes', e.target.value)}/></label></div>
+    <div className="row2"><label className="field"><span>Level</span><select id="tt-level" className="select" value=${v.level || ''} onChange=${(e) => set('level', e.target.value)}>${[['', 'Not set'], ['Starter', 'Starter'], ['Intermediate', 'Intermediate'], ['Advanced', 'Advanced']].map(([k, l]) => html`<option key=${k} value=${k}>${l}</option>`)}</select></label>
+      <label className="field"><span>Wait before trying again after not passing (days)</span><input id="tt-wait" className="input" type="number" min="0" value=${v.wait || 0} onChange=${(e) => set('wait', e.target.value)}/></label></div>
+    <label className="field"><span>Video walkthrough before it starts</span><select id="tt-video" className="select" value=${v.video || ''} onChange=${(e) => set('video', e.target.value)}><option value="">None</option>${videos.map((l) => html`<option key=${l.id} value=${l.id}>${l.title}</option>`)}</select>${!videos.length && html`<small>Add a video walkthrough lesson to this team first, and it can be shown before the test.</small>`}</label>
+    <label className="sm tr-opt-l"><input type="checkbox" checked=${v.locked !== false} onChange=${(e) => set('locked', e.target.checked)}/>Full screen and locked (copy and paste from outside it off, leaving is noted)</label>
+    <label className="sm tr-opt-l"><input type="checkbox" checked=${v.check !== false} onChange=${(e) => set('check', e.target.checked)}/>Check as you go: each practice part has a Check button that says how many of its checks are right (not which)</label>
+    <label className="sm tr-opt-l"><input type="checkbox" checked=${!!v.ordered} onChange=${(e) => set('ordered', e.target.checked)}/>Parts in order: B opens when A is done, and so on</label>
+    <div className="field"><span>Who takes it</span><div className="checks">${people.map((u) => html`<label key=${u.id}><input type="checkbox" checked=${v.to.includes(u.id)} onChange=${() => flip('to', u.id)}/>${u.name}</label>`)}</div></div>
+    <label className="field"><span>Done by</span><input id="tt-due" className="input" type="date" min=${dkey()} value=${v.due || ''} onChange=${(e) => set('due', e.target.value)}/></label>
+    ${err && html`<p className="err">${err}</p>`}
+  <//>`;
+}
+/* results: everyone's tests and lessons in the department, for whoever manages it */
+function TrResults({ dept }) {
+  const { db } = useApp(), [open, setOpen] = useState(null);
+  const tests = trTests(db, dept), lessons = trLessons(db, dept), people = deptMembers(db, dept).map((id) => userById(db, id)).filter((u) => u && u.active !== false);
+  const cell = (r, t) => !r ? html`<span className="muted">${t && t.to && t.to.length ? 'Not taken yet' : '–'}</span>` : html`<button className=${'tr-res ' + (r.pass ? 'pass' : 'fail')} onClick=${() => setOpen(r)}>${r.pct}% ${r.pass ? 'passed' : 'not passed'}${r.left ? ' · left ' + r.left + '×' : ''}</button>`;
+  return html`<section className="tr-sec"><h3>Results</h3>
+    ${tests.map((t) => html`<div key=${t.id} className="tr-restab"><b>${t.title}</b><small className="muted">${t.due ? ' · due ' + fmtKey(t.due) : ''} · pass mark ${t.pass}%</small>
+      <table className="tr-table"><tbody>${people.filter((u) => (t.to || []).includes(u.id) || trRes(db, t.id, u.id)).map((u) => html`<tr key=${u.id}><td>${u.name}</td><td>${cell(trRes(db, t.id, u.id), t)}</td><td className="muted sm">${trRes(db, t.id, u.id) ? fmtDay(trRes(db, t.id, u.id).ended || trRes(db, t.id, u.id).at) : ''}</td></tr>`)}</tbody></table></div>`)}
+    ${!tests.length && html`<p className="muted sm">No tests yet.</p>`}
+    <div className="tr-restab"><b>Lessons done</b><table className="tr-table"><tbody>${people.map((u) => html`<tr key=${u.id}><td>${u.name}</td><td>${lessons.filter((l) => (trRes(db, l.id, u.id) || {}).done).length} of ${lessons.length}</td></tr>`)}</tbody></table></div>
+    ${open && html`<${Modal} title=${(userById(db, open.user) || {}).name + ': ' + ((db.trtests || []).find((t) => t.id === open.item) || {}).title} onClose=${() => setOpen(null)} footer=${html`<button className="btn primary" onClick=${() => setOpen(null)}>Close</button>`}>
+      <p><b>${open.pct}%</b> (${open.score} of ${open.max}) · ${open.pass ? 'passed' : 'not passed'} · took ${fmtDur((open.ended || 0) - (open.started || 0))}${open.left ? ' · left the test ' + open.left + (open.left === 1 ? ' time' : ' times') : ''}</p>
+      ${(open.parts || []).map((p, i) => { const it = (db.trlessons || []).find((l) => l.id === p.item); const L = it && it.kind === 'lab' ? LABS[it.lab] : null;
+        return html`<div key=${i} className="tr-part"><b>${it ? it.title : 'Part ' + (i + 1)}: ${p.score} of ${p.max}${p.gaveUp ? ' (handed in early)' : ''}</b>
+          ${L && p.checks && html`<ul className="tr-checks">${L.checks.map(([id, label]) => html`<li key=${id} className=${p.checks[id] ? 'ok' : 'no'}>${p.checks[id] ? '✓' : '✗'} ${label}</li>`)}</ul>`}
+          ${it && it.kind === 'quiz' && p.answers && html`<ul className="tr-checks">${(it.quiz || []).map((q, k) => html`<li key=${k} className=${p.answers[k] === q.answer ? 'ok' : 'no'}>${p.answers[k] === q.answer ? '✓' : '✗'} ${q.q}${p.answers[k] !== q.answer ? ' (answered: ' + (q.options[p.answers[k]] || 'nothing') + ')' : ''}</li>`)}</ul>`}</div>`; })}
+    <//>`}
+  </section>`;
+}
+/* the Training page */
+function TrainingView() {
+  const { db, user } = useApp(), depts = trDepts(db, user);
+  const [dep, setDep] = useState(() => ((depts.find((d) => /financ/i.test(d.name)) || depts[0]) || {}).id || '');
+  const [lesson, setLesson] = useState(null), [edit, setEdit] = useState(null), [testEdit, setTestEdit] = useState(null), [run, setRun] = useState(null);
+  const builder = !!dep && isManagerOf(user, dep), lessons = trLessons(db, dep), tests = trTests(db, dep), mine = tests.filter((t) => (t.to || []).includes(user.id));
+  const doneCount = lessons.filter((l) => (trRes(db, l.id, user.id) || {}).done).length;
+  if (run) return html`<${TestRun} test=${run} onClose=${() => setRun(null)}/>`;
+  return html`<${Page} title="Training" sub="Lessons, practice labs and tests for each team." actions=${builder && html`<button className="btn" onClick=${() => setEdit('new')}><${Icon} n="plus" s=${15}/>Add a lesson</button><button className="btn primary" onClick=${() => setTestEdit('new')}><${Icon} n="learn" s=${15}/>New test</button>`}>
+    ${depts.length > 1 && html`<div className="tabs" role="tablist">${depts.map((d) => html`<button key=${d.id} role="tab" aria-selected=${dep === d.id} className=${dep === d.id ? 'on' : ''} onClick=${() => setDep(d.id)}>${d.name}</button>`)}</div>`}
+    ${!depts.length && html`<p className="muted">You’re not in a department yet.</p>`}
+    ${mine.length > 0 && html`<section className="tr-sec"><h3>Your tests</h3><div className="tr-cards">${mine.map((t) => { const r = trRes(db, t.id, user.id); return html`<div key=${t.id} className="tr-card test glass">
+        <span className="tr-kind"><${Icon} n="learn" s=${14}/>Training test</span><b>${t.title}</b>${t.desc && html`<p className="tr-card-d">${t.desc}</p>`}<small>${t.level ? t.level + ' · ' : ''}${t.minutes ? t.minutes + ' min · ' : ''}${(t.items || []).length} parts · pass mark ${t.pass}%${t.due ? ' · by ' + fmtKey(t.due) : ''}</small>
+        ${r ? html`<span className=${'tr-res ' + (r.pass ? 'pass' : 'fail')}>${r.pct}% · ${r.pass ? 'passed' : 'not passed'}</span>` : ''}
+        <button className="btn primary sm" onClick=${() => setRun(t)}>${r ? 'Take it again' : 'Start the test'}</button></div>`; })}</div></section>`}
+    <section className="tr-sec"><h3>Lessons <small className="muted">${doneCount} of ${lessons.length} done</small></h3>
+      ${lessons.length ? html`<div className="tr-cards">${lessons.map((l) => { const r = trRes(db, l.id, user.id); return html`<div key=${l.id} className=${'tr-card glass' + (r && r.done ? ' done' : '')}>
+          <span className="tr-kind"><${Icon} n=${TR_KINDS[l.kind][1]} s=${14}/>${TR_KINDS[l.kind][0]}</span><b>${l.title}</b>
+          ${r && r.done && html`<small className="tr-ok">✓ Done${r.max ? ' · ' + (r.best != null ? r.best : r.score) + ' of ' + r.max : ''}</small>`}
+          <span className="tr-card-a"><button className="btn sm" onClick=${() => setLesson(l)}>${l.kind === 'lab' ? 'Practise' : l.kind === 'quiz' ? 'Take the quiz' : l.kind === 'video' ? 'Watch' : 'Read'}</button>${builder && html`<button className="btn sm ghost" onClick=${() => setEdit(l)}>Edit</button>`}</span></div>`; })}</div>`
+        : html`<p className="muted sm">${builder ? 'No lessons yet. Add the first one: a video walkthrough, written steps, a quiz or a practice lab.' : 'No lessons here yet.'}</p>`}</section>
+    ${builder && tests.length > 0 && html`<section className="tr-sec"><h3>Tests</h3><div className="tr-cards">${tests.map((t) => html`<div key=${t.id} className="tr-card test glass"><b>${t.title}</b>
+        <small>${(t.items || []).length} parts · pass mark ${t.pass}%${t.minutes ? ' · ' + t.minutes + ' min' : ''} · ${(t.to || []).length} ${(t.to || []).length === 1 ? 'person' : 'people'}${t.due ? ' · by ' + fmtKey(t.due) : ''}</small>
+        <span className="tr-card-a"><button className="btn sm" onClick=${() => setRun(t)}>Try it</button><button className="btn sm ghost" onClick=${() => setTestEdit(t)}>Edit</button></span></div>`)}</div></section>`}
+    ${builder && html`<${TrResults} dept=${dep}/>`}
+    ${lesson && html`<${LessonView} lesson=${lesson} onClose=${() => setLesson(null)}/>`}
+    ${edit && html`<${TrLessonModal} dept=${dep} lesson=${edit === 'new' ? null : edit} onClose=${() => setEdit(null)}/>`}
+    ${testEdit && html`<${TrTestModal} dept=${dep} test=${testEdit === 'new' ? null : testEdit} onClose=${() => setTestEdit(null)}/>`}
+  <//>`;
+}
+// the demo store's Finance training: a lesson, a quiz, both practice labs and a test
+function seedTraining(db, T) {
+  db.trlessons = [
+    { id: 'tl-demo-1', dept: 'finance', kind: 'steps', title: 'How a supplier bill gets paid', order: 1, at: T, by: 'u1',
+      text: '1. The supplier emails their tax invoice. Check it’s addressed to the store and has their VAT number.\n2. In Xero, start a new bill from that supplier.\n3. Copy the invoice number into Reference, and the invoice date and due date.\n4. Capture every line: description, quantity, unit price, the account and the VAT.\n5. Check the bill’s total is the same as the invoice’s, to the cent.\n6. Approve it. It then waits for payment on the due date.' },
+    { id: 'tl-demo-2', dept: 'finance', kind: 'quiz', title: 'Bills and VAT: a quick check', order: 2, at: T, by: 'u1', quiz: [
+      { q: 'An invoice shows R 1 000 plus 15% VAT. What’s the total to pay?', options: ['R 1 000.00', 'R 1 150.00', 'R 1 015.00', 'R 869.57'], answer: 1 },
+      { q: 'Produce bought to sell in the store is coded to…', options: ['200 Sales', '300 Purchases', '429 General expenses', '820 VAT'], answer: 1 },
+      { q: 'Bank service fees usually have…', options: ['15% VAT', 'Zero-rated VAT (0%)', 'No VAT (exempt)'], answer: 2 },
+      { q: 'Before you approve a bill, you check it against…', options: ['The supplier’s tax invoice', 'Last month’s bill', 'The bank statement only'], answer: 0 }] },
+    { id: 'tl-demo-3', dept: 'finance', kind: 'lab', lab: 'bill-capture', title: 'Practice: capture a supplier bill', order: 3, at: T, by: 'u1' },
+    { id: 'tl-demo-4', dept: 'finance', kind: 'lab', lab: 'bank-recon', title: 'Practice: reconcile the bank', order: 4, at: T, by: 'u1' },
+  ];
+  db.trtests = [{ id: 'tt-demo-1', dept: 'finance', title: 'Finance: bills and bank test', items: ['tl-demo-2', 'tl-demo-3', 'tl-demo-4'], pass: 70, minutes: 45, locked: true, check: true, ordered: false, wait: 7, level: 'Intermediate',
+    desc: 'Capture a supplier’s bill from their emailed tax invoice, and reconcile five bank statement lines, in the Xero practice; then a short check on bills and VAT. It’s the same work Finance does every week.', to: ['u3'], due: keyPlus(5), by: 'u1', at: T }];
+  db.trres = [];
+}
+
 function MonthEndView() {
   const { db, user, update, toast, compose, ask } = useApp();
   const editor = canEditME(db, user);
@@ -11056,7 +11817,7 @@ function myShortcuts(db, u) {
 }
 function pageOptions(db, u) {
   return [['needs', 'Needs you'], ['chats', 'Chats'], ['all', 'Everything for you'], ['sent', 'Sent & tracking'], u.role !== 'staff' && ['team', 'Team progress'],
-    ['pins', 'My pins'], ['groups', 'Projects & issues'], ['search', 'Search'], canSeeME(db, u) && ['monthend', 'Month end'], canSeeAP(db, u) && ['approvals', 'Approvals'], ['calendar', 'Calendar'],
+    ['pins', 'My pins'], ['groups', 'Projects & issues'], ['search', 'Search'], canSeeME(db, u) && ['monthend', 'Month end'], canSeeAP(db, u) && ['approvals', 'Approvals'], ['calendar', 'Calendar'], ['training', 'Training'],
     ...db.depts.map((d) => ['dept:' + d.id, d.name + ' page']), ...myGroups(db, u).filter((g) => !g.archived).map((g) => ['group:' + g.id, g.name])].filter(Boolean);
 }
 function ShortcutModal({ sc, onClose }) {
@@ -11168,6 +11929,7 @@ function Shell() {
   else if (view === 'admin') content = html`<${AdminView}/>`;
   else if (view === 'monthend') content = html`<${MonthEndView}/>`;
   else if (view === 'approvals') content = html`<${ApprovalsView}/>`;
+  else if (view === 'training') content = html`<${TrainingView}/>`;
   else if (view === 'calendar') content = html`<${CalendarView}/>`;
   else if (view === 'week') content = html`<${WeekView}/>`;
   else if (view === 'taskboard') content = html`<${TaskBoardView}/>`;
