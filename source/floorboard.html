@@ -692,7 +692,7 @@ html.isl-sleepy .isl-ch:not(.wig):not(.ring) .isl-svg{animation:isl-snooze 3.4s 
 .tr-card{border-radius:18px;padding:14px;display:grid;gap:6px;align-content:start}.tr-card b{font-size:15px}.tr-card small{color:var(--ink-3)}
 .tr-card.done{opacity:.85}.tr-card .tr-ok{color:var(--green)}.tr-card-a{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
 .tr-kind{display:inline-flex;gap:6px;align-items:center;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)}
-.tr-res{display:inline-block;border:0;border-radius:999px;padding:3px 10px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}.tr-res.pass{background:var(--green-soft);color:var(--green)}.tr-res.fail{background:var(--red-soft);color:var(--red)}
+.tr-res{display:inline-block;border:0;border-radius:999px;padding:3px 10px;font:inherit;font-size:12.5px;font-weight:700;cursor:pointer}.tr-res.pass{background:#3d9a62;color:#fff}.tr-res.fail{background:#c9503f;color:#fff}.tr-card .tr-res{align-self:flex-start;justify-self:start}
 .tr-restab{margin:10px 0 16px}.tr-table{width:100%;border-collapse:collapse;margin-top:6px}.tr-table td{padding:7px 8px;border-top:1px solid var(--glass-line);font-size:13.5px}
 .tr-part{margin:10px 0}.tr-checks{list-style:none;padding:0;margin:6px 0;display:grid;gap:4px;font-size:13px}.tr-checks .ok{color:var(--green)}.tr-checks .no{color:var(--red)}
 .tr-video{width:100%;max-height:60vh;border-radius:12px;background:#000}.tr-text{white-space:pre-wrap;line-height:1.55;margin:10px 0}
@@ -705,6 +705,9 @@ html.isl-sleepy .isl-ch:not(.wig):not(.ring) .isl-svg{animation:isl-snooze 3.4s 
 .tr-sum,.tr-qwrap{max-width:720px;margin:30px auto;padding:0 20px;display:grid;gap:12px;width:100%;box-sizing:border-box}
 .tr-big{font:800 64px/1 var(--f-display)}.tr-big.pass{color:#7fe0a3}.tr-big.fail{color:#ff9a8a}.tr-parts{list-style:none;padding:0;margin:0;display:grid;gap:6px}.tr-parts li{display:flex;justify-content:space-between;gap:10px;padding:8px 12px;border-radius:10px;background:rgba(255,255,255,.06)}
 .tr-note{background:rgba(255,207,133,.12);border-radius:10px;padding:10px 12px;font-size:13.5px}.tr-warn{color:#ffcf85;font-weight:700}
+.tr-again{font-weight:700}
+.tr-opt input{accent-color:#6b9bff}.tr-opt:has(input:checked){box-shadow:inset 0 0 0 2px #6b9bff}
+.tr-file{font:inherit;color:inherit}.tr-file::file-selector-button{margin-right:12px;border:0;border-radius:999px;padding:8px 16px;background:rgba(255,255,255,.16);color:inherit;font:700 13.5px var(--f-body);cursor:pointer}.tr-file::file-selector-button:hover{background:rgba(255,255,255,.26)}
 .tr-card-d{margin:0;font-size:12.5px;line-height:1.45;opacity:.82;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
 .tr-opt-l{display:flex;gap:8px;align-items:flex-start;line-height:1.4}.tr-opt-l input{margin-top:3px}
 /* a test, before it starts: what it is on the left, six steps on the right */
@@ -766,7 +769,7 @@ html.isl-sleepy .isl-ch:not(.wig):not(.ring) .isl-svg{animation:isl-snooze 3.4s 
 .tr-x-view{min-height:0;overflow:auto;display:flex;flex-direction:column;background:#252d3e}.tr-x-view>.lab-screen{flex:1;min-height:480px}
 .tr-x-bar{display:flex;align-items:center;gap:10px;padding:8px 14px;background:#1b2232;font-size:13.5px;border-bottom:1px solid rgba(255,255,255,.08);flex-wrap:wrap}.tr-x-dim{color:rgba(255,255,255,.65)}
 .tr-x-doc{max-width:900px;margin:22px auto;padding:0 22px 30px;display:grid;gap:18px;width:100%;box-sizing:border-box}
-.tr-x-panel{background:#1b2232;border-radius:10px;padding:20px 24px;display:grid;gap:12px}.tr-x-panel h3{margin:0;color:#7ea6ff;font-size:18px}
+.tr-x-panel{background:#1b2232;border-radius:10px;padding:20px 24px;display:grid;gap:12px;min-width:0;overflow-x:auto}.tr-x-panel h3{margin:0;color:#7ea6ff;font-size:18px}
 .tr-x-panel p{margin:0;font-size:14px;line-height:1.55;color:rgba(255,255,255,.86);white-space:pre-wrap}.tr-mine{font-size:13px;color:#a9c3ff}
 .tr-x-res{width:100%;border-collapse:collapse;font-size:13px}.tr-x-res th{text-align:left;color:rgba(255,255,255,.6);font-weight:600;padding:6px 8px;background:#232b3d}
 .tr-x-res td{padding:6px 8px;border-top:1px solid rgba(255,255,255,.06);vertical-align:middle}
@@ -793,7 +796,7 @@ html.isl-sleepy .isl-ch:not(.wig):not(.ring) .isl-svg{animation:isl-snooze 3.4s 
 .tr-out-rep{background:#1b2232;border-radius:12px;padding:20px 24px}.tr-out-rep h3{margin:0 0 10px;color:#7ea6ff;font-size:18px}
 .tr-out-rep table{width:100%;border-collapse:separate;border-spacing:0 6px;font-size:13.5px}.tr-out-rep th{text-align:left;padding:6px 14px;color:rgba(255,255,255,.75)}
 .tr-out-rep td{padding:12px 14px;background:#232b3d}.tr-out-r{width:190px;font-weight:800;color:#fff}.tr-out-rep td.tr-out-r.weak{background:#d4782e}.tr-out-rep td.tr-out-r.good{background:#3d9a62}
-@media (max-width:860px){.tr-prep{grid-template-columns:1fr;padding:14px}.tr-x-main{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr)}.tr-x-side{max-height:46vh}
+@media (max-width:860px){.tr-prep{grid-template-columns:minmax(0,1fr);padding:14px}.tr-x-main{grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr)}.tr-x-main.wide{grid-template-rows:minmax(0,1fr)}.tr-x-side{max-height:46vh}.tr-x-doc{padding:0 12px 24px;margin:14px auto}.tr-x-panel{padding:16px}.tr-out-band{order:-1}
   .tr-x-top{flex-wrap:wrap;gap:10px}.tr-x-segs i{width:18px}.tr-x-sym{grid-template-columns:1fr}.tr-out-card{grid-template-columns:1fr}.tr-out-band{padding:14px}.tr-out-r{width:auto}}
 /* the practice desktop */
 .lab-desk{display:grid;grid-template-columns:320px minmax(0,1fr);min-height:560px;height:100%}
@@ -11356,7 +11359,7 @@ function TestRun({ test, onClose }) {
 
   // the result: passed or not, the soonest retake, the lessons to go over, and how each part went
   if (phase === 'done' && summary) {
-    const until = !summary.pass && test.wait > 0 ? summary.ended + test.wait * 86400000 : 0;
+    const until = !summary.pass && test.wait > 0 && !isManagerOf(user, test.dept) ? summary.ended + test.wait * 86400000 : 0;
     const weak = summary.parts.filter((p) => !(p.max > 0 && pctOf(p.score, p.max) >= (test.pass || 70))).map((p) => items.find((x) => x.id === p.item)).filter(Boolean);
     const review = summary.pass ? weak : [...before, ...weak]; // the lessons, and the parts that need work (to practise again)
     return ReactDOM.createPortal(html`<div className="tr-run"><div className="tr-run-h"><b>${test.title}</b><span className="grow"></span><button className="btn ghost sm" onClick=${onClose}>Close</button></div>
@@ -11470,7 +11473,7 @@ function TrLessonModal({ dept, lesson, onClose }) {
     <div className="field"><span>What kind</span><div className="seg" role="group">${Object.entries(TR_KINDS).map(([k, [l]]) => html`<button type="button" key=${k} className=${v.kind === k ? 'on' : ''} onClick=${() => set('kind', k)}>${l}</button>`)}</div></div>
     ${v.kind === 'lab' && html`<label className="field"><span>Which practice lab</span><select id="tr-lab" className="select" value=${v.lab} onChange=${(e) => set('lab', e.target.value)}>${Object.entries(LABS).map(([k, L]) => html`<option key=${k} value=${k}>${L.title} (${L.minutes} min)</option>`)}</select><small>${(LABS[v.lab] || {}).brief}</small></label>`}
     <label className="field"><span>Title</span><input id="tr-title" className="input" value=${v.title} onChange=${(e) => set('title', e.target.value)} placeholder=${v.kind === 'lab' ? (LABS[v.lab] || {}).title : 'e.g. How a supplier bill gets paid'}/></label>
-    ${v.kind === 'video' && html`<div className="field"><span>The video</span><input type="file" accept="video/*" onChange=${(e) => setFile(e.target.files && e.target.files[0])}/>
+    ${v.kind === 'video' && html`<div className="field"><span>The video</span><input className="tr-file" type="file" accept="video/*" onChange=${(e) => setFile(e.target.files && e.target.files[0])}/>
       <small>${v.video && !file ? 'A video is added. Choose another to replace it. ' : ''}A screen recording from Minutes works well (Documents › Meeting recordings), up to 300 MB. Or paste a link instead:</small>
       <input id="tr-link" className="input" value=${v.link} onChange=${(e) => set('link', e.target.value)} placeholder="https://… (OneDrive, YouTube)"/></div>`}
     <label className="field"><span>${v.kind === 'steps' ? 'The steps' : 'Notes (optional)'}</span><textarea id="tr-text" className="input" rows=${v.kind === 'steps' ? 8 : 3} value=${v.text} onChange=${(e) => set('text', e.target.value)} placeholder=${v.kind === 'steps' ? '1. Open the email from the supplier…\n2. …' : 'What to look out for'}></textarea></label>
@@ -11515,7 +11518,8 @@ function TrTestModal({ dept, test, onClose }) {
     <label className="sm tr-opt-l"><input type="checkbox" checked=${v.locked !== false} onChange=${(e) => set('locked', e.target.checked)}/>Full screen and locked (copy and paste from outside it off, leaving is noted)</label>
     <label className="sm tr-opt-l"><input type="checkbox" checked=${v.check !== false} onChange=${(e) => set('check', e.target.checked)}/>Check as you go: each practice part has a Check button that says how many of its checks are right (not which)</label>
     <label className="sm tr-opt-l"><input type="checkbox" checked=${!!v.ordered} onChange=${(e) => set('ordered', e.target.checked)}/>Parts in order: B opens when A is done, and so on</label>
-    <div className="field"><span>Who takes it</span><div className="checks">${people.map((u) => html`<label key=${u.id}><input type="checkbox" checked=${v.to.includes(u.id)} onChange=${() => flip('to', u.id)}/>${u.name}</label>`)}</div></div>
+    <div className="field"><span>Who takes it</span><div className="checks">${people.map((u) => html`<label key=${u.id}><input type="checkbox" checked=${v.to.includes(u.id)} onChange=${() => flip('to', u.id)}/>${u.name}</label>`)}</div>
+      ${people.length > 1 && html`<div><button type="button" className="btn sm ghost" onClick=${() => set('to', people.every((u) => v.to.includes(u.id)) ? [] : people.map((u) => u.id))}>${people.every((u) => v.to.includes(u.id)) ? 'Untick everyone' : 'Everyone in the team'}</button></div>`}</div>
     <label className="field"><span>Done by</span><input id="tt-due" className="input" type="date" min=${dkey()} value=${v.due || ''} onChange=${(e) => set('due', e.target.value)}/></label>
     ${err && html`<p className="err">${err}</p>`}
   <//>`;
@@ -11531,7 +11535,7 @@ function TrResults({ dept }) {
     ${!tests.length && html`<p className="muted sm">No tests yet.</p>`}
     <div className="tr-restab"><b>Lessons done</b><table className="tr-table"><tbody>${people.map((u) => html`<tr key=${u.id}><td>${u.name}</td><td>${lessons.filter((l) => (trRes(db, l.id, u.id) || {}).done).length} of ${lessons.length}</td></tr>`)}</tbody></table></div>
     ${open && html`<${Modal} title=${(userById(db, open.user) || {}).name + ': ' + ((db.trtests || []).find((t) => t.id === open.item) || {}).title} onClose=${() => setOpen(null)} footer=${html`<button className="btn primary" onClick=${() => setOpen(null)}>Close</button>`}>
-      <p><b>${open.pct}%</b> (${open.score} of ${open.max}) · ${open.pass ? 'passed' : 'not passed'} · took ${fmtDur((open.ended || 0) - (open.started || 0))}${open.left ? ' · left the test ' + open.left + (open.left === 1 ? ' time' : ' times') : ''}</p>
+      <p><b>${open.pct}%</b> (${open.score} of ${open.max}) · ${open.pass ? 'passed' : 'not passed'} · took ${fmtDur((open.ended || 0) - (open.started || 0))}${open.timeUp ? ' (the time ran out)' : ''}${open.tries > 1 ? ' · attempt ' + open.tries : ''}${open.left ? ' · left the test ' + open.left + (open.left === 1 ? ' time' : ' times') : ''}</p>
       ${(open.parts || []).map((p, i) => { const it = (db.trlessons || []).find((l) => l.id === p.item); const L = it && it.kind === 'lab' ? LABS[it.lab] : null;
         return html`<div key=${i} className="tr-part"><b>${it ? it.title : 'Part ' + (i + 1)}: ${p.score} of ${p.max}${p.gaveUp ? ' (handed in early)' : ''}</b>
           ${L && p.checks && html`<ul className="tr-checks">${L.checks.map(([id, label]) => html`<li key=${id} className=${p.checks[id] ? 'ok' : 'no'}>${p.checks[id] ? '✓' : '✗'} ${label}</li>`)}</ul>`}
@@ -11553,15 +11557,16 @@ function TrainingView() {
     ${mine.length > 0 && html`<section className="tr-sec"><h3>Your tests</h3><div className="tr-cards">${mine.map((t) => { const r = trRes(db, t.id, user.id); return html`<div key=${t.id} className="tr-card test glass">
         <span className="tr-kind"><${Icon} n="learn" s=${14}/>Training test</span><b>${t.title}</b>${t.desc && html`<p className="tr-card-d">${t.desc}</p>`}<small>${t.level ? t.level + ' · ' : ''}${t.minutes ? t.minutes + ' min · ' : ''}${(t.items || []).length} parts · pass mark ${t.pass}%${t.due ? ' · by ' + fmtKey(t.due) : ''}</small>
         ${r ? html`<span className=${'tr-res ' + (r.pass ? 'pass' : 'fail')}>${r.pct}% · ${r.pass ? 'passed' : 'not passed'}</span>` : ''}
-        <button className="btn primary sm" onClick=${() => setRun(t)}>${r ? 'Take it again' : 'Start the test'}</button></div>`; })}</div></section>`}
+        ${r && !r.pass && t.wait > 0 && !builder && Date.now() < (r.ended || r.at || 0) + t.wait * 86400000 && html`<small className="tr-again">You can take it again from ${trWhen((r.ended || r.at || 0) + t.wait * 86400000)}</small>`}
+        <button className="btn primary sm" onClick=${() => setRun(t)}>${r && !r.pass && t.wait > 0 && !builder && Date.now() < (r.ended || r.at || 0) + t.wait * 86400000 ? 'See the test' : r ? 'Take it again' : 'Start the test'}</button></div>`; })}</div></section>`}
     <section className="tr-sec"><h3>Lessons <small className="muted">${doneCount} of ${lessons.length} done</small></h3>
       ${lessons.length ? html`<div className="tr-cards">${lessons.map((l) => { const r = trRes(db, l.id, user.id); return html`<div key=${l.id} className=${'tr-card glass' + (r && r.done ? ' done' : '')}>
           <span className="tr-kind"><${Icon} n=${TR_KINDS[l.kind][1]} s=${14}/>${TR_KINDS[l.kind][0]}</span><b>${l.title}</b>
           ${r && r.done && html`<small className="tr-ok">✓ Done${r.max ? ' · ' + (r.best != null ? r.best : r.score) + ' of ' + r.max : ''}</small>`}
           <span className="tr-card-a"><button className="btn sm" onClick=${() => setLesson(l)}>${l.kind === 'lab' ? 'Practise' : l.kind === 'quiz' ? 'Take the quiz' : l.kind === 'video' ? 'Watch' : 'Read'}</button>${builder && html`<button className="btn sm ghost" onClick=${() => setEdit(l)}>Edit</button>`}</span></div>`; })}</div>`
         : html`<p className="muted sm">${builder ? 'No lessons yet. Add the first one: a video walkthrough, written steps, a quiz or a practice lab.' : 'No lessons here yet.'}</p>`}</section>
-    ${builder && tests.length > 0 && html`<section className="tr-sec"><h3>Tests</h3><div className="tr-cards">${tests.map((t) => html`<div key=${t.id} className="tr-card test glass"><b>${t.title}</b>
-        <small>${(t.items || []).length} parts · pass mark ${t.pass}%${t.minutes ? ' · ' + t.minutes + ' min' : ''} · ${(t.to || []).length} ${(t.to || []).length === 1 ? 'person' : 'people'}${t.due ? ' · by ' + fmtKey(t.due) : ''}</small>
+    ${builder && tests.length > 0 && html`<section className="tr-sec"><h3>Tests</h3><div className="tr-cards">${tests.map((t) => html`<div key=${t.id} className="tr-card test glass"><span className="tr-kind"><${Icon} n="learn" s=${14}/>Training test</span><b>${t.title}</b>${t.desc && html`<p className="tr-card-d">${t.desc}</p>`}
+        <small>${t.level ? t.level + ' · ' : ''}${t.minutes ? t.minutes + ' min · ' : ''}${(t.items || []).length} parts · pass mark ${t.pass}% · ${(t.to || []).length} ${(t.to || []).length === 1 ? 'person' : 'people'}${t.due ? ' · by ' + fmtKey(t.due) : ''}</small>
         <span className="tr-card-a"><button className="btn sm" onClick=${() => setRun(t)}>Try it</button><button className="btn sm ghost" onClick=${() => setTestEdit(t)}>Edit</button></span></div>`)}</div></section>`}
     ${builder && html`<${TrResults} dept=${dep}/>`}
     ${lesson && html`<${LessonView} lesson=${lesson} onClose=${() => setLesson(null)}/>`}
